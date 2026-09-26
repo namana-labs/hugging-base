@@ -16,7 +16,9 @@ import sys
 from pathlib import Path
 
 FORBIDDEN = ["demos/**", "four-home-simulation/**", "docs/headroom/**", "headroom-gridspine-dossier.html",
-             "docs/{design,plan,ui-brief,reconciliation,research-report}.md"]
+             "docs/{design,plan,ui-brief,reconciliation,research-report}.md",
+             # round 2 (RZ ruling 26 Sep): never edit Connor's folders or the design handoff he owns
+             "simulators/**", "docs/design-handoff/**", ".claude/skills/**"]
 
 
 def glob_re(pat):
