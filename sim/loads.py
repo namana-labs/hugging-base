@@ -166,7 +166,8 @@ class Loads:
     def driver(self, tf, k):
         """The 5.3 `driver` of transformer index `tf` at 15-min step `k`: the home whose load makes the peak.
 
-        {home, label, profile, kwAtPeak, sharedWith[]}: sharedWith lists the other homes on the feeder whose loads use
+        {home, label, profile, kwAtPeak{v,label}, sharedWith[{home, label, tf}]} (home = index in topology order, as
+        in docs/contracts.md); sharedWith lists the other homes on the feeder whose loads use
         the same SMART-DS shape (SMART-DS reuses 254 shapes across 2,021 loads, so one spike can appear on many cans).
         """
         kw = self.home_kw(k, 1)[0]
@@ -175,9 +176,9 @@ class Loads:
         profiles = self.home_profile(h)
         shared = sorted({int(self.load_home[i]) for i in range(self.n_loads)
                          if self.kw_names[self.load_shape[i]] in profiles and self.load_home[i] != h})
-        return {'home': self.home_ids[h], 'label': self.home_labels[h], 'profile': profiles[0] if len(profiles) == 1 else profiles,
+        return {'home': h, 'label': self.home_labels[h], 'profile': profiles[0] if len(profiles) == 1 else profiles,
                 'kwAtPeak': {'v': round(float(kw[h]), 2), 'label': 'SIM'},
-                'sharedWith': [{'home': self.home_ids[s], 'label': self.home_labels[s], 'tf': int(self.home_tf[s])} for s in shared]}
+                'sharedWith': [{'home': s, 'label': self.home_labels[s], 'tf': int(self.home_tf[s])} for s in shared]}
 
 
 # -- the 5.3 conformance check (used by sim/tests/test_loads.py and sim.calibrate) ----------------------------------

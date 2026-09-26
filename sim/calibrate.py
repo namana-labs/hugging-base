@@ -230,6 +230,15 @@ def main(argv=None):
     scope = 'Aug' if not a.quick else '23 Aug (quick)'
     print(f'census {scope}, OpenDSS, no batteries: >100% {over100} ; >110% {over110} ; >110% for >=30 min {k30}   '
           f'(surrogate tonight: 4, 2, 0)   [report]')
+    mx = pct.max(0)
+    for i in np.flatnonzero(mx > 100)[np.argsort(-mx[mx > 100])]:
+        k = int(steps[int(np.argmax(pct[:, i]))])
+        d = loads.driver(i, k)
+        runs = [loads.time_of(int(steps[j]))[5:].replace('T', ' ') for j in np.flatnonzero(pct[:, i] > 110)]
+        print(f'  census tf {i} ({loads.kva[i]:.0f} kVA): peak {mx[i]:.1f}% at {loads.time_of(k)[5:].replace("T", " ")} ; '
+              f'h>100 {(pct[:, i] > 100).sum() * loads.step_minutes / 60:.2f} ; longest >110 run {run110[i] * loads.step_minutes} min '
+              f'[{", ".join(runs)}] ; driver {d["label"]} {d["profile"]}'
+              + (f' (shared with {", ".join(x["label"] for x in d["sharedWith"])})' if d['sharedWith'] else '') + '   [report]')
 
     # fit on training frames, evaluate on held-out frames
     n_each = 20 if a.quick else 100
@@ -237,7 +246,7 @@ def main(argv=None):
     coeffs, n_fit = fit(loads, feeder, train)
     evl = frames(loads, nf, EVAL_SEED, n_each, spread=False)
     err, err0, kinds, times, dss_pct = evaluate(loads, feeder, evl, coeffs)
-    prior_err, *_ = evaluate(loads, feeder, evl[: min(len(evl), 60)], surrogate.physics_prior(loads.tf_ids))
+    prior_err, *_ = evaluate(loads, feeder, evl, surrogate.physics_prior(loads.tf_ids))
     ae = np.abs(err)
     mx, p99 = float(ae.max()), float(np.percentile(ae, 99))
     hot = dss_pct >= 80
