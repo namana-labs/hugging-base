@@ -14,12 +14,21 @@ combos' top-5 entries; max and p99, in points) and the tier agreement, and gives
 `before` (baseline run) and `after` (top-5 build run) numbers. Every run also reads the feeder-head current
 (370 A, site/ems/flow-spec.md) and compares it with P2's per-phase head estimate (siting.head_phase_pct).
 
-Then two more OpenDSS months check the useful-capacity counts (5.6 step 8), which the surrogate screen found:
-  capacity naive   the first n1 homes of naive's greedy order from an empty feeder (n1 = usefulCapacity.naive)
-  capacity aware   the first n2 homes of aware's greedy order, with the feeder-head cap (n2 = usefulCapacity.aware)
-Each reports battery-caused normal-tier events, emergency intervals, protection, the head against 370 A and the
-minimum home voltage, all measured by OpenDSS. Nothing is tuned from them: the counts stay the screen's, and the
-cite says what OpenDSS measured. Output: data/out/referee-2026-08.json, then
+Round 2 (audit R2 M2, M6, L9) adds the existing-fleet months that were never run, outside the six (their error does
+not enter the shortlist numbers): home load only (no batteries) at today's load and at +20%, and the existing fleet
+under the cheapest-hours rule (aware and naive, g0 and g20). With the four d26 baselines above, every combo's fleet
+table and feeder head has an OpenDSS month (a Legacy combo's existing fleet is Core, with its Core twin's schedule).
+
+Then OpenDSS months check the useful-capacity counts (5.6 step 8), which the surrogate screen found:
+  capacity naive      the first n1 homes of naive's greedy order from an empty feeder (n1 = usefulCapacity.naive)
+  capacity aware      the first n2 homes of aware's greedy order, with the feeder-head cap (n2 = usefulCapacity.aware)
+  capacity naiveHead  naive under aware's question: the first n3 homes, where the screen's per-phase head estimate
+                      passes 370 A at n3 + 1 (n3 = usefulCapacity.naiveHead; audit R2 H1)
+and a naive search: OpenDSS steps from n3 (up while it holds, bisecting down if it fails) to the largest prefix with
+0 battery-caused normal-tier events, 0 battery-caused emergency intervals and the head never above 370 A
+(usefulCapacity.naiveOpenDSS). Each reports battery-caused normal-tier events, emergency intervals, protection, the
+head against 370 A and the minimum home voltage, all measured by OpenDSS. Nothing is tuned from them: the screen's
+counts stay, and OpenDSS's verdicts sit beside them. Output: data/out/referee-2026-08.json, then
 sim.p2_build re-writes ui/data/p2/* with those numbers merged (keyed by the schedules' sha256, so a stale referee
 file is never merged).
 """
@@ -40,6 +49,10 @@ ROOT = Path(__file__).resolve().parents[1]
 RUNS = [("baseline", "aware-core-d26-g0"), ("baseline", "naive-core-d26-g0"),
         ("top5", "aware-core-d26-g0"), ("top5", "naive-core-d26-g0"),
         ("baseline", "aware-core-d26-g20"), ("baseline", "naive-core-d26-g20")]
+# existing-fleet months outside the six: home load only, and the cheapest-hours baselines (audit R2 M2, M6, L9)
+FLEET_RUNS = [("none", "g0"), ("none", "g20")] + [("baseline", f"{p}-core-cheapest-g{g}") for g in (0, 20)
+                                                  for p in ("aware", "naive")]
+SEARCH_MAX_CHECKS = 12
 
 
 def selected_columns(ctx, x, kind):
@@ -155,6 +168,67 @@ def capacity_check(feeder, ctx, homes, policy, steps=REPORTED):
             "errorAllPts": {"max": round(float(d.max()), 2), "p99": round(float(np.percentile(d, 99)), 2)}}
 
 
+def fleet_entry(ctx, sol, g, kw_home, steps, sur, col_kw=None):
+    """One existing-fleet month in OpenDSS, summed over the 379 transformers (col_kw None: home load only)."""
+    pct = sol["pct"]
+    M = month_metrics(pct, None, None, steps=steps)
+    d = np.abs(sur - pct).ravel()
+    e = {"h100": round(float(M["h100"].sum()), 2), "normalEvents": int(M["normalEvents"].sum()),
+         "emergencyN": int(M["emergencyN"].sum()), "tfsOver100": int((M["h100"] > 0).sum()),
+         "protectionTfs": [int(i) for i in np.flatnonzero(M["protection"] >= 0)],
+         "head": head_doc(sol, ctx, g, kw_home, steps),
+         "errorAllPts": {"max": round(float(d.max()), 2), "p99": round(float(np.percentile(d, 99)), 2)}}
+    if col_kw is not None:
+        ev, n_em = caused(pct, col_kw, sol["net"])
+        e["causedNormal"] = len(ev)
+        e["causedEmergencyN"] = n_em
+    return e
+
+
+def harmless(c):
+    """The useful-capacity question, judged in OpenDSS: 0 battery-caused normal-tier events, 0 battery-caused
+    emergency intervals, and the feeder head never above 370 A (no step over 100%)."""
+    return c["causedNormal"]["n"] == 0 and c["causedEmergencyN"] == 0 and c["head"]["stepsOver100"] == 0
+
+
+def naive_search(feeder, ctx, order, n0, steps=REPORTED, out=print, max_checks=SEARCH_MAX_CHECKS):
+    """OpenDSS-judged naive count: from the screen's n0, step up one placement at a time while the build holds, or
+    bisect down if n0 fails, one OpenDSS month per check (at most max_checks). Returns (the n0 check, summary)."""
+    checks = {}
+
+    def ok(n):
+        if n not in checks:
+            t = time.perf_counter()
+            checks[n] = c = capacity_check(feeder, ctx, order[:n], "naive", steps)
+            out(f"referee naive search n={n}: battery-caused normal {c['causedNormal']['n']} (tfs {c['causedNormal']['tfs']}), "
+                f"battery-caused emergency {c['causedEmergencyN']}, head max {c['head']['maxPct']}% of 370 A at {c['head']['t']} "
+                f"({c['head']['stepsOver100']} steps > 100%), min v {c['vmin']['pu']} pu -> {'holds' if harmless(c) else 'HARM'} "
+                f"({time.perf_counter() - t:.0f} s)")
+        return harmless(checks[n])
+
+    if ok(n0):
+        lo, hi, n = n0, None, n0 + 1
+        while hi is None and len(checks) < max_checks and n <= len(order):
+            if ok(n):
+                lo = n
+            else:
+                hi = n
+            n += 1
+    else:
+        lo, hi = 0, n0
+        while hi - lo > 1 and len(checks) < max_checks:
+            mid = (lo + hi) // 2
+            if ok(mid):
+                lo = mid
+            else:
+                hi = mid
+    cols = ["n", "causedNormal", "causedEmergencyN", "headMaxPct", "headStepsOver100", "vMinPu", "holds"]
+    rows = [[n, c["causedNormal"]["n"], c["causedEmergencyN"], c["head"]["maxPct"], c["head"]["stepsOver100"], c["vmin"]["pu"],
+             harmless(c)] for n, c in sorted(checks.items())]
+    return checks[n0], {"n": lo, "failAt": hi, "exact": hi is not None and hi == lo + 1, "from": n0, "cols": cols,
+                        "checks": rows}
+
+
 def dss_metrics(M, col, label_cite):
     prot = int(M["protection"][col])
     lab = lambda v, **kw: {"v": v, "label": "SIM", **kw}  # noqa: E731
@@ -165,14 +239,14 @@ def dss_metrics(M, col, label_cite):
             "protection": lab(prot >= 0, t=stamp(prot) if prot >= 0 else None)}
 
 
-def run(steps=REPORTED, runs=RUNS, write=True, out=print, capacity=True):
+def run(steps=REPORTED, runs=RUNS, write=True, out=print, capacity=True, fleet_runs=FLEET_RUNS):
     from .feeder import Feeder
     t0 = time.perf_counter()
     ctx = pb.Ctx()
     xs = {}
     for combo in pb.referee_combos():
         _, xs[combo] = pb.build_combo(ctx, combo)
-    sha = pb.schedule_sha(xs)
+    sha = pb.schedule_sha({c: x["sim"]["kw"] for c, x in xs.items()})
     shortlist = []
     for combo in pb.FLIP:
         for r in xs[combo]["rows"][:5]:
@@ -183,6 +257,7 @@ def run(steps=REPORTED, runs=RUNS, write=True, out=print, capacity=True):
     res = {}
     caused_n = {}
     heads = {}
+    fleet = {}
     ms = []
     for kind, combo in runs:
         x = xs[combo]
@@ -209,6 +284,8 @@ def run(steps=REPORTED, runs=RUNS, write=True, out=print, capacity=True):
         res[(kind, combo)] = M
         if kind == "baseline":
             caused_n[combo] = n_caused
+            if fleet_runs:
+                fleet[combo] = fleet_entry(ctx, sol, g, kw_home, steps, sur, col_kw)
         h = heads[f"{kind} {combo}"]
         out(f"referee {kind:8s} {combo}: {steps} steps, {ms[-1]:.1f} ms/step; shortlist err max {err_s[-1].max():.2f} pts; "
             f"normal events {int(M['normalEvents'].sum())} (battery-caused {n_caused}); placed {sum(kplaced)}; "
@@ -216,6 +293,29 @@ def run(steps=REPORTED, runs=RUNS, write=True, out=print, capacity=True):
             f"{-h['underReadMaxPts']:+.2f} to {h['overReadMaxPts']:+.2f} pts; balanced total read low by up to {h['balancedUnderReadMaxPts']} pts)")
     es = np.concatenate(err_s)
     ea = np.concatenate(err_all)
+    for kind, key in (fleet_runs or []):
+        t = time.perf_counter()
+        if kind == "none":
+            g = int(key[1:])
+            x = xs[f"aware-core-d26-{key}"]
+            cols, _ = selected_columns(ctx, x, "baseline")
+            kw_home = np.zeros((steps, len(ctx.home_ids)))
+            sol = solve_month(feeder, ctx, g, kw_home, steps)
+            fleet[f"none-{key}"] = e = fleet_entry(ctx, sol, g, kw_home, steps, x["sim"]["pct_none"][:steps][:, cols])
+        else:
+            x = xs[key]
+            g = int(key.split("-g")[1])
+            cols, _ = selected_columns(ctx, x, "baseline")
+            kw_home = home_schedule(ctx, x, cols, steps)
+            sol = solve_month(feeder, ctx, g, kw_home, steps)
+            col_kw = x["sim"]["col_kw"][:steps][:, cols]
+            fleet[key] = e = fleet_entry(ctx, sol, g, kw_home, steps, x["sim"]["pct"][:steps][:, cols], col_kw)
+            caused_n[key] = e["causedNormal"]
+            heads[f"baseline {key}"] = e["head"]
+        out(f"referee fleet {kind:8s} {key}: {steps} steps, {time.perf_counter() - t:.0f} s: h above nameplate {e['h100']}, "
+            f"normal events {e['normalEvents']} (battery-caused {e.get('causedNormal', '-')}), emergency intervals {e['emergencyN']}, "
+            f"tfs > 100% {e['tfsOver100']}; head max {e['head']['maxPct']}% of 370 A at {e['head']['t']} "
+            f"({e['head']['stepsOver100']} steps > 100%); surrogate err all tfs max {e['errorAllPts']['max']} p99 {e['errorAllPts']['p99']} pts")
     cards = {}
     for combo in pb.FLIP:
         if ("baseline", combo) not in res or ("top5", combo) not in res:
@@ -236,7 +336,8 @@ def run(steps=REPORTED, runs=RUNS, write=True, out=print, capacity=True):
            "errorPts": {"max": round(float(es.max()), 2), "p99": round(float(np.percentile(es, 99)), 2)},
            "errorAllPts": {"max": round(float(ea.max()), 2), "p99": round(float(np.percentile(ea, 99)), 2)},
            "tierAgreementPct": round(100.0 * agree / max(1, tot), 2),
-           "baselineCausedNormal": caused_n, "cards": cards, "head": heads}
+           "baselineCausedNormal": caused_n, "cards": cards, "head": heads, "fleet": fleet,
+           "extraRuns": [f"{k} {c}" for k, c in (fleet_runs or [])]}
     out(f"referee: {len(runs)} runs x {steps} | shortlist {shortlist} | error max {doc['errorPts']['max']} pts, "
         f"p99 {doc['errorPts']['p99']} pts; all tfs max {doc['errorAllPts']['max']}, p99 {doc['errorAllPts']['p99']}; "
         f"tier agreement {doc['tierAgreementPct']}% | {np.mean(ms):.1f} ms/step | {time.perf_counter() - t0:.0f} s")
@@ -257,6 +358,10 @@ def run(steps=REPORTED, runs=RUNS, write=True, out=print, capacity=True):
                 f"max {c['head']['estMaxPct']}%; balanced total {c['head']['balancedMaxPct']}%); "
                 f"min home voltage {c['vmin']['pu']} pu ({c['vmin']['home']}, {c['vmin']['t']}), homes < 0.95 pu {c['vmin']['homesBelow095']}; "
                 f"surrogate err all tfs max {c['errorAllPts']['max']} p99 {c['errorAllPts']['p99']} pts")
+        cap["naiveHead"], cap["naiveSearch"] = naive_search(feeder, ctx, builds["naiveOrder"], uc["naiveHead"]["n"], steps, out)
+        srch = cap["naiveSearch"]
+        out(f"referee naive search: screen (naiveHead) {srch['from']}; OpenDSS holds up to {srch['n']}, harm at "
+            f"{srch['failAt']} ({'exact' if srch['exact'] else 'bounds only'}; {len(srch['checks'])} OpenDSS months)")
         doc["capacity"] = cap
     if write:
         pb.REFEREE_JSON.parent.mkdir(parents=True, exist_ok=True)
@@ -268,7 +373,7 @@ def run(steps=REPORTED, runs=RUNS, write=True, out=print, capacity=True):
 
 def main(argv):
     if "--quick" in argv:
-        run(steps=96, runs=RUNS[:1], write=False, capacity=False)
+        run(steps=96, runs=RUNS[:1], write=False, capacity=False, fleet_runs=FLEET_RUNS[:1])
         return 0
     run()
     return 0

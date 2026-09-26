@@ -1,107 +1,135 @@
 {
   "schema": "hb.beats.v1",
   "producer": "sim.handwritten",
-  "inputs": {"prices_sha256": null, "loads_sha256": null, "topology_sha256": null},
+  "inputs": {
+    "prices_sha256": null,
+    "loads_sha256": null,
+    "topology_sha256": null
+  },
   "constants": {},
   "sources": {},
   "series": {},
-  "_doc": "L5, hand-written (no generator). The 5-minute video as deep links. Captions are TEMPLATES: prose plus {{fact}} placeholders that ui/panels/more.js resolves from the committed JSON at view time, each with its honesty label; {{chip:LABEL:cite}} labels a prose claim. No caption or title carries a bare digit (ui/test/p2.test.js). t0/t1 are the video clock. Beat times follow build prompt section 11; every caption uses what was measured, and a refuted expectation (for example the A-B-C-D rotation, or a throttle on the hot transformer) is stated as measured, never asserted.",
+  "_doc": "L5, hand-written (no generator). The 5-minute video as deep links. Captions and headlines are TEMPLATES: prose plus {{fact}} placeholders that ui/panels/more.js resolves from the committed JSON at view time, each with its honesty label; {{chip:LABEL:cite}} labels a prose claim; [[...]] is an optional clause, dropped whole until the data it names is built (never a guess). `headline` is one sentence: the P1 beat bar shows it with the full caption one click away, and on P1 beats it says what the on-screen story line says. No caption, headline or title carries a bare digit (ui/test/p2.test.js). t0/t1 are the video clock. A refuted expectation is stated as measured, never asserted.",
   "beats": [
     {
       "id": "problem",
-      "t0": "0:00", "t1": "0:25",
+      "t0": "0:00",
+      "t1": "0:25",
       "title": "The problem",
       "label": "REAL",
       "link": "view=p1&branch=naive&t=16:00&cam=street",
-      "caption": "ERCOT dispatches one number per load zone and does not check feeders {{chip:REAL:ERCOT base points are per resource and load zone; no feeder or service-transformer check}}. Our naive branch splits that number with no feeder check, all at once at the onset {{chip:ASSUMPTION:Base's real split is not public (build prompt 12 Q5); never implies Base charges this way today}}. Street A–D: {{streetHomes}} homes on {{streetTfs}} service transformers, every home with a battery, in a fleet of {{fleetSize}}. The scale ladder: A's battery charge at once, {{scaleLadderKW}}, as a share of each scale: {{scaleLadder}}. What overloads one service transformer does not register at the zone."
+      "headline": "ERCOT sends one number per zone and checks no street transformer, while Base's Houston batteries already charge as one block ({{houstonBlock}}).",
+      "caption": "ERCOT dispatches one number per load zone and does not check feeders {{chip:REAL:ERCOT base points are per resource and load zone; no feeder or service-transformer check}}. Base's own Houston fleet already moves as one block: its charge reached {{houstonBlock}}. Our naive branch splits that number with no feeder check, all at once at the onset {{chip:ASSUMPTION:Base's real split is not public (build prompt 12 Q5); never implies Base charges this way today}}. Street A–D: {{streetHomes}} homes on {{streetTfs}} service transformers, every home with a battery, in a fleet of {{fleetSize}}. The scale ladder: A's battery charge at once, {{scaleLadderKW}}, as a share of each scale: {{scaleLadder}}. What overloads one service transformer does not register at the zone."
     },
     {
       "id": "peak-relief",
-      "t0": "0:25", "t1": "0:50",
+      "t0": "0:25",
+      "t1": "0:50",
       "title": "Afternoon peak: relief at its true size",
       "label": "SIM",
       "link": "view=p1&branch=aware&t=16:45&cam=street",
+      "headline": "{{reliefT}}: one home's spike pushes transformer A over nameplate, and its own batteries bring it back to {{reliefAware}}.",
       "caption": "At {{reliefT}}, with no batteries, transformer A reaches {{reliefNone}} of nameplate: over nameplate for {{reliefMinutesNone}} (amber; not a failure). The driver is one home's load, {{reliefDriverHome}} (SMART-DS profile {{reliefDriverProfile}}), and the same profile runs at {{reliefDriverShared}}: one shape, not two pieces of evidence. Feeder-aware, at {{reliefT}} A reads {{reliefAware}}, and its own batteries discharge up to {{reliefKWPeak}}. {{unrelievedTf}} has no battery and stays over nameplate; the next-battery view answers that."
     },
     {
       "id": "insight",
-      "t0": "0:50", "t1": "1:00",
+      "t0": "0:50",
+      "t1": "1:00",
       "title": "When transformers peak vs when prices peak",
       "label": "SIM",
       "link": "view=p2&combo=aware-core-d26-g0",
+      "headline": "Transformers peak at {{insightTfHour}}, prices at {{insightPriceHour}}: a market-only plan leaves the street's peak alone.",
       "caption": "Across August, transformers most often hit their monthly peak at {{insightTfHour}}; the day's highest price most often falls at {{insightPriceHour}}. {{insightVerdict}}"
     },
     {
       "id": "backfeed",
-      "t0": "1:00", "t1": "1:25",
+      "t0": "1:00",
+      "t1": "1:25",
       "title": "Evening price peak: naive back-feed",
       "label": "SIM",
       "link": "view=p1&branch=naive&t=20:00&cam=street",
-      "caption": "The market plan discharges every battery in the highest-priced intervals ({{dischargeSlots}}). Naive, all at once, the street's back-feed reaches {{naiveBackfeedMax}}: back-feed is an overload too. Feeder-aware caps export by headroom: the worst street reading while exporting is {{awareBackfeedMax}}."
+      "headline": "At the price peak naive sells all at once and back-feeds the street to {{naiveBackfeedMax}}; feeder-aware stays at {{awareBackfeedMax}}.",
+      "caption": "The market plan discharges every battery in the highest-priced intervals ({{dischargeSlots}}). Watch the batteries turn violet with an out-arrow: they are sending power out. Naive, all at once, the street's back-feed reaches {{naiveBackfeedMax}}: back-feed is an overload too. Feeder-aware caps export by headroom: the worst street reading while a transformer is actually exporting is {{awareBackfeedMax}}."
     },
     {
       "id": "rebound-naive",
-      "t0": "1:25", "t1": "2:00",
+      "t0": "1:25",
+      "t1": "2:00",
       "title": "The price collapse: naive rebound",
       "label": "SIM",
       "link": "view=p1&branch=naive&t=22:30&cam=street",
-      "caption": "The price falls from {{eveningPeakPrice}} at {{eveningPeakT}} to {{onsetPrice}} at {{onsetT}}, the charge onset. Naive: every battery charges at once, and the worst service transformer reaches {{naiveMax}} ({{naiveMaxTf}} at {{naiveMaxT}}): {{naiveNormalEvents}} normal-tier events and {{naiveEmergencyTfs}} transformers past the emergency rating. This rule's fuse opens above {{fusePct}} for {{fuseMinutes}}; it operated on {{naiveProtection}} transformers. Grid check: minimum service voltage {{naiveVmin}}, so {{naiveVoltVerdict}}; after the onset the feeder head peaks at {{naiveHeadOnset}}."
+      "headline": "{{onsetT}}: the price drops to {{onsetPrice}}, every battery charges at once, and transformers overload: worst {{naiveMax}}.",
+      "caption": "The price falls from {{eveningPeakPrice}} at {{eveningPeakT}} to {{onsetPrice}} at {{onsetT}}, the charge onset. The story line walks it: price drops, every battery charges at once (bolts on every cabinet), transformers overload (meters sticking out of their boxes). The worst service transformer reaches {{naiveMax}} ({{naiveMaxTf}} at {{naiveMaxT}}): {{naiveNormalEvents}} normal-tier events and {{naiveEmergencyTfs}} transformers past the emergency rating. This rule's fuse opens above {{fusePct}} for {{fuseMinutes}}; it operated on {{naiveProtection}} transformers. Grid check: minimum service voltage {{naiveVmin}}, so {{naiveVoltVerdict}}; after the onset the feeder head peaks at {{naiveHeadOnset}}."
     },
     {
       "id": "rebound-aware",
-      "t0": "2:00", "t1": "2:30",
+      "t0": "2:00",
+      "t1": "2:30",
       "title": "The price collapse: feeder-aware rotation",
       "label": "SIM",
       "link": "view=p1&branch=aware&t=22:30&cam=street",
-      "caption": "Feeder-aware: before sending charge, check each transformer's headroom and send only what fits. On street A–D the first charge reaches each transformer at {{chargeOrder}}; the ticker names every grant and hand-off. Battery-caused normal-tier events: {{awareBatteryNormal}}; emergency: {{awareBatteryEmergency}}. {{awareVerdict}} Charged by the morning deadline: {{awareCharged}}. What the controller sees: {{controllerView}}."
+      "headline": "{{onsetT}}: the price drops, the room is checked first[[, {{onsetDeferredKW}} waits]], batteries take turns, and {{awareBatteryNormal}} overloads are caused by batteries.",
+      "caption": "Feeder-aware: before sending charge, check each transformer's room and send only what fits. [[At {{onsetT}} naive sends {{onsetNaiveKW}} at once; feeder-aware sends {{onsetAwareKW}} and holds back {{onsetDeferredKW}} for later in the night. ]]On street A–D the first charge reaches each transformer at {{chargeOrder}}; the controller log names every grant and hand-off. Battery-caused normal-tier events: {{awareBatteryNormal}}; emergency: {{awareBatteryEmergency}}. {{awareVerdict}} Charged by the morning deadline: {{awareCharged}}. [[Energy value tonight {{energyAware}}, against naive's {{energyNaive}}. ]]What the controller sees: {{controllerView}}."
     },
     {
       "id": "faults",
-      "t0": "2:30", "t1": "3:00",
+      "t0": "2:30",
+      "t1": "3:00",
       "title": "Pieces fail mid-balance",
       "label": "SIM",
       "link": "view=p1&branch=aware_faults&t=22:16&cam=street",
+      "headline": "A battery goes silent, an EV plugs in, our controller stalls: still {{faultsBatteryNormal}} battery-caused overloads.",
       "caption": "At {{faultCommsT}} the battery at {{faultCommsHome}} goes silent holding a {{faultCommsKW}} command: stale after {{staleS}}, expired and idle with backup armed after {{ttlS}}, and {{faultCover}}. At {{faultHotT}} {{faultHotTf}} runs hot ({{evKW}} of new load for {{faultHotMinutes}}). {{faultHotOutcome}} At {{faultStallT}} our controller stalls for {{stallMin}}; every command expires on schedule. Battery-caused normal-tier events: {{faultsBatteryNormal}}; emergency: {{faultsBatteryEmergency}}."
     },
     {
       "id": "p2-controls",
-      "t0": "3:00", "t1": "3:30",
+      "t0": "3:00",
+      "t1": "3:30",
       "title": "Where the next battery goes",
       "label": "SIM",
       "link": "view=p2&combo=aware-core-d26-g0&n=5",
+      "headline": "Where the next battery goes: feeder-aware's first choice is {{awareTop1}} on {{awareTop1Tf}}.",
       "caption": "A month-long what-if on real August LZ_NORTH prices {{chip:REAL:ERCOT RTM SPP LZ_NORTH 15-min}} and SMART-DS loads {{chip:SIM:SMART-DS 2018 AUS P1U, paired by calendar date (ASSUMPTION)}}: {{candidates}} candidate homes, with and without a battery. Feeder-aware's first choice is {{awareTop1}} on {{awareTop1Tf}}. The OpenDSS referee ran {{refereeRuns}} month runs; screening error {{refereeP99}}."
     },
     {
       "id": "p2-flip",
-      "t0": "3:30", "t1": "3:55",
+      "t0": "3:30",
+      "t1": "3:55",
       "title": "The flip",
       "label": "DERIVED",
       "link": "view=p2&combo=naive-core-d26-g0",
+      "headline": "Feeder-aware's first choice, {{awareTop1}}, sits at {{awareTop1NaiveRank}} under naive dispatch; the two top tens share {{flipOverlap}}.",
       "caption": "{{flipHeadline}} Naive and feeder-aware share {{flipOverlap}} of their top ten (Spearman {{flipSpearman}}); among candidates whose place no id tie-break decided, they share {{flipUntied}}. Feeder-aware's first choice, {{awareTop1}} on {{awareTop1Tf}}, under naive dispatch: {{awareTop1UnderNaive}}."
     },
     {
       "id": "p2-capacity",
-      "t0": "3:55", "t1": "4:20",
+      "t0": "3:55",
+      "t1": "4:20",
       "title": "Useful capacity and dark homes",
       "label": "SIM",
       "link": "view=p2&combo=aware-core-d26-g0&n=10",
-      "caption": "From an empty feeder, naive dispatch fits {{capNaive}} batteries before the first battery-caused normal-tier event; feeder-aware fits {{capAware}}: {{capAwareStop}}. Protection may operate {{chip:ASSUMPTION:fuse rule, round-1 world-sim}} in {{protectionWhere}}."
+      "headline": "Naive passes the feeder cable's rating at {{capNaiveCableAt}} batteries; feeder-aware fits {{capAware}} with {{capAwareOdssCaused}} battery-caused events in OpenDSS.",
+      "caption": "How many batteries fit before the grid is harmed? Naive: the feeder cable passes its rating at {{capNaiveCableAt}} batteries (per-phase estimate), and transformers break before the screening count of {{capNaiveScreen}}: OpenDSS found {{capNaiveOdssCaused}} battery-caused events and the cable at {{capNaiveOdssHead}} there. Feeder-aware fits {{capAware}}, {{capAwareStop}}; OpenDSS measured {{capAwareOdssCaused}} battery-caused events, the cable at {{capAwareOdssHead}} at most, and the lowest home voltage {{capAwareVmin}}, at the ANSI edge. Protection may operate {{chip:ASSUMPTION:fuse rule, round-1 world-sim}} in {{protectionWhere}}."
     },
     {
       "id": "money",
-      "t0": "4:20", "t1": "4:45",
+      "t0": "4:20",
+      "t1": "4:45",
       "title": "Money, labelled",
       "label": "DERIVED",
       "link": "view=more",
-      "caption": "Energy value, naive {{energyNaive}} vs feeder-aware {{energyAware}}: the cost of awareness is {{costOfAwareness}}. Feeder-aware, the fleet delivers {{fleetKWPeakAware}} at the price peak: at {{capacityLow}} to {{capacityHigh}} per kW-month that is {{capMonthAwareLow}} to {{capMonthAwareHigh}} a month of system-capacity value. A's local relief would have earned at most {{reliefOpportunity}} at the price peak, and it is never priced with the capacity band. CoServ, GVEC and Austin Energy pay for system peak, coincident peaks and arbitrage, not local relief {{chip:REAL:docs/research-report.md:215-224}}: local relief is an unpriced opportunity {{chip:ASSUMPTION:no sourced price in our material}}."
+      "headline": "Sell at the evening peak, buy back after the fall: tonight feeder-aware earned {{energyAware}}[[, {{awareMoreTonight}} more than naive]], with {{awareBatteryNormal}} battery-caused overloads.",
+      "caption": "Batteries earn by selling in the evening's priciest intervals and buying back after the price falls. Tonight's energy value: naive {{energyNaive}}, feeder-aware {{energyAware}}[[ (feeder-aware sold {{soldAware}} at the peak and bought back {{boughtAware}}; {{perBatteryAware}} a battery)]]. [[Across {{daysCount}} real ERCOT evenings, feeder-aware earned more than naive {{daysAwareMoreEvery}}, {{daysAwareSafe}}; naive overloaded a transformer on {{daysNaiveBroke}} of them. ]][[One Core cycling every evening of this year so far would have earned {{perCoreYear}}, {{top10Share}} of it on the ten best evenings: the money comes from a few price spikes. ]]A's local relief would have earned at most {{reliefOpportunity}} at the price peak. CoServ, GVEC and Austin Energy pay for system peak, coincident peaks and arbitrage, not local relief {{chip:REAL:docs/research-report.md:215-224}}: local relief is an unpriced opportunity {{chip:ASSUMPTION:no sourced price in our material}}. Pick another evening with the day chip in the where-to-charge view, or from the evenings card on this page."
     },
     {
       "id": "plug-in",
-      "t0": "4:45", "t1": "5:00",
+      "t0": "4:45",
+      "t1": "5:00",
       "title": "How Base plugs it in tomorrow",
       "label": "SIM",
       "link": "view=more",
-      "caption": "The siting file sits beside the install queue; allocate() sits behind the zone base point, deterministic, no model in the loop. It needs {{controllerView}}. One OpenDSS step takes {{msPerSolve}}; allocate() at the largest synthetic fleet takes {{allocateLargest}}."
+      "headline": "One file beside the install queue, one function behind the zone base point, and OpenDSS checks every step in {{msPerStep}}.",
+      "caption": "The siting file sits beside the install queue; allocate() sits behind the zone base point, deterministic, no model in the loop. It needs {{controllerView}}. One OpenDSS solve takes {{msPerSolve}} and one full step {{msPerStep}}, measured on a shared machine; allocate() at the largest synthetic fleet takes {{allocateLargest}}."
     }
   ]
 }

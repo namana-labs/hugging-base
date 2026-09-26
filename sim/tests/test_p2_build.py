@@ -111,6 +111,55 @@ class ShortMonth(unittest.TestCase):
             self.assertNotIn(e["home"], e["alsoOnTf"])
             self.assertTrue(e["screening"])
 
+    def test_reason_tags_every_number_screening(self):
+        """Audit R2 L8: the ranking's reason sentence marks its surrogate numbers as screening."""
+        for doc in self.docs.values():
+            for e in doc["ranking"]:
+                self.assertIn("(SIM, screening", e["reason"], e["reason"])
+
+    def test_own_bridge_fleet_rows_and_flip(self):
+        """Audit R2 M1-M3: each combo carries its own T-240 hand-off (rank over ALL entries), its own existing-fleet
+        rows, and the naive-vs-aware flip for its own setting; the fleet rows equal the combos' own headlines."""
+        c = ctx()
+        light = {k: {kk: x[kk] for kk in ("rows", "home_rank", "tie_home", "fleet", "fleetSha")} for k, x in self.x.items()}
+        docs = {k: dict(d) for k, d in self.docs.items()}
+        same = pb.per_combo_blocks(c, docs, light)
+        self.assertEqual(same, {k: k for k in docs})
+        for combo, doc in docs.items():
+            pol = combo.split("-")[0]
+            b = doc["bridge"]
+            self.assertEqual(b["tf"], c.T240)
+            rank = b[pol]["rank"]
+            self.assertEqual(self.x[combo]["rows"][rank - 1][2], c.T240)
+            self.assertEqual(b[pol]["inTop"], rank <= 50)
+            if rank <= 50:
+                self.assertEqual(doc["ranking"][rank - 1]["tf"], c.T240)
+            fct = doc["fleetCounterfactualTotals"]
+            self.assertEqual(fct["combos"], ["naive-core-d26-g0", "aware-core-d26-g0"])
+            for p in ("naive", "aware"):
+                hl = self.docs[f"{p}-core-d26-g0"]["headline"]
+                for k in ("h100", "normalEvents", "emergencyN", "causedNormal"):
+                    self.assertEqual(fct[p][k]["v"], hl[k]["v"], (combo, p, k))
+            self.assertEqual(fct["none"]["causedNormal"]["v"], 0)
+            self.assertEqual(doc["flip"]["combos"], ["naive-core-d26-g0", "aware-core-d26-g0"])
+            self.assertEqual(audit_labels(doc)[0], [])
+
+    def test_driver_kw_scales_with_growth(self):
+        c = ctx()
+        k = 18 * 4
+        d0, d20 = c.driver(c.T240, k, 0), c.driver(c.T240, k, 20)
+        self.assertEqual(d0["home"], d20["home"])
+        self.assertAlmostEqual(d20["kwAtPeak"]["v"], d0["kwAtPeak"]["v"] * pb.growth_factor(20), delta=0.011)
+
+    def test_naive_head_capacity_takes_the_first_harm(self):
+        c = ctx()
+        order = list(c.eligible[:400])
+        nv = {"n": 383, "stop": "tf event", "headOverAt": 94, "order": order}
+        self.assertEqual(pb.naive_head_capacity(c, nv)["n"], 93)
+        self.assertIn("placement 94", pb.naive_head_capacity(c, nv)["stop"])
+        self.assertEqual(pb.naive_head_capacity(c, {**nv, "headOverAt": None})["n"], 383)
+        self.assertEqual(pb.naive_head_capacity(c, {**nv, "headOverAt": 500})["n"], 383)
+
     def test_useful_capacity_world_has_every_eligible_home(self):
         world, col_of, newb = pb.siting_world(ctx(), "core", kmax=99, with_fleet=False, pool=ctx().elig_on)
         self.assertEqual(int(world.new.sum()), sum(k * (k + 1) // 2 for k in map(len, ctx().elig_on)))
