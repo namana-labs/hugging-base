@@ -7,6 +7,8 @@ Read in this order. Each file has one job; do not duplicate content between them
 | [design.md](design.md) | What we are building, why, and what is out of scope. The group signs off on this before code. | Living. Edit when scope or a decision changes. | Scope, decisions, scenarios, model, metrics, repo layout |
 | [research-report.md](research-report.md) | The sourced research on Base, ERCOT, physics and data. 176 inline citations. | Frozen as of 25 Sep 2026 except for corrections. | Every number and label (UNVERIFIED / DERIVED / ASSUMPTION / INFERENCE) |
 
+The standalone [Grid stories toy demo](../demos/grid-stories/README.md) has its own runbook and limitations. It is separate from the main shipping app described here.
+
 ## How the two relate
 
 The research report answers "what is true." The design doc answers "what do we do about it." If a figure appears in the design doc, it came from the report or from a Base employee on site; the design doc says which. If you find a figure in the report that changes a design decision, change the design doc and leave a one-line note in the report's conflicts table only if the report itself was wrong.

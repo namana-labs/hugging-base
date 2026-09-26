@@ -1,18 +1,19 @@
-# First playable implementation
+# Grid stories — toy demo
 
-The three scenarios in `design.md` are playable in a self-contained browser UI. Actual SMART-DS electrical topology is solved by OpenDSSDirect.py 0.9.4; no kW-only model judges violations. The browser reads precomputed solutions rather than running an AC solver.
+This standalone toy demo explores the three scenarios in the [project design](../../docs/design.md). It is a prototype for storytelling and experimentation; the main shipping app will be developed separately. Actual SMART-DS electrical topology is solved by OpenDSSDirect.py 0.9.4; no kW-only model judges violations. The browser reads precomputed solutions rather than running an AC solver.
 
 ## Running
 
 From the repository root:
 
 ```sh
+cd demos/grid-stories
 python3 -m http.server 4387 --bind 127.0.0.1 --directory ui/dist
 ```
 
 Open http://127.0.0.1:4387. No installation or build is needed to play the bundled replay.
 
-To regenerate all physics, scores, and the bounded hosting sweep, use Python 3.12 or newer:
+From `demos/grid-stories/`, use Python 3.12 or newer to regenerate all physics, scores, and the bounded hosting sweep:
 
 ```sh
 python3 -m venv .venv
@@ -23,6 +24,15 @@ node --test ui/test/model.test.js
 ```
 
 Generation takes roughly two minutes on the development machine. It runs thousands of actual AC solves. Core assumptions are in `sim/constants.py`; detector and score formulas are inspectable source. Noise generation and battery selection are seeded, and device iteration is sorted for repeatability.
+
+## Layout
+
+- `ui/`: standalone static UI, bundled replay artifacts, tests, and the demo’s Sites hosting configuration.
+- `sim/`: Python replay generator, device model, scoring, and tests.
+- `data/`: source feeder files, generated CSV, and [data provenance](data/README.md).
+- `requirements.txt`: dependencies used only to regenerate this demo.
+
+Paths in this document are relative to this demo directory unless stated otherwise. The project’s design and research remain in the repository-level `docs/`.
 
 ## Demo in three minutes
 

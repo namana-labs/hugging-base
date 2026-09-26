@@ -1,16 +1,21 @@
 # Hugging Base
 
-A playable neighborhood-grid simulator for the Base Power × AITX hackathon. Explore a real SMART-DS feeder, replay three stories, compare dispatch policies, and test the next home battery with OpenDSS.
+A feeder-aware battery-fleet simulator for the Base Power × AITX hackathon. The project explores grid failures, local dispatch decisions, and where to build the next home battery.
+
+The main shipping app is still to be developed. The existing playable prototype is isolated in [`demos/grid-stories/`](demos/grid-stories/README.md) as a standalone toy demo, with its own UI, simulator, data, dependencies, tests, and hosting configuration.
+
+## Project documents
+
+- [Reading order and project guidance](docs/README.md)
+- [Design and main-app scope](docs/design.md)
+- [Research and source references](docs/research-report.md)
+
+## Run the toy demo
+
+From the repository root:
 
 ```sh
-python3 -m http.server 4387 --bind 127.0.0.1 --directory ui/dist
+python3 -m http.server 4387 --bind 127.0.0.1 --directory demos/grid-stories/ui/dist
 ```
 
-Open **http://127.0.0.1:4387**. The bundled app needs no dependency installation.
-
-- [Playbook, regeneration, validation, and limitations](docs/implementation.md)
-- [Design and project scope](docs/design.md)
-- [Research and source references](docs/research-report.md)
-- [Data provenance and modifications](data/README.md)
-
-`sim/` owns the physics and scoring; `ui/dist/` is the complete static app plus solved data. Core assumptions are centralized in `sim/constants.py`. Prices and temporal load profiles are illustrative, explicitly labeled assumptions. OpenDSS is the referee.
+Open **http://127.0.0.1:4387**. The bundled replay needs no dependency installation. See the [demo README](demos/grid-stories/README.md) for regeneration, tests, and model limitations.

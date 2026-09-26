@@ -23,4 +23,6 @@ SMART-DS and EAGLE-I are CC BY 4.0. OSM and Overture are ODbL. ERCOT data may be
 
 ## Layout
 
-See `docs/design.md` §12. `sim/` is the Python simulator, `ui/` the MapLibre + deck.gl front end, `data/` pre-extracted inputs, `docs/` the documents above.
+The standalone toy demo lives in `demos/grid-stories/`, with its own `sim/`, `ui/`, `data/`, dependencies, and README. It is not the main shipping app.
+
+See `docs/design.md` §12 for the proposed main-app layout. `sim/` is the Python simulator, `ui/` the MapLibre + deck.gl front end, `data/` pre-extracted inputs, `docs/` the documents above.
