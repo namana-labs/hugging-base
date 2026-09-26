@@ -29,8 +29,7 @@ import numpy as np
 from .loads import ROOT, topology_maps
 
 COEFFS = ROOT / 'data' / 'profiles' / 'surrogate.json'
-TRANSFORMERS_DSS = (ROOT / 'data' / 'smartds' / 'Transformers.dss',
-                    ROOT / 'demos' / 'grid-stories' / 'data' / 'smartds' / 'Transformers.dss')
+TRANSFORMERS_DSS = ROOT / 'data' / 'smartds' / 'Transformers.dss'
 
 
 def _f(line, key):
@@ -41,7 +40,7 @@ def _f(line, key):
 @lru_cache(maxsize=2)
 def transformer_params(path=None):
     """{tf id: {kva, phases, windings, loadloss, noloadloss, r[], xhl, xht, xlt, imag}} from Transformers.dss."""
-    src = Path(path) if path else next(p for p in TRANSFORMERS_DSS if p.exists())
+    src = Path(path) if path else TRANSFORMERS_DSS
     out = {}
     for line in src.read_text().splitlines():
         m = re.match(r'(?i)^New Transformer\.(\S+)\s', line.strip())

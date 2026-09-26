@@ -38,9 +38,7 @@ CAL_BEGIN, CAL_END = '<!-- calibrate:begin -->', '<!-- calibrate:end -->'
 
 
 def default_dss():
-    for p in (ROOT / 'data' / 'smartds' / 'Loads.dss', ROOT / 'demos' / 'grid-stories' / 'data' / 'smartds' / 'Loads.dss'):
-        if p.exists():
-            return p
+    """data/smartds/Loads.dss (lane L0's byte copy). Before L0 merged, lane L1 passed --dss demos/.../Loads.dss."""
     return ROOT / 'data' / 'smartds' / 'Loads.dss'
 
 

@@ -2,7 +2,7 @@
 
 - **What:** NREL SMART-DS v1.0, 2018, AUS region, P1U feeder set, `profiles/<name>.csv` (35,040 per-unit values at 15 min, 2018). **Licence: CC BY 4.0** (NREL, "SMART-DS: Synthetic Models for Advanced, Realistic Testing: Distribution Systems and Scenarios").
 - **URL pattern:** `https://oedi-data-lake.s3.amazonaws.com/SMART-DS/v1.0/2018/AUS/P1U/profiles/{name}.csv`
-- **Names:** every `yearly=` shape in `demos/grid-stories/data/smartds/Loads.dss` (254 kW shapes over 2021 load objects); each kvar shape is the kW name with `_kw_` replaced by `_kvar_`.
+- **Names:** every `yearly=` shape in `data/smartds/Loads.dss` (254 kW shapes over 2021 load objects); each kvar shape is the kW name with `_kw_` replaced by `_kvar_`.
 - **Fetched by:** `python3 scripts/fetch_profiles.py` (curl -fsS --retry 3, 8 in parallel, cached in `~/hb-overnight/cache/smartds/`, never committed).
 - **Counts:** kW 254/254, kvar 254/254.
 - **Slice:** `smartds_2018_aug.npz`, float32, 3000 steps x 15 min from 2018 index 20352 (2018-08-01 00:00) to 2018-09-01 06:00. The reported month is the first 2,976 steps; the last 24 exist only so the 31 Aug night can charge to 06:00 (those loads are 1 Sep 2018 SMART-DS, SIM).

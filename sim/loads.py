@@ -10,9 +10,9 @@ The Python API of docs/contracts.md (build prompt 5.3), owned by lane L1:
       .home_kw(step0, n) -> kw[n,1010]
       .profile_of(load_index) -> "res_kw_38274_pu"
 
-Loads follow `Loads.dss` order (2,021 objects, stored in the npz). Homes and transformers follow `topology.json`
-order: `ui/data/topology.json` (lane L0) when it exists, else the prototype's `demos/grid-stories/ui/dist/topology.json`
-(read only; L0's topology keeps the prototype's ids and order). A home is the bus its loads sit on.
+Loads follow `data/smartds/Loads.dss` order (2,021 objects, stored in the npz and checked against lane L0's
+`sim.topology.load_table()`). Homes and transformers follow `ui/data/topology.json` order. A home is the bus its loads
+sit on.
 
 Labels: the shapes are SMART-DS 2018 (SIM); the 2018 -> 2026 calendar-date pairing is an ASSUMPTION; the 15 -> 1
 minute interpolation is DERIVED. Knot k sits at the START of interval k (k x 15 min local; convention UNVERIFIED).
@@ -27,7 +27,6 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_NPZ = 'data/profiles/smartds_2018_aug.npz'
-TOPOLOGY_PATHS = (ROOT / 'ui' / 'data' / 'topology.json', ROOT / 'demos' / 'grid-stories' / 'ui' / 'dist' / 'topology.json')
 
 LABELS = {
     'load': ('SIM', 'NREL SMART-DS 2018 AUS P1U per-load kW (mult) and kvar (qmult) shapes x Loads.dss kW/kvar'),
@@ -42,43 +41,27 @@ def _resolve(p):
     return p if p.is_absolute() else ROOT / p
 
 
-@lru_cache(maxsize=4)
-def topology_maps(path=None):
-    """(home_ids[1010], home_tf[1010] int, tf_ids[379], kva[379] float, home_labels[1010], fleet_home_idx[96], source path)."""
-    cands = [Path(path)] if path else [p for p in TOPOLOGY_PATHS if p.exists()]
-    if not cands:
-        raise FileNotFoundError('no topology.json (ui/data/topology.json or the prototype copy)')
-    src = cands[0]
-    t = json.loads(src.read_text())
-    tfs = t['transformers']
-    tf_ids = [x['id'] for x in tfs]
-    tf_index = {tid: i for i, tid in enumerate(tf_ids)}
-    kva = np.array([float(x['kva']) for x in tfs], dtype=np.float64)
-    homes = t['homes']
-    home_ids = [h['id'] for h in homes]
-    home_tf = np.array([h['tf'] if isinstance(h['tf'], int) else tf_index[h['tf']] for h in homes], dtype=np.int64)
-    labels = [h.get('label') or f'Home {i + 1:04d}' for i, h in enumerate(homes)]
-    hidx = {hid: i for i, hid in enumerate(home_ids)}
-    fleet = t.get('fleet')
-    if fleet is None:  # prototype: battery flag on each home, in home order
-        fleet_idx = [i for i, h in enumerate(homes) if h.get('battery')]
-    else:
-        fleet_idx = []
-        for f in fleet:
-            if isinstance(f, int):
-                fleet_idx.append(f)
-            elif isinstance(f, str):
-                fleet_idx.append(hidx[f])
-            else:
-                key = f.get('home', f.get('id'))
-                fleet_idx.append(key if isinstance(key, int) else hidx[key])
-    return (tuple(home_ids), home_tf, tuple(tf_ids), kva, tuple(labels), np.array(fleet_idx, dtype=np.int64), str(src))
+@lru_cache(maxsize=1)
+def topology_maps():
+    """(home_ids[1010], home_tf[1010] int, tf_ids[379], kva[379] float, home_labels[1010], fleet_home_idx[96], source).
+
+    From lane L0's `sim.topology.load_table()` (data/fleet.json + ui/data/topology.json, no OpenDSS) plus the home
+    labels in ui/data/topology.json. The root sim never reads demos/."""
+    from .topology import OUT, load_table  # lane L0
+    t = load_table()
+    topo = json.loads(Path(OUT).read_text())
+    labels = [h.get('label') or f'Home {i + 1:04d}' for i, h in enumerate(topo['homes'])]
+    if [h['id'] for h in topo['homes']] != list(t['home_ids']):
+        raise ValueError('ui/data/topology.json home order differs from data/fleet.json homeOrder')
+    return (tuple(t['home_ids']), np.asarray(t['home_tf'], dtype=np.int64), tuple(t['tf_ids']),
+            np.asarray(t['kva'], dtype=np.float64), tuple(labels), np.asarray(t['fleet'], dtype=np.int64),
+            str(Path(OUT).relative_to(ROOT)))
 
 
 class Loads:
     """Per-load SMART-DS kW/kvar on the 2026 August clock. See the module docstring for the contract."""
 
-    def __init__(self, npz=DEFAULT_NPZ, topology=None):
+    def __init__(self, npz=DEFAULT_NPZ):
         z = np.load(_resolve(npz))
         self.npz_path = str(_resolve(npz))
         self._kw_shape = z['kw'].astype(np.float64)            # [254, 3000]
@@ -100,12 +83,17 @@ class Loads:
         self.t0 = str(z['t0'])
         self._t0_date = _dt.date.fromisoformat(self.t0[:10])
         (self.home_ids, self.home_tf, self.tf_ids, self.kva, self.home_labels, self.fleet_home,
-         self.topology_source) = topology_maps(topology)
+         self.topology_source) = topology_maps()
         hidx = {h: i for i, h in enumerate(self.home_ids)}
         missing = sorted({b for b in self.load_bus if b not in hidx})
         if missing:
             raise ValueError(f'{len(missing)} load buses are not homes in {self.topology_source}: {missing[:3]}')
         self.load_home = np.array([hidx[b] for b in self.load_bus], dtype=np.int64)
+        from .topology import load_table  # lane L0: the npz must describe the same loads in the same order
+        lt = load_table()
+        if list(lt['load_names']) != self.load_names or not np.array_equal(lt['load_home'], self.load_home) \
+                or not np.allclose(lt['nameplate_kw'], self.load_kw) or list(lt['profiles']) != [self.kw_names[j] for j in self.load_shape]:
+            raise ValueError(f'{self.npz_path} does not match data/smartds/Loads.dss: rebuild with scripts/fetch_profiles.py --build-only')
         self.load_tf = self.home_tf[self.load_home]
         n_loads, n_homes, n_tf, n_shape = len(self.load_names), len(self.home_ids), len(self.tf_ids), len(self.kw_names)
         # Aggregation matrices: shape -> transformer / home, weighted by nameplate.

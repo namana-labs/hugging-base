@@ -26,10 +26,7 @@ class TestLoads(unittest.TestCase):
         self.assertEqual(api_conformance(self.L), [])
 
     def test_conformance_fixture_loads(self):
-        try:
-            from sim.fixtures import FixtureLoads  # lane L0
-        except ImportError:
-            self.skipTest('sim.fixtures (lane L0) not merged into this branch yet')
+        from sim.fixtures import FixtureLoads  # lane L0
         self.assertEqual(api_conformance(FixtureLoads()), [])
 
     def test_slice_counts_and_order(self):

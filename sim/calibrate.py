@@ -11,17 +11,14 @@ frames, the held-out error, and `surrogate_trusted` (p99 <= 5 points). The evalu
 """
 import argparse
 import json
-import math
 import os
-import re
 import sys
 import time
-from pathlib import Path
 
 import numpy as np
 
 from . import surrogate
-from .loads import ROOT, Loads, topology_maps
+from .loads import ROOT, Loads
 
 A_ID = 'tr(r:p1udt9411-p1udt9411lv)'
 T240_ID = 'tr(r:p1udt15649-p1udt15649lv)'
@@ -33,97 +30,10 @@ EVAL_SEED, TRAIN_SEED = 20260823, 20260801
 REPORTED_STEPS = 2976          # August; the npz carries 24 more steps to 1 Sep 06:00
 
 
-# --------------------------------------------------------------------------------------------------------------
-# The feeder: lane L0's sim.feeder.Feeder once it has merged; until then a minimal stand-in with the same API,
-# built the same way (the prototype's create(), batteries line-to-line at unity pf, the weak lateral kept).
-# --------------------------------------------------------------------------------------------------------------
 def get_feeder():
-    try:
-        from .feeder import Feeder  # noqa: WPS433 (lane L0)
-        return Feeder(), 'sim.feeder.Feeder (lane L0)'
-    except ImportError:
-        return _StandInFeeder(), 'calibrate stand-in (sim.feeder not merged yet; same API, unity-pf batteries)'
-
-
-class _StandInFeeder:
-    """Same API as sim.feeder.Feeder (5.3): set_loads, set_batteries, solve -> {P, Q, pct, vmin_home_pu, head_amps}."""
-
-    HEAD_LINE = 'l(r:p1udt17263-p1uhs19_1247)'   # the first primary cable (site/ems/flow-spec.md)
-
-    def __init__(self):
-        from opendssdirect import dss
-        self.dss = dss
-        src = next(p for p in (ROOT / 'data' / 'smartds', ROOT / 'demos' / 'grid-stories' / 'data' / 'smartds')
-                   if (p / 'Loads.dss').exists())
-        home_ids, home_tf, tf_ids, kva, _, fleet, topo_src = topology_maps()
-        dss.Basic.ClearAll()
-        dss('New Circuit.huggingbase bus1=p1udt17263-p1uhs19_1247x pu=1.03 basekv=12.47 '
-            'r1=0.00001 x1=0.00001 r0=0.00001 x0=0.00001')
-        for name in ['LineCodes', 'Lines', 'Transformers', 'Loads', 'Capacitors']:
-            for line in (src / f'{name}.dss').read_text().splitlines():
-                if line.strip():
-                    dss(re.sub(r'\s+yearly=\S+', '', line))
-        dss('Set voltagebases=[0.12,0.208,0.48,7.2,12.47]')
-        dss('CalcVoltageBases')
-        dss('Set maxcontroliter=100 maxiterations=100 mode=snapshot')
-        self.load_names = [ld.Name() for ld in dss.Loads]
-        self.n_loads = len(self.load_names)
-        for h in home_ids:
-            dss(f'New Load.bat_{h} bus1={h}.1.2 phases=1 conn=delta kv=0.24 kw=0 kvar=0 pf=1 model=1 vminpu=0.8 vmaxpu=1.2')
-        topo = json.loads(Path(topo_src).read_text())
-        shaping = topo.get('shaping') or {}
-        if shaping.get('weakLine'):
-            dss.Lines.Name(shaping['weakLine'])
-            dss.Lines.Length(shaping['originalLengthKm'] * 3)
-        self.tf_ids = list(tf_ids)
-        self.kva = np.asarray(kva, dtype=float)
-        self.fleet = np.asarray(fleet, dtype=np.int64)
-        self.home_ids = list(home_ids)
-        self._bat_idx = [self.n_loads + 1 + i for i in range(len(home_ids))]
-        names = [n.lower() for n in dss.Circuit.AllNodeNames()]
-        pos = {}
-        for k, n in enumerate(names):
-            pos.setdefault(n.split('.')[0], []).append(k)
-        nodes = [np.array(pos[h.lower()], dtype=np.int64) for h in home_ids]
-        self._flat = np.concatenate(nodes)
-        self._split = np.cumsum([len(x) for x in nodes])[:-1]
-
-    def set_loads(self, kw, kvar):
-        L = self.dss.Loads
-        for i in range(self.n_loads):
-            L.Idx(i + 1)
-            L.kW(float(kw[i]))
-            L.kvar(float(kvar[i]))
-
-    def set_batteries(self, kw):
-        full = np.zeros(len(self.home_ids))
-        full[self.fleet] = kw
-        L = self.dss.Loads
-        for i, v in enumerate(full):
-            L.Idx(self._bat_idx[i])
-            L.kW(float(v))
-            L.kvar(0.0)
-
-    def solve(self):
-        dss = self.dss
-        dss.Solution.Solve()
-        if not dss.Solution.Converged():
-            raise RuntimeError('OpenDSS did not converge')
-        P = np.zeros(len(self.tf_ids))
-        Q = np.zeros(len(self.tf_ids))
-        for i, tid in enumerate(self.tf_ids):
-            dss.Circuit.SetActiveElement('Transformer.' + tid)
-            v = dss.CktElement.Powers()
-            n = 2 * dss.CktElement.NumConductors()
-            P[i] = sum(v[0:n:2])
-            Q[i] = sum(v[1:n:2])
-        mags = np.asarray(dss.Circuit.AllBusMagPu())
-        vmin = np.array([float(x.min()) for x in np.split(mags[self._flat], self._split)])
-        dss.Circuit.SetActiveElement('Line.' + self.HEAD_LINE)
-        cur = dss.CktElement.CurrentsMagAng()
-        nc = dss.CktElement.NumConductors()
-        return {'P': P, 'Q': Q, 'pct': np.hypot(P, Q) / self.kva * 100.0, 'vmin_home_pu': vmin,
-                'head_amps': float(max(cur[0:2 * nc:2]))}
+    """Lane L0's OpenDSS feeder (unity-pf batteries, the weak lateral kept). One live Feeder per process."""
+    from .feeder import Feeder
+    return Feeder(), 'sim.feeder.Feeder (lane L0)'
 
 
 # --------------------------------------------------------------------------------------------------------------
@@ -269,7 +179,7 @@ def main(argv=None):
         invariant_fail.append('conformance')
 
     feeder, feeder_src = get_feeder()
-    if list(getattr(feeder, 'tf_ids', [t['id'] for t in getattr(feeder, 'transformers', [])])) != list(loads.tf_ids):
+    if [t['id'] for t in feeder.transformers] != list(loads.tf_ids):
         raise SystemExit('feeder transformer order differs from topology.json')
     print(f'feeder: {feeder_src}      [report]')
     iA, i240 = loads.tf_ids.index(A_ID), loads.tf_ids.index(T240_ID)
