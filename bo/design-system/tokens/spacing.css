@@ -1,0 +1,5 @@
+:root{
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:20px; --space-6:24px; --space-8:32px;
+  --radius-tag:3px; --radius-control:6px; --radius-button:8px; --radius-card:10px; --radius-float:12px;
+  --hairline:1px solid var(--border); --emphasis-border:1.5px solid var(--ink);
+}
