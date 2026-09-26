@@ -545,8 +545,9 @@ export function capacityParts(u, topology) {
       if (vm && typeof vm.v === 'number') {
         aware.push('; the lowest home voltage ', { ...vm, o: { digits: 4, unit: ' pu' } });
         if (typeof vm.volts === 'number') aware.push(' (', { v: vm.volts, label: vm.label, cite: vm.cite, o: { digits: 1, unit: ' V' } }, ')');
-        if (vm.v < 0.95) aware.push(', just under the ANSI Range A edge (0.95 pu)');
-        else if (vm.v < 0.951) aware.push(', at the ANSI Range A edge (0.95 pu)');
+        const edge = { v: 0.95, label: 'REAL', cite: 'ANSI C84.1 Range A service voltage lower limit (114 V on a 120 V base)', o: { digits: 2, unit: ' pu' } };
+        if (vm.v < edge.v) aware.push(', just under the ANSI Range A edge (', edge, ')');
+        else if (vm.v < edge.v + 0.001) aware.push(', at the ANSI Range A edge (', edge, ')');
       }
     } else aware.push(' (screening only; not OpenDSS-checked)');
   }

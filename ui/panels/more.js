@@ -10,8 +10,15 @@
 // bare digit fails ui/test/p2.test.js. A fact whose data is not built yet renders "(not built yet)", never a guess.
 //   {{name}}                a fact from FACTS
 //   {{chip:LABEL}}          a label chip for a prose claim; {{chip:LABEL:cite text}} adds the cite as its title
+//   [[ ... ]]               an OPTIONAL clause (round 2): dropped whole when any fact inside it is not built, so a
+//                           caption that names round-2 data (money.split, onsetDeferral, the history days) reads
+//                           cleanly before that data lands, and in full after. Never a guess, never a half sentence.
+// Each beat also has a `headline` (round 2): one sentence, placeholders only, no bare digits. The P1 beat bar shows the
+// headline with the full caption one click away (UX_SPEC_R2 7.2); P2 and More show both.
 
 import { chartHTML } from '../lib/charts.js';
+import { svg } from '../lib/icons.js';
+import { calendarStripHTML } from '../lib/days.js';
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const LABELS = ['REAL', 'SIM', 'DERIVED', 'ASSUMPTION'];
@@ -443,6 +450,15 @@ export const FACTS = {
     if (bn && bn.noNewViolation && bn.noNewViolation.v === false) parts.push(' and adds a violation (where NOT to put it)');
     return parts;
   }, ['p2index']],
+  // the naive standing of feeder-aware's first choice, short (the p2-flip headline)
+  awareTop1NaiveRank: [['p2:' + DEFAULT_AWARE, 'p2:' + DEFAULT_NAIVE], (S) => {
+    const a = get(S, `p2:${DEFAULT_AWARE}.ranking.0`), nd = S[`p2:${DEFAULT_NAIVE}`];
+    if (!a || !nd) return null;
+    const e = rankOf(nd, a.home);
+    if (e) return ['rank ', L(e.rank, 'SIM', 'naive ranking (sim.p2_build)')];
+    const mv = (get(S, 'p2index.flip.movers') || []).find((m) => m.home === a.home);
+    return mv && isL(mv.rankNaive) ? ['rank ', { ...mv.rankNaive, o: {} }] : 'outside the top fifty';
+  }, ['p2index']],
   flipHeadline: [['p2index'], (S) => {
     const f = get(S, 'p2index.flip');
     if (!f || !isL(f.top10Overlap)) return null;
@@ -495,7 +511,91 @@ export const FACTS = {
   }],
   cliffCount: [['p2index'], (S) => withO(get(S, 'p2index.cliffs.count'))],
   cliffEvening: [['p2index'], (S) => withO(get(S, 'p2index.cliffs.evening'))],
+
+  // ---- round 2 -------------------------------------------------------------------------------------------------
+  // Adopt #2: Base's real Houston charge block. The meta constant when l2 exports it (docs/contracts.md A.5r); until
+  // then the same constant as sim/constants.py (ui/test/p2.test.js pins the two equal), with its source.
+  houstonBlock: [['topology'], (S) => {
+    const c = constOf(S.p1meta, 'BASE_HOUSTON_CHARGE_BLOCK_MW', { unit: ' MW', digits: 1 });
+    return [c || { ...HOUSTON_BLOCK_MW, o: { unit: ' MW', digits: 1 } }, ' within fifteen minutes on ', L(HOUSTON_BLOCK_DATE, 'REAL', HOUSTON_BLOCK_MW.cite)];
+  }, ['p1meta']],
+  // Adopt #3: what feeder-aware held back at the price-collapse onset (meta.onsetDeferral, l2)
+  onsetDeferredKW: [['p1meta'], (S) => withO(get(S, 'p1meta.onsetDeferral.deferredKW'), { unit: ' kW', digits: 0 })],
+  onsetNaiveKW: [['p1meta'], (S) => withO(get(S, 'p1meta.onsetDeferral.naiveKW'), { unit: ' kW', digits: 0 })],
+  onsetAwareKW: [['p1meta'], (S) => withO(get(S, 'p1meta.onsetDeferral.awareKW'), { unit: ' kW', digits: 0 })],
+  // Money tonight, split (meta.money.split, l2): sold at the peak, bought back after the fall, per battery
+  soldAware: [['p1meta'], (S) => withO(get(S, 'p1meta.money.split.aware.sold'), { money: true, digits: 0 })],
+  boughtAware: [['p1meta'], (S) => withO(get(S, 'p1meta.money.split.aware.bought'), { money: true, digits: 0 })],
+  perBatteryAware: [['p1meta'], (S) => withO(get(S, 'p1meta.money.split.aware.perBattery'), { money: true, digits: 2 })],
+  awareMoreTonight: [['p1days'], (S) => {
+    const d = daysOf(S).find((r) => r.date === (S.p1days.default || DEFAULT_DAY));
+    return d ? withO(d.awareMoreUSD, { money: true, digits: 2 }) : null;
+  }],
+  // The real ERCOT evenings (p1/days/index.json, l2): how the money and the harm vary day to day
+  daysCount: [['p1days'], (S) => { const n = daysOf(S).length; return n ? L(n, 'DERIVED', 'real ERCOT evenings simulated on this feeder (p1/days/index.json)') : null; }],
+  daysAwareMoreEvery: [['p1days'], (S) => {
+    const ds = daysOf(S).filter((r) => isL(r.awareMoreUSD));
+    if (!ds.length) return null;
+    const more = ds.filter((r) => r.awareMoreUSD.v > 0).length;
+    return more === ds.length ? 'on every one of them' : ['on ', L(more, 'DERIVED', 'evenings where feeder-aware earned more than naive'), ' of them'];
+  }],
+  daysAwareSafe: [['p1days'], (S) => {
+    const ds = daysOf(S).filter((r) => isL(r.awareBatteryCaused));
+    if (!ds.length) return null;
+    const bad = ds.filter((r) => r.awareBatteryCaused.v > 0).length;
+    return bad === 0 ? ['with ', L(0, 'SIM', 'battery-caused overloads, feeder-aware, summed over the simulated evenings (OpenDSS)'), ' battery-caused overloads']
+      : ['with battery-caused overloads on ', L(bad, 'SIM', 'evenings with a battery-caused overload, feeder-aware'), ' evenings'];
+  }],
+  daysNaiveBroke: [['p1days'], (S) => {
+    const ds = daysOf(S).filter((r) => isL(r.naiveEvents));
+    return ds.length ? L(ds.filter((r) => r.naiveEvents.v > 0).length, 'SIM', 'evenings where naive caused a normal-tier event (OpenDSS)') : null;
+  }],
+  daysBest: [['p1days'], (S) => dayExtreme(S, 1)],
+  daysWorst: [['p1days'], (S) => dayExtreme(S, -1)],
+  perCoreYear: [['p1cal'], (S) => withO(get(S, 'p1cal.headline.perBattery2026ytd'), { money: true, digits: 0 })],
+  top10Share: [['p1cal'], (S) => withO(get(S, 'p1cal.headline.top10Share2026'), { unit: '%', digits: 0 })],
+  losingNights: [['p1cal'], (S) => withO(get(S, 'p1cal.headline.losingNights2026'))],
+  // Audit R2 H1: the useful-capacity figures OpenDSS measured on each build (index.usefulCapacity.opendss)
+  capNaiveCableAt: [['p2index'], (S) => withO(get(S, 'p2index.usefulCapacity.feederHead.naive.overAt'))],
+  capNaiveScreen: [['p2index'], (S) => {
+    const x = get(S, 'p2index.usefulCapacity.naive');
+    return isL(x) ? { ...x, cite: 'screening count (sim.surrogate) of batteries before the first battery-caused event; the count itself is not OpenDSS-checked as safe: OpenDSS refutes it', o: {} } : null;
+  }],
+  capNaiveOdssCaused: [['p2index'], (S) => withO(get(S, 'p2index.usefulCapacity.opendss.naive.causedNormal'))],
+  capNaiveOdssHead: [['p2index'], (S) => withO(get(S, 'p2index.usefulCapacity.opendss.naive.headMaxPct'), { unit: '%', digits: 1 })],
+  capAwareOdssCaused: [['p2index'], (S) => withO(get(S, 'p2index.usefulCapacity.opendss.aware.causedNormal'))],
+  capAwareOdssHead: [['p2index'], (S) => withO(get(S, 'p2index.usefulCapacity.opendss.aware.headMaxPct'), { unit: '%', digits: 1 })],
+  capAwareVmin: [['p2index'], (S) => {
+    const x = get(S, 'p2index.usefulCapacity.opendss.aware.vMinPu');
+    if (!isL(x)) return null;
+    return typeof x.volts === 'number' ? [{ ...x, o: { digits: 4, unit: ' pu' } }, ' (', { v: x.volts, label: x.label, cite: x.cite, o: { digits: 1, unit: ' V' } }, ')'] : [{ ...x, o: { digits: 4, unit: ' pu' } }];
+  }],
+  // Audit R2 L3: per solve and per step are different numbers (engine.json)
+  msPerStep: [['topology'], (S) => { const x = scanEngine(S.engine, /msPerStep|perStep/i); return x ? { ...x, o: { unit: ' ms', digits: 1 } } : null; }, ['engine']],
 };
+
+/** Base's Houston charge block (adopt #2, REAL): the same constant as sim/constants.py BASE_HOUSTON_CHARGE_BLOCK_MW
+ *  (l0), used until l2 exports it in p1/meta.json constants. ui/test/p2.test.js pins the value to the Python file. */
+export const HOUSTON_BLOCK_MW = { v: -45.8, label: 'REAL',
+  cite: "Base blog 'Aggregated DERs and the capacity crunch' (Jul 2026): Base's Houston charge block reached -45.8 MW within 15 minutes on 22 Jul 2026 (docs/research-report.md:207-212, 297; sim/constants.py BASE_HOUSTON_CHARGE_BLOCK_MW)" };
+export const HOUSTON_BLOCK_DATE = '22 Jul 2026';
+const DEFAULT_DAY = '2026-08-23';
+function daysOf(S) { return (S.p1days && Array.isArray(S.p1days.days)) ? S.p1days.days : []; }
+/** The best (dir 1) or worst (dir -1) simulated evening by feeder-aware money per battery: date, tag, $ per battery. */
+function dayExtreme(S, dir) {
+  const ds = daysOf(S).filter((r) => r.perBattery && isL(r.perBattery.aware));
+  if (ds.length < 2) return null;
+  const r = ds.reduce((a, b) => ((b.perBattery.aware.v - a.perBattery.aware.v) * dir > 0 ? b : a));
+  return [L(dateText(r.date), 'REAL', 'a real ERCOT evening (LZ_NORTH prices)'), r.tag ? ` (${String(r.tag).toLowerCase()})` : '', ', ', { ...r.perBattery.aware, o: { money: true, digits: 2 } }, ' a battery'];
+}
+const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+/** "Sun 23 Aug 2026" from an ISO date; the weekday is computed, never typed. */
+export function dateText(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
+  if (!m) return String(iso || '');
+  const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+  return `${WD[d.getUTCDay()]} ${+m[3]} ${MO[+m[2] - 1]} ${m[1]}`;
+}
 
 const PLACEHOLDER = /\{\{\s*([^}]+?)\s*\}\}/g;
 
@@ -509,8 +609,19 @@ export function placeholders(tpl) {
   }
   return out;
 }
-/** The template with every placeholder removed: what the "no bare digits" test reads. */
-export const stripPlaceholders = (tpl) => String(tpl || '').replace(PLACEHOLDER, '');
+/** The template with every placeholder (and optional-clause bracket) removed: what the "no bare digits" test reads. */
+export const stripPlaceholders = (tpl) => String(tpl || '').replace(PLACEHOLDER, '').replace(/\[\[|\]\]/g, '');
+
+const OPTIONAL = /\[\[([\s\S]*?)\]\]/g;
+/** The optional clauses of a template: [{raw, inner}]. */
+export function optionalClauses(tpl) { return [...String(tpl || '').matchAll(OPTIONAL)].map((m) => ({ raw: m[0], inner: m[1] })); }
+/** The template with its optional clauses removed: its placeholders must always resolve. */
+export const requiredPart = (tpl) => String(tpl || '').replace(OPTIONAL, '');
+/** Keep an optional clause (without its brackets) when every fact inside it resolves; drop it whole otherwise. */
+export function applyOptional(tpl, S) {
+  return String(tpl || '').replace(OPTIONAL, (raw, inner) => (placeholders(inner).every((p) => !p.name || evalFact(p.name, S)) ? inner : ''))
+    .replace(/ {2,}/g, ' ').replace(/ ([.,;:])/g, '$1');
+}
 
 /** Sources a set of templates needs. */
 export function sourcesFor(templates) {
@@ -523,6 +634,8 @@ function sourcePath(key) {
   if (key === 'p1meta') return 'p1/meta.json';
   if (key === 'p2index') return 'p2/index.json';
   if (key === 'engine') return 'engine.json';
+  if (key === 'p1days') return 'p1/days/index.json';
+  if (key === 'p1cal') return 'p1/days/calendar.json';
   if (key.startsWith('p1:')) return `p1/${key.slice(3)}.json`;
   if (key.startsWith('p2:')) return `p2/${key.slice(3)}.json`;
   return null;
@@ -536,7 +649,7 @@ export async function loadSources(ctx, keys) {
     if (!path) return;
     let d = null;
     try { d = await ctx.data.getOptional(path); } catch (e) { d = null; }
-    if (!d && k !== 'engine' && ctx.data.isFixture && ctx.data.isFixture()) {
+    if (!d && !['engine', 'p1days', 'p1cal'].includes(k) && ctx.data.isFixture && ctx.data.isFixture()) {
       try { d = await ctx.data.getOptional('fixtures/' + path); } catch (e) { d = null; }
     }
     S[k] = d;
@@ -563,7 +676,7 @@ function renderPart(p, fmt, html) {
 
 /** Resolve a caption template. html=true for the page; false gives "value LABEL" text (tests, docs). */
 export function resolveCaption(tpl, S, fmt, { html = true } = {}) {
-  return String(tpl || '').replace(PLACEHOLDER, (raw, inner) => {
+  return applyOptional(tpl, S).replace(PLACEHOLDER, (raw, inner) => {
     const [kind, ...rest] = inner.trim().split(':');
     if (kind === 'chip') {
       const label = rest[0], cite = rest.slice(1).join(':') || undefined;
@@ -578,26 +691,33 @@ export function resolveCaption(tpl, S, fmt, { html = true } = {}) {
 function beatsList(beats) { return Array.isArray(beats) ? beats : ((beats && beats.beats) || []); }
 export function beatHref(b) { return `?${b.link}&beat=${encodeURIComponent(b.id)}`; }
 
-/** The caption bar for the current ?beat=<id>, with a "next beat" stepper. */
-export async function beatBarHTML(ctx) {
+/** The caption bar for the current ?beat=<id>, with prev / next. compact (the P1 bar, UX_SPEC_R2 7.2): the title,
+ *  prev / next and the beat's one-sentence headline, with the full caption under "Read the full caption". P2 and More
+ *  show the headline and the full caption. */
+export async function beatBarHTML(ctx, { compact = false } = {}) {
   const beats = beatsList(await ctx.data.loadBeats());
   const i = beats.findIndex((b) => b.id === ctx.link.beat);
   if (i < 0) return '';
   const b = beats[i];
-  const S = await loadSources(ctx, sourcesFor([b.caption]));
+  const S = await loadSources(ctx, sourcesFor([b.caption, b.headline || '']));
   const next = beats[i + 1], prev = beats[i - 1];
-  return `<div class="beat-bar" data-beat-id="${esc(b.id)}">
+  const head = b.headline ? `<div class="beat-headline">${resolveCaption(b.headline, S, ctx.fmt)}</div>` : '';
+  const cap = resolveCaption(b.caption, S, ctx.fmt);
+  const body = compact && head
+    ? `${head}<details class="beat-more"><summary>Read the full caption</summary><div class="beat-cap">${cap}</div></details>`
+    : `${head}<div class="beat-cap">${cap}</div>`;
+  return `<div class="beat-bar${compact ? ' compact' : ''}" data-beat-id="${esc(b.id)}">
     <div class="beat-h"><span class="beat-t">${esc(b.t0)}–${esc(b.t1)}</span> <b>${esc(b.title)}</b>${b.label ? ctx.fmt.chip(b.label) : ''}
       <span class="beat-nav">${prev ? `<a href="${beatHref(prev)}" title="${esc(prev.title)}">‹ prev</a>` : ''}${next ? `<a href="${beatHref(next)}" title="${esc(next.title)}">next beat ›</a>` : ''}</span></div>
-    <div class="beat-cap">${resolveCaption(b.caption, S, ctx.fmt)}</div></div>`;
+    ${body}</div>`;
 }
 
-/** For the shell or the P1 panel: put the caption bar at the top of the panel when ?beat= is set. */
+/** For the shell or the P1 panel: put the compact caption bar at the top of the panel when ?beat= is set. */
 export async function mountBeatBar(ctx, panelEl) {
   if (!ctx.link.beat) return;
   const el = panelEl || (typeof document !== 'undefined' && document.getElementById('panel'));
   if (!el || el.querySelector('.beat-bar')) return;
-  const html = await beatBarHTML(ctx);
+  const html = await beatBarHTML(ctx, { compact: ctx.link.view === 'p1' });
   if (html) el.insertAdjacentHTML('afterbegin', html);
 }
 
@@ -610,35 +730,108 @@ export const PAYERS = [
   { who: 'El Paso Electric', mw: 10, what: 'local capacity constraints: the only local-constraint programme found, and it is outside ERCOT', cite: 'docs/research-report.md:59, 215-224' },
 ];
 
+/** A labelled money value as HTML, or the "not built yet" marker. */
+function moneyHTML(fmt, x, digits = 0) { return isL(x) ? fmt.fmtHTML(x, { money: true, digits }) : '<span class="beat-na">(not built yet)</span>'; }
+
+/** Tonight's money (the P1 evening): sold at the peak, bought back after the fall, net, per branch (meta.money.split,
+ *  l2; before it lands, the energy value alone). Audit R2 M5: no monthly benchmark sits beside these per-evening $. */
 function moneyCard(ctx, S) {
   const { fmt } = ctx;
   const m = S.p1meta && S.p1meta.money;
-  const f = (name) => { const p = evalFact(name, S); return p ? p.map((x) => renderPart(x, fmt, true)).join('') : '<span class="beat-na">(not built yet)</span>'; };
-  const lines = [];
-  if (m && m.energyValueUSD) {
-    for (const k of ['naive', 'aware', 'aware_faults']) if (isL(m.energyValueUSD[k])) lines.push(`<tr><td>energy value, ${esc(k.replace('_', ' + '))}</td><td class="n">${fmt.fmtHTML(m.energyValueUSD[k], { money: true, digits: 0 })}</td></tr>`);
-  }
-  if (m && isL(m.costOfAwareness)) lines.push(`<tr><td>cost of awareness (naive − aware; may be negative)</td><td class="n">${fmt.fmtHTML(m.costOfAwareness, { money: true, digits: 0 })}</td></tr>`);
-  const sc = m && m.systemCapacityPerMonth;
-  for (const k of ['naive', 'aware']) {
-    const x = sc && sc[k];
-    if (x && isL(x.fleetKW) && isL(x.low) && isL(x.high)) {
-      lines.push(`<tr><td>system-capacity value, ${esc(k)}: fleet ${fmt.fmtHTML(x.fleetKW, { unit: ' kW', digits: 0 })} at the price peak</td><td class="n">${fmt.fmtHTML(x.low, { money: true, digits: 0 })} to ${fmt.fmtHTML(x.high, { money: true, digits: 0 })} a month</td></tr>`);
+  const split = m && m.split;
+  const day = S.p1meta && S.p1meta.day ? dateText(S.p1meta.day) : 'the P1 evening';
+  const rows = [];
+  const maxSold = split ? Math.max(1, ...['naive', 'aware'].map((k) => (split[k] && isL(split[k].sold) ? split[k].sold.v : 0))) : 1;
+  for (const k of ['naive', 'aware', 'aware_faults']) {
+    const net = m && m.energyValueUSD && m.energyValueUSD[k];
+    if (!isL(net)) continue;
+    const sp = split && split[k];
+    const name = k === 'naive' ? 'naive' : k === 'aware' ? 'feeder-aware' : 'feeder-aware + failures';
+    let bars = '';
+    if (sp && isL(sp.sold) && isL(sp.bought)) {
+      const w = (x) => Math.max(1, Math.round((x / maxSold) * 100));
+      bars = `<div class="money-bars" data-tip-html="${esc(`<b>${name}</b><br>sold at the peak ${fmt.fmtHTML(sp.sold, { money: true, digits: 2 })}<br>bought back after the fall ${fmt.fmtHTML(sp.bought, { money: true, digits: 2 })}<br>net ${fmt.fmtHTML(sp.net || net, { money: true, digits: 2 })}${isL(sp.perBattery) ? `, ${fmt.fmtHTML(sp.perBattery, { money: true, digits: 2 })} a battery` : ''}`)}" tabindex="0">`
+        + `<span class="mb sold" style="width:${w(sp.sold.v)}%"></span><span class="mb bought" style="width:${w(sp.bought.v)}%"></span></div>`;
     }
+    rows.push(`<div class="money-row"><span class="money-name">${esc(name)}</span>${bars}<b class="money-net">${fmt.fmtHTML(net, { money: true, digits: 0 })}</b></div>`);
   }
+  const more = evalFact('awareMoreTonight', S);
+  const cost = m && isL(m.costOfAwareness) ? m.costOfAwareness : null;
+  const moreLine = more ? `<div class="money-more">${svg('turns', { size: 15 })} Feeder-aware earned ${more.map((x) => renderPart(x, fmt, true)).join('')} more than naive tonight, and caused no overload.</div>`
+    : cost ? `<div class="money-more">Cost of awareness (naive − feeder-aware; negative means feeder-aware earned more): ${fmt.fmtHTML(cost, { money: true, digits: 2 })}</div>` : '';
   const r = m && m.relief;
-  if (r && isL(r.kwh)) {
-    lines.push(`<tr><td>A's local relief (one home's spike; see the driver)</td><td class="n">${fmt.fmtHTML(r.kwh, { unit: ' kWh', digits: 2 })}</td></tr>`);
-    if (isL(r.opportunityUpperUSD)) lines.push(`<tr><td>what that energy would have earned at the price peak (upper bound)</td><td class="n">${fmt.fmtHTML(r.opportunityUpperUSD, { money: true, digits: 2 })}</td></tr>`);
-    if (isL(r.priced)) lines.push(`<tr><td>local relief priced?</td><td class="n">${fmt.fmtHTML(r.priced)}</td></tr>`);
-  }
-  return `<div class="hb-card more-money" data-beat="money"><h3>Money, labelled</h3>
-    <table class="p2-rank">${lines.join('') || `<tr><td colspan="2"><span class="beat-na">P1 money not built yet</span></td></tr>`}</table>
-    <p class="hb-sub">System-capacity value of fleet kW <b>at the system or price peak</b>: ${f('capacityLow')} (Modo's ERCOT storage market benchmark) to ${f('capacityHigh')} per kW-month (implied from an unverified Austin Energy figure). Never applied to local relief.</p>
-    <p class="hb-sub"><b>Who pays today, and for what</b> ${fmt.chip('REAL', 'docs/research-report.md:59, 215-224')}</p>
+  const relief = r && isL(r.opportunityUpperUSD)
+    ? `<p class="hb-sub">A's local relief on this evening (one home's spike) would have earned at most ${fmt.fmtHTML(r.opportunityUpperUSD, { money: true, digits: 2 })} at the price peak: it is <b>not paid for today</b> ${fmt.chip('ASSUMPTION', 'no sourced price for local transformer relief anywhere in our material (build prompt 5.4.6)')}.</p>` : '';
+  const note = m && m.systemCapacityPerMonth && m.systemCapacityPerMonth.note ? '' : '';
+  return `<div class="hb-card more-money" data-beat="money"><h3>${svg('money', { size: 18 })} Money tonight, ${esc(day)}</h3>
+    <div class="hb-sub">Batteries earn by <span class="k-sold">selling</span> in the evening's priciest intervals and <span class="k-bought">buying back</span> after the price falls. Gross energy value, not Base's profit.</div>
+    <div class="money-rows">${rows.join('') || '<span class="beat-na">P1 money not built yet</span>'}</div>
+    ${moreLine}${relief}${note}</div>`;
+}
+
+/** The real ERCOT evenings (p1/days/index.json + calendar.json, l2): how Base earns at the evening peak day to day,
+ *  and what each dispatch does to the street that night (RZ ask 3). Every value from the index, labelled. */
+function daysCard(ctx, S) {
+  const { fmt } = ctx;
+  const idx = S.p1days;
+  const days = idx && Array.isArray(idx.days) ? idx.days : [];
+  if (!days.length) return `<div class="hb-card more-days"><h3>${svg('calendar', { size: 18 })} Real Texas evenings</h3><p class="hb-sub"><span class="beat-na">The history days are not built yet</span> (<code>p1/days/index.json</code>, sim.history).</p></div>`;
+  const spk = idx.series && idx.series.sparkline && LABELS.includes(idx.series.sparkline.label) ? idx.series.sparkline.label : null;
+  const maxPB = Math.max(0.01, ...days.map((d) => (d.perBattery && isL(d.perBattery.aware) ? Math.abs(d.perBattery.aware.v) : 0)));
+  const rows = [...days].sort((a, b) => String(a.date).localeCompare(String(b.date))).map((d) => {
+    const pb = d.perBattery && d.perBattery.aware, pn = d.perBattery && d.perBattery.naive;
+    const w = isL(pb) ? Math.max(2, Math.round(Math.abs(pb.v) / maxPB * 100)) : 0;
+    const nm = d.naiveMax;
+    const nmTip = isL(nm) ? `<b>Naive, the worst transformer</b><br>${fmt.fmtHTML(nm, { unit: '%', digits: 1 })}${nm.tf != null ? ` on ${esc(typeof nm.tf === 'number' ? `T-${nm.tf}` : nm.tf)}` : ''}${nm.t ? ` at ${esc(nm.t)}` : ''}${isL(d.naiveEvents) ? `<br>${fmt.fmtHTML(d.naiveEvents)} battery-caused normal-tier events` : ''}` : '';
+    const ab = d.awareBatteryCaused;
+    const peakTip = isL(d.peak) ? `<b>ERCOT LZ_NORTH, 16:00 to 04:00</b><br>evening peak ${fmt.fmtHTML(d.peak, { digits: 2, unit: ' $/MWh' })}${d.peak.t ? ` at ${esc(d.peak.t)}` : ''}` : '';
+    const href = ctx.href({ view: 'p1', date: d.date, branch: 'aware', t: d.peak && d.peak.t ? d.peak.t : null, combo: null, home: null, n: null });
+    return `<a class="day-row" href="${href}" data-date="${esc(d.date)}">
+      <span class="day-d"><b>${esc(dateText(d.date))}</b>${fmt.chip('REAL', 'a real ERCOT evening: LZ_NORTH prices for this date; the load is the 2018 SMART-DS weather year on the same calendar date (ASSUMPTION)')}<span class="day-tag">${esc(d.tag || '')}</span></span>
+      <span class="day-spark"${peakTip ? ` data-tip-html="${esc(peakTip)}"` : ''}>${sparkSVG(d.sparkline)}${spk ? fmt.chip(spk, 'ERCOT RTM SPP LZ_NORTH, 15-min, 16:00 to 04:00') : ''}</span>
+      <span class="day-money${isL(pb) && pb.v < 0 ? ' lose' : ''}" data-tip-html="${esc(`<b>Money per battery tonight</b> (gross, not Base's profit)<br>feeder-aware ${moneyHTML(fmt, pb, 2)}<br>naive ${moneyHTML(fmt, pn, 2)}${isL(d.awareMoreUSD) ? `<br>feeder-aware earned ${fmt.fmtHTML(d.awareMoreUSD, { money: true, digits: 2 })} more (fleet)` : ''}`)}"><span class="day-bar" style="width:${w}%"></span><b>${moneyHTML(fmt, pb, 2)}</b></span>
+      <span class="day-naive" data-tip-html="${esc(nmTip)}">${isL(nm) ? svg('meter', { size: 22, pct: nm.v, tier: nm.tier ?? 4 }) : ''}</span>
+      <span class="day-aware" data-tip="Feeder-aware: battery-caused overloads that evening (OpenDSS)">${isL(ab) ? `${svg(ab.v === 0 ? 'check' : 'warn', { size: 16 })}${fmt.fmtHTML(ab)}` : ''}</span></a>`;
+  }).join('');
+  const f = (name) => { const p = evalFact(name, S); return p ? p.map((x) => renderPart(x, fmt, true)).join('') : null; };
+  const best = f('daysBest'), worst = f('daysWorst'), every = f('daysAwareMoreEvery'), safe = f('daysAwareSafe'), broke = f('daysNaiveBroke'), n = f('daysCount');
+  const lines = [];
+  if (best && worst) lines.push(`${svg('money', { size: 15 })}<span>The money is lumpy: ${best} on the best evening, ${worst} on the worst.</span>`);
+  if (every && safe) lines.push(`${svg('check', { size: 15 })}<span>Feeder-aware earned more than naive ${every}, ${safe}.</span>`);
+  if (broke && n) lines.push(`${svg('warn', { size: 15 })}<span>Naive caused a transformer overload on ${broke} of ${n} evenings, even on a night that lost money.</span>`);
+  const cal = S.p1cal ? calendarStripHTML(S.p1cal, ctx.link.date || DEFAULT_DAY) : '';
+  return `<div class="hb-card more-days" data-beat="days"><h3>${svg('calendar', { size: 18 })} Real Texas evenings: where the money is, and what it costs the street</h3>
+    <div class="day-head"><span></span><span>price, 16:00 to 04:00</span><span>per battery, feeder-aware</span><span>naive</span><span>aware</span></div>
+    <div class="day-rows">${rows}</div>
+    ${lines.length ? `<div class="day-lines">${lines.map((l) => `<div>${l}</div>`).join('')}</div>` : ''}
+    <p class="hb-sub">Why it matters for Base: the money comes from a few spiky evenings, and those are the evenings a whole fleet charging at once would push this street's transformers past their ratings. Feeder-aware keeps almost all of that money and adds a claim Base can take to the wires company: its fleet did not overload the street. Click an evening to replay it.</p>
+    ${cal}</div>`;
+}
+
+/** 48 prices -> a small sparkline (REAL; the tag sits beside it). Pure string. */
+function sparkSVG(values, w = 88, h = 18) {
+  const v = (values || []).filter((x) => typeof x === 'number' && Number.isFinite(x));
+  if (v.length < 2) return '';
+  const lo = Math.min(0, ...v), hi = Math.max(...v), span = hi - lo || 1;
+  const pts = v.map((x, i) => `${(i * (w - 2) / (v.length - 1) + 1).toFixed(1)},${(h - 1 - (x - lo) * (h - 2) / span).toFixed(1)}`).join(' ');
+  return `<svg class="day-sparksvg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
+}
+
+/** Who pays today, and a monthly yardstick (audit R2 M5): the $3.12 figure is a grid-scale storage REVENUE benchmark
+ *  (Modo, Apr 2026) that already includes arbitrage, not a capacity payment (ERCOT pays none). It sits in its own card,
+ *  never beside a per-evening dollar. */
+function payersCard(ctx, S) {
+  const { fmt } = ctx;
+  const m = S.p1meta && S.p1meta.money;
+  const sc = m && m.systemCapacityPerMonth && m.systemCapacityPerMonth.aware;
+  const f = (name) => { const p = evalFact(name, S); return p ? p.map((x) => renderPart(x, fmt, true)).join('') : '<span class="beat-na">(not built yet)</span>'; };
+  const band = sc && isL(sc.fleetKW) && isL(sc.low) && isL(sc.high)
+    ? `<p class="hb-sub"><b>A monthly yardstick, not tonight's money.</b> Feeder-aware, the fleet delivers ${fmt.fmtHTML(sc.fleetKW, { unit: ' kW', digits: 0 })} at the price peak. Priced at a grid-scale storage revenue benchmark (Modo, Apr 2026, which already includes arbitrage) of ${f('capacityLow')} to an implied ${f('capacityHigh')} per kW-month, that is ${fmt.fmtHTML(sc.low, { money: true, digits: 0 })} to ${fmt.fmtHTML(sc.high, { money: true, digits: 0 })} a month. It overlaps the energy value above, so never add the two. ERCOT pays no capacity; this is not a capacity payment.</p>` : '';
+  return `<div class="hb-card more-payers-card"><h3>${svg('house', { size: 18 })} Who pays today, and for what ${fmt.chip('REAL', 'docs/research-report.md:59, 215-224')}</h3>
     <ul class="more-payers">${PAYERS.map((p) => `<li>${esc(p.who)} (${fmt.fmtHTML({ v: p.mw, label: 'REAL', cite: p.cite }, { unit: ' MW' })}${p.dispatchPct ? `, ${fmt.fmtHTML({ v: p.dispatchPct, label: 'REAL', cite: p.cite }, { unit: '% dispatch' })}` : ''}): ${esc(p.what)}</li>`).join('')}
       <li>Base's own "distribution grid support" offering: no public price ${fmt.chip('REAL', 'docs/headroom/research_notes/base_power_product_and_system.md:388')}</li></ul>
-    <p class="hb-sub"><b>Local transformer relief and upgrade deferral</b> have no sourced price anywhere in our material: an opportunity for Base and the wires company, not revenue ${fmt.chip('ASSUMPTION', 'build prompt 5.4.6')}.</p></div>`;
+    <p class="hb-sub"><b>Local transformer relief and upgrade deferral</b> have no sourced price anywhere in our material: an opportunity for Base and the wires company, not revenue ${fmt.chip('ASSUMPTION', 'build prompt 5.4.6')}.</p>
+    ${band}</div>`;
 }
 
 /** The unit of an engine.json number, read from its key and cite (judge R1 F9: the unit was only in the chip's title).
@@ -657,12 +850,22 @@ export function engineUnit(path, v) {
   return { name: path, unit: '' };
 }
 
+/** The machine the timings were measured on (audit R2 L4): engine.json sources.machine (l2, round 2) or the old
+ *  loadAvg row, as a caption, never as a result row. */
+export function machineNote(eng) {
+  const m = eng && eng.sources && eng.sources.machine;
+  if (m && m.text) return String(m.text);
+  const la = eng && eng.loadAvg;
+  return isL(la) && typeof la.v === 'number' ? `timings measured on a shared machine (1-minute load average ${la.v} while measuring); not a benchmark` : null;
+}
+
 function engineCard(ctx, S) {
   const { fmt } = ctx;
   const rows = [];
   const walk = (o, path) => {
     for (const [k, v] of Object.entries(o || {})) {
       const p = path ? `${path} · ${k}` : k;
+      if (/^loadAvg$/i.test(k)) continue;           // the machine's load is a caption, not a result (audit R2 L4)
       if (isL(v) && typeof v.v === 'number') {
         const u = engineUnit(p, v);
         rows.push(`<tr><td>${esc(u.name)}</td><td class="n">${fmt.fmtHTML(v, { digits: v.v < 10 ? 2 : v.v < 100 ? 1 : 0, unit: u.unit })}</td></tr>`);
@@ -671,9 +874,10 @@ function engineCard(ctx, S) {
   };
   if (S.engine) walk(S.engine, '');
   const solve = evalFact('msPerSolve', S);
-  return `<div class="hb-card" data-beat="plug-in"><h3>Performance</h3>
-    ${rows.length ? `<table class="p2-rank">${rows.slice(0, 12).join('')}</table>` : `<p class="hb-sub">${solve ? `One OpenDSS step: ${solve.map((x) => renderPart(x, fmt, true)).join('')}.` : '<span class="beat-na">engine.json not built yet</span>'}</p>`}
-    <p class="hb-sub">All static: the browser replays committed JSON; no server, no network at view time.</p></div>`;
+  const mn = machineNote(S.engine);
+  return `<div class="hb-card" data-beat="plug-in"><h3>Performance, as measured</h3>
+    ${rows.length ? `<table class="p2-rank">${rows.slice(0, 12).join('')}</table>` : `<p class="hb-sub">${solve ? `One OpenDSS solve: ${solve.map((x) => renderPart(x, fmt, true)).join('')}.` : '<span class="beat-na">engine.json not built yet</span>'}</p>`}
+    <p class="hb-sub">${mn ? `${esc(mn.charAt(0).toUpperCase() + mn.slice(1))}. ` : ''}A solve is one OpenDSS power flow; a step also sets every load and battery and reads the result. All static: the browser replays committed JSON; no server, no network at view time.</p></div>`;
 }
 
 function plugInCard(ctx, S) {
@@ -689,10 +893,14 @@ function plugInCard(ctx, S) {
 
 const STORIES = [
   ['Heat wave', 'Prototype story: a scripted heat wave on the same feeder.'],
-  ['Rebound', 'Prototype story: the price rebound, even split vs feeder-aware.'],
-  ['Covert channel + quarantine', 'Prototype story: a fictional adversary signals through battery setpoints; the detector quarantines it. SIM, fictional.'],
+  ['Rebound', 'Prototype story: the price rebound, even split vs feeder-aware. Its voltage sag is an artefact of the power-factor setting below.'],
+  ['Covert channel + quarantine', 'Prototype story: a fictional adversary signals through battery setpoints; the detector quarantines it. SIM, fictional. The detector uses a privileged voltage baseline and is keyed to a fixed square wave, so a channel carrying real bits would mostly pass it.'],
   ['Siting board', "Prototype's next-battery board (its own score; see P2 for tonight's month what-if)."],
 ];
+/** Adopt #5 (TEAMMATES_REVIEW, RZ's list): honest caveats on the teammate cards, in OUR copy only; their folders are
+ *  untouched. Numbers are facts about their code, read and re-run by our review, each with its source. */
+const PROTO_CAVEAT = (fmt) => `Caveats from our review: its battery loads run at ${fmt.fmtHTML({ v: 0.88, label: 'REAL', cite: "read from the prototype's battery() (it writes kW only, so OpenDSS applies pf 0.88); overnight/REVIEW-connor-proto.md W1" }, { digits: 2 })} power factor, so its voltage sag and trade-off figures are artefacts (at unity power factor the naive rebound shows no voltage violation); its detector has a privileged voltage baseline and is keyed to a fixed ${fmt.fmtHTML({ v: 350, label: 'REAL', cite: 'build_replays.py:69, the fixed alternating attack wave; overnight/REVIEW-connor-proto.md W3' }, { unit: ' W', digits: 0 })} alternating wave. Connor's newer simulator (simulators/connor) fixes the power factor.`;
+const FOURHOME_CAVEAT = (fmt) => `Caveat from our review: its frequency figure uses the retired ${fmt.fmtHTML({ v: '3–5 mHz', label: 'DERIVED', cite: 'four_home_constants.py:73-74 F_SENS 0.075/0.12 mHz/MW x a 40 MW swing; the team corrected it to 3-17 mHz on 26 Sep (docs/research-report.md:308-318)' })} band for a thousand-battery swing, and its naive branch is not labelled an assumption.`;
 
 async function chaosCard(ctx) {
   const doc = await ctx.data.getOptional('p1/chaos.json').catch(() => null);
@@ -848,24 +1056,27 @@ export async function mount(el, ctx) {
   const { sceneModel, scene, topology, fmt } = ctx;
   scene.update(sceneModel.buildSceneModel({ topology, footprints: ctx.footprints, frame: null, view: 'more', theme: ctx.theme }));
   const beats = beatsList(await ctx.data.loadBeats());
-  const S = await loadSources(ctx, [...new Set([...sourcesFor(beats.map((b) => b.caption)), 'p1meta', 'engine'])]);
+  const S = await loadSources(ctx, [...new Set([...sourcesFor(beats.flatMap((b) => [b.caption, b.headline || ''])), 'p1meta', 'engine', 'p1days', 'p1cal'])]);
   const beatBar = ctx.link.beat ? await beatBarHTML(ctx) : '';
   const beatRows = beats.map((b) => `<li class="beat-item${b.id === ctx.link.beat ? ' on' : ''}">
       <div class="beat-h"><span class="beat-t">${esc(b.t0)}–${esc(b.t1)}</span> <a href="${beatHref(b)}"><b>${esc(b.title)}</b></a>${b.label ? fmt.chip(b.label) : ''}</div>
-      <div class="beat-cap">${resolveCaption(b.caption, S, fmt)}</div></li>`).join('');
+      ${b.headline ? `<div class="beat-headline">${resolveCaption(b.headline, S, fmt)}</div>` : ''}
+      <details class="beat-more"${b.id === ctx.link.beat ? ' open' : ''}><summary>Caption</summary><div class="beat-cap">${resolveCaption(b.caption, S, fmt)}</div></details></li>`).join('');
   el.innerHTML = `<div class="more-wrap">
     ${beatBar}
     <div class="hb-cards more-top">
       <div class="hb-card more-beats"><h3>The five-minute video, beat by beat</h3>
         <div class="hb-sub">Each beat is one deep link; every number in a caption is read from the committed data, with its label. A beat whose data is not built says so.</div>
         <ol class="beat-list">${beatRows || '<li><span class="beat-na">beats.json not built yet</span></li>'}</ol></div>
-      ${moneyCard(ctx, S)}
+      <div class="more-col">${moneyCard(ctx, S)}${payersCard(ctx, S)}</div>
+      ${daysCard(ctx, S)}
       <div class="more-col">${plugInCard(ctx, S)}${engineCard(ctx, S)}</div>
     </div>
     <h2 class="more-h">Everything that already worked, unchanged</h2>
     <div class="hb-cards">
       ${STORIES.map(([t, d]) => `<div class="hb-card"><h3><a href="../demos/grid-stories/ui/dist/">${esc(t)}</a></h3><div class="hb-sub">${esc(d)} Pick it in the prototype's story menu. Connor's prototype, unchanged; its prices and loads are scripted.</div></div>`).join('')}
-      <div class="hb-card"><h3><a href="../four-home-simulation/four-home.html">Four-home simulation</a></h3><div class="hb-sub">Michael's four-home model on real prices, unchanged.</div></div>
+      <div class="hb-card more-caveat"><h3>${svg('info', { size: 16 })} Before you quote the prototype</h3><div class="hb-sub">${PROTO_CAVEAT(fmt)}</div></div>
+      <div class="hb-card"><h3><a href="../four-home-simulation/four-home.html">Four-home simulation</a></h3><div class="hb-sub">Michael's four-home model on real prices, unchanged. ${FOURHOME_CAVEAT(fmt)}</div></div>
       ${await chaosCard(ctx)}
     </div>
     ${await emsCards(ctx)}</div>`;

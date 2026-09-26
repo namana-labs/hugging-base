@@ -167,3 +167,44 @@ body.view-more .hb-panel { overflow: hidden; }
 .p2-capline.ok > .ic { color: var(--accent); }
 .p2-handoff { border: 0; background: none; padding: 0; margin: 0; }
 .p2-flip { border: 0; padding: 0; margin: 0; }
+
+/* ---- round 2: beat headline, compact P1 bar, More money story ------------------------------------------------ */
+.beat-headline { font-size: 15px; font-weight: 600; line-height: 1.4; margin-top: 4px; }
+.beat-more > summary { cursor: pointer; font-size: 12.5px; color: var(--accent); margin-top: 4px; }
+.beat-bar.compact { padding: 6px 10px; }
+.beat-bar.compact .beat-headline { font-size: 14px; }
+.beat-item .beat-headline { font-size: 13.5px; }
+.beat-item .beat-more > summary { font-size: 12px; }
+
+.more-money h3, .more-days h3, .more-payers-card h3, .more-caveat h3 { display: flex; align-items: center; gap: 6px; }
+.more-money h3 .ic, .more-days h3 .ic { color: var(--money); }
+.k-sold { color: var(--bat-sell); font-weight: 600; } .k-bought { color: var(--bat-charge); font-weight: 600; }
+.money-rows { display: grid; gap: 6px; margin: 10px 0 6px; }
+.money-row { display: grid; grid-template-columns: 130px 1fr auto; align-items: center; gap: 10px; font-size: 13px; }
+.money-name { color: var(--muted); }
+.money-bars { display: grid; gap: 2px; cursor: help; }
+.money-bars .mb { display: block; height: 7px; border-radius: 3px; }
+.money-bars .mb.sold { background: var(--bat-sell); } .money-bars .mb.bought { background: var(--bat-charge); opacity: .85; }
+.money-net { font-size: 15px; font-variant-numeric: tabular-nums; }
+.money-more { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; margin: 6px 0; }
+.money-more .ic { color: var(--accent); }
+
+.more-days { grid-row: span 2; }
+.day-head, .day-row { display: grid; grid-template-columns: minmax(150px, 1.4fr) 110px 1fr 30px 44px; align-items: center; gap: 8px; }
+.day-head { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 8px 0 2px; }
+.day-rows { display: grid; gap: 2px; }
+.day-row { text-decoration: none; color: var(--ink); padding: 6px 6px; border-radius: 8px; border: 1px solid transparent; font-size: 13px; }
+.day-row:hover, .day-row:focus-visible { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.day-d { display: block; } .day-d .day-tag { display: block; }
+.day-tag { color: var(--muted); font-size: 12px; }
+.day-spark { color: var(--real); display: inline-flex; align-items: center; }
+.day-money { position: relative; display: flex; align-items: center; gap: 6px; }
+.day-bar { display: block; height: 10px; border-radius: 3px; background: var(--money); opacity: .75; min-width: 2px; }
+.day-money.lose .day-bar { background: rgb(125, 147, 178); }
+.day-money b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.day-naive, .day-aware { display: inline-flex; align-items: center; gap: 3px; color: var(--muted); }
+.day-aware .ic { color: var(--accent); }
+.day-lines { display: grid; gap: 4px; margin: 10px 0 4px; font-size: 13px; }
+.day-lines > div { display: flex; gap: 6px; align-items: flex-start; }
+.day-lines .ic { margin-top: 2px; color: var(--muted); }
+.more-caveat { border-style: dashed; }
