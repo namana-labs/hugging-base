@@ -173,6 +173,49 @@ def main(argv):
     print(f"flip: top-10 overlap {v(f['top10Overlap'])}/10 ; spearman {v(f['spearman'])} ; untied only "
           f"{v(f['untied']['top10Overlap'])}/10, {v(f['untied']['spearman'])} (n = {f['untied']['n']}) (DERIVED)   [report]")
 
+    # per-combo blocks (audit R2 M1-M3): each combo's own bridge, fleet table and flip, consistent with its own data --
+    t240 = next(i for i, t in enumerate(topo["transformers"]) if t["id"] == idx["bridge"][0]["id"]) if idx.get("bridge") else None
+    bad = []
+    m1 = []
+    for cid, d in combos.items():
+        pol, cls, rule, gg = cid.split("-")
+        cn, ca = f"naive-{cls}-{rule}-{gg}", f"aware-{cls}-{rule}-{gg}"
+        b, fct, fl = d.get("bridge"), d.get("fleetCounterfactualTotals"), d.get("flip")
+        if not (b and fct and fl):
+            bad.append(f"{cid}: missing bridge/fleetCounterfactualTotals/flip")
+            continue
+        e = b.get(pol)
+        if b["tf"] != t240 or e is None:
+            bad.append(f"{cid}: bridge tf {b['tf']} / entry {e is not None}")
+            continue
+        if abs(v(e["peakWithoutPct"]) - d["baseline"]["peak"][t240] / 10) > 0.051:
+            bad.append(f"{cid}: bridge peak without {v(e['peakWithoutPct'])} vs baseline {d['baseline']['peak'][t240] / 10}")
+        if e["rank"] <= len(d["ranking"]):
+            r = d["ranking"][e["rank"] - 1]
+            if r["tf"] != t240 or v(r["peakWithPct"]) != v(e["peakWithPct"]) or r["home"] != e["home"]:
+                bad.append(f"{cid}: bridge rank {e['rank']} disagrees with ranking row")
+        elif any(r["tf"] == t240 for r in d["ranking"]):
+            bad.append(f"{cid}: bridge rank {e['rank']} but T-240 is in the top {len(d['ranking'])}")
+        for p_, sib in (("naive", cn), ("aware", ca)):
+            hl = combos[sib]["headline"]
+            if any(v(fct[p_][k]) != v(hl[k]) for k in ("h100", "normalEvents", "emergencyN", "causedNormal")):
+                bad.append(f"{cid}: fleet row {p_} != {sib} headline")
+        if fl["combos"] != [cn, ca]:
+            bad.append(f"{cid}: flip combos {fl['combos']}")
+        m1.append(f"{cid} rank {e['rank']} {v(e['peakWithoutPct'])}->{v(e['peakWithPct'])}")
+    dft = combos[idx["default"]]
+    for k in ("none", "naive", "aware"):
+        if dft.get("fleetCounterfactualTotals", {}).get(k) != idx["fleetCounterfactualTotals"][k]:
+            bad.append(f"index.fleetCounterfactualTotals.{k} != {idx['default']}'s")
+    if {kk: vv for kk, vv in idx["flip"].items() if kk != "scopeText"} != dft.get("flip"):
+        bad.append("index.flip != the default combo's own flip")
+    for x in bad[:8]:
+        print("    -", x)
+    chk.inv(not bad, "per-combo blocks", f"per-combo blocks: {len(combos)} combos carry their own bridge (T-240), fleet table and "
+            f"flip, each consistent with its own ranking, baseline and sibling headline; index blocks = {idx['default']}'s "
+            f"({len(bad)} problems)")
+    print("bridge T-240 per combo (rank, month peak without -> with, screening): " + " ; ".join(m1) + "   [report]")
+
     # greedy --------------------------------------------------------------------------------------------------------
     g = combos[idx["default"]]["greedy"]
     drops = [x["keyDrops"] for x in g]
@@ -214,13 +257,37 @@ def main(argv):
             f"{run.split()[0]} {run.split()[1].split('-')[0]}{'-g20' if run.endswith('g20') else ''} {v(h['maxPct'])}% "
             f"(est {v(h['estMaxPct'])}%, est - OpenDSS {-v(h['underReadMaxPts']):+.2f} to {v(h['overReadMaxPts']):+.2f} pts; balanced total {v(h['balancedMaxPct'])}%)"
             for run, h in heads.items()) + "   [report]")
+    fl = r.get("fleet") or {}
+    want = {"none-g0", "none-g20"} | {c for c in combos if c.split("-")[1] == "core"}
+    chk.inv(set(fl) == want and fresh, "fleet months", f"existing-fleet OpenDSS months: {len(fl)}/{len(want)} "
+            f"(home load only g0 and g20 + every Core baseline) | schedules {'match' if fresh else 'STALE or missing'}")
+    if fl:
+        def fline(k):
+            e = fl[k]
+            return (f"{k} {v(e['h100'])} h, {v(e['normalEvents'])} events"
+                    + (f" ({v(e['causedNormal'])} battery-caused)" if "causedNormal" in e else "")
+                    + f", head {v(e['headMaxPct'])}%")
+        print("fleet months (OpenDSS): " + " ; ".join(fline(k) for k in sorted(fl)) + "   [report]")
+        tn = idx["fleetCounterfactualTotals"]["none"]
+        ok_none = v(fl["none-g0"]["normalEvents"]) == v(tn["normalEvents"]) and abs(v(fl["none-g0"]["h100"]) - v(tn["h100"])) <= 0.5
+        chk.exp(ok_none, f"no-battery row, OpenDSS vs screen: {v(fl['none-g0']['h100'])} h / {v(fl['none-g0']['normalEvents'])} events "
+                f"vs {v(tn['h100'])} / {v(tn['normalEvents'])}", "same event count, h within 0.5")
+        aw0 = {k: v(e["causedNormal"]) for k, e in fl.items() if k.startswith("aware")}
+        chk.exp(all(x == 0 for x in aw0.values()), f"OpenDSS: aware existing fleet battery-caused normal events, every Core "
+                f"baseline: {aw0}", "all 0")
+        print(f"feeder head at +20% load (OpenDSS, % of 370 A): home load only {v(fl['none-g20']['headMaxPct'])}, "
+              f"aware fleet {v(fl['aware-core-d26-g20']['headMaxPct'])}, naive fleet {v(fl['naive-core-d26-g20']['headMaxPct'])} ; "
+              f"today's load: {v(fl['none-g0']['headMaxPct'])} / {v(fl['aware-core-d26-g0']['headMaxPct'])} / "
+              f"{v(fl['naive-core-d26-g0']['headMaxPct'])}   [report]")
     cap = ref.get("capacity") or {}
     ucd = uc.get("opendss") or {}
+    n3 = v(uc.get("naiveHead"))
     fresh_cap = (cap.get("sha256") is not None and cap.get("sha256") == idx.get("referee_capacity_sha256")
-                 and all(p in ucd for p in ("naive", "aware")) and ucd["naive"]["n"] == n1 and ucd["aware"]["n"] == n2)
+                 and all(p in ucd for p in ("naive", "aware", "naiveHead")) and ucd["naive"]["n"] == n1
+                 and ucd["aware"]["n"] == n2 and ucd["naiveHead"]["n"] == n3 and "naiveOpenDSS" in uc)
     chk.inv(fresh_cap, "capacity-check", f"useful capacity OpenDSS check: naive {ucd.get('naive', {}).get('n')} / aware "
-            f"{ucd.get('aware', {}).get('n')} Cores from an empty feeder, one OpenDSS month each | builds "
-            f"{'match' if fresh_cap else 'STALE or missing'}")
+            f"{ucd.get('aware', {}).get('n')} / naive under aware's question {ucd.get('naiveHead', {}).get('n')} Cores from an "
+            f"empty feeder, one OpenDSS month each | builds {'match' if fresh_cap else 'STALE or missing'}")
     if fresh_cap:
         def line(pol):
             c = ucd[pol]
@@ -237,6 +304,15 @@ def main(argv):
         nv = ucd["naive"]
         chk.exp(v(nv["causedNormal"]) == 0, f"         naive {n1}: " + line("naive"),
                 "0 battery-caused normal (the screen's stop rule); head reported")
+        nh = ucd["naiveHead"]
+        chk.exp(v(nh["causedNormal"]) == 0 and v(nh["causedEmergencyN"]) == 0 and nh["headMaxPct"]["stepsOver100"] == 0,
+                f"         naive under aware's question {n3} (stop: {uc['naiveHead']['stop']}): " + line("naiveHead"),
+                "0 battery-caused normal and emergency ; head never > 100%")
+        so = uc["naiveOpenDSS"]
+        print(f"         naive, OpenDSS-judged: holds up to {v(so)}, harm at {so['failAt']} "
+              f"({'exact' if so['exact'] else 'bounds only'}; {len(so['checks'])} OpenDSS months: "
+              + ", ".join(f"n={r[0]} caused {r[1]} head {r[3]}% ({r[4]} steps>100) {'holds' if r[6] else 'HARM'}" for r in so["checks"])
+              + ")   [report]")
 
     # determinism -----------------------------------------------------------------------------------------------------
     if rebuild:

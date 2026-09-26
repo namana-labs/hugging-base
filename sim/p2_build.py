@@ -42,6 +42,8 @@ GROWTHS = (0, 20)
 COMBOS = [f"{p}-{c}-{r}-g{g}" for p in POLICIES for c in CLS for r in RULES for g in GROWTHS]
 DEFAULT = "aware-core-d26-g0"
 FLIP = ("naive-core-d26-g0", "aware-core-d26-g0")
+SCOPE = "core-d26-g0"
+SCOPE_TEXT = "Core battery · D-26 onset · today's load"
 SCREEN = "surrogate screen (sim.surrogate, calibrated vs OpenDSS); not OpenDSS-checked"
 HEAD_CITE = ("feeder-head estimate: the most loaded primary phase, |sum P + j sum Q| of the transformers on that phase "
              "(SMART-DS Transformers.dss) vs 370 A x 7.2 kV = 2,663.8 kVA per phase (site/ems/flow-spec.md); lossless, "
@@ -101,11 +103,18 @@ class Ctx:
         self.price_median = float(np.median(self.price[:REPORTED]))
         self._driver = {}
 
-    def driver(self, tf, k):
-        key = (int(tf), int(k))
+    def driver(self, tf, k, g=0):
+        """The home whose load makes transformer tf's peak at step k. At +20% growth (g20) its kW is the SMART-DS kW
+        x the growth factor, the load that combo ran (round 1 printed the unscaled kW on g20 combos)."""
+        key = (int(tf), int(k), int(g))
         if key not in self._driver:
-            d = self.loads.driver(tf, k)
+            d = dict(self.loads.driver(tf, k))
             d["t"] = stamp(k)
+            if int(g):
+                f = growth_factor(g)
+                kw = float(self.loads.home_kw(int(k), 1)[0][d["home"]]) * f
+                d["kwAtPeak"] = {"v": round(kw, 2), "label": "SIM",
+                                 "cite": f"SMART-DS kW x {f:g} (GROWTH, ASSUMPTION: +{GROWTH:.0%} load)"}
             self._driver[key] = d
         return self._driver[key]
 
@@ -138,6 +147,7 @@ def run_world(ctx, world, policy, rule, g, steps=STEPS):
     n = min(REPORTED, steps)
     sim["M"] = month_metrics(sim["pct"], sim["pct_none"], sim["col_kw"], steps=n)
     sim["n"] = n
+    sim["g"] = int(g)
     return sim
 
 
@@ -200,6 +210,45 @@ def homes_dark(ctx, tf, with_battery=()):
     return [h for h in np.flatnonzero(ctx.home_tf == tf).tolist() if h not in lit]
 
 
+def fleet_row(ctx, Mx, idx, P, Q, col_kw, n, caused=True):
+    """One row of the existing-fleet table: totals over the transformers `idx` of the month metrics Mx, plus the
+    per-phase feeder-head estimate of home load P, Q (growth applied) and the batteries' col_kw (None: home load only)."""
+    m = min(n, len(P)) if col_kw is None else min(n, len(col_kw))
+    head = head_pct((P[:m] + (col_kw[:m] if col_kw is not None else 0.0)) @ ctx.phase_w, Q[:m] @ ctx.phase_w, m)
+    return {"h100": labelled(round(float(Mx["h100"][idx].sum()), 2), "SIM", SCREEN),
+            "normalEvents": labelled(int(Mx["normalEvents"][idx].sum()), "SIM", SCREEN),
+            "emergencyN": labelled(int(Mx["emergencyN"][idx].sum()), "SIM", SCREEN),
+            "tfsOver100": labelled(int((Mx["h100"][idx] > 0).sum()), "SIM", SCREEN),
+            "causedNormal": labelled(int(Mx["causedNormal"][idx].sum()) if caused else 0, "SIM", "P2 definition"),
+            "headPct": labelled(round(head, 1), "DERIVED", HEAD_CITE)}
+
+
+def bridge_entry(ctx, sim, e, rank, home):
+    """The unrelieved transformer's entry in one ranking (the P1 -> P2 hand-off): its collapsed rank (one entry per
+    transformer, as `ranking[].rank`) and its month peak without and with the candidate."""
+    M = sim["M"]
+    return {"rank": rank, "home": home, "label": ctx.labels[home],
+            "peakWithoutPct": labelled(round(e["peakWithout"], 1), "SIM", SCREEN),
+            "peakWithPct": labelled(round(e["peakWith"], 1), "SIM", SCREEN),
+            "h100Without": labelled(round(float(M["h100"][e["col_wo"]]), 2), "SIM", SCREEN),
+            "h100With": labelled(round(float(M["h100"][e["col_w"]]), 2), "SIM", SCREEN),
+            "noNewViolation": labelled(not e["newViolation"], "SIM", SCREEN)}
+
+
+def bridge_of(ctx, sim, rows, col_of, tf, pol, combo):
+    """This combo's own hand-off block for transformer tf (audit R2 M1: round 1 read index.bridge, built for
+    core-d26-g0 only, on every combo). Same shape as an index.bridge item, keyed by this combo's policy, with the
+    rank over ALL entries (a home outside the top 50 still gets its rank)."""
+    item = {"tf": tf, "id": ctx.tf_ids[tf], "candidates": ctx.cand_on[tf], "combo": combo}
+    for r, (_, e, t2, home) in enumerate(rows):
+        if t2 == tf:
+            item[pol] = bridge_entry(ctx, sim, e, r + 1, home)
+            item[pol]["inTop"] = r + 1 <= TOP_N
+            break
+    item["driver"] = ctx.driver(tf, int(sim["M"]["peakT"][col_of[(tf, 0)]]), sim.get("g", 0))
+    return item
+
+
 def entry_doc(ctx, sim, e, rank, home, tie_broken, cls_new):
     tf = e["tf"]
     M = sim["M"]
@@ -222,7 +271,7 @@ def entry_doc(ctx, sim, e, rank, home, tie_broken, cls_new):
          "before": metrics_of(M, e["col_wo"], cite=SCREEN), "after": metrics_of(M, e["col_w"], cite=SCREEN),
          "opendss": None, "screening": True}
     if M["h100"][e["col_wo"]] > 0:
-        d["driver"] = ctx.driver(tf, int(M["peakT"][e["col_wo"]]))
+        d["driver"] = ctx.driver(tf, int(M["peakT"][e["col_wo"]]), sim.get("g", 0))
     return d
 
 
@@ -395,6 +444,11 @@ def build_combo(ctx, combo, steps=STEPS):
     nv_rows = [r for r in rows if r[1]["newViolation"]]
     totals["newViolationTfs"] = labelled(len(nv_rows), "SIM", "transformers where one more battery adds a normal-tier event, an emergency interval or a protection operation")
     totals["newViolationHomes"] = labelled(sum(len(ctx.cand_on[r[2]]) for r in nv_rows), "SIM", "candidates on those transformers")
+    f = growth_factor(int(g[1:]))
+    Pg, Qg = ctx.P * f, ctx.Q * f
+    fleet = {"own": fleet_row(ctx, M, base_cols, Pg, Qg, sim["col_kw"][:, base_cols], n),
+             "none": fleet_row(ctx, month_metrics(sim["pct_none"][:, base_cols], steps=n), slice(None), Pg, Qg, None, n,
+                               caused=False)}
     prot_cases = [{"home": r[3], "tf": r[2], "label": ctx.labels[r[3]], "t": stamp(r[1]["protWith"]),
                    "peakWithPct": labelled(round(r[1]["peakWith"], 1), "SIM", SCREEN), "homesDark": homes_dark(ctx, r[2], [r[3]])}
                   for r in rows if r[1]["protWith"] >= 0 and r[1]["protWithout"] < 0]
@@ -404,9 +458,12 @@ def build_combo(ctx, combo, steps=STEPS):
                            "strips": {"label": "SIM", "unit": "pct x10, hourly max (with = + the listed candidate)", "by": "surrogate"}})
     doc.update({"combo": combo, "policy": pol, "cls": cls_new, "rule": rule, "growth": int(g[1:]),
                 "baseline": baseline, "headline": totals, "ranking": ranking, "greedy": greedy_doc, "strips": strips,
-                "protectionCases": prot_cases})
+                "protectionCases": prot_cases,
+                "bridge": bridge_of(ctx, sim, rows, col_of, ctx.T240, pol, combo)})
+    fleet_kw = sim["kw"][:, np.flatnonzero(np.isin(world.col, base_cols))]   # the existing fleet in its baseline
     extra = {"sim": sim, "col_of": col_of, "newb": newb, "world": world, "rows": rows, "home_rank": home_rank,
-             "tie_home": tie_home, "greedy": gl, "base_cols": base_cols}
+             "tie_home": tie_home, "greedy": gl, "base_cols": base_cols, "fleet": fleet,
+             "fleetSha": hashlib.sha256(np.ascontiguousarray(fleet_kw).tobytes()).hexdigest()}
     return doc, extra
 
 
@@ -424,7 +481,7 @@ def spearman(a, b):
     return float((ra * rb).sum() / den) if den else 0.0
 
 
-def flip_doc(ctx, xn, xa):
+def flip_doc(ctx, xn, xa, combos=FLIP):
     top_n = [r[3] for r in xn["rows"][:10]]
     top_a = [r[3] for r in xa["rows"][:10]]
     homes = sorted(ctx.cands)
@@ -447,7 +504,7 @@ def flip_doc(ctx, xn, xa):
             "untied": {"top10Overlap": labelled(len(set(un_n) & set(un_a)), "DERIVED", "candidates no id tie-break placed, in either ranking"),
                        "spearman": labelled(round(rho_u, 4), "DERIVED", "untied candidates only"),
                        "n": len(untied)},
-            "combos": list(FLIP), "topNaive": top_n, "topAware": top_a}
+            "combos": list(combos), "topNaive": top_n, "topAware": top_a}
 
 
 def useful_capacity(ctx, steps=STEPS):
@@ -488,7 +545,21 @@ def useful_capacity(ctx, steps=STEPS):
     # aware with the feeder head as a fleet-total cap (4.4): transformers are no longer independent, so each point is
     # one coupled month run of the first k placements of aware's greedy order; the stop is curtailment above CURTAIL_CAP
     out["awareHead"] = head_capped_capacity(ctx, out["aware"]["order"], steps)
+    out["naiveHead"] = naive_head_capacity(ctx, out["naive"])
     return out
+
+
+def naive_head_capacity(ctx, nv):
+    """Naive judged by the question feeder-aware answers (audit R2 H1): how many fit before the grid is harmed, where
+    harm is a battery-caused normal-tier event OR the feeder head over its rating. Naive has no controller, so the head
+    is not capped; its screen stop is the first placement whose per-phase head estimate (DERIVED) passes 100% of 370 A,
+    or the first battery-caused normal-tier event, whichever comes first. sim.referee judges the count in OpenDSS."""
+    ho = nv["headOverAt"]
+    if ho is not None and ho - 1 < nv["n"]:
+        home = nv["order"][ho - 1]
+        return {"n": ho - 1, "stop": (f"placement {ho} ({ctx.labels[home]} on tf {int(ctx.home_tf[home])}) takes the "
+                                      f"per-phase feeder-head estimate (DERIVED) above 100% of 370 A")}
+    return {"n": nv["n"], "stop": nv["stop"]}
 
 
 def capacity_sim(ctx, homes, policy="aware", steps=STEPS):
@@ -503,9 +574,13 @@ def capacity_sim(ctx, homes, policy="aware", steps=STEPS):
 
 
 def capacity_homes(uc):
-    """The two useful-capacity builds sim.referee checks in OpenDSS: each policy's first n homes of its greedy order."""
+    """The useful-capacity builds sim.referee checks in OpenDSS: each policy's first n homes of its greedy order, the
+    naive build under feeder-aware's question (naiveHead), and naive's whole screened order (the OpenDSS search steps
+    along it)."""
     return {"naive": [int(h) for h in uc["naive"]["order"][:uc["naive"]["n"]]],
-            "aware": [int(h) for h in uc["aware"]["order"][:uc["awareHead"]["n"]]]}
+            "aware": [int(h) for h in uc["aware"]["order"][:uc["awareHead"]["n"]]],
+            "naiveHead": [int(h) for h in uc["naive"]["order"][:uc["naiveHead"]["n"]]],
+            "naiveOrder": [int(h) for h in uc["naive"]["order"]]}
 
 
 def capacity_sha(uc, schedule_sha):
@@ -564,12 +639,12 @@ def stop_hit(pol, x):
 
 
 # =================================================================================================================
-def schedule_sha(extras):
-    """sha256 of the battery schedules the referee judges (both default combos, g0 and g20)."""
+def schedule_sha(kws):
+    """sha256 of the battery schedules the referee judges ({combo: kw [steps, m]}: referee_combos())."""
     h = hashlib.sha256()
-    for combo in sorted(extras):
+    for combo in sorted(kws):
         h.update(combo.encode())
-        h.update(np.ascontiguousarray(extras[combo]["sim"]["kw"]).tobytes())
+        h.update(np.ascontiguousarray(kws[combo]).tobytes())
     return h.hexdigest()
 
 
@@ -602,9 +677,13 @@ def apply_capacity(index, ref, cap_sha):
         uc["opendss"] = {"status": "not run on these builds (run scripts/build_all.sh referee)"}
         return
     out = {"status": "OpenDSS-checked builds", "rule": cap["rule"]}
-    for pol in ("naive", "aware"):
-        c = cap[pol]
-        cite = f"OpenDSS (sim.referee): the {c['n']}-battery {pol} useful-capacity build from an empty feeder, August 2026"
+    for pol in ("naive", "aware", "naiveHead"):
+        c = cap.get(pol)
+        if c is None:
+            continue
+        what = "naive build under feeder-aware's question (a battery-caused event or the head over 370 A)" if pol == "naiveHead" \
+            else f"{pol} useful-capacity build"
+        cite = f"OpenDSS (sim.referee): the {c['n']}-battery {what} from an empty feeder, August 2026"
         h, vm = c["head"], c["vmin"]
         out[pol] = {
             "n": c["n"],
@@ -628,9 +707,83 @@ def apply_capacity(index, ref, cap_sha):
     uc["opendss"] = out
     uc["naive"]["cite"] = capacity_cite(cap["naive"], HEAD_RATING_A)
     uc["aware"]["cite"] = capacity_cite(cap["aware"], HEAD_RATING_A) + "; aware with the feeder-head cap (HEAD_CAP)"
+    if cap.get("naiveHead"):
+        uc["naiveHead"]["cite"] = capacity_cite(cap["naiveHead"], HEAD_RATING_A) + "; naive under feeder-aware's question"
+    srch = cap.get("naiveSearch")
+    if srch:
+        uc["naiveOpenDSS"] = labelled(
+            srch["n"], "SIM",
+            "OpenDSS-judged (sim.referee): the largest greedy prefix of naive's order, from an empty feeder, with 0 "
+            "battery-caused normal-tier events, 0 battery-caused emergency intervals and the feeder head never above "
+            f"370 A; stepped from the screen's count {srch['from']} one OpenDSS month per check",
+            failAt=srch["failAt"], exact=srch["exact"], checks=srch["checks"], checkCols=srch["cols"])
 
 
-def apply_referee(index, combos, ref):
+def fleet_od(e, cite):
+    """One OpenDSS existing-fleet row (sim.referee `fleet`), labelled."""
+    h = e["head"]
+    from .constants import HEAD_RATING_A
+    d = {"h100": labelled(e["h100"], "SIM", cite + "; hours above nameplate, all 379 transformers"),
+         "normalEvents": labelled(e["normalEvents"], "SIM", cite + "; normal-tier events (>110% for >= 30 min), home load included"),
+         "emergencyN": labelled(e["emergencyN"], "SIM", cite + "; 15-min intervals above 150%"),
+         "tfsOver100": labelled(e["tfsOver100"], "SIM", cite + "; transformers above nameplate at least once"),
+         "protectionTfs": labelled(len(e["protectionTfs"]), "SIM", cite + "; transformers where the fuse rule (ASSUMPTION) would operate",
+                                   tfs=e["protectionTfs"]),
+         "headMaxPct": labelled(h["maxPct"], "SIM", cite + f"; feeder-head current / {HEAD_RATING_A:.0f} A (per conductor)",
+                                amps=h["amps"], t=h["t"], stepsOver100=h["stepsOver100"])}
+    if e.get("causedNormal") is not None:
+        d["causedNormal"] = labelled(e["causedNormal"], "SIM", cite + "; battery-caused normal-tier events (its batteries charge, or it back-feeds while they discharge)")
+    d["errorAllPts"] = {"max": labelled(e["errorAllPts"]["max"], "SIM", cite + "; surrogate - OpenDSS, all 379 transformers"),
+                        "p99": labelled(e["errorAllPts"]["p99"], "SIM", cite + "; surrogate - OpenDSS, all 379 transformers")}
+    return d
+
+
+FLEET_CITE = "OpenDSS (sim.referee): the existing 96-Core fleet's month, August 2026"
+
+
+def apply_fleet(index, combos, ref, same):
+    """sim.referee's existing-fleet months (home load only at g0 and g20, and every Core baseline) into
+    index.referee.fleet and each combo's fleetCounterfactualTotals.opendss (audit R2 M2, M6, L9). A Legacy combo's
+    existing fleet is Core with the same schedule as its Core twin (sha256 match, `same`), so it gets that month."""
+    fl = ref.get("fleet") or {}
+    if not fl:
+        return
+    rf = index["referee"]
+    rf["fleet"] = {}
+    for key, e in fl.items():
+        cite = (f"OpenDSS (sim.referee): home load only (no batteries), {key[5:]} load, August 2026" if key.startswith("none-")
+                else f"{FLEET_CITE}, {key}")
+        rf["fleet"][key] = fleet_od(e, cite)
+    bcn, hd = rf["baselineCausedNormal"], rf.setdefault("head", {})
+    for combo in COMBOS:
+        run = same.get(combo)
+        if run is None or run == combo or run not in fl:
+            continue
+        note = f"; the same existing-fleet schedule as {run} (sha256 match), so the same OpenDSS month"
+        if combo not in bcn and run in bcn:
+            bcn[combo] = labelled(bcn[run]["v"], "SIM", bcn[run]["cite"] + note)
+        if f"baseline {combo}" not in hd and f"baseline {run}" in hd:
+            src = hd[f"baseline {run}"]
+            hd[f"baseline {combo}"] = {k: ({**v, "cite": v.get("cite", "") + note} if isinstance(v, dict) else v)
+                                       for k, v in src.items()}
+    for combo, doc in combos.items():
+        t = doc.get("fleetCounterfactualTotals")
+        if t is None:
+            continue
+        pol, cls, rule, g = combo.split("-")
+        od = {}
+        if f"none-{g}" in rf["fleet"]:
+            od["none"] = rf["fleet"][f"none-{g}"]
+        for p in POLICIES:
+            run = same.get(f"{p}-{cls}-{rule}-{g}")
+            if run in fl:
+                sib = f"{p}-{cls}-{rule}-{g}"
+                od[p] = rf["fleet"][run] if run == sib else fleet_od(fl[run], f"{FLEET_CITE}, {run}; the same existing-fleet schedule as {sib} (sha256 match)")
+        if od:
+            t["opendss"] = od
+
+
+def apply_referee(index, combos, ref, same=None):
     """Merge sim.referee's OpenDSS numbers into index.referee and the shortlist cards (both default combos)."""
     if ref is None:
         index["referee"] = {"runs": 0, "status": "not run on these schedules (run scripts/build_all.sh referee)",
@@ -673,6 +826,9 @@ def apply_referee(index, combos, ref):
                         for k, v in block.items()}
             ent["opendss"] = {"before": relabel(c["before"]), "after": relabel(c["after"])}
             ent["screening"] = c["after"] is None
+            if c["after"] is not None:
+                ent["reason"] += f"; OpenDSS-checked month peak with the battery {c['after']['peakPct']['v']:.1f}% (SIM, OpenDSS)"
+    apply_fleet(index, combos, ref, same or {})
 
 
 # =================================================================================================================
@@ -693,13 +849,7 @@ def build_index(ctx, extras, uc, bench_s):
         fc[name] = {"h100": [round(float(v), 2) for v in Mx["h100"][idx]],
                     "normalEvents": [int(v) for v in Mx["normalEvents"][idx]],
                     "emergencyN": [int(v) for v in Mx["emergencyN"][idx]]}
-        fct[name] = {"h100": labelled(round(float(Mx["h100"][idx].sum()), 2), "SIM", SCREEN),
-                     "normalEvents": labelled(int(Mx["normalEvents"][idx].sum()), "SIM", SCREEN),
-                     "emergencyN": labelled(int(Mx["emergencyN"][idx].sum()), "SIM", SCREEN),
-                     "tfsOver100": labelled(int((Mx["h100"][idx] > 0).sum()), "SIM", SCREEN),
-                     "causedNormal": labelled(int(Mx["causedNormal"][idx].sum()) if which == "pct" else 0, "SIM", "P2 definition"),
-                     "headPct": labelled(round(head_pct((ctx.P + (x["sim"]["col_kw"][:, cols] if which == "pct" else 0.0)) @ ctx.phase_w,
-                                                        ctx.Q @ ctx.phase_w, x["sim"]["n"]), 1), "DERIVED", HEAD_CITE)}
+        fct[name] = x["fleet"]["none" if which == "pct_none" else "own"]     # the same rows build_combo computed
         if name == "none":
             none_peakT = Mx["peakT"]
     fprot = {}
@@ -726,16 +876,11 @@ def build_index(ctx, extras, uc, bench_s):
               for w in windows]
     bridge = []
     for tf in (ctx.T240,):
-        item = {"tf": tf, "id": ctx.tf_ids[tf], "candidates": ctx.cand_on[tf]}
+        item = {"tf": tf, "id": ctx.tf_ids[tf], "candidates": ctx.cand_on[tf], "scope": list(FLIP), "scopeText": SCOPE_TEXT}
         for pol, x in (("naive", xn), ("aware", xa)):
             for r, (_, e, t2, home) in enumerate(x["rows"]):
                 if t2 == tf:
-                    item[pol] = {"rank": r + 1, "home": home, "label": ctx.labels[home],
-                                 "peakWithoutPct": labelled(round(e["peakWithout"], 1), "SIM", SCREEN),
-                                 "peakWithPct": labelled(round(e["peakWith"], 1), "SIM", SCREEN),
-                                 "h100Without": labelled(round(float(x["sim"]["M"]["h100"][e["col_wo"]]), 2), "SIM", SCREEN),
-                                 "h100With": labelled(round(float(x["sim"]["M"]["h100"][e["col_w"]]), 2), "SIM", SCREEN),
-                                 "noNewViolation": labelled(not e["newViolation"], "SIM", SCREEN)}
+                    item[pol] = bridge_entry(ctx, x["sim"], e, r + 1, home)
                     break
         c0 = xa["col_of"][(tf, 0)]
         item["driver"] = ctx.driver(tf, int(xa["sim"]["M"]["peakT"][c0]))
@@ -756,17 +901,27 @@ def build_index(ctx, extras, uc, bench_s):
         "fleetCounterfactual": fc, "fleetCounterfactualTotals": fct,
         "fleetProtection": {"rule": "protection may operate (ASSUMPTION rule, 4.5: one 15-min interval above 200% of nameplate); the month run does not isolate the transformer afterwards",
                             "naive": fprot["naive"], "aware": fprot["aware"]},
-        "flip": flip_doc(ctx, xn, xa),
+        "flip": {**flip_doc(ctx, xn, xa), "scopeText": SCOPE_TEXT},
+        "scope": {"combo": SCOPE, "text": SCOPE_TEXT,
+                  "blocks": "flip, bridge, usefulCapacity, fleetCounterfactual(+Totals), fleetProtection, drivers, ties: "
+                            "computed for this setting only; every <combo>.json carries its own bridge, flip and "
+                            "fleetCounterfactualTotals (audit R2 M1-M3)"},
         "ties": {"byId": labelled(ties, "SIM", "candidates whose place only the id decided (siblings on one transformer are identical in the surrogate)"), "of": len(ctx.cands)},
         "drivers": {"top10DistinctProfiles": labelled(len(set(profs)), "SIM", "SMART-DS profiles of the aware top 10 (their transformer's peak home)"),
                     "profiles": profs},
         "insight": {"tfPeakHour": tf_peak_hour, "priceMaxHour": pmh},
-        "usefulCapacity": {"naive": labelled(uc["naive"]["n"], "SIM", SCREEN, stop=uc["naive"]["stop"]),
+        "usefulCapacity": {"scope": SCOPE, "scopeText": SCOPE_TEXT,
+                           "question": "how many batteries fit, from an empty feeder, before the grid is harmed (a battery-caused "
+                                       "normal-tier transformer event, or the feeder head over its 370 A rating)?",
+                           "naive": labelled(uc["naive"]["n"], "SIM", SCREEN, stop=uc["naive"]["stop"]),
+                           "naiveHead": labelled(uc["naiveHead"]["n"], "SIM", SCREEN + "; naive under feeder-aware's question: "
+                                                 "the first battery-caused normal-tier event or the per-phase feeder-head "
+                                                 "estimate above 100% of 370 A", stop=uc["naiveHead"]["stop"]),
                            "aware": labelled(uc["awareHead"]["n"], "SIM", SCREEN + "; aware with the feeder-head cap (HEAD_CAP)",
                                              stop=uc["awareHead"]["stop"]),
                            "awareTransformerOnly": labelled(uc["aware"]["n"], "SIM", SCREEN + "; transformer caps only, no head cap",
                                                             stop=uc["aware"]["stop"]),
-                           "rule": "greedy order from an empty feeder (the 96 fleet homes are candidates like any other; homes on one transformer by id); naive stops at the first battery-caused normal-tier event; aware (feeder-head cap) at feeder curtailment above the cap",
+                           "rule": "greedy order from an empty feeder (the 96 fleet homes are candidates like any other; homes on one transformer by id); naive stops at the first battery-caused normal-tier event (transformers only, the round-1 count); naiveHead also stops when the per-phase feeder-head estimate passes 100% (the question aware answers; naive has no head cap); aware (feeder-head cap) at feeder curtailment above the cap",
                            "cap": labelled(CURTAIL_CAP, "ASSUMPTION", "CURTAIL_CAP"),
                            "feederHead": {pol: {"overAt": labelled(uc[pol]["headOverAt"], "DERIVED", HEAD_CITE),
                                                 "pctAtN": labelled(round(uc[pol]["headPctAtN"], 1), "DERIVED", HEAD_CITE),
@@ -809,16 +964,20 @@ def csv_bytes(ctx, doc, extra):
 def build_all(bench=False, write=True, out=print):
     t0 = time.perf_counter()
     ctx = Ctx()
-    combos, extras = {}, {}
+    combos, extras, light, kws = {}, {}, {}, {}
     per = []
     for combo in COMBOS:
         t = time.perf_counter()
         doc, extra = build_combo(ctx, combo)
         per.append(time.perf_counter() - t)
         combos[combo] = doc
-        if combo in FLIP or combo in ("naive-core-d26-g20", "aware-core-d26-g20"):
+        light[combo] = {k: extra[k] for k in ("rows", "home_rank", "tie_home", "fleet", "fleetSha")}
+        if combo in FLIP:
             extras[combo] = extra
+        if combo in referee_combos():
+            kws[combo] = extra["sim"]["kw"]
         out(f"p2 {combo}: {per[-1]:.1f} s; #1 {doc['ranking'][0]['label'] if doc['ranking'] else '-'}")
+    same = per_combo_blocks(ctx, combos, light)
     uc = useful_capacity(ctx)
     out(f"useful capacity: naive {uc['naive']['n']} / aware {uc['aware']['n']}")
     prev = OUT / "index.json"
@@ -831,12 +990,12 @@ def build_all(bench=False, write=True, out=print):
         except (KeyError, ValueError, TypeError):
             bench_s = None
     index = build_index(ctx, extras, uc, bench_s)
-    sha = schedule_sha({k: extras[k] for k in referee_combos()})
+    sha = schedule_sha(kws)
     index["referee_schedule_sha256"] = sha
     cap_sha = capacity_sha(uc, sha)
     index["referee_capacity_sha256"] = cap_sha
     ref = load_referee(sha)
-    apply_referee(index, combos, ref)
+    apply_referee(index, combos, ref, same)
     apply_capacity(index, ref, cap_sha)
     csvb = csv_bytes(ctx, combos[DEFAULT], extras[DEFAULT])
     if write:
@@ -846,7 +1005,26 @@ def build_all(bench=False, write=True, out=print):
 
 
 def referee_combos():
-    return ("naive-core-d26-g0", "aware-core-d26-g0", "naive-core-d26-g20", "aware-core-d26-g20")
+    """Every Core combo: the referee re-runs each one's existing-fleet month in OpenDSS (the d26 ones also carry the
+    shortlist runs). A Legacy combo's existing fleet has its Core twin's schedule (`same`)."""
+    return tuple(c for c in COMBOS if c.split("-")[1] == "core")
+
+
+def per_combo_blocks(ctx, combos, light):
+    """Each combo's own hand-off inputs (audit R2 M1-M3): the existing-fleet table (none / naive / aware at this
+    combo's class, rule and growth) and the naive-vs-aware flip for the same setting. Returns `same`: combo -> the Core
+    combo whose existing-fleet schedule is byte-identical (sha256), i.e. the OpenDSS month that judges its fleet."""
+    same = {}
+    for combo, doc in combos.items():
+        pol, cls, rule, g = combo.split("-")
+        core = f"{pol}-core-{rule}-{g}"
+        if light[combo]["fleetSha"] == light[core]["fleetSha"]:
+            same[combo] = core
+        cn, ca = f"naive-{cls}-{rule}-{g}", f"aware-{cls}-{rule}-{g}"
+        doc["fleetCounterfactualTotals"] = {"combos": [cn, ca], "none": light[combo]["fleet"]["none"],
+                                            "naive": light[cn]["fleet"]["own"], "aware": light[ca]["fleet"]["own"]}
+        doc["flip"] = flip_doc(ctx, light[cn], light[ca], (cn, ca))
+    return same
 
 
 def write_outputs(index, combos, csvb):
