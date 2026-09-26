@@ -1,0 +1,2 @@
+OpenDSSDirect.py==0.9.4
+numpy==2.5.3

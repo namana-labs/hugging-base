@@ -1,7 +1,16 @@
 # Hugging Base
 
-Feeder-aware siting, dispatch and anomaly detection for a fleet of home batteries. Built for the Base Power & AITX hackathon, September 2026.
+A playable neighborhood-grid simulator for the Base Power × AITX hackathon. Explore a real SMART-DS feeder, replay three stories, compare dispatch policies, and test the next home battery with OpenDSS.
 
-The market pays a battery the same wherever it sits in a load zone. The grid does not benefit the same. This simulator scores where the next battery should go, chooses which batteries to recharge given a congestion point, and detects a stealthy hijack from physics on a real-looking Austin feeder.
+```sh
+python3 -m http.server 4387 --bind 127.0.0.1 --directory ui/dist
+```
 
-Start with [docs/README.md](docs/README.md).
+Open **http://127.0.0.1:4387**. The bundled app needs no dependency installation.
+
+- [Playbook, regeneration, validation, and limitations](docs/implementation.md)
+- [Design and project scope](docs/design.md)
+- [Research and source references](docs/research-report.md)
+- [Data provenance and modifications](data/README.md)
+
+`sim/` owns the physics and scoring; `ui/dist/` is the complete static app plus solved data. Core assumptions are centralized in `sim/constants.py`. Prices and temporal load profiles are illustrative, explicitly labeled assumptions. OpenDSS is the referee.
