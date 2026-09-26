@@ -95,6 +95,18 @@ export function fleetTotals(fc) {
   return out;
 }
 
+/** Where a home stands under a policy when it is outside that combo's top 50: the collapsed rank from
+ *  index.flip.movers (one entry per transformer) and the with/without month peak from index.bridge, when L3 lists
+ *  them. Both are labelled data; null fields when not listed. */
+export function standingOutside(index, homeIdx, tf, policy) {
+  const f = index && index.flip;
+  const mv = f && Array.isArray(f.movers) ? f.movers.find((m) => m.home === homeIdx) : null;
+  const rank = mv ? (policy === 'naive' ? mv.rankNaive : mv.rankAware) : null;
+  const br = index && Array.isArray(index.bridge) ? index.bridge.find((b) => b.tf === tf) : null;
+  const bp = br && br[policy] && br[policy].home === homeIdx ? br[policy] : null;
+  return { rank: rank && typeof rank === 'object' && 'label' in rank ? rank : null, bridge: bp };
+}
+
 /** True when the OpenDSS referee re-ran this candidate (L3: opendss.after is null when it did not). */
 export function checkedByOpenDSS(e) { return !!(e && e.opendss && e.opendss.after && e.screening !== true); }
 
@@ -237,8 +249,21 @@ function candidateCard(ctx, st) {
     if (sel.home < 0) return '<div class="p2-card"><div class="hb-sub">No candidate selected.</div></div>';
     const h = topology.homes[sel.home];
     const peak = bulk(doc, 'baseline', doc.baseline.peak[h.tf] / 10);
-    return `<div class="p2-card"><h3>${esc(h.label)} · ${esc(tfName(topology, h.tf))}</h3>
-      <div class="hb-sub">${h.battery ? 'This home already has a battery.' : 'Not in this combo\'s top 50.'} Its transformer's month peak without a new battery: ${fmt.fmtHTML(peak, { unit: '%', digits: 1 })}.</div></div>`;
+    const pol = (parseCombo(combo) || {}).policy;
+    const so = h.battery ? { rank: null, bridge: null } : standingOutside(index, sel.home, h.tf, pol);
+    const polName = pol === 'naive' ? 'naive dispatch (no feeder check)' : 'feeder-aware dispatch';
+    let more = '';
+    if (so.rank) more += `<div class="hb-sub">Rank under ${esc(polName)}: ${fmt.fmtHTML(so.rank)} (one entry per transformer).</div>`;
+    const b = so.bridge;
+    if (b && fmt.isLabelled(b.peakWithPct)) {
+      more += `<p class="p2-cf">With a new battery here under ${esc(polName)}: month peak ${b.peakWithoutPct ? fmt.fmtHTML(b.peakWithoutPct, { unit: '%', digits: 1 }) : 'n/a'} without, ${fmt.fmtHTML(b.peakWithPct, { unit: '%', digits: 1 })} with; hours above nameplate ${b.h100Without ? fmt.fmtHTML(b.h100Without, { unit: ' h', digits: 2 }) : 'n/a'} without, ${b.h100With ? fmt.fmtHTML(b.h100With, { unit: ' h', digits: 2 }) : 'n/a'} with.${b.noNewViolation && b.noNewViolation.v === false ? ' It adds a new violation: <b>where NOT to put it</b>.' : ''}</p>`;
+      const oc = counterpart(combo);
+      if (oc) more += `<a class="p2-toggle" href="${ctx.href({ view: 'p2', combo: oc, home: h.id })}">Managed ${pol === 'naive' ? 'feeder-aware' : 'naively'} instead: open its card</a>`;
+    }
+    const d = (index && Array.isArray(index.bridge) ? index.bridge.find((x) => x.tf === h.tf) : null);
+    const dr = d && d.driver && d.driver.profile ? `<div class="hb-sub">Its transformer's stress is one home's load, ${esc(d.driver.label || '')} (SMART-DS profile ${esc(d.driver.profile)}${sharedNames(d.driver.sharedWith).length ? `, the same profile as ${esc(sharedNames(d.driver.sharedWith).join(', '))}: one shape, not independent evidence` : ''}).</div>` : '';
+    return `<div class="p2-card" data-card-home="${esc(h.id)}"><h3>${esc(h.label)} · ${esc(tfName(topology, h.tf))}</h3>
+      <div class="hb-sub">${h.battery ? 'This home already has a battery.' : 'Not in this combo\'s top 50.'} Its transformer's month peak without a new battery: ${fmt.fmtHTML(peak, { unit: '%', digits: 1 })}.</div>${more}${dr}</div>`;
   }
   const t = topology.transformers[e.tf];
   const kva = { v: t.kva, label: 'REAL', cite: 'SMART-DS Transformers.dss' };
@@ -265,7 +290,7 @@ function candidateCard(ctx, st) {
   }
   const toggle = otherCombo
     ? `<a class="p2-toggle" href="${ctx.href({ view: 'p2', combo: otherCombo, home: homeId })}">Managed ${oc.policy === 'naive' ? 'naively' : 'feeder-aware'} instead: ${oRank ? `rank ${esc(oRank)}` : 'not in its top 50'}${oEntry && oEntry.noNewViolation && oEntry.noNewViolation.v === false ? ', adds a violation' : ''}</a>` : '';
-  return `<div class="p2-card">
+  return `<div class="p2-card" data-card-home="${esc(homeId || '')}">
     <div class="p2-card-h"><h3>#${esc(e.rank)} ${esc(homeLabel(topology, e.home))} · ${esc(tfName(topology, e.tf))} · ${fmt.fmtHTML(kva, { unit: ' kVA' })}</h3>${badge}</div>
     <div class="p2-reason">${esc(e.reason || '')}</div>
     <p class="p2-cf">${counterfactualHTML({ entry: e, doc, index, topology, combo }, fmt)}</p>
@@ -319,7 +344,7 @@ function flipBlock(ctx, st) {
   const ties = st.index.ties && st.index.ties.byId;
   let body = '';
   if (ov) {
-    body += `<div class="p2-flip-big"><span class="hb-big">${fmt.fmtHTML(ov)}</span><span class="hb-sub"> of 10 homes in both top tens (naive vs feeder-aware)</span></div>`;
+    body += `<div class="p2-flip-big"><span class="hb-big">${fmt.fmtHTML(ov)}</span><span class="hb-sub"> of 10 in both top tens (naive vs feeder-aware${ov.cite && /collapsed|per transformer/i.test(ov.cite) ? ', one entry per transformer' : ''})</span></div>`;
     body += v.supports ? `<div class="p2-headline">${esc(v.headline)}</div>`
       : `<div class="p2-headline muted">The two rankings overlap by the number above; the flip is ${ov.v >= 10 ? 'not seen' : 'partial'} in this data.</div>`;
     body += `<div class="hb-sub">Spearman ${sp ? fmt.fmtHTML(sp, { digits: 2 }) : 'n/a'}${un.top10Overlap ? ` · untied candidates only: overlap ${fmt.fmtHTML(un.top10Overlap)}, Spearman ${un.spearman ? fmt.fmtHTML(un.spearman, { digits: 2 }) : 'n/a'} over ${un.n != null ? fmt.fmtHTML(typeof un.n === 'number' ? { v: un.n, label: un.top10Overlap.label || 'DERIVED' } : un.n) : 'n/a'} candidates` : ''}${ties ? ` · places decided by id: ${fmt.fmtHTML(ties)} of ${esc(st.index.ties.of)}` : ''}</div>`;
@@ -333,14 +358,23 @@ function flipBlock(ctx, st) {
   }
   if (st.aware && st.naive) {
     const a1 = (st.aware.ranking || [])[0], n1 = (st.naive.ranking || [])[0];
-    const line = (e, from, to, toName) => {
+    const line = (e, from, to, toName, toPolicy) => {
       if (!e) return '';
       const r = rankOf(to, e.home);
       const te = findCandidate(to, topology, topology.homes[e.home] && topology.homes[e.home].id).entry;
-      const viol = te && te.noNewViolation && te.noNewViolation.v === false;
-      return `<li>${esc(from)} #1 ${esc(homeLabel(topology, e.home))} on ${esc(tfName(topology, e.tf))}: under ${esc(toName)} ${r ? `rank ${esc(r)}` : 'not in the top 50'}${viol ? ', and it adds a violation there (where NOT to put it)' : ''}.</li>`;
+      let viol = te && te.noNewViolation && te.noNewViolation.v === false;
+      let where = r ? `rank ${esc(r)}` : 'not in the top 50';
+      if (!r) {
+        const so = standingOutside(st.index, e.home, e.tf, toPolicy);
+        if (so.rank) where = `rank ${fmt.fmtHTML(so.rank)} (one entry per transformer)`;
+        if (so.bridge && fmt.isLabelled(so.bridge.peakWithPct)) {
+          where += `; month peak ${so.bridge.peakWithoutPct ? fmt.fmtHTML(so.bridge.peakWithoutPct, { unit: '%', digits: 1 }) : 'n/a'} without, ${fmt.fmtHTML(so.bridge.peakWithPct, { unit: '%', digits: 1 })} with`;
+          viol = viol || (so.bridge.noNewViolation && so.bridge.noNewViolation.v === false);
+        }
+      }
+      return `<li>${esc(from)} #1 ${esc(homeLabel(topology, e.home))} on ${esc(tfName(topology, e.tf))}: under ${esc(toName)} ${where}${viol ? ', and it adds a violation there (where NOT to put it)' : ''}.</li>`;
     };
-    body += `<ul class="p2-fliplist">${line(a1, 'Feeder-aware', st.naive, 'naive dispatch')}${line(n1, 'Naive', st.aware, 'feeder-aware dispatch')}</ul>`;
+    body += `<ul class="p2-fliplist">${line(a1, 'Feeder-aware', st.naive, 'naive dispatch', 'naive')}${line(n1, 'Naive', st.aware, 'feeder-aware dispatch', 'aware')}</ul>`;
   }
   return `<section class="p2-flip" data-beat="p2-flip"><h2>The flip: naive vs feeder-aware ranking</h2>${body || '<div class="hb-sub">Not computed yet.</div>'}</section>`;
 }
@@ -506,7 +540,7 @@ export async function mount(el, ctx) {
   const cur = parseCombo(combo);
   const aware = cur.policy === 'aware' ? doc : other;
   const naive = cur.policy === 'naive' ? doc : other;
-  const n = link.n || 5;
+  const n = link.n || 1;   // "the next battery"; ?n= (1-10) steps the greedy sequence
   let sel = findCandidate(doc, topology, link.home);
   if (!sel.entry && sel.home < 0 && doc.ranking && doc.ranking.length) sel = { entry: doc.ranking[0], via: 'home', home: doc.ranking[0].home };
   const st = { index, doc, combo, other, otherCombo, aware, naive, p1meta, sel, n };
@@ -547,7 +581,7 @@ export async function mount(el, ctx) {
     ${refereeBlock(ctx, st)}
     ${handoffBlock(ctx, st)}
     ${flipBlock(ctx, st)}
-    <h2>The candidate</h2>
+    <h2 class="p2-card-anchor">The candidate</h2>
     ${candidateCard(ctx, st)}
     <h2>Ranked candidates</h2>
     ${rankingTable(ctx, st)}
@@ -559,9 +593,13 @@ export async function mount(el, ctx) {
     ${marketBlock(ctx, st)}
     <div class="hb-note">The next-battery score is not a Base product: Base schedules installs by demand; this adds the grid lens. Screening numbers come from a per-transformer surrogate calibrated against OpenDSS; shortlist cards carry OpenDSS numbers when the referee has run. Growth ${fmt.chip('ASSUMPTION', 'EVs and heat pumps')}, the fleet placement ${fmt.chip('ASSUMPTION', 'seed 17263, the prototype placement')} and the curtailment cap ${fmt.chip('ASSUMPTION')} are named constants.</div>`;
 
-  if (link.beat) {
-    const t = el.querySelector(`[data-beat="${String(link.beat).replace(/[^a-z0-9-]/gi, '')}"]`);
-    if (t && t.scrollIntoView) t.scrollIntoView({ block: 'start' });
+  // Scroll the beat's section (or, on ?home=, the candidate card) into view below the sticky caption bar.
+  const target = link.beat ? el.querySelector(`[data-beat="${String(link.beat).replace(/[^a-z0-9-]/gi, '')}"]`)
+    : (link.home ? el.querySelector('.p2-card-anchor') : null);
+  if (target && target.scrollIntoView) {
+    const bar = el.querySelector('.beat-bar');
+    target.style.scrollMarginTop = `${bar ? bar.offsetHeight + 8 : 0}px`;
+    target.scrollIntoView({ block: 'start' });
   }
   const range = el.querySelector('.p2-n');
   if (range) {

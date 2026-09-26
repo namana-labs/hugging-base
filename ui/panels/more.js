@@ -644,6 +644,7 @@ export async function mount(el, ctx) {
     </div></div>`;
   if (ctx.link.beat) {
     const t = el.querySelector(`[data-beat="${typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(ctx.link.beat) : ctx.link.beat}"]`);
-    if (t && t.scrollIntoView) t.scrollIntoView({ block: 'start' });
+    const bar = el.querySelector('.beat-bar');
+    if (t && t.scrollIntoView) { t.style.scrollMarginTop = `${bar ? bar.offsetHeight + 8 : 0}px`; t.scrollIntoView({ block: 'start' }); }
   }
 }

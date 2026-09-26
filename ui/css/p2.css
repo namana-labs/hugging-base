@@ -109,3 +109,8 @@ body.view-more .hb-panel { overflow: hidden; }
 }
 .p2-odss { border: 1px solid var(--accent); border-radius: 6px; padding: 4px 8px; margin: 6px 0; font-size: 12px; }
 .p2-odss > b { color: var(--accent); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+
+/* The beat caption stays on screen while its section is scrolled into view (P2 and More beats). */
+.p2 > .beat-bar, .more-wrap > .beat-bar { position: sticky; top: 0; z-index: 3; background: color-mix(in srgb, var(--accent) 7%, var(--paper)); box-shadow: 0 2px 6px rgba(0, 0, 0, .08); }
+/* cover the panel's 18px top padding above the stuck bar, so scrolled text does not peek through */
+.p2 > .beat-bar { top: -18px; box-shadow: 0 -18px 0 var(--paper), 0 2px 6px rgba(0, 0, 0, .08); }

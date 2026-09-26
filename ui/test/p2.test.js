@@ -426,3 +426,19 @@ test('ranking table: refereed rows show the OpenDSS peak, screening rows the sur
   const real = realJSON('p2/aware-core-d26-g0.json');
   if (real) for (const x of real.ranking.slice(0, 5)) if (x.opendss && x.opendss.after) assert.equal(peakWithShown(x), x.opendss.after.peakPct);
 });
+
+test('outside the top 50: the naive standing of feeder-aware #1 comes from flip.movers + index.bridge, labelled', async () => {
+  const { standingOutside } = await import('../panels/p2.js');
+  const idx = realJSON('p2/index.json');
+  if (!idx) return;
+  const a1 = realJSON('p2/aware-core-d26-g0.json').ranking[0];
+  const so = standingOutside(idx, a1.home, a1.tf, 'naive');
+  const mv = (idx.flip.movers || []).find((m) => m.home === a1.home);
+  if (mv) assert.deepEqual(so.rank, mv.rankNaive);
+  const br = (idx.bridge || []).find((b) => b.tf === a1.tf);
+  if (br && br.naive.home === a1.home) {
+    assert.equal(so.bridge, br.naive);
+    assert.ok(fmt.isLabelled(so.bridge.peakWithPct));
+  }
+  assert.deepEqual(standingOutside(idx, -5, -5, 'naive'), { rank: null, bridge: null });
+});
