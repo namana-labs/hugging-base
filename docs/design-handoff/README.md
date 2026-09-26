@@ -1,5 +1,7 @@
 # Handoff: Hugging Base — Chapter 1 control room (option 3a)
 
+> **Authoritative design source.** For colours, type, spacing, radii, motion, components and UI copy, this spec wins over `docs/ui-brief.md` and the existing prototype's look. `docs/design.md` still owns scope and the non-negotiables.
+
 ## Overview
 Hugging Base simulates one Austin-like distribution feeder, with a fleet of home batteries run as one power plant. Option **3a** is the chosen direction for the "Heat-wave evening" chapter. It is a control-room screen where every signal is drawn as a graph across a 20-second simulated day. The graphs clear at midnight and redraw each day. The interface pulses with a "heartbeat" driven by fleet charge and power.
 
@@ -170,4 +172,4 @@ These are in `design-system/tokens/*.css`, and `design-system/styles.css` import
 ## Files
 - `prototype/Hugging Base Heartbeat v2.dc.html`: the design reference. Option 3a is inside `<div class="dv-opt" id="3a">`. The logic is in the `<script data-dc-script>` block: topology generator, scripted series, `paint()` loop.
 - `prototype/support.js`: the runtime needed to open the prototype in a browser.
-- `design-system/`: `styles.css`, `tokens/` (colors, typography, spacing, motion, fonts), `guidelines/` (specimen cards), `readme.md` (brand and content guide), and `SKILL.md` (so a Claude Code agent can use this system).
+- `design-system/`: `styles.css`, `tokens/` (colors, typography, spacing, motion, fonts), `guidelines/` (specimen cards), and `readme.md` (brand and content guide). The Claude Code skill for this system is `.claude/skills/hugging-base-design/SKILL.md`.

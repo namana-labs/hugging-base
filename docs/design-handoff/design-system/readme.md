@@ -2,7 +2,7 @@
 
 Hugging Base is a hackathon simulator of one Austin-like feeder run by a fleet of home batteries. It shows which batteries to dispatch under congestion, where the next battery should go, and what happens when pieces fail. It is inspired by Base Power's public look (deep forest green on warm cream) but is not Base's product and uses none of its marks.
 
-Sources: the design brief pasted in chat (Sep 2026) and the prototype at `demos/grid-stories/ui/dist/` (not connected, not read).
+Sources: `docs/ui-brief.md` and the prototype at `demos/grid-stories/ui/dist/`. The spec in `../README.md` is authoritative; if this file disagrees with it, the spec wins.
 
 ## Content fundamentals
 - Plain language first, jargon in parentheses on first use: "transformer (the street box shared by two or three homes)".
@@ -17,7 +17,7 @@ Sources: the design brief pasted in chat (Sep 2026) and the prototype at `demos/
 - Type: Hanken Grotesk 400/700 only, tabular figures for numbers. The beat's one number is the largest thing on screen (≥58px, up to 150px).
 - Surfaces: flat cards, 1px warm hairline, radius 10. No shadows. The emphasised stat tile gets a 1.5px ink border.
 - Backgrounds: flat. The only gradient is the day/night band on timelines.
-- Motion: the interface has a heartbeat. One day = 20 s. Pulse rate follows feeder demand (52–116/min). Each beat is a lub-dub that travels from the substation outward; lines thicken and brighten on the beat; transformers above a tier swell harder. The big number breathes 2.5% on each beat. The day trace clears at midnight and redraws; yesterday fades as a ghost over 4 s. Numbers update only on 5-minute market steps. State changes use 300 ms ease-out; no bounces.
+- Motion: the interface has a heartbeat. One day = 20 s. Pulse rate follows fleet power: `40 + 80·|P|` beats per minute, where |P| is normalised fleet power (see ../README.md). Each beat is a lub-dub that travels from the substation outward; lines thicken and brighten on the beat; transformers above a tier swell harder. The big number breathes 2.5% on each beat. The day trace clears at midnight and redraws; yesterday fades as a ghost over 4 s. Numbers update only on 5-minute market steps. State changes use 300 ms ease-out; no bounces.
 - Hover: primary darkens to --brand-hover. Selected: --brand-tint background, brand text.
 - Layout: 16:9, legible at 1080p after video compression. One primary action per screen.
 
@@ -27,5 +27,5 @@ Feeder board uses Lucide (ISC licence) glyphs as inline SVG symbols: `house` for
 ## Index
 - styles.css → tokens/{fonts,colors,typography,spacing,motion}.css
 - guidelines/ specimen cards
-- Hugging Base Heartbeat.dc.html: chapter 1 layout directions with the live heartbeat
-- SKILL.md
+- ../prototype/Hugging Base Heartbeat v2.dc.html: chapter 1 layout directions with the live heartbeat
+- The agent skill lives at `.claude/skills/hugging-base-design/SKILL.md`
