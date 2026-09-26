@@ -587,7 +587,7 @@ export function buildSceneModel({ topology, footprints = null, frame = null, vie
     const w = worstIndex(pct);
     const t = st.tfs[w];
     const text = `worst now ${pct[w].toFixed(1)}%`;
-    worst.push({ i: w, position: t.meterPos, text, code: tier[w] | 0, pct: pct[w], label: frame.loadingLabel || 'SIM', tag: (frame.loadingLabel || 'SIM')[0] });
+    worst.push({ i: w, position: t.meterPos, text, code: tier[w] | 0, pct: pct[w], label: frame.loadingLabel || 'SIM', tag: (frame.loadingLabel || 'SIM')[0], name: t.key || `T-${w}` });
   }
 
   const labels = [];

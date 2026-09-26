@@ -183,7 +183,7 @@ body[data-notice]:not([data-notice="0"]) .p1-story { top: calc(var(--header-h) +
 .lg-row { display: block; margin-top: 3px; }
 .lg-row > span { display: inline; margin-right: 10px; cursor: help; white-space: nowrap; }
 .lg-row .ic { vertical-align: -4px; margin-right: 2px; }
-.lg-row .c-bat { color: var(--accent); } .lg-row .c-pad { color: var(--pad-green); } .lg-row .c-pole { color: #6a5a4a; }
+.lg-row .c-bat { color: var(--accent); } .lg-row .c-pad { color: color-mix(in srgb, var(--pad-green) 75%, var(--ink)); } .lg-row .c-pole { color: color-mix(in srgb, #6a5a4a 70%, var(--ink)); }
 .lg-tiers > span { margin-right: 8px; }
 .lg-t i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 3px; vertical-align: -1px; }
 .lg-t b { font-weight: 700; }
@@ -192,6 +192,14 @@ body[data-notice]:not([data-notice="0"]) .p1-story { top: calc(var(--header-h) +
 
 .p1-credits { right: calc(var(--panel-w) + 10px); bottom: calc(var(--transport-h) + 6px); font-size: 10.5px; color: var(--muted);
   background: color-mix(in srgb, var(--paper) 85%, transparent); padding: 2px 7px; border-radius: 4px; display: flex; gap: 4px; align-items: center; }
+
+/* the off-screen worst pointer (scene3d): an arrow at the scene's edge toward the worst transformer, with its callout */
+.hb-worst-ptr { position: absolute; z-index: 5; transform: translate(-50%, -50%); display: inline-flex; align-items: center; gap: 5px; font: inherit;
+  font-size: 12.5px; font-weight: 800; color: #fff; background: var(--c, var(--crit)); border: 0; border-radius: 999px; padding: 4px 10px 4px 6px;
+  box-shadow: 0 3px 10px rgba(0,0,0,.2); cursor: pointer; white-space: nowrap; }
+.hb-worst-ptr[hidden] { display: none; }
+.hb-worst-ptr .ar { display: inline-block; font-size: 15px; line-height: 1; }
+.hb-worst-ptr .chip { color: #fff !important; border-color: rgba(255,255,255,.7) !important; margin-left: 0; }
 
 /* intro card (a bare view=p1) */
 body.p1-intro-on .hb-scene::after { content: ""; position: absolute; inset: 0; background: color-mix(in srgb, var(--bg) 70%, transparent); pointer-events: none; }

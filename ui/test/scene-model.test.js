@@ -162,6 +162,7 @@ test('meters only on A-D, T-240 and transformers at tier >= 1; halos only at tie
   assert.equal(m.worst[0].i, w);
   assert.equal(m.worst[0].text, `worst now ${frame.loadingPct[w].toFixed(1)}%`);
   assert.equal(m.worst[0].tag, doc.series.loading.label[0]);
+  assert.equal(m.worst[0].name, namedTfs(topology).get(w) || `T-${w}`);   // the off-screen pointer names it
   if (p1Dir === 'p1') assert.equal(m.worst[0].text, `worst now ${(meta.summary.naive.maxLoading.v).toFixed(1)}%`);
   // labels: "A".."D", "T-240" only (no kVA, no room; never "Northbank")
   assert.deepEqual(m.labels.map((l) => l.text), ['A', 'B', 'C', 'D', 'T-240']);
@@ -304,5 +305,6 @@ test('3D and 2D share the hover contract: onHover, pickingRadius 3, the pickable
   }
   for (const gone of ['can-ghost', 'battery-ghost', 'can-ring110', 'can-cap150', 'battery-reserve', "id: 'alerts'"]) assert.ok(!s3.includes(gone), `${gone} removed`);
   assert.match(s2, /onHover\(cb\) \{ hover = cb; \}/);
+  assert.match(s3, /hb-worst-ptr/, 'the off-screen worst pointer');
   for (const id of ['walls', 'pads', 'poles', 'cans', 'cabinets', 'meters', 'battery-icons']) assert.ok(s2.includes(`layer: '${id}'`), `2D hit-tests ${id}`);
 });

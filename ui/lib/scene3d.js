@@ -42,6 +42,39 @@ export function createScene(el, opts = {}) {
   let pick = null, hover = null;
   let model = null;
   const atlas = buildAtlas(64);
+  // the off-screen pointer (UX-R2-story 4.3): when the worst transformer is outside the view, an arrow at the edge
+  // points to it with its callout; a click flies there
+  const ptr = document.createElement('button');
+  ptr.type = 'button';
+  ptr.className = 'hb-worst-ptr';
+  ptr.hidden = true;
+  el.appendChild(ptr);
+  let ptrKey = '';
+  function placePointer() {
+    const w = model && model.worst && model.worst[0];
+    const vp = w ? deck.getViewports()[0] : null;
+    if (!w || !vp) { ptr.hidden = true; return; }
+    const [x, y] = vp.project(w.position);
+    const W = vp.width, H = vp.height, m = 36;
+    if (x >= 0 && x <= W && y >= 0 && y <= H) { ptr.hidden = true; return; }
+    const cx = W / 2, cy = H / 2, dx = x - cx, dy = y - cy;
+    const k = Math.min((W / 2 - m) / Math.max(1e-9, Math.abs(dx)), (H / 2 - m) / Math.max(1e-9, Math.abs(dy)));
+    ptr.hidden = false;
+    const c = TIER_RGB[w.code] || TIER_RGB[0];
+    const key = `${w.text}|${w.name}|${w.code}|${Math.round(Math.atan2(dy, dx) * 20)}`;
+    const put = () => {   // keep the whole pill inside the scene
+      const hw = ptr.offsetWidth / 2 + 8, hh = ptr.offsetHeight / 2 + 8;
+      ptr.style.left = `${Math.round(Math.max(hw, Math.min(W - hw, cx + dx * k)))}px`;
+      ptr.style.top = `${Math.round(Math.max(hh, Math.min(H - hh, cy + dy * k)))}px`;
+    };
+    if (key === ptrKey) { put(); return; }
+    ptrKey = key;
+    ptr.style.setProperty('--c', `rgb(${c.join(',')})`);
+    ptr.innerHTML = `<span class="ar" style="transform:rotate(${(Math.atan2(dy, dx) * 180 / Math.PI).toFixed(0)}deg)">➜</span><span class="tx">${w.text.replace(/[<>&]/g, '')} · ${String(w.name).replace(/[<>&]/g, '')}</span><span class="chip chip-${w.label}">${w.label}</span>`;
+    ptr.title = 'The worst transformer right now is off-screen: click to fly there';
+    ptr.onclick = () => api.flyTo(w.position, { zoom: 18.3, pitch: 55 });
+    put();
+  }
   const initial = opts.viewState || cameraPreset(topology, 'feeder');
   let near = initial.zoom >= LABEL_FULL_ZOOM;
   const deck = new D.Deck({
@@ -58,6 +91,7 @@ export function createScene(el, opts = {}) {
     pickingRadius: 3,
     onAfterRender: () => {
       if (!model) return;
+      try { placePointer(); } catch (e) { /* the pointer is a nicety; never break a frame */ }
       const w = waiters; waiters = [];
       for (const f of w) f();
     },
@@ -136,7 +170,7 @@ export function createScene(el, opts = {}) {
     return out;
   }
 
-  return {
+  const api = {
     kind: 'webgl',
     deck,
     update(m) { model = m; deck.setProps({ layers: layers(m) }); },
@@ -155,4 +189,5 @@ export function createScene(el, opts = {}) {
     dispose() { deck.finalize(); },
     whenRendered() { return new Promise((res) => { waiters.push(res); deck.redraw(true); }); },
   };
+  return api;
 }
