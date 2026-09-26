@@ -1,0 +1,15 @@
+HTTP/2 200 
+etag: "9006314f"
+content-type: application/json
+content-length: 17442
+cache-control: max-age=60, public, must-revalidate
+expires: Sat, 26 Sep 2026 00:26:12 GMT
+date: Sat, 26 Sep 2026 00:25:12 GMT
+set-cookie: visid_incap_1217363=<redacted>; expires=Sat, 25 Sep 2027 06:54:02 GMT; HttpOnly; path=/; Domain=.ercot.com; Secure; SameSite=None
+set-cookie: incap_ses_912_1217363=<redacted>; path=/; Domain=.ercot.com; Secure; SameSite=None
+strict-transport-security: max-age=31536000
+x-cdn: Imperva
+access-control-allow-origin: https://mis.ercot.com
+content-security-policy: frame-ancestors 'self' https://*.ercot.com:*
+x-iinfo: 47-47345048-0 0CNN RT(1790382312803 25) q(0 -1 -1 -1) r(0 -1)
+

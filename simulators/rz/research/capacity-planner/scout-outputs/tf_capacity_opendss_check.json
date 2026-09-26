@@ -1,0 +1,6336 @@
+{
+ "producer": "overnight/evidence/assets-demand/tf_capacity_opendss_check.py",
+ "label": "SIM (OpenDSS)",
+ "repoHead": "55cd89a",
+ "runs": 13,
+ "secondsPerRun": [
+  12.7,
+  12.9,
+  12.9,
+  12.8,
+  12.8,
+  13.0,
+  12.8,
+  12.6,
+  12.6,
+  12.6,
+  12.7,
+  12.6,
+  12.8
+ ],
+ "steps": 2976,
+ "summary": {
+  "naive_at_cap": {
+   "transformers": 287,
+   "opendssCausedNormalTfs": 5,
+   "surrogateCausedNormalTfs": 0,
+   "agreeTfs": 282,
+   "opendssCausedEmergencyTfs": 4,
+   "disagree": [
+    54,
+    95,
+    123,
+    144,
+    366
+   ]
+  },
+  "naive_at_cap_plus1": {
+   "transformers": 379,
+   "opendssCausedNormalTfs": 379,
+   "surrogateCausedNormalTfs": 379,
+   "agreeTfs": 379,
+   "opendssCausedEmergencyTfs": 69,
+   "disagree": []
+  },
+  "aware_at_cap90": {
+   "transformers": 379,
+   "opendssCausedNormalTfs": 3,
+   "surrogateCausedNormalTfs": 0,
+   "agreeTfs": 376,
+   "opendssCausedEmergencyTfs": 3,
+   "disagree": [
+    123,
+    144,
+    366
+   ]
+  }
+ },
+ "results": {
+  "naive_at_cap": {
+   "1": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 87.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "3": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "4": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 90.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "5": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 87.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "6": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 86.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "7": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 88.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "8": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 77.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "9": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 94.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "10": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "11": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 82.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "12": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 89.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "13": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 108.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "14": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 94.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "15": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 89.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "18": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 92.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "19": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 94.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "20": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 74.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "21": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 84.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "22": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 92.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "23": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "24": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 108.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "25": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 81.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "26": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 88.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "27": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "28": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 94.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "29": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 101.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "30": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 78.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "31": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 80.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "32": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 91.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "33": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 87.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "34": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 90.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "35": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 88.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "36": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 102.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "37": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "38": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 94.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "39": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "40": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "41": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 110.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "42": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 79.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "44": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 86.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "45": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 76.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "46": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 92.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "47": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 81.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "48": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 109.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "49": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 93.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "50": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 92.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "51": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 70.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "52": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 86.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "53": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "54": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 113.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "55": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 91.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "56": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "57": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "58": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 82.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "60": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 105.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "61": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 81.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "62": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 87.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "63": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "64": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 79.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "65": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 106.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "67": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 76.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "68": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 90.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "69": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 89.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "70": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 94.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "71": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 79.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "72": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 74.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "73": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 77.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "74": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 101.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "76": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 111.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "77": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 88.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "78": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 91.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "79": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 79.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "80": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 94.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "81": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 78.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "82": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 105.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "83": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 91.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "84": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 89.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "85": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 76.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "86": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 83.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "87": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 86.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "88": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 81.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "89": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 110.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "90": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 88.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "91": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 79.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "93": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 93.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "94": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 95.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "95": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 111.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "96": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 76.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "97": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 101.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "98": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 80.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "99": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "100": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 110.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "101": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 74.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "102": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 82.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "103": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 77.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "104": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 107.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "105": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 75.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "106": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "107": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 82.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "108": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 91.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "109": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 75.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "110": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 101.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "112": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 111.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "113": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 74.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "114": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 106.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "115": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 92.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "116": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 78.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "117": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 77.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "118": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 83.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "119": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 108.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "120": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 75.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "122": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 92.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "123": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 249.0,
+    "opendssCausedEmergencyN": 341
+   },
+   "124": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 83.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "125": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 92.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "126": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 102.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "128": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 75.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "130": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 107.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "131": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 75.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "132": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 79.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "133": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 108.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "134": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 95.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "135": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "136": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 92.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "137": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 90.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "138": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 76.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "139": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 88.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "140": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 101.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "141": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 84.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "143": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 82.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "144": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 192.5,
+    "opendssCausedEmergencyN": 212
+   },
+   "146": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "147": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 109.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "148": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 84.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "149": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 92.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "151": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 78.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "152": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "153": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 79.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "154": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 81.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "155": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "156": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 78.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "157": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 86.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "159": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 78.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "160": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 103.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "161": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 90.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "162": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 77.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "163": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 114.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "164": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 86.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "166": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 83.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "167": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 108.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "168": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 83.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "170": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 111.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "171": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "172": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 101.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "175": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 76.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "176": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 72.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "177": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "180": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 79.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "181": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 82.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "182": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 102.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "183": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 88.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "184": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 77.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "185": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 105.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "186": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 81.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "187": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 92.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "188": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 75.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "189": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 86.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "193": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "194": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 85.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "196": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 85.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "197": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 88.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "199": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 76.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "200": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 84.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "201": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 113.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "202": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 79.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "203": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 89.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "205": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 92.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "206": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 101.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "207": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 85.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "208": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "210": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 78.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "211": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 75.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "212": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 133.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "213": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 90.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "214": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 109.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "215": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 93.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "216": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 84.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "218": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 111.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "219": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 83.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "220": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 82.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "221": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 111.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "222": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 82.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "223": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 86.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "224": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 79.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "225": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "226": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 105.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "227": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 82.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "228": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 75.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "230": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 168.2,
+    "opendssCausedEmergencyN": 1
+   },
+   "231": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 115.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "232": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 105.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "233": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 84.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "235": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "236": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 89.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "237": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 105.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "239": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 92.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "242": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 82.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "243": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 75.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "245": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 74.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "248": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 107.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "249": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 85.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "250": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 81.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "251": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 86.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "252": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 79.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "254": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 78.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "256": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 85.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "257": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 84.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "259": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 87.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "260": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 71.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "261": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 90.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "262": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 90.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "264": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 79.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "265": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 75.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "266": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 100.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "267": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 100.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "268": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 84.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "270": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 78.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "271": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 112.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "273": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "274": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 77.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "275": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 92.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "276": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 84.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "277": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 81.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "278": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 95.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "281": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 104.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "284": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 105.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "285": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "287": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 79.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "288": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 101.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "289": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 107.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "290": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 109.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "291": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 74.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "292": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 79.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "293": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 119.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "296": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "297": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 71.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "298": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 73.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "300": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 77.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "302": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 75.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "305": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "306": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 106.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "307": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 79.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "308": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 72.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "311": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 80.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "312": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 79.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "313": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 129.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "314": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 85.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "315": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 103.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "317": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 104.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "318": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 102.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "323": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 100.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "326": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 93.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "327": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 129.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "328": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "330": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 70.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "332": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 85.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "333": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "334": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 104.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "335": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 105.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "336": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 86.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "341": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 104.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "346": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "350": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 115.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "351": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 101.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "352": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 100.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "355": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 101.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "360": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 112.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "361": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 106.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "363": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 104.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "364": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 102.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "366": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 209.1,
+    "opendssCausedEmergencyN": 341
+   },
+   "368": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 101.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "369": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 137.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "371": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 119.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "374": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "375": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 109.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "377": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 107.1,
+    "opendssCausedEmergencyN": 0
+   }
+  },
+  "naive_at_cap_plus1": {
+   "0": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 112.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "1": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 114.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "2": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 130.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "3": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 125.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "4": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 117.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "5": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 128.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "6": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 127.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "7": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "8": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 118.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "9": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 121.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "10": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 124.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "11": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 122.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "12": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "13": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 135.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "14": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 122.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "15": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 130.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "16": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "17": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 127.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "18": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 132.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "19": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 122.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "20": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 115.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "21": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 125.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "22": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 119.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "23": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 124.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "24": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 135.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "25": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 122.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "26": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 129.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "27": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 123.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "28": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 121.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "29": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 128.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "30": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 119.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "31": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 121.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "32": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 118.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "33": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "34": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 118.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "35": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 115.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "36": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 188.1,
+    "opendssCausedEmergencyN": 186
+   },
+   "37": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 137.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "38": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 121.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "39": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 124.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "40": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 125.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "41": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 151.6,
+    "opendssCausedEmergencyN": 2
+   },
+   "42": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 120.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "43": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 128.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "44": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 127.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "45": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 117.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "46": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 119.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "47": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 122.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "48": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 150.4,
+    "opendssCausedEmergencyN": 2
+   },
+   "49": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 120.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "50": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 119.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "51": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 111.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "52": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 113.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "53": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 124.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "54": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 154.6,
+    "opendssCausedEmergencyN": 3
+   },
+   "55": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 131.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "56": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 123.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "57": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 127.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "58": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 123.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "59": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "60": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 132.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "61": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 121.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "62": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 127.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "63": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 126.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "64": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "65": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 133.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "66": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 120.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "67": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "68": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 117.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "69": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "70": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 121.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "71": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 120.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "72": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 115.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "73": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 118.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "74": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 128.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "75": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 122.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "76": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 152.1,
+    "opendssCausedEmergencyN": 2
+   },
+   "77": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 129.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "78": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 119.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "79": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 121.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "80": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 121.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "81": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 118.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "82": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 132.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "83": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 117.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "84": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 117.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "85": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 117.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "86": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 124.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "87": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 126.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "88": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 122.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "89": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 153.3,
+    "opendssCausedEmergencyN": 6
+   },
+   "90": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 129.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "91": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 120.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "92": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 174.4,
+    "opendssCausedEmergencyN": 2
+   },
+   "93": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 120.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "94": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 122.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "95": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 138.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "96": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 117.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "97": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 129.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "98": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 121.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "99": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 125.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "100": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 151.7,
+    "opendssCausedEmergencyN": 1
+   },
+   "101": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 115.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "102": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 123.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "103": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 118.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "104": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 135.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "105": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 115.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "106": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 182.4,
+    "opendssCausedEmergencyN": 186
+   },
+   "107": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 123.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "108": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 119.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "109": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "110": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 143.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "111": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 129.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "112": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 152.8,
+    "opendssCausedEmergencyN": 2
+   },
+   "113": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 115.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "114": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 133.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "115": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 119.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "116": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 119.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "117": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 118.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "118": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 124.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "119": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 135.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "120": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 115.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "121": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 123.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "122": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 133.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "123": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 342.2,
+    "opendssCausedEmergencyN": 370
+   },
+   "124": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 124.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "125": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 132.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "126": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 129.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "127": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 130.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "128": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "129": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 128.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "130": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 148.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "131": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "132": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 120.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "133": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 192.0,
+    "opendssCausedEmergencyN": 186
+   },
+   "134": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 136.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "135": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 182.1,
+    "opendssCausedEmergencyN": 186
+   },
+   "136": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 120.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "137": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 118.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "138": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 117.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "139": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 129.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "140": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 184.9,
+    "opendssCausedEmergencyN": 186
+   },
+   "141": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 125.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "142": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 147.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "143": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 123.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "144": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 256.8,
+    "opendssCausedEmergencyN": 341
+   },
+   "145": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 122.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "146": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 126.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "147": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 194.0,
+    "opendssCausedEmergencyN": 186
+   },
+   "148": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 125.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "149": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 119.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "150": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 152.7,
+    "opendssCausedEmergencyN": 2
+   },
+   "151": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 118.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "152": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 124.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "153": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 120.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "154": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 122.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "155": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 181.3,
+    "opendssCausedEmergencyN": 186
+   },
+   "156": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 119.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "157": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 128.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "158": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 115.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "159": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 119.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "160": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 144.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "161": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 118.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "162": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 118.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "163": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 155.1,
+    "opendssCausedEmergencyN": 4
+   },
+   "164": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 127.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "165": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 115.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "166": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 124.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "167": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 149.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "168": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 124.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "169": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 125.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "170": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 152.5,
+    "opendssCausedEmergencyN": 6
+   },
+   "171": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 124.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "172": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 142.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "173": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 129.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "174": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 119.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "175": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 117.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "176": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 112.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "177": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 137.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "178": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 132.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "179": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "180": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 120.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "181": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 122.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "182": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 145.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "183": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 115.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "184": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 118.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "185": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 146.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "186": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 122.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "187": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 133.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "188": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "189": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 126.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "190": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 125.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "191": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 133.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "192": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 143.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "193": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 180.7,
+    "opendssCausedEmergencyN": 186
+   },
+   "194": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 127.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "195": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 136.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "196": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 125.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "197": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 129.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "198": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 146.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "199": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 117.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "200": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 125.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "201": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 140.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "202": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 119.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "203": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 117.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "204": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 142.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "205": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 133.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "206": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 185.0,
+    "opendssCausedEmergencyN": 193
+   },
+   "207": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 112.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "208": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 184.0,
+    "opendssCausedEmergencyN": 186
+   },
+   "209": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 145.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "210": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 119.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "211": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "212": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 175.5,
+    "opendssCausedEmergencyN": 12
+   },
+   "213": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 117.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "214": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 192.4,
+    "opendssCausedEmergencyN": 186
+   },
+   "215": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 121.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "216": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 125.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "217": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 135.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "218": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 153.9,
+    "opendssCausedEmergencyN": 5
+   },
+   "219": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 118.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "220": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 122.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "221": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 195.2,
+    "opendssCausedEmergencyN": 224
+   },
+   "222": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 122.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "223": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 127.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "224": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 120.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "225": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 126.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "226": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 132.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "227": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 124.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "228": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "229": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 131.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "230": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 257.1,
+    "opendssCausedEmergencyN": 186
+   },
+   "231": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 199.7,
+    "opendssCausedEmergencyN": 186
+   },
+   "232": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 132.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "233": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 125.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "234": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 127.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "235": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 125.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "236": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "237": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 187.9,
+    "opendssCausedEmergencyN": 186
+   },
+   "238": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 112.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "239": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 119.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "240": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 146.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "241": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 114.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "242": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 124.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "243": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "244": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 123.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "245": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 115.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "246": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 136.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "247": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 145.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "248": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 148.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "249": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 126.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "250": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 122.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "251": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 127.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "252": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 120.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "253": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 250.0,
+    "opendssCausedEmergencyN": 340
+   },
+   "254": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 118.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "255": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 136.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "256": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 126.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "257": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 126.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "258": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 145.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "259": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 127.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "260": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 112.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "261": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 130.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "262": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 131.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "263": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 143.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "264": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 120.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "265": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "266": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 141.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "267": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 127.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "268": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 125.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "269": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 117.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "270": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 114.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "271": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 154.4,
+    "opendssCausedEmergencyN": 4
+   },
+   "272": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 112.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "273": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 126.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "274": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 118.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "275": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 120.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "276": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 125.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "277": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 121.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "278": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 123.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "279": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 121.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "280": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 119.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "281": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 131.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "282": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 126.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "283": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "284": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 188.5,
+    "opendssCausedEmergencyN": 188
+   },
+   "285": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 139.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "286": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 134.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "287": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 120.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "288": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 128.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "289": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 190.4,
+    "opendssCausedEmergencyN": 186
+   },
+   "290": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 137.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "291": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 115.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "292": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 119.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "293": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 203.5,
+    "opendssCausedEmergencyN": 186
+   },
+   "294": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 124.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "295": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 125.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "296": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 180.6,
+    "opendssCausedEmergencyN": 198
+   },
+   "297": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 112.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "298": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 114.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "299": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 141.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "300": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 118.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "301": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 136.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "302": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "303": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 118.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "304": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 115.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "305": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 181.9,
+    "opendssCausedEmergencyN": 188
+   },
+   "306": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 189.4,
+    "opendssCausedEmergencyN": 186
+   },
+   "307": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 119.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "308": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 113.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "309": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 117.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "310": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 122.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "311": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 121.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "312": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 119.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "313": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 212.8,
+    "opendssCausedEmergencyN": 186
+   },
+   "314": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 126.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "315": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 186.9,
+    "opendssCausedEmergencyN": 186
+   },
+   "316": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 137.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "317": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 187.7,
+    "opendssCausedEmergencyN": 186
+   },
+   "318": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 186.0,
+    "opendssCausedEmergencyN": 186
+   },
+   "319": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 114.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "320": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 114.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "321": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 114.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "322": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "323": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 183.3,
+    "opendssCausedEmergencyN": 186
+   },
+   "324": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 133.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "325": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 140.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "326": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 134.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "327": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 213.0,
+    "opendssCausedEmergencyN": 186
+   },
+   "328": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 182.6,
+    "opendssCausedEmergencyN": 186
+   },
+   "329": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 115.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "330": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 111.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "331": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "332": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 125.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "333": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 181.3,
+    "opendssCausedEmergencyN": 190
+   },
+   "334": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 187.7,
+    "opendssCausedEmergencyN": 186
+   },
+   "335": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 188.9,
+    "opendssCausedEmergencyN": 186
+   },
+   "336": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 168.1,
+    "opendssCausedEmergencyN": 336
+   },
+   "337": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "338": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 127.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "339": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 125.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "340": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 128.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "341": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 187.5,
+    "opendssCausedEmergencyN": 186
+   },
+   "342": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 120.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "343": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 119.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "344": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 123.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "345": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 134.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "346": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 180.9,
+    "opendssCausedEmergencyN": 186
+   },
+   "347": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 123.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "348": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 115.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "349": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 114.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "350": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 199.3,
+    "opendssCausedEmergencyN": 186
+   },
+   "351": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 185.0,
+    "opendssCausedEmergencyN": 192
+   },
+   "352": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 183.4,
+    "opendssCausedEmergencyN": 186
+   },
+   "353": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "354": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 121.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "355": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 187.6,
+    "opendssCausedEmergencyN": 186
+   },
+   "356": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 118.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "357": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 150.7,
+    "opendssCausedEmergencyN": 1
+   },
+   "358": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 164.3,
+    "opendssCausedEmergencyN": 1
+   },
+   "359": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 128.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "360": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 196.1,
+    "opendssCausedEmergencyN": 186
+   },
+   "361": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 189.4,
+    "opendssCausedEmergencyN": 186
+   },
+   "362": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 127.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "363": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 187.9,
+    "opendssCausedEmergencyN": 186
+   },
+   "364": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 186.3,
+    "opendssCausedEmergencyN": 186
+   },
+   "365": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 141.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "366": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 240.2,
+    "opendssCausedEmergencyN": 341
+   },
+   "367": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 122.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "368": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 184.3,
+    "opendssCausedEmergencyN": 186
+   },
+   "369": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 230.2,
+    "opendssCausedEmergencyN": 186
+   },
+   "370": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 134.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "371": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 203.8,
+    "opendssCausedEmergencyN": 186
+   },
+   "372": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 157.0,
+    "opendssCausedEmergencyN": 2
+   },
+   "373": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 116.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "374": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 179.7,
+    "opendssCausedEmergencyN": 196
+   },
+   "375": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 151.1,
+    "opendssCausedEmergencyN": 4
+   },
+   "376": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 120.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "377": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 190.5,
+    "opendssCausedEmergencyN": 186
+   },
+   "378": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": true,
+    "opendssMaxPct": 120.6,
+    "opendssCausedEmergencyN": 0
+   }
+  },
+  "aware_at_cap90": {
+   "0": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "1": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "2": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "3": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "4": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "5": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "6": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "7": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "8": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "9": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "10": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "11": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "12": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "13": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 102.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "14": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "15": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "16": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "17": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "18": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "19": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "20": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "21": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "22": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "23": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 100.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "24": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "25": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "26": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "27": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "28": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "29": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "30": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "31": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "32": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "33": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "34": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "35": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "36": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "37": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "38": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "39": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "40": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "41": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "42": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "43": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "44": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "45": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "46": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "47": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "48": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "49": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "50": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "51": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "52": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "53": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "54": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "55": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "56": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "57": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "58": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "59": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "60": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "61": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "62": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 101.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "63": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "64": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "65": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 100.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "66": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "67": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "68": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "69": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "70": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "71": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "72": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "73": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "74": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "75": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "76": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "77": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "78": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "79": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "80": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "81": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "82": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "83": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "84": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "85": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "86": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "87": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "88": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "89": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "90": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 100.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "91": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 101.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "92": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "93": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "94": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "95": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "96": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "97": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "98": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "99": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 100.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "100": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "101": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "102": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "103": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "104": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "105": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "106": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "107": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "108": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "109": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "110": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "111": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "112": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "113": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "114": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "115": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "116": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "117": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "118": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "119": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "120": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "121": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "122": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "123": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 398.1,
+    "opendssCausedEmergencyN": 497
+   },
+   "124": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "125": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "126": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 100.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "127": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "128": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "129": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "130": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "131": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "132": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "133": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "134": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "135": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "136": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "137": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "138": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "139": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "140": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "141": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 101.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "142": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "143": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "144": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 431.4,
+    "opendssCausedEmergencyN": 572
+   },
+   "145": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "146": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 101.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "147": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "148": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "149": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "150": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "151": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "152": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "153": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "154": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "155": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "156": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "157": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "158": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "159": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "160": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "161": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "162": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "163": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "164": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "165": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "166": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "167": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "168": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "169": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "170": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "171": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "172": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "173": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "174": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "175": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "176": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "177": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "178": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "179": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "180": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "181": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "182": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "183": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "184": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "185": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "186": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "187": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "188": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "189": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "190": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "191": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "192": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "193": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "194": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "195": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "196": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "197": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "198": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "199": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "200": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "201": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "202": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "203": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "204": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "205": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "206": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "207": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "208": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "209": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "210": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "211": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "212": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "213": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "214": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "215": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "216": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "217": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "218": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "219": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "220": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "221": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "222": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "223": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "224": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "225": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "226": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "227": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "228": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "229": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "230": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "231": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "232": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "233": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "234": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "235": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "236": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "237": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "238": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "239": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "240": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "241": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "242": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "243": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "244": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "245": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "246": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "247": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "248": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "249": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "250": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "251": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "252": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "253": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "254": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "255": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "256": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "257": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "258": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "259": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "260": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "261": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "262": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "263": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "264": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "265": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "266": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "267": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "268": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "269": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "270": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 100.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "271": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "272": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "273": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "274": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "275": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "276": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 103.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "277": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "278": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "279": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "280": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "281": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "282": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "283": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "284": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "285": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "286": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "287": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "288": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "289": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "290": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "291": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "292": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "293": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "294": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "295": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "296": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "297": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "298": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "299": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "300": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "301": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "302": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "303": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "304": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "305": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "306": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "307": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 103.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "308": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "309": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "310": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.4,
+    "opendssCausedEmergencyN": 0
+   },
+   "311": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "312": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "313": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "314": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "315": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "316": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "317": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "318": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "319": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "320": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "321": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "322": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "323": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "324": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "325": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "326": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "327": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "328": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "329": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "330": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "331": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "332": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "333": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "334": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "335": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "336": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 86.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "337": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "338": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "339": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "340": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "341": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "342": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "343": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "344": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "345": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "346": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "347": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "348": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "349": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "350": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "351": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "352": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "353": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "354": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "355": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "356": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "357": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "358": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 98.5,
+    "opendssCausedEmergencyN": 0
+   },
+   "359": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.3,
+    "opendssCausedEmergencyN": 0
+   },
+   "360": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "361": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "362": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.8,
+    "opendssCausedEmergencyN": 0
+   },
+   "363": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "364": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "365": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.7,
+    "opendssCausedEmergencyN": 0
+   },
+   "366": {
+    "opendssCausedNormal": true,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 398.6,
+    "opendssCausedEmergencyN": 646
+   },
+   "367": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.1,
+    "opendssCausedEmergencyN": 0
+   },
+   "368": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "369": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 99.2,
+    "opendssCausedEmergencyN": 0
+   },
+   "370": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "371": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "372": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "373": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "374": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.6,
+    "opendssCausedEmergencyN": 0
+   },
+   "375": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "376": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 97.0,
+    "opendssCausedEmergencyN": 0
+   },
+   "377": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.9,
+    "opendssCausedEmergencyN": 0
+   },
+   "378": {
+    "opendssCausedNormal": false,
+    "surrogateCausedNormal": false,
+    "opendssMaxPct": 96.6,
+    "opendssCausedEmergencyN": 0
+   }
+  }
+ }
+}

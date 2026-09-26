@@ -1,0 +1,77 @@
+== acceptance l3-p2 at d74fb9f (origin/overnight/l3-p2 efd9199 + origin/main 22de6bd), 10:50Z, load averages: 5.82 6.46 8.11
+lock acquired 10:56:26Z
+p2 naive-core-d26-g0: 0.3 s; #1 Home 0126
+p2 naive-core-d26-g20: 0.3 s; #1 Home 0126
+p2 naive-core-cheapest-g0: 0.3 s; #1 Home 0312
+p2 naive-core-cheapest-g20: 0.3 s; #1 Home 0541
+p2 naive-legacy-d26-g0: 0.3 s; #1 Home 0531
+p2 naive-legacy-d26-g20: 0.3 s; #1 Home 0195
+p2 naive-legacy-cheapest-g0: 0.3 s; #1 Home 0531
+p2 naive-legacy-cheapest-g20: 0.3 s; #1 Home 0195
+p2 aware-core-d26-g0: 0.9 s; #1 Home 0409
+p2 aware-core-d26-g20: 0.9 s; #1 Home 0195
+p2 aware-core-cheapest-g0: 0.9 s; #1 Home 0409
+p2 aware-core-cheapest-g20: 0.9 s; #1 Home 0195
+p2 aware-legacy-d26-g0: 0.9 s; #1 Home 0409
+p2 aware-legacy-d26-g20: 0.9 s; #1 Home 0195
+p2 aware-legacy-cheapest-g0: 0.9 s; #1 Home 0409
+p2 aware-legacy-cheapest-g20: 0.9 s; #1 Home 0195
+useful capacity: naive 383 / aware 1007
+p2 build: 17.6 s
+BUILD p2: OK (18 s)
+BUILD: PASS
+referee baseline aware-core-d26-g0: 2976 steps, 4.1 ms/step; shortlist err max 0.27 pts; normal events 0 (battery-caused 0); placed 0
+referee baseline naive-core-d26-g0: 2976 steps, 4.2 ms/step; shortlist err max 0.27 pts; normal events 308 (battery-caused 308); placed 0
+referee top5     aware-core-d26-g0: 2976 steps, 4.2 ms/step; shortlist err max 0.43 pts; normal events 0 (battery-caused 0); placed 5
+referee top5     naive-core-d26-g0: 2976 steps, 4.1 ms/step; shortlist err max 0.69 pts; normal events 308 (battery-caused 308); placed 5
+referee baseline aware-core-d26-g20: 2976 steps, 4.1 ms/step; shortlist err max 0.42 pts; normal events 5 (battery-caused 0); placed 0
+referee baseline naive-core-d26-g20: 2976 steps, 4.1 ms/step; shortlist err max 0.42 pts; normal events 374 (battery-caused 366); placed 0
+referee: 6 runs x 2976 | shortlist [104, 290, 95, 285, 201, 240, 142, 92] | error max 0.69 pts, p99 0.25 pts; all tfs max 1.25, p99 0.17; tier agreement 100.0% | 4.1 ms/step | 77 s
+referee: wrote data/out/referee-2026-08.json; re-merging into ui/data/p2 (sim.p2_build)
+p2 naive-core-d26-g0: 0.3 s; #1 Home 0126
+p2 naive-core-d26-g20: 0.3 s; #1 Home 0126
+p2 naive-core-cheapest-g0: 0.3 s; #1 Home 0312
+p2 naive-core-cheapest-g20: 0.3 s; #1 Home 0541
+p2 naive-legacy-d26-g0: 0.3 s; #1 Home 0531
+p2 naive-legacy-d26-g20: 0.3 s; #1 Home 0195
+p2 naive-legacy-cheapest-g0: 0.3 s; #1 Home 0531
+p2 naive-legacy-cheapest-g20: 0.3 s; #1 Home 0195
+p2 aware-core-d26-g0: 0.9 s; #1 Home 0409
+p2 aware-core-d26-g20: 0.9 s; #1 Home 0195
+p2 aware-core-cheapest-g0: 0.9 s; #1 Home 0409
+p2 aware-core-cheapest-g20: 0.9 s; #1 Home 0195
+p2 aware-legacy-d26-g0: 0.8 s; #1 Home 0409
+p2 aware-legacy-d26-g20: 0.8 s; #1 Home 0195
+p2 aware-legacy-cheapest-g0: 0.8 s; #1 Home 0409
+p2 aware-legacy-cheapest-g20: 0.8 s; #1 Home 0195
+useful capacity: naive 383 / aware 1007
+p2 build: 17.1 s
+BUILD referee: OK (94 s)
+BUILD: PASS
+== git status --porcelain -- ui/data/p2 data/out (empty = byte-identical)
+== end porcelain
+P2 2026-08 | 2976 x 15 min (+24 steps to 1 Sep 06:00) | 379 tfs | candidates 911 | combos 16 | screen 0.6 s/combo
+onset_d26: 31 days: binding 26, non-binding 5 [08-10 08-14 08-15 08-21 08-28], fallback 0 ; 08-22 -> 08-23 01:45 $50.54   [INVARIANT]
+cliffs: 27 total, 13 evening (4.3 rule)   [INVARIANT]
+labels ; contract ; csv data/out/siting-2026-08.csv 911 rows with labelled header (17 files, 20147 labelled numbers, 0 problems, 11 labelled columns)   [INVARIANT]
+caps parity: allocate(state=None, cover=False) vs siting.per_tf_rule, 1000 random single-step states, max diff 2.8e-13 < 1e-6   [INVARIANT]
+baseline aware-core-d26-g0 battery-caused normal 0 (all 8 aware combos: [0])   [INVARIANT]
+baseline naive-core-d26-g0 battery-caused normal 308 (7.3 lag rule: 308; emergency intervals 567; protection tfs 3)   [EXPECT: >= 1] ok
+baseline aware-core-d26-g0 normal events attributed by 7.3's lag rule (batteries active within 2 steps): 0   [report]
+fleet head estimate (DERIVED, lossless, % of 370 A): none 86.4 / naive 96.0 / aware 93.7   [report]
+fleet counterfactual (hours >100%, all tfs): none 5.0 / naive 673.0 / aware 2.0 (SIM) ; normal events 1 / 308 / 0 ; tfs >100% 5 / 30 / 3   [report]
+insight: tf monthly-peak hour (SIM, 379 tfs) mode 16 ; daily max-price hour (REAL, 31 days) mode 18   [report]
+top5 aware-core-d26-g0: 1 Home 0409@tf240 "relieves 1.25 h above nameplate (SIM); no new violation; month peak with the battery 96.8% (SIM)" 2 Home 0195@tf142 "relieves 0.50 h above nameplate (SIM); no new violation; month peak with the battery 97.0% (SIM)" 3 Home 0112@tf92 "relieves 0.25 h above nameplate (SIM); no new violation; month peak with the battery 96.8% (SIM)" 4 Home 0126@tf104 "no stress to relieve; no new violation; month peak with the battery 53.1% (SIM, lowest first)" 5 Home 0541@tf290 "no stress to relieve; no new violation; month peak with the battery 55.5% (SIM, lowest first)"
+ties decided by id: 802/911 ; aware top 10 driven by 9 distinct SMART-DS profiles [res_kw_16275_pu, res_kw_29237_pu, res_kw_30107_pu, res_kw_35369_pu, res_kw_35547_pu, res_kw_38274_pu, res_kw_38841_pu, res_kw_5253_pu, res_kw_629_pu]   [report]
+check: a home on a battery-less >100% tf is in the aware top 5: Home 0409@tf240, Home 0195@tf142, Home 0112@tf92   [EXPECT: yes] ok
+check: >= 1 naive candidate creates a new violation (where NOT to put it): 120 transformers, 179 candidates   [EXPECT: >= 1] ok
+check: protection operates in >= 1 naive counterfactual: Home 0314@tf209 2026-08-03 19:00, dark homes [], Home 0440@tf253 2026-08-01 21:00, dark homes []   [report]
+flip: top-10 overlap 7/10 ; spearman 0.9418 ; untied only 4/10, 0.2426 (n = 109) (DERIVED)   [report]
+greedy: score on the placed tf drops after each placement: 10/10 (Home 0409@tf240 Home 0195@tf142 Home 0112@tf92 Home 0126@tf104 Home 0541@tf290 Home 0115@tf95 Home 0531@tf285 Home 0302@tf201 Home 0312@tf207 Home 0055@tf52)   [EXPECT: x10] ok
+useful capacity from empty feeder: naive 383 / aware 1007 (cap 10%)   [EXPECT: n2 > n1] ok
+         naive stop: placement 384 (Home 0631 on tf 51) makes the first battery-caused normal-tier event; the feeder-head estimate (DERIVED, lossless) passes 100% at placement 113 ; aware (feeder-head cap) stop: all 1007 eligible homes used with the feeder-head cap ; aware with transformer caps only: 1007 ; feeder-head estimate (DERIVED, lossless, reads low): empty feeder 86.4%, without a head cap it passes 100% at placement naive 113 / aware 115   [report]
+referee: 6 runs x 2976 | shortlist 5/5 (naive 5/5) carry OpenDSS numbers | schedules match   [INVARIANT]
+         error max 0.69 pts ; p99 0.25 pts ; tier agreement 100.0% (all 379 tfs: max 1.25, p99 0.17) ; OpenDSS battery-caused normal, baseline: aware-core-d26-g0 0, naive-core-d26-g0 308, aware-core-d26-g20 0, naive-core-d26-g20 366   [EXPECT: p99 <= 5] ok
+determinism: not checked (run --full)
+VERIFY p2: PASS (0 expectations refuted, see NOTES.md)
+rc=0 wall 456 s

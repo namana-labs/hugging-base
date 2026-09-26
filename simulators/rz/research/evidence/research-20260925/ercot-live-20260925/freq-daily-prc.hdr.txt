@@ -1,0 +1,14 @@
+retrieved_utc=2026-09-26T04:04:47Z url=https://www.ercot.com/api/1/services/read/dashboards/daily-prc.json
+HTTP/2 200 
+etag: "58954304"
+content-type: application/json
+content-length: 919467
+cache-control: max-age=10, public, must-revalidate
+expires: Sat, 26 Sep 2026 04:04:58 GMT
+date: Sat, 26 Sep 2026 04:04:48 GMT
+strict-transport-security: max-age=31536000
+x-cdn: Imperva
+access-control-allow-origin: https://mis.ercot.com
+content-security-policy: frame-ancestors 'self' https://*.ercot.com:*
+x-iinfo: 53-69217770-0 0CNN RT(1790395488058 32) q(0 -1 -1 -1) r(0 -1)
+

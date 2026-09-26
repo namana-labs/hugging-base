@@ -1,0 +1,1011 @@
+<title>Headroom PRD</title>
+<meta name="description" content="Build spec for Headroom, a feeder-aware orchestrator and what-if lab for a fleet of Base home batteries.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap">
+<style>
+:root{
+  --bg:#F3F5F4; --surface:#FFFFFF; --surface-2:#E8EEEA; --ink:#16211C; --muted:#56655D; --rule:#D2DAD5;
+  --accent:#2F6A48; --accent-soft:#DCEBE1;
+  --flag:#9A5700; --flag-soft:#F6E9D4; --flag-rule:#E2C597;
+  --crit:#B23A2A; --crit-soft:#F6DFDA;
+  --display:"Barlow Condensed","Arial Narrow","Roboto Condensed",sans-serif;
+  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0E1411; --surface:#151D19; --surface-2:#1C2621; --ink:#E3EBE6; --muted:#9CAAA2; --rule:#2B3731;
+    --accent:#88C69E; --accent-soft:#1D3226;
+    --flag:#E8AB4E; --flag-soft:#342813; --flag-rule:#5C4520;
+    --crit:#F08472; --crit-soft:#3A1E1A;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0E1411; --surface:#151D19; --surface-2:#1C2621; --ink:#E3EBE6; --muted:#9CAAA2; --rule:#2B3731;
+  --accent:#88C69E; --accent-soft:#1D3226;
+  --flag:#E8AB4E; --flag-soft:#342813; --flag-rule:#5C4520;
+  --crit:#F08472; --crit-soft:#3A1E1A;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;padding-inline:16px;padding-block:0 64px}
+a{color:var(--accent);text-underline-offset:2px;text-decoration-thickness:1px}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+code{font-family:var(--mono);font-size:.84em;background:var(--surface-2);padding:1px 5px;border-radius:3px;overflow-wrap:anywhere}
+pre{font-family:var(--mono);font-size:12.5px;line-height:1.5;background:var(--surface);border:1px solid var(--rule);border-radius:4px;padding:12px 14px;overflow-x:auto;margin:6px 0 18px;max-width:100%}
+pre code{background:none;padding:0;font-size:inherit;overflow-wrap:normal}
+
+.mast{max-width:1160px;margin:0 auto;padding-block:40px 28px;border-bottom:1px solid var(--rule);margin-bottom:32px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 16px}
+.eyebrow span+span::before{content:"/";margin-right:16px;color:var(--rule)}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(2.6rem,6vw,4.2rem);line-height:1;margin:14px 0 6px}
+.sub{font-family:var(--display);font-weight:600;font-size:clamp(1.25rem,2.6vw,1.6rem);color:var(--muted);margin:0 0 16px;max-width:40ch;line-height:1.15;text-wrap:balance}
+.lede{font-size:1.08rem;max-width:68ch;margin:0}
+.readout{margin-top:26px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:1px solid var(--rule);background:var(--surface);border-radius:4px}
+.readout div{padding:12px 14px;border-left:1px solid var(--rule);display:flex;flex-direction:column;gap:2px}
+.readout div:first-child{border-left:0}
+.readout b{font-family:var(--mono);font-weight:500;font-size:1.25rem;font-variant-numeric:tabular-nums;line-height:1.2}
+.readout span{font-size:12.5px;color:var(--muted);line-height:1.35}
+@media (max-width:900px){.readout{grid-template-columns:repeat(2,minmax(0,1fr))}.readout div{border-left:0;border-top:1px solid var(--rule)}.readout div:nth-child(-n+2){border-top:0}.readout div:nth-child(even){border-left:1px solid var(--rule)}.readout div:last-child{grid-column:1/-1;border-left:0}}
+
+.frame{max-width:1160px;margin:0 auto;display:grid;grid-template-columns:210px minmax(0,1fr);gap:48px}
+@media (max-width:900px){.frame{grid-template-columns:minmax(0,1fr);gap:0}}
+.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;font-size:13.5px;max-height:calc(100vh - 40px);overflow-y:auto}
+.toc p{font-family:var(--mono);font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.toc a{display:grid;grid-template-columns:24px 1fr;padding:4px 8px 4px 10px;border-left:2px solid var(--rule);color:var(--muted);text-decoration:none;line-height:1.35}
+.toc a span{font-family:var(--mono);font-size:12px}
+.toc a:hover{color:var(--ink);border-left-color:var(--accent)}
+.toc a.hot{color:var(--accent);font-weight:600;border-left-color:var(--accent)}
+@media (max-width:900px){.toc{position:static;max-height:none;margin-bottom:28px}.toc ol{flex-direction:row;flex-wrap:wrap;gap:6px}.toc a{display:block;border:1px solid var(--rule);border-radius:3px;padding:3px 8px}.toc a span{margin-right:4px}}
+
+article{min-width:0;max-width:800px}
+section{padding-block:8px 36px;border-bottom:1px solid var(--rule);margin-bottom:36px;scroll-margin-top:16px}
+section:last-of-type{border-bottom:0}
+.sec-no{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+h2{font-family:var(--display);font-weight:700;font-size:clamp(1.75rem,3.4vw,2.3rem);line-height:1.08;margin:4px 0 18px;text-wrap:balance}
+h3{font-size:1.06rem;font-weight:700;margin:28px 0 10px;text-wrap:balance}
+p{margin:0 0 14px;max-width:70ch}
+ul,ol{margin:0 0 16px;padding-left:1.25em;max-width:68ch}
+li{margin-bottom:5px}
+li::marker{color:var(--muted)}
+.src{font-size:13.5px;color:var(--muted)}
+
+.tag{font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.05em;padding:1px 6px;border-radius:3px;white-space:nowrap;vertical-align:1px}
+.t-ok{background:var(--accent-soft);color:var(--accent)}
+.t-cav{background:var(--flag-soft);color:var(--flag)}
+.t-no{background:var(--crit-soft);color:var(--crit)}
+.t-plain{background:var(--surface-2);color:var(--muted)}
+.t-asm{background:var(--surface-2);color:var(--muted);border:1px dashed var(--muted)}
+
+.key{background:var(--surface);border:1px solid var(--rule);border-left:4px solid var(--accent);padding:14px 18px;border-radius:0 4px 4px 0;margin:0 0 18px;max-width:70ch}
+.key p:last-child,.key ul:last-child,.key ol:last-child{margin-bottom:0}
+.key .label{font-family:var(--mono);font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;display:block}
+.warn{border-left-color:var(--flag);background:var(--flag-soft);border-color:var(--flag-rule)}
+.warn .label{color:var(--flag)}
+
+.tbl{overflow-x:auto;margin:6px 0 20px;border:1px solid var(--rule);border-radius:4px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;line-height:1.45}
+th,td{text-align:left;vertical-align:top;padding:8px 11px;border-bottom:1px solid var(--rule)}
+tr:last-child td{border-bottom:0}
+th{font-family:var(--mono);font-weight:500;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--surface-2);white-space:nowrap}
+td:first-child{font-weight:600}
+td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.wide table{min-width:760px}
+.xwide table{min-width:980px}
+
+.loop{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0 20px;font-family:var(--mono);font-size:12.5px}
+.loop span{background:var(--surface);border:1px solid var(--rule);border-radius:3px;padding:4px 9px}
+.loop span.hl{border-color:var(--flag);color:var(--flag);background:var(--flag-soft)}
+.loop i{font-style:normal;color:var(--muted)}
+pre.mermaid{background:var(--surface);font-size:13px}
+
+.foot{max-width:1160px;margin:0 auto;padding-top:20px;border-top:1px solid var(--rule);font-size:13.5px;color:var(--muted)}
+.foot p{max-width:none}
+</style>
+
+<header class="mast">
+  <div class="eyebrow"><span>PRD v1</span><span>Base Power &amp; AITX hackathon</span><span>25–26 Sep 2026</span><span>Merged from 5 designs + 2 critiques</span></div>
+  <h1>Headroom</h1>
+  <p class="sub">A feeder-aware orchestrator and what-if lab for a fleet of Base home batteries</p>
+  <p class="lede">ERCOT dispatches Base's fleet as one number per load zone and declines in writing to enforce distribution limits, so <strong>what the fleet can reliably deliver is decided at the feeder</strong>. Headroom proves it: real ERCOT prices, NREL's synthetic north-Austin feeders, every battery simulated with its own firmware rules, and an orchestrator made of real processes on a real bus that we kill, partition and hijack on camera.</p>
+  <div class="readout" aria-label="Key figures">
+    <div><b>14</b><span>spine items: the smallest loop that must work on video</span></div>
+    <div><b>23 / 26</b><span>ESSENTIAL / ENHANCEMENT items</span></div>
+    <div><b>18</b><span>scenarios, each a regression test</span></div>
+    <div><b>17</b><span>risks, each with an early pass/fail test</span></div>
+    <div><b>1,012</b><span>homes on spine feeder S1, 379 transformers</span></div>
+  </div>
+</header>
+
+<div class="frame">
+  <nav class="toc" aria-label="Contents">
+    <p>Contents</p>
+    <ol>
+      <li><a href="#s1"><span>1</span>Summary</a></li>
+      <li><a href="#s2"><span>2</span>Problem and why</a></li>
+      <li><a href="#s3"><span>3</span>Goals and claims</a></li>
+      <li><a href="#s4"><span>4</span>Users</a></li>
+      <li><a href="#s5"><span>5</span>Architecture</a></li>
+      <li><a href="#s6"><span>6</span>Components</a></li>
+      <li><a href="#s7"><span>7</span>Interfaces</a></li>
+      <li><a href="#s8"><span>8</span>Scenarios</a></li>
+      <li><a href="#s9"><span>9</span>Metrics</a></li>
+      <li><a href="#s10"><span>10</span>Data</a></li>
+      <li><a href="#s11" class="hot"><span>11</span>Spine and build order</a></li>
+      <li><a href="#s12" class="hot"><span>12</span>Risks and early tests</a></li>
+      <li><a href="#s13"><span>13</span>Video storyboard</a></li>
+      <li><a href="#s14"><span>14</span>Questions for Base</a></li>
+      <li><a href="#s15"><span>15</span>Decisions, glossary</a></li>
+    </ol>
+  </nav>
+
+  <article>
+
+<section id="s1">
+  <div class="sec-no">1 · Summary</div>
+  <h2>One number per load zone, 379 transformers on the street</h2>
+  <ul>
+    <li><strong>Inputs:</strong> real ERCOT prices and NREL's synthetic north-Austin feeders (SMART-DS).</li>
+    <li><strong>world-sim:</strong> every battery is its own device, with firmware rules, a radio link, a home and a service transformer.</li>
+    <li><strong>Orchestrator:</strong> real OS processes on a real message bus, splitting the Markets desk's 5-minute base point across the fleet.</li>
+    <li><strong>Test harness:</strong> kills those processes, cuts their network and steals their keys.</li>
+    <li><strong>Detectors:</strong> physics-based, scored against ground truth they never see.</li>
+  </ul>
+  <p>A controller that knows transformer and feeder headroom, and fences its own failures at the battery, keeps its commitments. A load-zone controller keeps them only by overloading transformers. We measure how many batteries a real-looking feeder hosts under each controller, what feeder awareness costs in MW and dollars, and how much harm a failure or attacker does before it is caught.</p>
+  <div class="key">
+    <span class="label">Binding conventions</span>
+    <ul>
+      <li><strong>Sign:</strong> battery <code>p_kw &gt; 0</code> is discharge/export; home load &gt; 0 is consumption; <code>p_site_kw = p_home − p_batt</code>, &gt; 0 is import.</li>
+      <li><strong>Units</strong> are in field names: kW for devices, transformers, feeders; MW for partitions, system, market.</li>
+      <li><strong>Time:</strong> <code>t_ms</code> is int64 UTC ms in sim time, labelled by interval start.</li>
+      <li><strong>Tags:</strong> <span class="tag t-ok">SOURCED</span> cited fact · <span class="tag t-plain">DERIVED</span> computed, method given · <span class="tag t-asm">ASSUMPTION</span> our choice and a config knob · <span class="tag t-cav">UNVERIFIED</span> carried from research.</li>
+    </ul>
+  </div>
+  <p class="src">Full source: <code>PRD.md</code> in the project folder. Depth lives in <code>design/round1/</code>: world-sim (WS), orchestrator (OR), adversary-and-observability (AO), data-ingest (DI), ui-scenario-studio (UI), critique-judge (CJ), critique-integration (CI).</p>
+</section>
+
+<section id="s2">
+  <div class="sec-no">2 · Problem</div>
+  <h2>ERCOT will not enforce the limit that matters</h2>
+  <p>Base bids each load-zone partition into SCED as one ADER, dispatched using load-zone shift factors. The ADER governing document says distribution limits will not be explicitly enforced when ERCOT awards or dispatches it. Base's hardware sharpens the gap:</p>
+  <ul>
+    <li>A 20 kW Core charging flat out is about 80% of a 25 kVA transformer.</li>
+    <li>Base's Houston partition swung its charging from −15.9 to −45.8 MW in 10–15 minutes.</li>
+    <li>Homebuilder deals put a battery in nearly every home on a feeder.</li>
+  </ul>
+  <p>Base's deployment engineer asked exactly this: how each extra battery affects a stressed feeder, and how the fleet would behave if the controller knew feeder capacity.</p>
+  <ul>
+    <li><strong>Orchestration (primary track).</strong> The independent things are batteries, controller processes, and several principals (Markets desk, utility programs, each member's 20% floor). Physical pieces fail (links, feeders, lying devices) and so do ours (workers, leaders, the bus). Base's postings ask for controls for concentrations of aggregated batteries at distribution voltages and for automated fault detection, isolation and recovery.</li>
+    <li><strong>Open Grid Data (second track).</strong> The simulator runs on ERCOT's own files (15-minute SPP, frequency-events workbook NP12-261-M, ADER workbooks) and yields two findings most readers miss (§9.5).</li>
+    <li><strong>What Base lacks:</strong> no outage simulator, and grid-load math that doesn't teach its software to act better. Headroom is "a place to play the what-ifs", and its dispatch policy is a pluggable function, so Base's own black box can run the same scenarios.</li>
+  </ul>
+</section>
+
+<section id="s3">
+  <div class="sec-no">3 · Goals</div>
+  <h2>Goals, non-goals, and what we will say on camera</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Goal</th></tr></thead>
+    <tbody>
+      <tr><td>G1</td><td>Run the core loop on video without crashing: data → sim → orchestrator → failure or attack → detection → mitigation → score → UI → recorded run.</td></tr>
+      <tr><td>G2</td><td>Headline hosting curves (naive / naive+jitter / feeder-aware) with tiered, battery-attributable violations and the MW and $ given up.</td></tr>
+      <tr><td>G3</td><td>Real control-plane failures with measured handoff times and invariants enforced at the device.</td></tr>
+      <tr><td>G4</td><td>Contain a hijack with device-enforced bounds plus a command audit.</td></tr>
+      <tr><td>G5</td><td>Two Track 1 findings with their caveats.</td></tr>
+      <tr><td>G6</td><td>Every on-screen number traceable to a source, derivation or labelled assumption.</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>Non-goals:</strong> predicting Base's bids or cloning its ML; backup-only outage stories; fleet frequency regulation as a product (FFR is off by default and exists only as a what-if); real exploit code or vendor names; any scale figure that wasn't run and measured.</p>
+
+  <h3>Claims</h3>
+  <div class="tbl xwide"><table>
+    <thead><tr><th>#</th><th>Claim (video wording)</th><th>Status</th><th>Evidence</th></tr></thead>
+    <tbody>
+      <tr><td>C1</td><td>ERCOT sees this fleet as one number per load zone and does not enforce distribution limits.</td><td><span class="tag t-ok">HOLDS</span></td><td>ADER Governing Doc 3.3. Say the utility screens homes at registration.</td></tr>
+      <tr><td>C2</td><td>One Core ≈ 80% of a 25 kVA transformer; with a Core, 25 kVA units exceed their 110% rating on summer evenings.</td><td><span class="tag t-cav">CAVEAT</span> framing, not discovery</td><td>2.67 homes × 4–6 kW + 20 kW → 123–144%, under the 150% emergency rating. 4–6 kW is UNVERIFIED until test R3.</td></tr>
+      <tr><td>C3</td><td>Naive dispatch creates its first battery-attributable normal-tier violation at N ≈ 1–2 devices; feeder-aware holds zero N/E violations up to N = [measured], giving up [measured] MW and $.</td><td><span class="tag t-cav">CAVEAT</span> arithmetic verified, curve not yet measured</td><td>§9.1. Bucket model first, OpenDSS later (L-01).</td></tr>
+      <tr><td>C4</td><td>Random start delay fixes the charging spike, not the plateau.</td><td><span class="tag t-cav">CAVEAT</span> near-tautology; show as a chart</td><td>NAIVE+JITTER arm.</td></tr>
+      <tr><td>C5</td><td>A hijacked shard is a neighbourhood emergency but invisible statewide: 1,000 Cores swing 40 MW → about 3–17 mHz, no larger than normal wander (σ 13.7 mHz).</td><td><span class="tag t-cav">CAVEAT</span> always a band</td><td><code>freq_noise.py</code>, <code>fme_sensitivity.py</code>. One spine shard (≈3.0 MW) → ≈0.2–1.7 mHz.</td></tr>
+      <tr><td>C6</td><td>With a device-enforced delay, ≈1.5% of a hijack's swing lands before a 1 s audit + revocation; if the command could set the delay, ≈79% would land; a backdoor lands 13–17%.</td><td><span class="tag t-cav">CAVEAT</span> three conditions, §9.3</td><td>Monte Carlo, <code>adversary_checks.py</code>.</td></tr>
+      <tr><td>C7</td><td>Quiet under-delivery is caught later the quieter it is; we show harm vs time-to-detect.</td><td><span class="tag t-cav">CAVEAT</span> replaces "never caught"</td><td>19 kW → 2.6 h; 9.5 kW → 9.5 h; 4.7 kW → 35 h; 1.9 kW → 4.3 d. σ_e assumed.</td></tr>
+      <tr><td>C8</td><td><code>kill -9</code> on a worker hands its shard over at epoch+1 within ≤5 s and no device goes idle; a paused zombie's commands are rejected at the battery.</td><td><span class="tag t-cav">CAVEAT</span> NATS KV CAS unverified (R4)</td><td>Report per-unit deviation, not a tolerance counter.</td></tr>
+      <tr><td>C9</td><td>With 20% of messages dropped and 5% duplicated, commands are applied wrongly zero times.</td><td><span class="tag t-cav">CAVEAT</span> if §7.5 rules hold</td><td>Needs the chaos relay (L-11).</td></tr>
+      <tr><td>C10</td><td>Feeder headroom can flow up as one signal (<code>headroom_up/down</code>) that Base's black box could consume unchanged.</td><td><span class="tag t-ok">PROPOSAL</span></td><td>OR §5.2; Q2.</td></tr>
+      <tr><td>C11</td><td>Track 1 (a): in summer 2026 the cheapest 2-hour charge window usually started on the morning solar ramp, worth $9–11/MWh, ≈$0.40 per Core per day with perfect foresight.</td><td><span class="tag t-cav">CAVEAT</span> perfect foresight, zone level</td><td><code>price_profile_check.py</code>.</td></tr>
+      <tr><td>C12</td><td>Track 1 (b): per MW lost, ERCOT frequency dips ≈2.6× less than a decade ago; nothing has crossed 59.85 Hz since 2023-05-01.</td><td><span class="tag t-cav">CAVEAT</span> 2022 standard change; n = 9</td><td><code>fme_sensitivity.py</code>.</td></tr>
+      <tr><td>C13</td><td>Base is hiring for exactly this.</td><td><span class="tag t-ok">HOLDS</span></td><td>Algorithms Engineer posting.</td></tr>
+      <tr><td>C14</td><td>Nothing on screen is scripted.</td><td><span class="tag t-cav">CAVEAT</span> replays badged</td><td>Hash equality only for headless and lockstep runs.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="key warn">
+    <span class="label">We will not claim</span>
+    <p>A map labelled <code>lz_houston</code> · "zero intervals out of tolerance" below the 2 MW floor · "protection trips in seconds" · "never caught" · a point value for frequency · unmeasured 88k or 100k scale figures · ADER Phase IV as a feeder mechanism (it's about transmission nodes).</p>
+  </div>
+</section>
+
+<section id="s4">
+  <div class="sec-no">4 · Users</div>
+  <h2>Who at Base would open this tomorrow</h2>
+  <div class="tbl wide"><table>
+    <thead><tr><th>User</th><th>Use case</th><th>What Headroom gives</th></tr></thead>
+    <tbody>
+      <tr><td>Markets desk</td><td>Check a dispatch policy against feeders, price drops and failures before it ships.</td><td>The scenario library as a regression suite; any <code>step(observation) → commands</code> policy as the arm under test; a per-feeder <code>headroom_up/down</code> input; a commitment derate when fresh capacity shrinks.</td></tr>
+      <tr><td>Deployments / planning</td><td>Before a subdivision goes in, find which transformers break first.</td><td>Hosting what-if and a fragility map by kVA class, with a <code>transformer_upgrade_policy</code> sweep. Ties to site survey.</td></tr>
+      <tr><td>Security / fleet ops</td><td>Bound what one stolen credential, cohort or carrier can do.</td><td>Blast radius per credential vs feeder headroom, the device acceptance contract, a command audit, harm-vs-TTD curves, playbooks that move devices toward idle with backup armed.</td></tr>
+      <tr><td>Firmware / BaseOS</td><td>Specify what a battery must reject.</td><td>The §7.5 acceptance table as golden test vectors.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Five ways Base could use it tomorrow, each with a caveat: run <code>make sweep</code> on their own feeder model (needs TDSP feeder models or transformer maps, Q2); plug their dispatcher into <code>step()</code> and run the library in CI; adopt the acceptance table as their firmware spec; add <code>headroom_up/down</code> as a constraint input; rerun the Track 1 notebooks on their own dispatch logs.</p>
+</section>
+
+<section id="s5">
+  <div class="sec-no">5 · Architecture</div>
+  <h2>Physics in one process, everything that must fail in its own</h2>
+  <p>The core loop the video must complete (G1):</p>
+  <div class="loop" aria-label="Core loop">
+    <span>data</span><i>→</i><span>world-sim</span><i>→</i><span>orchestrator</span><i>→</i><span class="hl">failure or attack</span><i>→</i><span>detection</span><i>→</i><span>mitigation</span><i>→</i><span>score</span><i>→</i><span>UI</span><i>→</i><span>recorded run</span>
+  </div>
+  <pre class="mermaid">flowchart LR
+  EX[(ingest: committed extracts + state_at)] --> SIM
+  subgraph SIM[sim process]
+    WS[world-sim] --- FR[fault router + runner] --- ADV[adversary, fog of war] --- TL[(truth log)]
+  end
+  SIM <-->|NATS sim.tele / ctl.cmd| WK[orch-worker xN]
+  DESK[orch-desk] --> LEAD[orch-leader] --> WK
+  COORD[orch-coord] -.KV leases.- WK
+  SIM --> DET[obs-detect] -->|ctl.control| LEAD
+  SIM -->|truth.*| SCORE[obs-score]
+  SIM --> GW[gateway] --> WEB[web UI]
+  GW --> LLM[(Claude API)]
+  SUP[supervisor + TCP fault proxy] -.kill/pause/cut.- WK</pre>
+  <div class="tbl wide"><table>
+    <thead><tr><th>Process</th><th>Role</th></tr></thead>
+    <tbody>
+      <tr><td><code>nats-server</code></td><td>JetStream, KV, user ACLs generated from <code>contracts/subjects.yaml</code></td></tr>
+      <tr><td><code>supervisor</code></td><td>spawn / SIGKILL / SIGSTOP / SIGCONT / restart; a TCP fault proxy per orch/obs process (cut = partition)</td></tr>
+      <tr><td><code>sim</code></td><td>world-sim + fault router + scenario runner + adversary + ingest <code>state_at</code>/overlays + truth log</td></tr>
+      <tr><td><code>orch-coord</code> ×1, <code>orch-leader</code> ×1, <code>orch-worker</code> ×N (≥2, default 3), <code>orch-desk</code> ×1</td><td>the control plane (hot standbys for leader and coord are L-13)</td></tr>
+      <tr><td><code>obs-detect</code></td><td>detectors + playbooks; ACL denies <code>truth.&gt;</code> and <code>exo.&gt;</code></td></tr>
+      <tr><td><code>obs-score</code></td><td>scorer; the only observability reader of truth</td></tr>
+      <tr><td><code>gateway</code></td><td>FastAPI WS/HTTP, run manager, playback, what-if, studio; sole holder of the API key</td></tr>
+      <tr><td><code>ingest-live</code></td><td>LIVE pollers → append-only Parquet (L-25; never on the run path)</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>Headless twin.</strong> The same code runs in one process on an in-memory bus with the same subjects, codecs and ACLs. It serves sweeps, fast-forward, the A/B baseline arm, CI and every determinism claim. Only one live run uses NATS at a time; A/B comparisons play two run logs synced on <code>t_ms</code>.</p>
+
+  <h3>One SCED interval</h3>
+  <ol>
+    <li><strong>sim</strong> reads <code>state_at(t)</code>, applies overlays, publishes <code>exo.price</code> (truth) and <code>ctl.exo.price</code> (the controller's view).</li>
+    <li><strong>orch-desk</strong> publishes <code>ctl.basepoint.&lt;partition_id&gt;</code>.</li>
+    <li><strong>orch-leader</strong> ramps the target, applies a PI correction with the reflex excluded, clips to the envelope, publishes <code>ctl.plan</code> before any command, then one <code>ctl.budget.&lt;shard_id&gt;</code> per shard.</li>
+    <li><strong>Workers</strong> holding shard leases split each budget across transformers and devices and publish signed <code>ctl.cmd.&lt;shard_id&gt;</code> (only entries that moved &gt; deadband, plus renewals).</li>
+    <li><strong>sim's comms model</strong> delivers each command late, never, or twice.</li>
+    <li><strong>Devices</strong> apply §7.5; physics produces truth; meters sample it.</li>
+    <li><strong>Telemetry</strong> returns on <code>sim.tele</code>; workers update belief and send <code>ctl.shardenv</code>; the leader publishes <code>ctl.envelope</code> every 2 s and <code>ctl.tracking</code> every interval.</li>
+    <li><strong>obs-detect</strong> audits <code>ctl.cmd.&gt;</code> against <code>ctl.plan</code> and asks <code>ctl.control</code> to mitigate; <strong>obs-score</strong> joins truth to alerts. JetStream plus the truth log form the run log.</li>
+  </ol>
+
+  <h3>Clocks and leases</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Field</th><th>Values</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><code>data_source</code></td><td><code>replay:&lt;window_id&gt;</code> (default) or <code>ercot_live</code> (L-25)</td><td>Live runs the sim clock at wall − 150 s, behind the ingest watermark.</td></tr>
+      <tr><td><code>pacing</code></td><td><code>realtime(speed)</code>, <code>lockstep</code>, <code>headless</code></td><td>How sim time advances.</td></tr>
+      <tr><td><code>view</code></td><td><code>live</code> or <code>playback</code></td><td>Seek is view-only, served from the run log.</td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li><strong>Sim time is authoritative</strong> for physics, command expiry, telemetry age and leases. Leases are KV values holding <code>expires_ms</code> in sim time, not NATS TTLs.</li>
+    <li><strong>Wall time only for liveness:</strong> <code>ctl.hb</code> and <code>obs.health</code> at 1 Hz, gateway <code>kpi</code> at 2 Hz, and the clock-silence self-fence (a partitioned worker also fences after <code>sim.clock</code> is silent for 3 ticks of wall time).</li>
+    <li><strong>Speed cap</strong> while distributed: <code>speed ≤ 2000 ms ÷ p99_lease_renew_ms</code> (measured in R4), never above 10×. Failure beats run at 1× or lockstep; sweeps run headless.</li>
+    <li><strong>Leases:</strong> each worker compare-and-sets <code>lease.shard.&lt;id&gt; = {owner, epoch, expires_ms: now + 3 s}</code> every 1 s sim; publishes only while &gt;1 s remains; the coordinator reassigns expired leases at epoch+1. The device's epoch check is the guarantee; the self-fence is a convenience.</li>
+  </ul>
+
+  <h3>Truth, claims and meters</h3>
+  <div class="tbl wide"><table>
+    <thead><tr><th>Plane</th><th>Subjects</th><th>May read</th><th>Must not read</th></tr></thead>
+    <tbody>
+      <tr><td>Truth</td><td><code>truth.frame</code>, <code>truth.evt</code>, <code>exo.*</code></td><td>obs-score, gateway (truth view), run log, sweep harness</td><td>orch-*, obs-detect, adversary policy</td></tr>
+      <tr><td>Claims</td><td><code>sim.tele.*</code>, <code>ctl.cmd.*</code></td><td>owning worker, obs-detect, gateway; adversary sees only its foothold</td><td>—</td></tr>
+      <tr><td>Measurements</td><td><code>sim.meas.scada</code> (4 s), <code>sim.meas.ami</code> (15 min)</td><td>obs-detect; orch only at <code>knowledge ≥ scada</code>; gateway</td><td>—</td></tr>
+      <tr><td>Controller exogenous</td><td><code>ctl.exo.*</code> (truth + overlays)</td><td>orch-*, obs-detect, adversary (public fields)</td><td>—</td></tr>
+      <tr><td>Physical events</td><td><code>sim.evt</code> (only what SCADA would see)</td><td>everyone</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+  <p class="src">Enforced by generated NATS user permissions (mirrored by the in-memory bus), a CI leak test (obs-detect's alerts byte-identical with <code>truth.*</code> and <code>exo.*</code> disabled), an import lint (<code>orch/core</code> must not import <code>sim/</code>), and a <code>Foothold</code> API test for the adversary.</p>
+</section>
+
+<section id="s6">
+  <div class="sec-no">6 · Components</div>
+  <h2>Six components, each with its algorithms and knobs</h2>
+
+  <h3>6.1 world-sim (<code>sim/</code>)</h3>
+  <p>Owns the clock and seeded RNG streams, homes, devices, comms and grid, the §7.5 acceptance rules, the truth/claim/meter split, the fault router's <code>sim</code> executor, the adversary, the truth log, and the hosting sweep harness (with <code>orch/core</code> as the policy under test).</p>
+  <ul>
+    <li><strong>Tick (1 s):</strong> exogenous inputs and due faults → deliver commands from the comms timing wheel → acceptance rules → home load → device update (mode, release, ramp, SoC, expiry) → <code>np.bincount</code> buckets per transformer and feeder → referee when due → tier bookkeeping → telemetry → meters → publish, latest-wins.</li>
+    <li><strong>RNG:</strong> one <code>SeedSequence</code> spawns <code>placement</code>, <code>load_noise</code>, <code>comms</code>, <code>device_delay</code>, <code>device_faults</code>, <code>adversary</code>.</li>
+    <li><strong>Device modes</strong> (highest priority first): REMOTE_DISABLED &gt; FAULT_THERMAL &gt; BACKUP_ISLANDED / OVERLOAD_RETRY &gt; COMMS_LOST (label only) &gt; STORM_HOLD &gt; GRID_DISPATCH &gt; GRID_IDLE.</li>
+    <li><strong>Energy per tick:</strong> <code>E ← E − Δt·max(p,0)/√RTE + Δt·max(−p,0)·√RTE − Δt·P_aux</code>. Islanded devices never export.</li>
+    <li><strong>Grid:</strong> spine uses a bucket model <code>S_xfmr = Σ(p_home − p_batt)</code> (home PF 0.95, battery PF 1.0), labelled <code>fidelity:"bucket"</code>; OpenDSS AC referee is L-01. A violation counts only if absent from, or worse than, a cached <strong>zero-battery twin</strong>.</li>
+    <li><strong>Transformer ratings</strong> from <code>Transformers.dss</code>: <code>kva</code> is nameplate (25/50/75), <code>normhkva</code> the 110% normal rating, <code>emerghkva</code> the 150% emergency rating. <strong>No de-rating</strong> (verified in <code>evidence/scratchpad-20260925/sds/*/Transformers.dss</code>). SMART-DS's design-stage upsizing may understate stress; say so on screen.</li>
+    <li><strong>Feeder rating</strong> = head-line <code>normamps × √3 × 12.47 kV</code> <span class="tag t-plain">DERIVED</span>.</li>
+  </ul>
+  <div class="tbl wide"><table>
+    <thead><tr><th>Stage</th><th>Scope</th><th>Source</th></tr></thead>
+    <tbody>
+      <tr><td>S0 <code>toy4</code></td><td>4 devices, one 25 kVA and one 50 kVA transformer, no OpenDSS</td><td>WS §4.8</td></tr>
+      <tr><td>S1 (spine)</td><td><code>p1uhs19_1247--p1udt17263</code>: 1,012 customers, 379 transformers, 7.02 MW peak planning load, 2.67 customers per transformer</td><td><code>p1u_metrics.csv</code>; needs a one-time fetch</td></tr>
+      <tr><td>S1 fallback</td><td><code>p1uhs0_1247--p1udt22170</code>: 776 customers, 244 transformers, 6.18 MW</td><td>Already in <code>evidence/…/sds/</code></td></tr>
+      <tr><td>S2 (L-15)</td><td>Substation <code>p1uhs0_1247</code>: 3 feeders, 3,526 customers, ≈1,301 transformers (25 kVA ≈25%, 50 kVA ≈38%, 75 kVA ≈30%)</td><td>Same folder</td></tr>
+      <tr><td>S3 (L-27)</td><td>P1U: 96 feeders, 65,529 customers</td><td>Research</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>Demo fleet</strong> <span class="tag t-asm">ASSUMPTION</span>, a stress case: 20% of homes, 1.35 cabinets per home, 60% Cores. On S1 that's ≈202 homes, ≈273 devices (≈164 Core, ≈109 legacy), ≈4.52 MW each direction, in 3 shards of ≈91 devices (whole-transformer groups, ≤120 devices). One shard's full swing ≈3.0 MW.</p>
+  <div class="tbl xwide"><table>
+    <thead><tr><th>Parameter</th><th>Value</th><th>Tag</th></tr></thead>
+    <tbody>
+      <tr><td>Device classes (per cabinet)</td><td><code>legacy_25</code>: 22.5 kWh usable, ±11.4 kW. <code>core_39_2</code>: 37 kWh usable, ±20 kW.</td><td>Power SOURCED; usable energy INFERENCE / ASSUMPTION</td></tr>
+      <tr><td>RTE; aux draw</td><td>0.88 legacy / 0.89 Core; 80 W</td><td>ASSUMPTION; DERIVED</td></tr>
+      <tr><td>SoC floor; initial SoC</td><td>20% grid-tied (0% islanded); U(60%, 90%)</td><td>SOURCED; ASSUMPTION</td></tr>
+      <tr><td>Ramp</td><td>P_max in 2 s</td><td>ASSUMPTION</td></tr>
+      <tr><td>Switchover; start load; retries</td><td>Core 50 ms, &lt;20 kW; legacy ≤0.5 s, ≤11 kW; 3 retries 60 s apart</td><td>SOURCED; spacing ASSUMPTION</td></tr>
+      <tr><td>Reconnect delay</td><td>300 s</td><td>ASSUMPTION (IEEE 1547 default)</td></tr>
+      <tr><td>Telemetry; latency; loss; dup</td><td>2 s; lognormal median 1.5 s, p95 4 s; 0.5%; 0.1%</td><td>ASSUMPTION</td></tr>
+      <tr><td>Links</td><td>Wi-Fi + LTE; up if either is up; LTE failover 30 s</td><td>Links SOURCED; timing ASSUMPTION</td></tr>
+      <tr><td><code>comms_loss_policy</code></td><td><code>IDLE_ON_EXPIRY</code> (default) / <code>HOLD_LAST</code> (to 180 s) / <code>RAMP_TO_ZERO</code> (60 s)</td><td>Default UNVERIFIED (engineer said so verbally)</td></tr>
+      <tr><td>Device start delay D</td><td>U(0, 120 s), device-enforced</td><td>Range SOURCED; enforcement ours</td></tr>
+      <tr><td>Flip lock</td><td>300 s</td><td>ASSUMPTION</td></tr>
+      <tr><td><code>fleet_freq_response</code></td><td><code>off</code> (default) / <code>droop</code> (5%, 0.036 Hz) / <code>ffr</code> (59.85 Hz, 0.25 s)</td><td>Values SOURCED</td></tr>
+      <tr><td>Home load</td><td>SMART-DS leg kW × <code>res_kw_*_pu</code> 15-min profile; analog day 2018-07-25 for 2026-07-22 (both Wednesdays)</td><td>Data SOURCED; analog ASSUMPTION</td></tr>
+      <tr><td>Voltage band</td><td>0.95–1.05 pu (114–126 V)</td><td>SOURCED</td></tr>
+      <tr><td>Meter error</td><td>SCADA ±0.5%; σ_e = 0.15 kWh per device per 15 min</td><td>ASSUMPTION; re-measured on benign seeds</td></tr>
+    </tbody>
+  </table></div>
+  <p class="src">Failure handling: non-converging power flow retries once, then keeps the last good solution and emits <code>PF_NONCONVERGED</code>; invariant breaches freeze the device in FAULT_THERMAL; an overloaded sim lowers referee cadence first and always shows <code>fidelity</code> and <code>lag_ms</code>; missing input holds with a <code>stale_input</code> flag; a silent controller leaves devices to expire to idle; the truth log is local, so the run survives a bus outage. Depth: WS §4, §6.</p>
+
+  <h3>6.2 Orchestrator (<code>orch/core</code>, <code>orch/svc</code>)</h3>
+  <p>Desk stub produces base points; leader does tracking, envelope, derate ladder, plans and budgets; coordinator owns the shard map, leases, epochs and key rotation; workers keep belief, compute bottom-up envelopes, split top-down and sign commands. The control API executes mitigations (obs owns scores; orch owns enforcement and the commitment formula).</p>
+  <ul>
+    <li><strong>Device envelope:</strong> eligible = fresh ∧ not quarantined ∧ mode ∈ {GRID_DISPATCH, GRID_IDLE} ∧ energized. <code>hi = min(P_rated, ramp, (soc − floor)·E/h)</code>; <code>lo = −min(P_rated, ramp, (soc_max − soc)·E/(η·h))</code>. The flip lock clamps both to the current side of zero.</li>
+    <li><strong>Bottom-up envelope:</strong> transformer <code>LO_k = max(Σlo, H_k − κ·S_k)</code>, <code>HI_k = min(Σhi, H_k + S_k)</code>; feeder <code>LO_f = max(ΣLO_k, L_f − (1−m)·F_f)</code>, <code>HI_f = min(ΣHI_k, L_f + X_f)</code>; partition = Σ over energized feeders. <code>LO_k &gt; 0</code> means batteries must discharge to protect the transformer; <code>LO &gt; HI</code> emits <code>BUDGET_INFEASIBLE</code>.</li>
+    <li><strong>Top-down split:</strong> the same code at every level; clip to [LO, HI], bisect θ over stress-tilted weights. Stressed feeders discharge first and charge last. O(30·N).</li>
+    <li><strong>Allocator arms</strong> (same base-point shape): <code>naive</code> flat pro-rata, delay off; <code>naive_jitter</code> flat, delay on; <code>feeder_aware</code> hierarchical split + rebound governor, delay on.</li>
+    <li><strong>Tracker:</strong> target ramps linearly between base points over 300 s; <code>P_meas</code> excludes the reflex; PI clipped to the envelope with integrator freeze.</li>
+    <li><strong>Belief:</strong> FRESH ≤10 s; SUSPECT 10–180 s (stop renewing, believe last command until expiry, then 0, start a same-feeder replacement at expiry); STALE &gt;180 s; re-admit after 60 s fresh.</li>
+    <li><strong>Commitment:</strong> <code>firm = α·deliverable</code>; <code>at_risk = max(0, committed − firm)</code>. Derate ladder: re-split within feeders → move budget across feeders → spend tolerance while <code>|e| &lt; 0.5·tol</code> → lower <code>hsl_mw</code> → <code>COMMIT_DERATE</code>.</li>
+    <li><strong>Leases and keys:</strong> a new owner loads <code>devstate.&lt;shard&gt;</code> (≤10 s old) and resends the full command set at epoch+1. <code>REVOKE_CREDENTIAL</code> = epoch+1 → <code>ctl.keys</code> → full resend.</li>
+    <li><strong>Governors:</strong> rebound caps charging ramp at 5% of <code>F_f</code> per minute; restoration holds 300 s, then caps recharge at <code>(1−m)·F_f − CLPU·L_f</code> (CLPU 2.0 for 15 min) through a token bucket.</li>
+    <li><strong>Desk stub</strong> (synthetic, labelled): discharge follows Base's four published points (22:00 0.258, 22:05 0.591, 22:10 0.923, 22:15 0.996 pu of 46.9 MW), rising from 0 at 21:00, holding to 22:30, ramping to 0 over 15 min. Charge starts at the first 15-min interval after 22:30 whose price ≤ 2 × the day's median: at LZ_NORTH on 2026-07-22 that's <strong>23:15 CDT at $59.45/MWh</strong> (median $34.57), ramping −0.346 → −0.996 pu over 15 min. A plain "≤ median" rule fires only at 02:45 on that record day <span class="tag t-asm">ASSUMPTION</span>.</li>
+  </ul>
+  <div class="tbl wide"><table>
+    <thead><tr><th>Parameter</th><th>Value</th><th>Tag</th></tr></thead>
+    <tbody>
+      <tr><td>Control tick</td><td>2 s</td><td>ASSUMPTION (ADER telemeters every 2 s)</td></tr>
+      <tr><td>SCED interval; tolerance</td><td>300 s; max(2 MW, 15% of capability)</td><td>SOURCED</td></tr>
+      <tr><td>Base reference</td><td>46.9 MW; 36/36 intervals; MAD 1.59 MW (≈3.4%); worst 5.45 MW</td><td>SOURCED</td></tr>
+      <tr><td>SUSPECT / STALE / re-admit</td><td>10 s / 180 s / 60 s</td><td>180 s SOURCED; rest ASSUMPTION</td></tr>
+      <tr><td>Lease TTL, renew, heartbeat</td><td>3 s sim, 1 s sim, 1 Hz wall</td><td>ASSUMPTION</td></tr>
+      <tr><td>Command TTL; budget TTL; deadband</td><td>30 s (+0–10 s grace); 10 s; 0.5 kW</td><td>ASSUMPTION</td></tr>
+      <tr><td>κ; m; X_f</td><td>1.0 × nameplate; 5%; 1.0 MW</td><td>ASSUMPTION</td></tr>
+      <tr><td>α; β; h</td><td>0.9; 2; 0.25 h</td><td>α UNVERIFIED heuristic; rest ASSUMPTION</td></tr>
+      <tr><td>Kp; Ki</td><td>0.5; 0.05 s⁻¹</td><td>ASSUMPTION</td></tr>
+      <tr><td>Energy behind AS awards</td><td>RRS 0.5 h, ECRS 1 h, Non-Spin 4 h</td><td>SOURCED</td></tr>
+    </tbody>
+  </table></div>
+  <p class="src">Failure handling: worker crash → lease expires, shard moves at epoch+1, devices hold until expiry; zombie → self-fences, late sends get <code>STALE_EPOCH</code>; dropped/duplicated/reordered messages → absolute commands resent, older ones skipped at the device; partition → minority fences, cut-off devices expire to idle; bus lost → everything fences and devices idle with backup armed within 30–40 s; mailboxes are latest-value only, so no backlog forms. Depth: OR §4–§6.</p>
+
+  <h3>6.3 Scenario engine and adversary (<code>scenario/</code>)</h3>
+  <ul>
+    <li>The DSL in two forms (§7.10), the validator, the runner (each event gets an RNG seeded with <code>hash(seed, event.id)</code>), and one <strong>fault router</strong> with four executors: <code>sim</code> (grid, comms, device, member, weather), <code>feed</code> (overlays), <code>ctl</code> (supervisor, fault proxy, principal requests), <code>obs</code> (pipeline faults).</li>
+    <li><strong>Validation:</strong> schema → semantics (IDs exist, power ≤ class rating, window exists, cyber events hold a granted capability, kind in <code>/faults/manifest</code>) → a 10-sim-minute headless dry run returning <code>derived{devices_in_target, est_swing_mw}</code>. Errors are JSON pointers with <code>allowed</code> ranges.</li>
+    <li><strong>Spine adversary (scripted):</strong> <code>credential_compromise</code> grants a stolen shard key; <code>setpoint_override</code> publishes real signed <code>cmd.v1</code> at the current epoch, <code>seq = last_seen + 10⁶</code>, <code>p_kw = −P_max</code> for every device, <code>start_at_ms = now</code>. Trigger: price ≥ trailing-day p95 for 300 s, or a fixed <code>at_min</code>.</li>
+    <li><strong>Fog of war:</strong> the adversary sees only its foothold's claims, its own reject rate, and public <code>ctl.exo</code> fields.</li>
+    <li><strong>Adaptive adversary (L-21):</strong> DORMANT → RECON → STRIKE or CREEP → EVADE; creep probes start at 20% bias and halve after each loss. Decision period 60 s; evade when quarantine rate &gt; 0.3 or reject rate &gt; 0.5 within 60 s.</li>
+  </ul>
+
+  <h3>6.4 Detection and observability (<code>obs/</code>)</h3>
+  <div class="tbl xwide"><table>
+    <thead><tr><th>ID</th><th>Layer</th><th>Rule</th><th>Does Base have the data?</th><th>Item</th></tr></thead>
+    <tbody>
+      <tr><td>D0</td><td>audit</td><td>CRITICAL after any <code>ctl.cmd</code> batch whose <code>plan_id</code> is unknown for the leader epoch, whose shard <code>Σp_kw</code> differs from its plan budget by &gt; max(50 kW, 10%), or whose <code>seq</code> jumps from the lease holder's last batch. Latency ≤2 s.</td><td>Yes: its own command stream</td><td>Spine</td></tr>
+      <tr><td>D1</td><td>plan</td><td><code>|p − p_plan|</code> &gt; max(2 kW, 10% of rating) for 2 samples; suppressed when islanded, storm-held or comms-lost</td><td>Yes</td><td>L-20</td></tr>
+      <tr><td>D2</td><td>physics</td><td>Feeder-head residual above 4σ_F for 3 scans; plus CUSUM</td><td>Needs TDSP SCADA; ask</td><td>L-20</td></tr>
+      <tr><td>D3</td><td>physics</td><td>Hard alarm at <code>|E_meter − ∫p_site| &gt; 10%</code> (ADER validation rule), plus pooled cohort CUSUM k = 0.5, h = 5</td><td>Needs a 15-min device meter; AMI likely next-day (UNVERIFIED)</td><td>L-20, §9.4</td></tr>
+      <tr><td>D5/D6</td><td>cohort</td><td>Robust peer z &gt; 4; hypergeometric enrichment by fw / batch / installer / vendor / carrier, p &lt; 1e-4</td><td>Yes</td><td>L-20</td></tr>
+      <tr><td>D7</td><td>context</td><td>≥10% of a comms group and ≥20 devices silent within 30 s</td><td>Yes</td><td>L-20</td></tr>
+      <tr><td>D8</td><td>context</td><td>Two price paths differ by &gt; max($20, 20%) for 2 intervals</td><td>Yes</td><td>L-24</td></tr>
+      <tr><td>D9</td><td>context</td><td>Device rejects on commands we did not originate</td><td>Yes</td><td>L-20</td></tr>
+      <tr><td>D10</td><td>context</td><td>Offline in ≥3 of the last 5 dispatch windows</td><td>Yes</td><td>L-22</td></tr>
+      <tr><td>D12</td><td>posture</td><td>A credential's MW on a feeder exceeds that feeder's headroom</td><td>Yes</td><td>L-20</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>Playbooks.</strong> Automation may always move devices toward idle with backup armed; anything that costs members or MW needs a human. <strong>PB1</strong> (spine, automatic on D0): <code>REVOKE_CREDENTIAL</code> → <code>QUARANTINE</code> the devices that received forgeries → orchestrator re-splits to healthy devices → <code>RELEASE</code> manual or after 15 clean sim-minutes. Statistical alarms trigger a challenge, never a quarantine. Detectors are pure functions of log plus state, checkpointed every 60 s sim, resuming from a durable JetStream consumer.</p>
+
+  <h3>6.5 Data ingest (<code>ingest/</code>)</h3>
+  <ul>
+    <li>Adapters write immutable raw files with a manifest row (URL, time, sha256, license) → canonical Parquet long tables → time module → <code>state_at(t)</code> as-of reads → replay windows and overlays → Track 1 jobs writing <code>insights/*.json</code> → <code>sources.yaml</code> and <code>ATTRIBUTION.md</code>.</li>
+    <li><strong>Time:</strong> annual SPP uses hour-ending <code>Delivery Hour</code>, so interval start = <code>date + (hour − 1) h + (interval − 1)·15 min</code>; <code>Repeated Hour Flag</code> resolves fall-back; <code>Native_Load</code> writes <code>24:00</code> and a <code>DST</code> suffix; dashboard <code>interval</code> marks the interval end. DST tests: 2026-03-08 has 92 intervals, 2025-11-02 has 100.</li>
+    <li><strong>Availability</strong> (<code>available_ms = interval_end + latency</code>): SCED LMP +2 s; 15-min SPP +2 min; dashboard frequency +90 s; PRC +10 s; fuel mix +5 min; DAM D−1 12:40; actual load D+1 05:50. In replay no controller reads a price before it was published.</li>
+    <li><strong>Market model:</strong> <code>rtcb</code> from 2025-12-05; before that, no RT AS prices and scarcity lives in energy prices.</li>
+    <li><strong>Spine extracts</strong> (committed, offline): the S1 bundle (homes, transformers with <code>kva</code>/<code>normhkva_kva</code>/<code>emerghkva_kva</code>, feeders, home load); the <code>peak_2026_07_22</code> window from <code>rtm2026_lz.csv</code>; the Houston shape file (4 published points + charge swing, cited).</li>
+    <li>Politeness ≤1 req/s to ercot.com; Public API optional and prefetch-only, with a ledger refusing a third download of a report in 12 months; keys from env only. Fallbacks: frequency <code>ancillary-services</code> → <code>dc-tie-flows</code> → RTSC HTML → recorded → modelled; prices dashboard → MIS → hold. Prices are never interpolated.</li>
+  </ul>
+
+  <h3>6.6 Gateway, UI and studio (<code>gateway/</code>, <code>web/</code>, <code>llm/</code>)</h3>
+  <ul>
+    <li><strong>Breadcrumb:</strong> <code>Fleet ▸ Stand-in: Oncor suburb (e.g. Round Rock) on Base's ADER path ▸ p1uhs19_1247 ▸ p1uhs19_1247--p1udt17263</code>. Price chip: <code>LZ_NORTH (placeholder: zone unconfirmed)</code>. Map caption: "SMART-DS synthetic feeder on real north-Austin buildings".</li>
+    <li><strong>Map:</strong> MapLibre + deck.gl + OpenFreeMap, schematic fallback. Transformers coloured by tier with a glyph each (Okabe–Ito): neutral below 100%, above <code>kva</code> <code>#F0E442</code>, tier N <code>#E69F00</code>, tier E <code>#D55E00</code>.</li>
+    <li><strong>Three spine charts:</strong> tracking (commanded vs delivered, per-unit MAD, tolerance-to-capability ratio); feeder-head loading and transformer counts per tier; unauthorized vs quarantined MW with alerts.</li>
+    <li><strong>KPI tiles:</strong> frequency as <code>Δf est. 0.2–1.7 mHz · normal wander σ 13.7 mHz</code>; members below reserve floor. Control-plane strip: shard, owner, epoch, heartbeat age, STALE_EPOCH count. Library buttons, allocator toggle, Operator/Truth toggle (humans only). ELI5 tooltips sit next to units, never replace them.</li>
+    <li><strong>Studio flow:</strong> library match first → <code>client.messages.parse()</code> with <code>output_config.format</code> = <code>ScenarioDraft</code> on <strong><code>claude-sonnet-5</code></strong> (adaptive thinking, effort medium, 20 s timeout, <code>max_retries=1</code>) → validator → up to two repairs on <strong><code>claude-haiku-4-5-20251001</code></strong> (8 s, no thinking) → deterministic clamp shown on screen (e.g. "1,000 devices requested; a shard credential commands 91; clamped") → preview → a human presses Run. <code>claude-opus-5-5</code> is fallback only.</li>
+    <li><strong>API constraints:</strong> structured outputs forbid recursion and <code>minimum</code>/<code>maximum</code>/<code>minLength</code> and need <code>additionalProperties:false</code> on every object. The Python SDK validates bounds client-side, so a bounded schema would make <code>parse()</code> raise before repair runs; <code>ScenarioDraft</code> therefore has no bounds. Opus 5.5 rejects a forced <code>tool_choice</code> and isn't yet confirmed for structured outputs (R8).</li>
+    <li><strong>Keys:</strong> <code>ANTHROPIC_API_KEY</code> lives only in the gateway env; <code>.env</code> git-ignored; gitleaks pre-commit; the browser never calls Anthropic; logs record model, request ID, usage, latency, <code>stop_reason</code>; decisions stored, never re-queried on replay.</li>
+    <li><strong>Frames:</strong> JSON keyframes ≤5 Hz (spine); KPIs 2 Hz wall; panels grey out when a KPI is &gt;2 s stale. Slow engine shows "sim 42×, asked 60×"; WS drop resumes from <code>last_seq</code>; no tiles → schematic mode.</li>
+  </ul>
+</section>
+
+<section id="s7">
+  <div class="sec-no">7 · Interfaces</div>
+  <h2>The single source of truth for every interface</h2>
+  <div class="key warn">
+    <span class="label">Rule</span>
+    <p>This section wins over the round-1 documents and over every other section. <code>contracts/</code> (pydantic v2 → JSON Schema → generated TypeScript, plus <code>cframe</code>) is its executable form, and a change to either lands in the same commit.</p>
+  </div>
+  <h3>7.1 Conventions and IDs</h3>
+  <ul>
+    <li><strong>Header</strong> on every message: <code>schema, run_id, t_ms, seq, src</code> (<code>seq</code> monotonic per subject and publisher; <code>src</code> is the <code>proc_id</code>). ISO strings only in the authored DSL and UI display. <code>soc_pct</code> is 0–100; voltage in pu.</li>
+    <li><strong>cframe:</strong> <code>[u32 header_len][header JSON][pad to 8][little-endian buffers]</code>; header lists <code>cols:[{name, dtype, n, offset}]</code>. Columnar messages with a mismatched <code>topology_id</code>/<code>fleet_id</code> are dropped and counted.</li>
+  </ul>
+  <div class="tbl wide"><table>
+    <thead><tr><th>ID</th><th>Format</th><th>Example</th></tr></thead>
+    <tbody>
+      <tr><td>substation / feeder</td><td>SMART-DS names verbatim</td><td><code>p1uhs19_1247</code>, <code>p1uhs19_1247--p1udt17263</code></td></tr>
+      <tr><td>xfmr_id</td><td>SMART-DS transformer name</td><td><code>tr(r:p1udt17301-p1udt17301lv)</code></td></tr>
+      <tr><td>home_id</td><td>LV bus shared by the customer's two 120 V legs</td><td><code>p1ulv17542</code></td></tr>
+      <tr><td>device_id</td><td><code>&lt;home_id&gt;#&lt;k&gt;</code>, k ∈ {1,2}</td><td><code>p1ulv17542#1</code></td></tr>
+      <tr><td>shard_id</td><td><code>&lt;feeder_id&gt;/&lt;k&gt;</code></td><td><code>p1uhs19_1247--p1udt17263/0</code></td></tr>
+      <tr><td>topology_id / fleet_id</td><td>sha256 of grid bundle / fleet placement</td><td><code>sha256:9f2c41d0</code></td></tr>
+      <tr><td>partition_id</td><td>fixed</td><td><code>part-oncor-suburb</code></td></tr>
+      <tr><td>run_id; proc_id</td><td><code>r-</code> + 8 hex; role-index</td><td><code>r-7f3a21c0</code>; <code>orch-worker-2</code></td></tr>
+      <tr><td>key_id</td><td><code>k-&lt;shard_id&gt;-e&lt;epoch&gt;</code></td><td><code>k-p1uhs19_1247--p1udt17263/0-e8</code></td></tr>
+      <tr><td>plan_id</td><td><code>&lt;partition_id&gt;:&lt;interval_start_ms&gt;:rev=&lt;n&gt;</code></td><td><code>part-oncor-suburb:1784775900000:rev=17</code></td></tr>
+      <tr><td>fault / event / alert / incident</td><td><code>f-NNNN</code> / <code>e-NNNNNN</code> / <code>al-NNNN</code> / <code>inc-NNN</code></td><td><code>f-0007</code></td></tr>
+    </tbody>
+  </table></div>
+  <p class="src">Enums: device <code>mode</code> 0 GRID_IDLE, 1 GRID_DISPATCH, 2 STORM_HOLD, 3 COMMS_LOST, 4 BACKUP_ISLANDED, 5 OVERLOAD_RETRY, 6 FAULT_THERMAL, 7 REMOTE_DISABLED · reject codes 0 NONE, 1 BAD_SIG, 2 EXPIRED, 3 STALE_EPOCH, 4 DUPLICATE, 5 OUT_OF_ORDER · <code>alarms</code> bits SOC_FLOOR, PMAX, FLIP_LOCK, LOCAL_GUARD, DELAY_PENDING · <code>knowledge</code> market | nameplate | scada | oracle · orchestrator mode NORMAL | DEGRADED_TELEMETRY | SHARD_LOSS | CONTROL_LOSS | LOCAL_ONLY · detector layer audit | plan | physics | cohort | context · event family exogenous | injection | physical | detection | mitigation | orchestrator | component | run · severity info | warn | high | critical.</p>
+
+  <h3>7.2 Subject registry (<code>contracts/subjects.yaml</code>)</h3>
+  <div class="tbl xwide"><table>
+    <thead><tr><th>Subject</th><th>Schema</th><th>Owner</th><th>Consumers</th><th>Cadence</th></tr></thead>
+    <tbody>
+      <tr><td><code>sim.clock</code></td><td>clock.v1</td><td>sim</td><td>all</td><td>every 1 s tick</td></tr>
+      <tr><td><code>sim.tele.&lt;shard_id&gt;</code></td><td>tele.v1 (cframe)</td><td>sim comms model</td><td>owning worker, obs-detect, gateway</td><td>per tick; each device samples every 2 s</td></tr>
+      <tr><td><code>ctl.cmd.&lt;shard_id&gt;</code></td><td>cmd.v1 (cframe)</td><td>lease-holding worker (adversary forges here)</td><td>sim, obs-detect, gateway</td><td>2 s changes + renewals</td></tr>
+      <tr><td><code>ctl.keys</code></td><td>keys.v1</td><td>orch-coord</td><td>sim</td><td>on rotation</td></tr>
+      <tr><td><code>ctl.basepoint.&lt;partition_id&gt;</code></td><td>basepoint.v1</td><td>orch-desk</td><td>leader, obs-detect, gateway</td><td>5 min</td></tr>
+      <tr><td><code>ctl.plan.&lt;partition_id&gt;</code></td><td>plan.v1</td><td>leader</td><td>obs-detect, workers, gateway</td><td>every re-plan, before commands</td></tr>
+      <tr><td><code>ctl.budget.&lt;shard_id&gt;</code></td><td>budget.v1</td><td>leader</td><td>worker</td><td>2 s</td></tr>
+      <tr><td><code>ctl.shardenv.&lt;shard_id&gt;</code></td><td>shardenv.v1</td><td>worker</td><td>leader</td><td>2 s</td></tr>
+      <tr><td><code>ctl.envelope.&lt;partition_id&gt;</code></td><td>envelope.v1</td><td>leader</td><td>gateway, desk</td><td>2 s</td></tr>
+      <tr><td><code>ctl.tracking.&lt;partition_id&gt;</code></td><td>tracking.v1</td><td>leader</td><td>gateway, obs-score</td><td>per 5-min interval</td></tr>
+      <tr><td><code>ctl.hb.&lt;proc_id&gt;</code></td><td>hb.v1</td><td>every orch-*</td><td>coord, obs-detect, gateway</td><td>1 Hz wall</td></tr>
+      <tr><td><code>ctl.control</code></td><td>control.v1 (req/reply)</td><td>leader serves</td><td>obs-detect, gateway</td><td>on demand</td></tr>
+      <tr><td><code>sim.evt</code>, <code>ctl.evt</code>, <code>obs.evt</code></td><td>event.v1</td><td>prefix owner</td><td>all</td><td>on event</td></tr>
+      <tr><td><code>truth.evt</code>, <code>truth.frame</code></td><td>event.v1, truthframe.v1</td><td>sim</td><td>gateway, obs-score only</td><td>on event; every tick</td></tr>
+      <tr><td><code>sim.meas.scada</code> / <code>.ami</code></td><td>scada.v1 / ami.v1</td><td>sim</td><td>obs-detect, gateway; orch SCADA only at knowledge ≥ scada</td><td>4 s / 15 min + latency (L-10)</td></tr>
+      <tr><td><code>sim.system</code></td><td>system.v1</td><td>sim</td><td>all</td><td>1 s</td></tr>
+      <tr><td><code>exo.{price,system,load,weather}</code></td><td>exo.*.v1</td><td>sim via <code>state_at</code></td><td>gateway, obs-score (denied to orch, obs-detect)</td><td>on availability</td></tr>
+      <tr><td><code>ctl.exo.{…}</code></td><td>same</td><td>sim after overlays</td><td>orch-*, obs-detect</td><td>on availability</td></tr>
+      <tr><td><code>obs.alert</code></td><td>alert.v1</td><td>obs-detect</td><td>leader, gateway, obs-score</td><td>on alert</td></tr>
+      <tr><td><code>obs.trust</code>, <code>obs.proposal</code>, <code>obs.incident</code></td><td>trust.v1, proposal.v1, incident.v1</td><td>obs-detect</td><td>orch-*, gateway</td><td>5 s; on event (L-20)</td></tr>
+      <tr><td><code>obs.health</code></td><td>health.v1</td><td>obs-detect</td><td>leader, gateway</td><td>1 Hz wall</td></tr>
+      <tr><td><code>obs.score</code></td><td>score.v1</td><td>obs-score</td><td>gateway</td><td>1 Hz sim + final</td></tr>
+      <tr><td>JetStream <code>RUN_&lt;run_id&gt;</code></td><td>—</td><td>nats</td><td><code>runlog export</code></td><td>whole run: <code>sim.&gt;</code> (no frames), <code>ctl.&gt;</code>, <code>obs.&gt;</code>, <code>exo.&gt;</code>, <code>truth.evt</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>7.3 Topology</h3>
+  <p><code>GET /topology/grid/{topology_id}</code> and <code>GET /topology/fleet/{fleet_id}?knowledge=</code>, owned by sim. Knowledge levels: <code>market</code> devices only; <code>nameplate</code> adds the transformer map and kVA; <code>scada</code> adds the head meter; <code>oracle</code> research only.</p>
+<pre><code>{"schema":"fleet.v1","fleet_id":"sha256:41ab77e3","topology_id":"sha256:9f2c41d0",
+ "placement":{"mode":"dispersed","seed":42,"penetration_pct":20,"two_cabinet_share":0.35,"core_home_share":0.6},
+ "partition":{"partition_id":"part-oncor-suburb","principal":"base_markets","program":"ader","price_node":"LZ_NORTH",
+   "price_node_status":"placeholder_unconfirmed","basepoint_source":"desk_stub:shape_replay",
+   "display_label":"Stand-in: Oncor suburb (e.g. Round Rock) on Base's ADER path"},
+ "devices":{"device_id":["p1ulv17542#1"],"home_idx":[0],"shard_id":["p1uhs19_1247--p1udt17263/0"],
+   "class":["core_39_2"],"e_usable_kwh":[37.0],"p_max_kw":[20.0],"fw":["2.3.1"],"install_batch":["b-0917"],
+   "installer":["i-3"],"vendor":["vendor-A"],"carrier":["lte-A"],"geo_cell":["cell-17"]}}</code></pre>
+
+  <h3>7.5 Commands and the device acceptance rules</h3>
+<pre><code>{"schema":"cmd.v1","run_id":"r-7f3a21c0","t_ms":1784775904100,"seq":1412,"src":"orch-worker-2",
+ "fleet_id":"sha256:41ab77e3","shard_id":"p1uhs19_1247--p1udt17263/0","epoch":8,
+ "key_id":"k-p1uhs19_1247--p1udt17263/0-e8","credential_id":"svc-orch-worker",
+ "plan_id":"part-oncor-suburb:1784775900000:rev=17","issued_ms":1784775904100,
+ "expires_ms":1784775934100,"sig":"hmac-sha256:&lt;omitted&gt;"}
+columns: idx u32 · p_kw f32 · start_at_ms f64 (absolute, unchanged across renewals) · mode u8 (0,1,2,7)</code></pre>
+  <p>The signature covers header and buffers; key material is never on the bus. HMAC secrets are generated per run by the supervisor, passed through env, never logged. There are no acks: telemetry carries the applied epoch/seq and rejects.</p>
+  <div class="tbl wide"><table>
+    <thead><tr><th>#</th><th>Acceptance rule (world-sim implements, orchestrator relies on, CI golden table tests)</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Signature valid and <code>key_id</code> current for the shard, else <code>BAD_SIG</code>.</td></tr>
+      <tr><td>2</td><td><code>now ≤ expires_ms + H(device_id, epoch, seq) mod 10 s</code>, else <code>EXPIRED</code>.</td></tr>
+      <tr><td>3</td><td><code>epoch ≥ max_epoch[shard]</code>, else <code>STALE_EPOCH</code>; a higher epoch raises <code>max_epoch</code>.</td></tr>
+      <tr><td>4</td><td><code>(epoch, seq) &gt; (last_epoch, last_seq)</code>, else <code>DUPLICATE</code> (equal) or <code>OUT_OF_ORDER</code>.</td></tr>
+      <tr><td>5</td><td><code>target = clamp(p_kw; SoC floor, P_max, flip lock 300 s, local guards)</code>; record the active command and expiry.</td></tr>
+      <tr><td>6</td><td><strong>Release rule.</strong> <code>device_start_delay_max_s = D</code> is a per-run firmware setting no command field can change. A move toward 0 applies immediately. A target beyond <code>p_released</code> in the risk direction becomes pending: if nothing is pending, draw <code>release_at = max(now, start_at_ms) + U(0, D)</code> from the device's own RNG; if something is pending, replace the target and keep <code>release_at</code>. A sign flip goes to 0 first, then waits for the flip lock. A renewal never re-draws. Any newer accepted command replaces a pending target, which is how revocation cancels pending forgeries.</td></tr>
+      <tr><td>7</td><td>Every tick: past the active command's expiry → <code>target = 0</code>, <code>GRID_IDLE</code>, backup armed. <strong>The only timer that affects power.</strong></td></tr>
+      <tr><td>8</td><td><code>COMMS_LOST</code> is a label, set after 60 s with no contact on either link.</td></tr>
+      <tr><td>9</td><td>Report <code>applied_epoch</code>, <code>applied_seq</code>, <code>last_reject</code>, <code>rej_count</code>, <code>p_reflex_kw</code>; output <code>p = ramped target + p_reflex</code>.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>7.6 Telemetry (<code>sim.tele.&lt;shard_id&gt;</code>, tele.v1)</h3>
+  <p>Columns, every value a claim: <code>idx</code> u32 · <code>sample_t_ms</code> f64 · <code>mode</code> u8 · <code>p_kw</code> (claimed, incl. reflex) · <code>p_reflex_kw</code> · <code>p_site_kw</code> (+ = import) · <code>soc_pct</code>, <code>soc_floor_pct</code> · <code>p_dis_max_kw</code>, <code>p_ch_max_kw</code> · <code>p_target_kw</code> · <code>release_at_ms</code> (0 = none pending) · <code>v_pu</code>, <code>f_hz</code> · <code>link</code> (0/1 Wi-Fi/2 LTE) · <code>applied_epoch</code>, <code>applied_seq</code> · <code>last_reject</code> · <code>rej_count</code> · <code>alarms</code>.</p>
+
+  <h3>7.7 Orchestrator messages (envelope example)</h3>
+<pre><code>{"schema":"envelope.v1","t_ms":1784775906000,"src":"orch-leader-a","partition_id":"part-oncor-suburb",
+ "leader_epoch":3,"mode":"NORMAL","committed":{"base_point_mw":2.67,"ecrs_mw":0.0,"nonspin_mw":0.0},
+ "deliverable":{"up_mw":3.61,"down_mw":2.95,"alpha":0.9,"firm_up_mw":3.25,"firm_down_mw":2.66},
+ "at_risk_mw":0.0,"hsl_mw":3.25,"tracking":{"target_mw":2.41,"measured_mw":2.37,"tol_mw":2.0},
+ "fleet":{"n":273,"fresh":270,"suspect":2,"stale":1,"quarantined":0,"islanded":0},
+ "by_feeder":[{"feeder_id":"p1uhs19_1247--p1udt17263","headroom_up_mw":0.94,"headroom_down_mw":0.61,
+   "horizon_s":300,"confidence":0.8,"loading_pct":71.0,"binding":"XFMR"}]}</code></pre>
+  <p class="src">Also defined: basepoint.v1, plan.v1, budget.v1, shardenv.v1, tracking.v1, hb.v1, control.v1. <code>ctl.control</code> is served by the leader and idempotent on <code>request_id</code>; ops: <code>QUARANTINE, RELEASE, REVOKE_CREDENTIAL, CAP_SHARD, SET_ALLOCATOR, SET_STORM_HOLD, SAFE_MODE, CONFIG_PUSH, ROLLBACK, EMBED_CHALLENGES</code>. Principal requests (L-23) return <code>ACCEPTED|PARTIAL|REJECTED</code> with <code>accepted_mw</code>. Full payloads in <code>PRD.md</code> §7.7.</p>
+
+  <h3>7.8 Measurements, system, exogenous</h3>
+  <ul>
+    <li><code>sim.meas.scada</code> (4 s): <code>feeder_idx, p_kw, q_kvar, v_head_pu, breaker_closed</code>. <code>sim.meas.ami</code> (15 min + latency): <code>home_idx, interval_start_ms, kwh_import, kwh_export, v_min_pu, v_max_pu</code>.</li>
+    <li><code>sim.system</code> carries <code>df_est_mhz_lo/hi</code> and <code>sigma_normal_mhz: 13.7</code>; <code>f_hz</code> is null for historical windows (ERCOT publishes no history). L-18 adds <code>f_hz</code>, <code>rocof_hz_s</code>, <code>ufls_stage</code>.</li>
+    <li><code>exo.price</code> example, real values for 22:00 CDT on 2026-07-22 from <code>rtm2026_lz.csv</code>: <code>LZ_NORTH 344.13</code>, <code>LZ_AEN 348.00</code> $/MWh, <code>market_model: "rtcb"</code>, <code>src: "ercot.mis.NP6-785-ER:RTMLZHBSPP_2026"</code>.</li>
+  </ul>
+
+  <h3>7.9 Events, alerts, scores</h3>
+<pre><code>{"schema":"alert.v1","alert_id":"al-0221","t_ms":1784776201600,"detector":"D0","layer":"audit",
+ "severity":"critical","subject":{"kind":"credential","id":"k-p1uhs19_1247--p1udt17263/0-e8"},
+ "first_evidence_ms":1784776200400,"score":1.0,"threshold":"shard sum -1510 kW vs plan +880 kW",
+ "explain":"A valid shard key ordered 91 batteries to charge at full power; no dispatch plan asked for that."}</code></pre>
+  <p class="src">One <code>event.v1</code> with string <code>cause_ids</code>; the gateway computes <code>links{caused_by, mitigated_by}</code>. <code>score.v1</code> carries <code>ttd_s, ttm_s, peak_unauthorized_mw, landed_fraction, xfmr_tierN, xfmr_tierE, members_below_reserve, double_applies, zombie_applies, track_mad_pu</code> and a <code>defenses:off</code> counterfactual.</p>
+
+  <h3>7.10 Scenario DSL: <code>ScenarioDraft</code> and <code>Scenario</code></h3>
+  <p><strong><code>ScenarioDraft</code></strong> is what the LLM fills: non-recursive, <code>additionalProperties:false</code> everywhere, no bounds, no outcome fields, <code>events[]</code> as <code>anyOf</code> of per-kind objects with a <code>const</code> kind, <code>when_all</code> one level deep. <strong><code>Scenario</code></strong> is the validator's output: adds <code>expect[]</code> (evaluated over <code>contracts/metrics.yaml</code>), resolved IDs, <code>scenario_hash</code>, <code>bounds</code>. Allocator, defenses, pacing and speed are run parameters, not scenario fields.</p>
+<pre><code>{"dsl_version":"1","id":"sc-03-hijack-shard","seed":20260722,
+ "window":{"replay_window":"peak_2026_07_22","start_local":"2026-07-22T17:00","tz":"America/Chicago","duration_min":540},
+ "grid":{"feeders":["p1uhs19_1247--p1udt17263"],"penetration_pct":20,"two_cabinet_share":0.35,
+         "class_mix":{"legacy_25":0.4,"core_39_2":0.6},"placement":"dispersed","shard_max_devices":120},
+ "defenses":{"device_start_delay_max_s":120,"flip_lock_s":300,"signed_commands":true,"fleet_freq_response":"off",
+             "comms_loss_policy":"IDLE_ON_EXPIRY","auto_approve":"safe_direction","detectors":["D0"]},
+ "events":[{"id":"steal","kind":"credential_compromise","at_min":0,"when_all":[],
+            "target":{"select":"shard","shard":"p1uhs19_1247--p1udt17263/0"},"params":{"scope":"shard"}},
+           {"id":"strike","kind":"setpoint_override","at_min":310,"when_all":[],
+            "target":{"select":"compromised","count":91},"params":{"pattern":"full_swing","p_kw":-20.0,"vector":"cloud"}}],
+ "adversary":{"policy":"scripted","goal":"outage","fallback_goal":"degrade","decision_period_s":60}}</code></pre>
+  <div class="tbl wide"><table>
+    <thead><tr><th>Kinds</th><th>Executor</th></tr></thead>
+    <tbody>
+      <tr><td><code>feeder_outage</code>, <code>substation_outage</code>, <code>feeder_restore</code>, <code>comms_outage</code>, <code>generator_trip</code>, <code>heat_wave</code>, <code>winter_storm</code>, <code>misinstall</code>, <code>member_tamper</code>, <code>telemetry_bias</code>, <code>device_fault</code></td><td><code>sim</code></td></tr>
+      <tr><td><code>feed_spoof</code>, <code>feed_blackout</code></td><td><code>feed</code></td></tr>
+      <tr><td><code>credential_compromise</code></td><td>adversary</td></tr>
+      <tr><td><code>setpoint_override</code></td><td>forged <code>cmd.v1</code> (cloud) or <code>sim</code> (firmware / backdoor)</td></tr>
+      <tr><td><code>proc_kill</code>, <code>proc_pause</code>, <code>bus_partition</code>, <code>principal_request</code></td><td><code>ctl</code></td></tr>
+      <tr><td><code>pipeline_fault</code></td><td><code>obs</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>7.11–7.12 Fault API and gateway</h3>
+<pre><code>POST /faults {"target":"ctl","kind":"proc_kill","selector":{"proc":"orch-worker-2"},
+              "at_ms":1784775900000,"params":{"signal":"SIGKILL"}}
+→ {"fault_id":"f-0007","affected":{"devices":91,"mw_nameplate":1.51,"processes":["orch-worker-2"]}}</code></pre>
+  <div class="tbl wide"><table>
+    <thead><tr><th>Endpoint</th><th>Body → result</th></tr></thead>
+    <tbody>
+      <tr><td><code>POST /runs</code></td><td><code>{scenario_hash, allocator, defenses, pacing, speed, record:true}</code> → <code>{run_id, ws_url}</code></td></tr>
+      <tr><td><code>GET /runs/{run_id}/report</code></td><td>metrics, <code>expect</code> pass/fail, A/B diff</td></tr>
+      <tr><td><code>POST /whatif/hosting</code></td><td><code>{feeder_id, class_mix, placement, seeds[], allocators[], referee, knowledge, n_max}</code> → <code>{job_id}</code>; writes <code>hosting.parquet</code> and <code>summary.json</code></td></tr>
+      <tr><td><code>GET /scenarios/schema?form=draft|scenario</code>, <code>POST /scenarios/validate</code></td><td>JSON Schema; <code>{ok, normalized, errors:[{path, code, message, allowed}], derived}</code></td></tr>
+      <tr><td><code>POST /studio/compile</code> (SSE)</td><td>drafting → validating → repairing → done <code>{scenario_hash}</code></td></tr>
+      <tr><td><code>GET /sources</code>, <code>GET /insights/{id}</code>, <code>GET /faults/manifest</code></td><td>credits; Track 1 JSON; every fault kind with its schema</td></tr>
+    </tbody>
+  </table></div>
+  <p class="src">WebSocket <code>/ws</code> server → client: <code>hello{protocol:"headroom-ws/1", …}</code>, <code>frame</code> (JSON keyframe ≤5 Hz: device <code>p_kw/soc_pct/mode/flags</code>, xfmr <code>loading_pct/tier</code>, feeder <code>p_kw/loading_pct</code>), <code>kpi</code> 2 Hz, <code>event</code> (never dropped), <code>control_plane</code>, <code>run_status</code>, <code>heartbeat</code>. Client → server: <code>subscribe</code>, <code>control{play|pause|speed|seek|next_event}</code>, <code>ack{seq}</code>. <code>flags.compromised_truth</code> only when <code>view=truth</code>.</p>
+</section>
+
+<section id="s8">
+  <div class="sec-no">8 · Scenarios</div>
+  <h2>Eighteen scenarios, each one a regression test</h2>
+  <p>Defaults: window <code>peak_2026_07_22</code> 17:00 → 02:00 CDT, grid S1 with the demo fleet. Four invariants asserted every run: <code>run.crashed == 0</code>, <code>members.below_reserve == 0</code>, <code>ctl.double_applies == 0</code>, <code>obs.truth_subscriptions == 0</code>. Numeric thresholds are ASSUMPTIONs pinned with a margin after the first measured run.</p>
+  <div class="tbl xwide"><table>
+    <thead><tr><th>ID</th><th>Scenario</th><th>Where</th><th>Trigger</th><th>Expected behaviour</th><th>Detection</th><th><code>expect:</code></th></tr></thead>
+    <tbody>
+      <tr><td>SC-01</td><td>Price-drop charging rebound (headline)</td><td><span class="tag t-ok">SPINE</span></td><td>No injection; desk charge block at 23:15; once per allocator</td><td>naive synchronizes; jitter same plateau spread over 120 s; feeder_aware binds, defers, <code>COMMIT_DERATE</code></td><td>physics outcome</td><td>tierN ≥ 1 {naive}; tierN == 0 and tierE == 0 {feeder_aware}; at_risk_mw_max &gt; 0 {feeder_aware}</td></tr>
+      <tr><td>SC-02</td><td>Worker <code>kill -9</code> during discharge ramp</td><td><span class="tag t-ok">SPINE</span></td><td><code>proc_kill orch-worker-2</code> at 22:05, distributed, 1×</td><td>Lease expires after 3 s; shard moves to epoch+1 with full resend; no gap</td><td>SHARD_REASSIGNED</td><td>failover_first_cmd_ms ≤ 5000; devices_expired == 0; zombie_applies == 0; Δtrack_dev_pu ≤ 0.05</td></tr>
+      <tr><td>SC-03</td><td>Hijack via stolen shard key</td><td><span class="tag t-ok">SPINE</span></td><td>Shard /0 key stolen; full swing at 22:10; ≈91 devices, ≈3.0 MW</td><td>Device delay holds forgeries; PB1 revokes, rotates, resends, quarantines; budget moves to /1 and /2</td><td>D0 ≤2 s</td><td>ttd_s ≤ 5 {on}; landed_fraction ≤ 0.06 {on}; peak_unauth ≥ 2.0 {off}; tierE == 0 {on}</td></tr>
+      <tr><td>SC-04</td><td>Comms partition and flapping (sPower)</td><td>L-02</td><td>cell-17: 240 s down / 60 s up for 2 h from 21:30</td><td>SUSPECT → stop renewing → same-feeder replacement; STALE at 180 s; re-admit after 60 s</td><td>D7 or DEGRADED_TELEMETRY</td><td>track_dev_pu_max ≤ 0.10; belief_error_kw_max ≤ 50</td></tr>
+      <tr><td>SC-05</td><td>Feeder outage and restoration</td><td>L-03</td><td>Outage 21:30 for 30 min; restore with <code>governor</code> or <code>none</code></td><td>Homes island; envelope → 0, derate; 300 s hold then governed recharge with cold-load pickup</td><td>BREAKER_TRIP</td><td>restore_peak_kw {governor} &lt; {none}; unserved_kwh == 0</td></tr>
+      <tr><td>SC-06</td><td>Zombie worker</td><td>L-04</td><td>SIGSTOP worker-2 for 10 s at 22:05, then SIGCONT</td><td>Self-fence; late sends rejected STALE_EPOCH</td><td>counter</td><td>zombie_applies == 0; stale_epoch_rejects ≥ 1</td></tr>
+      <tr><td>SC-07</td><td>Bus partition of one worker</td><td>L-11</td><td>Cut the worker's fault proxy for 30 s</td><td>Clock-silence self-fence; majority reassigns</td><td>SELF_FENCED</td><td>zombie_applies == 0</td></tr>
+      <tr><td>SC-08</td><td>Whole bus down</td><td>L-12</td><td>Kill <code>nats-server</code> for 60 s</td><td>Everything fences; devices idle, backup armed within 30–40 s; truth log continues</td><td>by design</td><td>idle_by_s ≤ 40; truth_log_gap_s == 0</td></tr>
+      <tr><td>SC-09</td><td>Detector crash</td><td>L-14</td><td><code>pipeline_fault obs-detect</code> for 60 s</td><td>BLIND → shard caps halved; resume from durable consumer</td><td><code>obs.health</code></td><td>resume_gap_alerts_lost == 0</td></tr>
+      <tr><td>SC-10</td><td>1,000-battery hijack on S2</td><td>L-15</td><td>741 homes × 1.35 = 1,000 devices; several shards; 33 MW swing</td><td>As SC-03 across feeders; healthy feeders cover</td><td>D0</td><td>landed_fraction ≤ 0.06 {on}; df_est_mhz_hi ≤ 17.5</td></tr>
+      <tr><td>SC-11</td><td>Stealth creep</td><td>L-21</td><td>1,000-device cohort under-delivers s kW; 7 sim-days headless</td><td>Trust down-weights; challenges; derate</td><td>D3 pooled CUSUM</td><td>ttd_h(19 kW) ≤ 4; curve recorded</td></tr>
+      <tr><td>SC-12</td><td>Contractor mis-install (CT polarity)</td><td>L-22</td><td>Batch b-0917: claimed sign flipped</td><td>Exclude batch; roll back</td><td>D3 sign flip, D6</td><td>ttd_s ≤ 900</td></tr>
+      <tr><td>SC-13</td><td>Member hoarding</td><td>L-22</td><td>5 homes offline during dispatch windows</td><td>Exclude from commitments; human case; never disable backup</td><td>D10</td><td>fp_devices ≤ 1</td></tr>
+      <tr><td>SC-14</td><td>Conflicting principals</td><td>L-23</td><td>Hypothetical GVEC-style co-op request (80% access) vs ADER and 20% floor</td><td>Admission control returns PARTIAL; floor never lent</td><td>—</td><td>principal.partial ≥ 1</td></tr>
+      <tr><td>SC-15</td><td>Generator trip 2,750 MW (what-if)</td><td>L-18</td><td><code>fleet_freq_response</code> off vs ffr</td><td>Off by default; tracker excludes reflex</td><td>—</td><td>nadir_hz {off} ≥ 59.3</td></tr>
+      <tr><td>SC-16</td><td>Winter storm (Uri)</td><td>L-19</td><td><code>uri_2021</code>; storm hold 95%; rotating outage</td><td>Storm hold, islanding, staggered recharge</td><td>—</td><td>unserved_kwh recorded</td></tr>
+      <tr><td>SC-17</td><td>Price feed spoof</td><td>L-24</td><td>×20 on LZ_NORTH for 2 intervals</td><td>Hold last good; bound response to 10% of partition</td><td>D8</td><td>ttd_s ≤ 900</td></tr>
+      <tr><td>SC-18</td><td>Comms jamming at peak (N-1)</td><td>L-20</td><td>Carrier lte-A down at 22:00</td><td>With N-1 on, commitment already excludes the largest group</td><td>D7</td><td>at_risk_mw_max {n1:on} &lt; {n1:off}</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="s9">
+  <div class="sec-no">9 · Metrics</div>
+  <h2>How every headline number is computed</h2>
+  <p>Every metric is a key in <code>contracts/metrics.yaml</code>; the scorer reads only the run log.</p>
+
+  <h3>9.1 Hosting capacity: naive vs naive+jitter vs feeder-aware (the headline)</h3>
+  <p>Harness owned by world-sim, headless and in-process. For each placement (dispersed, seeds 1–5; clustered is L-15) and allocator, sweep N in placement order on a coarse grid, then bisect around each tier's first violation. Window SC-01; referee <code>bucket</code> (spine) or <code>ac</code> (L-01); tick 10 s; knowledge <code>nameplate</code>. A violation counts only if absent from, or worse than, the zero-battery twin.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Tier</th><th>Rule (S = apparent power, kVA)</th></tr></thead>
+    <tbody>
+      <tr><td>Info</td><td><code>S &gt; kva</code>, counted only</td></tr>
+      <tr><td>N (normal)</td><td><code>S &gt; normhkva</code> (110%) for ≥30 consecutive min</td></tr>
+      <tr><td>E (emergency)</td><td><code>S &gt; emerghkva</code> (150%) at any tick</td></tr>
+      <tr><td>A (ageing, L-17)</td><td><code>∫V_run dt / ∫V_twin dt &gt; 1.5</code> with <code>V = 2^((θ_h − 98)/6)</code> <span class="tag t-asm">ASSUMPTION</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="tbl wide"><table>
+    <thead><tr><th>Metric</th><th>Computation</th></tr></thead>
+    <tbody>
+      <tr><td><code>first_n_tier{N,E}</code></td><td>smallest N with ≥1 attributable violation of that tier; median and range across seeds</td></tr>
+      <tr><td><code>xfmr_tier{N,E}(N)</code></td><td>transformer count per tier vs N (the main curve), split by 25/50/75 kVA</td></tr>
+      <tr><td><code>useful_capacity_n</code></td><td>largest N with zero tier-N and tier-E violations (and zero voltage exits in <code>ac</code>)</td></tr>
+      <tr><td><code>firm_mw(N)</code></td><td>min over the charge block of <code>α·deliverable_down</code>; knee where <code>Δfirm/ΔN &lt; 0.1 kW</code> per device</td></tr>
+      <tr><td><code>mw_given_up(N)</code></td><td><code>∫(base_point − delivered)⁺ dt</code> over the charge block, MWh</td></tr>
+      <tr><td><code>usd_given_up(N)</code></td><td><code>Σ (energy charged feeder_aware − naive) × SPP</code>; negative means awareness saved money (prices keep falling after 23:15 on 2026-07-22). Measured, not assumed.</td></tr>
+      <tr><td>Fragility map</td><td>each transformer coloured by the N at which naive first puts it in tier N, with its kVA class</td></tr>
+    </tbody>
+  </table></div>
+  <div class="key warn"><span class="label">Wording</span><p>Never say "hosting capacity is N". Naive gives about 1–2 by construction. The claim is the curves, the fragility map, and the $/MW cost of staying out of tiers N and E. A <code>25_to_50_on_core</code> upgrade sweep repeats everything.</p></div>
+
+  <h3>9.2 Control-plane failover (SC-02, SC-06, SC-07)</h3>
+  <ul>
+    <li><code>detect_ms</code> = t(SHARD_REASSIGNED) − t(kill); <code>failover_first_cmd_ms</code> = t(first epoch+1 command) − t(kill).</li>
+    <li><code>devices_expired_during_failover</code> must be 0 while the first new command arrives within 30 s; <code>zombie_applies</code> (from truth) must be 0; <code>stale_epoch_rejects</code> from telemetry.</li>
+    <li><code>track_dev_pu_event − track_dev_pu_baseline</code> against a no-kill run with the same seed. R4 reports p50/p99 over 20 kills and 5 pauses. "In tolerance" only ever appears next to the tolerance-to-capability ratio (2 ÷ 4.52 = 44%, trivial at demo scale).</li>
+  </ul>
+
+  <h3>9.3 Hijack containment (SC-03, SC-10)</h3>
+  <ul>
+    <li><code>peak_unauthorized_mw = max_t Σ_i |p_true,i − p_auth,i|</code> (sim tracks <code>p_auth</code> as a shadow); <code>landed_fraction</code> = that ÷ nominal swing.</li>
+    <li><code>ttd_s</code> = first correct covering alert − first physical effect (first device off by &gt;1 kW); <code>ttm_s</code> = first effect → unauthorized MW below 5% of peak.</li>
+    <li><strong>Blast radius:</strong> homes and transformers in tier N/E, peak feeder loading, the credential's swing as a multiple of feeder headroom and of 1% of system load (911 MW).</li>
+    <li><strong>Frequency band:</strong> <code>df_lo = ΔP × 0.081 mHz/MW</code>; <code>df_hi</code> from load damping <code>D_L = 1,750 MW/Hz</code> <span class="tag t-asm">ASSUMPTION</span>, governor <code>K_g = 25,900 MW/Hz</code> <span class="tag t-plain">DERIVED</span>, deadband 0.017 Hz <span class="tag t-cav">UNVERIFIED</span>. 40 MW → 3.2–17.4 mHz; one S1 shard (3.0 MW) → 0.24–1.7 mHz. Always next to σ 13.7 mHz and the 150 mHz gap to 59.85 Hz.</li>
+  </ul>
+  <div class="tbl"><table>
+    <thead><tr><th>Path (Monte Carlo)</th><th>Share of swing that lands</th></tr></thead>
+    <tbody>
+      <tr><td>Device-enforced delay, D0 at 1 s</td><td class="n">1.5%</td></tr>
+      <tr><td>Delay set by the command</td><td class="n">79%</td></tr>
+      <tr><td>Backdoor, caught by D1 at ~15 s</td><td class="n">13%</td></tr>
+      <tr><td>Backdoor, caught by D2 at ~20 s</td><td class="n">17%</td></tr>
+    </tbody>
+  </table></div>
+  <p class="src">On-screen conditions: the delay is enforced by the device; the device honours revocation; the attack uses the audited cloud path. A/B uses the same seed with defenses on vs off (off = delay 0, detectors and playbooks off).</p>
+
+  <h3>9.4 Stealth: harm vs time to detect</h3>
+  <p>D3 pooled cohort CUSUM on <code>Σ_cohort(E_meter − ∫p_site_claim)</code> per 15 min; σ_R = σ_e·√n = 4.74 kWh at σ_e 0.15 kWh and n = 1,000; k = 0.5σ_R, h = 5. Mean TTD = Siegmund ARL(δ) × 15 min; harm = s × TTD. In-control ARL 938 intervals (≈9.8 days per chart); across ≈50 charts that's ≈5 alarms a day, which is why an alarm triggers a challenge, not a quarantine.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Sustained shortfall (1,000 devices)</th><th>Mean TTD</th><th>Harm before detection</th></tr></thead>
+    <tbody>
+      <tr><td class="n">19 kW</td><td class="n">2.6 h</td><td class="n">≈49 kWh</td></tr>
+      <tr><td class="n">9.5 kW</td><td class="n">9.5 h</td><td class="n">≈90 kWh</td></tr>
+      <tr><td class="n">4.7 kW</td><td class="n">35 h</td><td class="n">≈165 kWh</td></tr>
+      <tr><td class="n">1.9 kW</td><td class="n">4.3 days</td><td class="n">≈196 kWh</td></tr>
+    </tbody>
+  </table></div>
+  <p class="src">Contrast: the naive "deliver 80% of the award" tactic loses ≈4 MW and is caught at once. Caveats on the chart: σ_e is assumed and the curve scales linearly with it; 15-min detection needs a device meter; AMI likely arrives next-day (UNVERIFIED).</p>
+
+  <h3>9.5 Track 1 findings</h3>
+  <p><strong>(a) The recharge window sits on the morning solar ramp.</strong> For every summer day (Jun–Aug 2026, 92 days) in each zone, find the start of the cheapest 2-hour block of 15-minute RT SPP (<code>rtm2026_lz.csv</code>, <code>price_profile_check.py</code>).</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Load zone</th><th>Days starting 07:00–10:59 (of 92)</th></tr></thead>
+    <tbody>
+      <tr><td>LZ_HOUSTON</td><td class="n">67 (59 of them 07:00–08:59)</td></tr>
+      <tr><td>LZ_NORTH</td><td class="n">66</td></tr>
+      <tr><td>LZ_AEN</td><td class="n">67</td></tr>
+    </tbody>
+  </table></div>
+  <p>Perfect-foresight charging is $9–11/MWh cheaper than the naive post-peak rule: ≈<strong>$0.40 per Core per day</strong> at 40 kWh, against a grid-scale benchmark of ≈$1.58/day. Caveats: perfect foresight; calendar-day windows; DI's naive-onset stats dropped 30–51% of days (only the 22:45 median onset is quoted); "solar ramp" is our interpretation. Open question (L-06b): does feeder-aware staggering keep the morning saving while raising hosting capacity?</p>
+  <p><strong>(b) The grid got stiffer per MW.</strong> Sensitivity = (pre-event frequency − nadir) ÷ MW lost, from NP12-261-M (<code>fme_sensitivity.py</code>).</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Period</th><th>Median sensitivity</th></tr></thead>
+    <tbody>
+      <tr><td>2015–17 (n = 86)</td><td class="n">0.212 mHz/MW</td></tr>
+      <tr><td>2025–26 (n = 9)</td><td class="n"><strong>0.081 mHz/MW</strong> (bootstrap 95% CI 0.072–0.112)</td></tr>
+    </tbody>
+  </table></div>
+  <p>A 2.6× ratio; size-matched to 700–1,200 MW losses it still holds (0.203 → 0.082). The last event below 59.85 Hz was 2023-05-01 (59.847 Hz after 851 MW). Caveats: BAL-001-TRE-1 → TRE-2 in 2022; the smallest recorded loss rose from ≈400–500 MW to ≈700 MW; n = 9; correlation only (batteries supplying 51% of RRS is a plausible driver). Implication: replays need era-specific calibration (2021 sensitivity ≈2.4× that of 2026).</p>
+</section>
+
+<section id="s10">
+  <div class="sec-no">10 · Data</div>
+  <h2>The spine runs with no network</h2>
+  <p>Every endpoint was tested on 25–26 Sep 2026; caches are in <code>evidence/</code>. The spine runs on committed extracts, the schematic map, the library and recorded runs.</p>
+  <div class="tbl xwide"><table>
+    <thead><tr><th>Source</th><th>Endpoint</th><th>Offline cache</th><th>License / attribution</th></tr></thead>
+    <tbody>
+      <tr><td>ERCOT RT SPP annual (NP6-785-ER)</td><td>MIS <code>mirDownload?doclookupId=1276781176</code> (2026), <code>1177737535</code> (2025)</td><td><code>bp-data-ingest/rtm2026.zip</code>, <code>rtm2026_lz.csv</code>, <code>rtm2025_lz.csv</code></td><td>Raw ERCOT data may be redistributed in compilations, charts and analyses; no logo; README credit line</td></tr>
+      <tr><td>ERCOT Uri RT SPP 2021</td><td>DocID 814922832</td><td><code>ercot/rtm2021.zip</code></td><td>same</td></tr>
+      <tr><td>Frequency events (NP12-261-M)</td><td>DocID 1263831744</td><td><code>bp-data-ingest/fme.zip</code></td><td>same</td></tr>
+      <tr><td>Native load</td><td><code>ercot.com/files/docs/…/Native_Load_2026.zip</code></td><td><code>nl2025.zip</code>, <code>nl2026.zip</code></td><td>same</td></tr>
+      <tr><td>ADER monthly report; limits tracker</td><td>ercot.com xlsx files</td><td><code>ader_monthly.xlsx</code>, <code>lop.xlsx</code></td><td>same</td></tr>
+      <tr><td>ERCOT dashboards</td><td><code>ercot.com/api/1/services/read/dashboards/*.json</code> (keyless, 60 s cache)</td><td><code>ercot/db_*.json</code>, <code>dc-tie-flows.json</code></td><td>same; poll no faster than <code>max-age</code></td></tr>
+      <tr><td>ERCOT Public API (optional)</td><td><code>api.ercot.com/api/public-reports</code> (key + 1 h token; 30 req/min; US only)</td><td>—</td><td>≤3 downloads per report per 12 months</td></tr>
+      <tr><td>NREL SMART-DS P1U</td><td><code>oedi-data-lake.s3.amazonaws.com/SMART-DS/v1.0/2018/AUS/P1U/…</code></td><td><code>p1u_metrics.csv</code>, <code>sds/</code>, <code>sds2/</code>. <strong>S1 feeder and <code>profiles/</code> need a fetch.</strong></td><td>CC BY 4.0; credit NREL SMART-DS</td></tr>
+      <tr><td>Weather</td><td>Open-Meteo archive; NWS (User-Agent); NCEI KAUS</td><td><code>om_uri.json</code>, <code>om_aug.json</code>, <code>nws_*.json</code>, <code>ncei.csv</code></td><td>Open-Meteo free tier non-commercial, so commit NCEI/NWS (public domain)</td></tr>
+      <tr><td>OSM infrastructure</td><td>Overpass bbox (area queries return 406)</td><td><code>ovp_bb.json</code>, <code>ovp_metro.json</code></td><td>ODbL notice</td></tr>
+      <tr><td>Basemap</td><td>OpenFreeMap</td><td><code>ofm.json</code></td><td>OpenFreeMap © OpenMapTiles, data © OpenStreetMap contributors</td></tr>
+      <tr><td>EAGLE-I outages</td><td>DOI 10.6084/m9.figshare.24237376.v4</td><td>metadata only</td><td>CC BY 4.0</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="s11">
+  <div class="sec-no">11 · Build</div>
+  <h2>Contracts first, then the spine, then layers</h2>
+<pre><code>contracts/   models, enums, ids.py, units.py, time.py, cframe.py; subjects.yaml; metrics.yaml; schema/*.json; ts/
+bus/         nats.py, inmem.py (same subjects, codecs, ACLs)
+fixtures/    toy4/ (grid, fleet, scenario, golden runlog, invariants.yaml); p1u_1feeder/ (manifest + hashes, make fetch)
+sim/         world-sim; faults/ (router + executors); harness/ (sweeps)
+orch/core/   pure policy incl. step(observation)→commands (no bus/sim imports)
+orch/svc/    coord, leader, worker, desk
+scenario/    DSL, validator, runner, adversary, library/*.json
+obs/         detectors, playbooks, trust, scorer
+ingest/      adapters, store, time, state_at, overlays, insights
+llm/         model config, structured outputs, logging
+gateway/     FastAPI, run manager, playback, whatif, studio
+supervisor/  spawn/kill/pause, proxy control
+web/         React + Vite + TS + deck.gl + MapLibre + uPlot + Zustand
+deploy/      process-compose, nats.conf, proxy.json
+demo/runs/   committed recorded runs
+tests/       contract/, integration/
+Makefile     contracts fetch itest ci demo-replay demo-live sweep</code></pre>
+
+  <h3>Interface-first build order</h3>
+  <ol>
+    <li><strong>Spikes</strong> R1, R2, R3, R4, R8 (§12). Their results can change the contracts.</li>
+    <li><strong><code>contracts/</code>.</strong> Nothing is coded against a shape that isn't in it.</li>
+    <li><strong><code>bus/</code> and <code>fixtures/toy4</code>:</strong> both bus implementations, plus a hand-made golden run log with every spine subject.</li>
+    <li><strong>One fake per component</strong> (fake-sim with toy4 replay + §7.5 rules; fake-orch NAIVE; fake-ingest; fake-obs; UI mock frames). Once these exist, every workstream starts in parallel.</li>
+    <li><strong>CI contract tests:</strong> schema validation, cframe round-trip, the acceptance table on fake and real sim, toy4 through every consumer against <code>invariants.yaml</code>, DST days, the truth-leak test.</li>
+    <li><strong>Headless end to end</strong> on the in-memory bus: toy4, then S1.</li>
+    <li><strong>Distributed spine:</strong> NATS, supervisor, orch processes (SC-02).</li>
+    <li><strong>Run log and <code>demo-replay</code></strong> (depends on step 6, not step 7).</li>
+    <li><strong>Layers</strong> in dependency order.</li>
+  </ol>
+
+  <h3>The spine (ESSENTIAL)</h3>
+  <p>One S1 feeder replaying the 2026-07-22 evening · world-sim with acceptance rules, kW buckets with tiers, truth log · orchestrator over NATS (desk stub, leader, coordinator, ≥2 lease-holding workers, three allocators) · one self-failure (SC-02) · one attack (SC-03, D0 + PB1) · scorer and a map with three charts, recorded and replayable offline · a headless hosting sweep chart (SC-01).</p>
+  <div class="tbl xwide"><table>
+    <thead><tr><th>ID</th><th>Item</th><th>Workstream</th><th>Depends on</th></tr></thead>
+    <tbody>
+      <tr><td>SP-1</td><td><code>contracts/</code>: models, enums, IDs, units, time, cframe, <code>subjects.yaml</code> + ACLs, <code>metrics.yaml</code>, schemas, TS types</td><td>contracts &amp; bus</td><td>spikes</td></tr>
+      <tr><td>SP-2</td><td><code>bus/</code> in-memory + NATS, both enforcing ACLs</td><td>contracts &amp; bus</td><td>SP-1</td></tr>
+      <tr><td>SP-3</td><td>toy4 fixture, golden run log, invariants, one fake per component</td><td>contracts &amp; bus</td><td>SP-1, SP-2</td></tr>
+      <tr><td>SP-4</td><td>Committed extracts (S1 bundle, <code>peak_2026_07_22</code> SPP, Houston shape); time module + DST tests; <code>state_at</code>; <code>sources.yaml</code>; <code>ATTRIBUTION.md</code></td><td>data-ingest</td><td>SP-1, R2</td></tr>
+      <tr><td>SP-5</td><td>world-sim core: clock, RNG, device model, §7.5 rules incl. release and HMAC, comms, buckets and tiers with zero-battery twin, <code>truth.*</code>, truth log</td><td>world-sim</td><td>SP-1, SP-4</td></tr>
+      <tr><td>SP-6</td><td>Orchestrator core (envelope, split, three allocators, tracker, belief) and services (desk, leader, coord, ≥2 workers with KV leases, epochs, key rotation, plan-before-command, hb/envelope/tracking, QUARANTINE/RELEASE/REVOKE_CREDENTIAL/SET_ALLOCATOR)</td><td>orchestrator</td><td>SP-1, SP-2, R4</td></tr>
+      <tr><td>SP-7</td><td>Supervisor: spawn, SIGKILL, restart</td><td>orchestrator</td><td>SP-6</td></tr>
+      <tr><td>SP-8</td><td>DSL (both forms), validator, runner, fault router, scripted adversary, library SC-01..03</td><td>scenario &amp; obs</td><td>SP-1, SP-5</td></tr>
+      <tr><td>SP-9</td><td>D0, PB1, <code>obs.health</code>, scorer (§9.1–9.3 + invariants)</td><td>scenario &amp; obs</td><td>SP-5, SP-6</td></tr>
+      <tr><td>SP-10</td><td>Run log: truth Parquet, JetStream capture, <code>runlog export</code>, manifest</td><td>world-sim + gateway</td><td>SP-5</td></tr>
+      <tr><td>SP-11</td><td>Gateway: JSON WS frames, run manager, playback, <code>make demo-replay</code></td><td>gateway &amp; UI</td><td>SP-10</td></tr>
+      <tr><td>SP-12</td><td>UI: map with tier colours, three charts, KPI tiles incl. frequency band, control-plane strip, library, allocator toggle, REPLAY badge</td><td>gateway &amp; UI</td><td>SP-11</td></tr>
+      <tr><td>SP-13</td><td>Hosting harness (bucket referee, three allocators, tiers N/E, Parquet + summary) with chart and fragility map</td><td>world-sim + UI</td><td>SP-5, SP-6</td></tr>
+      <tr><td>SP-14</td><td>CI: contract tests; SC-01..03 as headless regression tests</td><td>contracts &amp; bus</td><td>SP-3..SP-9</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Layers</h3>
+  <div class="tbl xwide"><table>
+    <thead><tr><th>ID</th><th>Layer</th><th>Tag</th><th>Depends on</th></tr></thead>
+    <tbody>
+      <tr><td>L-01</td><td>OpenDSS AC referee (slow cadence), voltage band, twin</td><td><span class="tag t-ok">ESSENTIAL</span></td><td>SP-5, R1</td></tr>
+      <tr><td>L-02</td><td>Comms partition and flapping (SC-04) with belief handoff on screen</td><td><span class="tag t-ok">ESSENTIAL</span></td><td>SP-5, SP-6, SP-8</td></tr>
+      <tr><td>L-03</td><td>Feeder outage and restoration (SC-05)</td><td><span class="tag t-ok">ESSENTIAL</span></td><td>SP-5, SP-6</td></tr>
+      <tr><td>L-04</td><td>Zombie (SC-06) and the STALE_EPOCH counter</td><td><span class="tag t-ok">ESSENTIAL</span></td><td>SP-7</td></tr>
+      <tr><td>L-05</td><td>Studio compile path (Claude, <code>ScenarioDraft</code>, repair, clamp, preview, cached-compile fallback)</td><td><span class="tag t-ok">ESSENTIAL</span></td><td>SP-8, R8</td></tr>
+      <tr><td>L-06</td><td>Track 1 pack: morning-window chart, stiffer-grid chart, 2026-09-25 trace, <code>insights/*.json</code></td><td><span class="tag t-ok">ESSENTIAL</span></td><td>SP-4</td></tr>
+      <tr><td>L-07</td><td>Provenance chips, credits panel, ELI5 tooltips</td><td><span class="tag t-ok">ESSENTIAL</span></td><td>SP-4, SP-12</td></tr>
+      <tr><td>L-08</td><td>Analytic harm-vs-TTD curve</td><td><span class="tag t-ok">ESSENTIAL</span></td><td>SP-9</td></tr>
+      <tr><td>L-09</td><td>Measured performance overlay: tick p99, PF ms, failover p50/p99, bytes/frame, fps</td><td><span class="tag t-ok">ESSENTIAL</span></td><td>SP-11</td></tr>
+      <tr><td>L-06b</td><td>SC-01 on every summer-2026 day under each rule: the price of feeder awareness</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>SP-13, L-06</td></tr>
+      <tr><td>L-10</td><td>Measurement plane: SCADA 4 s; AMI / device meter 15 min</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>SP-5</td></tr>
+      <tr><td>L-11</td><td>Fault-proxy bus partition, clock-silence fence (SC-07), chaos relay</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>SP-7</td></tr>
+      <tr><td>L-12</td><td>Whole-bus-down beat (SC-08)</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>SP-10</td></tr>
+      <tr><td>L-13</td><td>Leader and coordinator hot standbys</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>SP-6</td></tr>
+      <tr><td>L-14</td><td>Detector crash and BLIND halving (SC-09)</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>SP-9</td></tr>
+      <tr><td>L-15</td><td>S2 substation, cross-feeder re-dispatch, 1,000-battery hijack (SC-10), clustered placement</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>L-01</td></tr>
+      <tr><td>L-16</td><td>Knowledge-level (value-of-information) sweep</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>SP-13, L-10</td></tr>
+      <tr><td>L-17</td><td>Thermal model (tier A), fuse and breaker protection</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>L-01</td></tr>
+      <tr><td>L-18</td><td>Swing equation, FFR/droop what-if, generator trip (SC-15)</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>SP-5</td></tr>
+      <tr><td>L-19</td><td>Weather rescaling, cold-load pickup, Uri (SC-16)</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>SP-4</td></tr>
+      <tr><td>L-20</td><td>D1–D3, D5–D7, D9, D12; trust; comms N-1 (SC-18); PB2–PB6</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>L-10</td></tr>
+      <tr><td>L-21</td><td>Adaptive adversary, stealth points (SC-11), LLM planner, bandit</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>L-20</td></tr>
+      <tr><td>L-22</td><td>Mis-install and tamper (SC-12, SC-13), D10</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>L-20</td></tr>
+      <tr><td>L-23</td><td>Principal arbiter and <code>principal_request</code> (SC-14)</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>SP-6</td></tr>
+      <tr><td>L-24</td><td>Feed-spoof overlay and D8 (SC-17)</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>SP-4</td></tr>
+      <tr><td>L-25</td><td>LIVE mode and recorder (its value decays every hour it isn't running)</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>SP-4</td></tr>
+      <tr><td>L-26</td><td>Binary frames, Web Worker decoding, deltas, LOD</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>SP-11</td></tr>
+      <tr><td>L-27</td><td>S3 and the 88k benchmark, published only if measured</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>L-15</td></tr>
+      <tr><td>L-28</td><td>Checkpoints, engine seek, exact replay from the command log</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>SP-10</td></tr>
+      <tr><td>L-29</td><td>Storm hold, AS energy holds, LP planner, <code>hsl_mw</code> derate step</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>SP-6</td></tr>
+      <tr><td>L-30</td><td>LLM narration with <code>numbers_trace</code>, drill-down, captions</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>L-05</td></tr>
+      <tr><td>L-31</td><td>Prometheus <code>/metrics</code> and Grafana</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>SP-9</td></tr>
+      <tr><td>L-32</td><td>Canary config push and rollback</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>SP-6</td></tr>
+      <tr><td>L-33</td><td>ADER fingerprints, OSM layer, EAGLE-I, ERCOT API pulls</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>SP-4</td></tr>
+      <tr><td>L-34</td><td>Synced split-screen A/B; interactive what-if</td><td><span class="tag t-plain">ENHANCEMENT</span></td><td>SP-13</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>Count:</strong> 23 ESSENTIAL (14 spine + L-01 to L-09) and 26 ENHANCEMENT (L-06b and L-10 to L-34). Staffing, timing and cuts are the team's decision.</p>
+
+  <h3>Parallel workstreams (by component)</h3>
+  <div class="tbl wide"><table>
+    <thead><tr><th>Workstream</th><th>Items</th><th>Builds against</th><th>Hands off</th></tr></thead>
+    <tbody>
+      <tr><td>Contracts &amp; bus</td><td>SP-1..3, SP-14</td><td>spikes</td><td><code>contracts/</code>, buses, toy4, CI</td></tr>
+      <tr><td>world-sim</td><td>SP-5, SP-13, L-01, L-03, L-10, L-15, L-17..19</td><td>fake-orch, fake-ingest</td><td>truth log, harness, sweep Parquet</td></tr>
+      <tr><td>Orchestrator</td><td>SP-6, SP-7, L-04, L-11..13, L-23, L-29, L-32</td><td>fake-sim</td><td>processes, <code>orch/core</code></td></tr>
+      <tr><td>Scenario &amp; observability</td><td>SP-8, SP-9, L-02, L-08, L-14, L-20..22, L-24</td><td>fake-sim, fake-orch</td><td>library, scorer, detectors</td></tr>
+      <tr><td>Data-ingest</td><td>SP-4, L-06, L-06b, L-25, L-33</td><td>none</td><td>extracts, <code>state_at</code>, insights</td></tr>
+      <tr><td>Gateway, UI &amp; studio</td><td>SP-10 export, SP-11, SP-12, L-05, L-07, L-09, L-26, L-30, L-31, L-34</td><td>mock frames, fake runs</td><td>console, <code>demo-replay</code>, studio</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="s12">
+  <div class="sec-no">12 · Risks</div>
+  <h2>Run these tests before building on them</h2>
+  <div class="tbl xwide"><table>
+    <thead><tr><th>#</th><th>Risk</th><th>Early test (pass/fail)</th><th>If it fails</th></tr></thead>
+    <tbody>
+      <tr><td>R1</td><td>OpenDSS per-step push is slow (unmeasured)</td><td>Compile S1; push ≈2,024 leg kW and ≈480 battery kW per solve over 720 solves. <strong>Pass: median ≤50 ms.</strong></td><td>Precomputed loadshapes, pandapower 3.5.5, or bucket-only labelled <code>fidelity:"bucket"</code></td></tr>
+      <tr><td>R2</td><td>S1 transformer→home map not extractable</td><td>BFS each LV bus through <code>Lines.dss</code>. <strong>Pass: 379 transformers, 1,012 customers, no orphans.</strong></td><td>Use fallback feeder <code>p1uhs0_1247--p1udt22170</code></td></tr>
+      <tr><td>R3</td><td>Evening home load differs from 4–6 kW (UNVERIFIED)</td><td>Join <code>res_kw_*_pu</code> to leg kW; summer median per 25 kVA unit 20:00–23:00 and 23:00–01:00; count units above 110% and 150% with one Core</td><td>Reword C2/C3 with measured numbers</td></tr>
+      <tr><td>R4</td><td>NATS KV compare-and-set leases unverified</td><td>Two workers race; <code>kill -9</code> the holder ×20 and SIGSTOP/SIGCONT ×5. <strong>Pass: takeover ≤5 s; every zombie command rejected STALE_EPOCH.</strong> Record p99 renew RTT.</td><td>Coordinator-owned lease table over request/reply; device epoch check still guarantees correctness</td></tr>
+      <tr><td>R5</td><td>Tracking uninformative at demo scale</td><td>Tolerance ÷ capability = 44%</td><td>Per-unit MAD vs Base's ≈3.4% (already planned)</td></tr>
+      <tr><td>R6</td><td>Frequency number is model-dependent</td><td>40 MW step with D_L ∈ {850, 1,750} and db ∈ {0.017, 0.036}</td><td>Publish the range next to σ 13.7 mHz</td></tr>
+      <tr><td>R7</td><td>Comms-loss behaviour unknown</td><td>Ask on site first (Q1)</td><td>Knob, default idle</td></tr>
+      <tr><td>R8</td><td>LLM compile path fails</td><td>10 library phrasings + 5 hostile prompts through <code>ScenarioDraft</code> on <code>claude-sonnet-5</code>. <strong>Pass: all validate; p95 ≤20 s.</strong> Confirm Haiku repair and whether <code>claude-opus-5-5</code> accepts <code>output_config.format</code>.</td><td>Library-only studio; Opus fallback off</td></tr>
+      <tr><td>R9</td><td>Scale claims</td><td>deck.gl at 17k points and 5 Hz; a numpy tick at 88k devices</td><td>Drop the claims</td></tr>
+      <tr><td>R10</td><td>Replay needs an API key</td><td>Desk stub and D8 run on 15-min SPP</td><td>Already the default</td></tr>
+      <tr><td>R11</td><td>A cframe exceeds NATS's 1 MB payload limit at S2/S3</td><td>Measure frame bytes at S1 and S2</td><td>Split frames per shard</td></tr>
+      <tr><td>R12</td><td>Truth leaks into orch or obs</td><td>CI leak test; NATS ACL deny test</td><td>Blocks merge</td></tr>
+      <tr><td>R13</td><td>Schemas drift across workstreams</td><td>Generated types; <code>schema</code> on every message; validate outgoing in dev</td><td>Blocks merge</td></tr>
+      <tr><td>R14</td><td>Time bugs</td><td>DST tests; July <code>cooling_kw</code> median should peak 15:00–20:00 local</td><td>Fix the time module</td></tr>
+      <tr><td>R15</td><td>Charge timing looks invented</td><td>Unit test: stub onset at LZ_NORTH on 2026-07-22 is 23:15 CDT</td><td>Label the rule on screen</td></tr>
+      <tr><td>R16</td><td>Demo crashes while recording</td><td>Run <code>make demo-replay</code> on committed runs daily</td><td>Record from playback, with the badge</td></tr>
+      <tr><td>R17</td><td>Device delay slows legitimate ramps</td><td>Measure feeder_aware tracking lag with D = 120 s vs D = 0 in SC-01</td><td>Report it as the cost of the defence (Q4)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="s13">
+  <div class="sec-no">13 · Video</div>
+  <h2>Five minutes, eight beats</h2>
+  <div class="tbl xwide"><table>
+    <thead><tr><th>Time</th><th>On screen</th><th>Voiceover gist</th><th>Rubric line</th></tr></thead>
+    <tbody>
+      <tr><td class="n">0:00–0:20</td><td>S1 map labelled "Stand-in: Oncor suburb (e.g. Round Rock) on Base's ADER path · SMART-DS synthetic feeder on real north-Austin buildings · LZ_NORTH placeholder"; one partition number next to 379 transformers</td><td>"ERCOT sees this fleet as one number. The street sees 379 transformers."</td><td>Why, Insight</td></tr>
+      <tr><td class="n">0:20–0:45</td><td>The ADER sentence with its source; Base's Algorithms Engineer posting; the pipeline strip</td><td>Distribution limits aren't enforced, and Base is hiring for this. What's real: data, physics, balancing, processes.</td><td>Problem, Why</td></tr>
+      <tr><td class="n">0:45–1:35</td><td>Hosting what-if: three curves by tier N/E; fragility map by kVA; MW and $ given up</td><td>"Jitter fixes the spike, not the plateau. Here's which quarter of this feeder's transformers break on the first Core, and what staying safe costs."</td><td>Insight, Usability, Depth</td></tr>
+      <tr><td class="n">1:35–2:25</td><td>22:00 ramp; <code>kill -9 orch-worker-2</code>: lease tile red, shard to epoch 9, <code>first_cmd_ms</code>; then SIGSTOP/SIGCONT: STALE_EPOCH jumps, zombie applies stay 0</td><td>"How it holds up when <em>our</em> pieces fail. The battery decides who may command it."</td><td>Orchestration, Completeness</td></tr>
+      <tr><td class="n">2:25–3:30</td><td>Studio: "an AI takes over 1,000 batteries at the evening peak"; validator clamps ("a shard credential commands 91"); A/B defenses off (red tiles) vs on (D0 TTD, key rotation, quarantine, landed fraction); frequency tile 0.2–1.7 mHz vs σ 13.7 mHz; harm-vs-TTD chart</td><td>"Blast radius per credential. Physics over logs. The LLM only wrote the scenario; the validator checked it."</td><td>Creativity, Insight, Depth</td></tr>
+      <tr><td class="n">3:30–4:10</td><td>Track 1: morning window (67/66/67 of 92 days) and the stiffer grid, each with its caveat</td><td>"What ERCOT's own files show that most people miss."</td><td>Open Grid Data, Insight</td></tr>
+      <tr><td class="n">4:10–4:40</td><td>Measured numbers: tick p99, PF ms, failover p50/p99, bytes/frame, fps; CI running the library; <code>make demo-replay</code></td><td>"Engineered, measured, reproducible."</td><td>Performance, Completeness</td></tr>
+      <tr><td class="n">4:40–5:00</td><td><code>headroom_up/down</code>, the acceptance table, the Deployments what-if; credits (ERCOT, NREL SMART-DS, OpenFreeMap/OSM)</td><td>"What Base could use tomorrow."</td><td>Usability, Track 3</td></tr>
+    </tbody>
+  </table></div>
+  <p class="src">Cut from round 1: the Uri backup beat, the FFR generator-trip beat, the 100k zoom (unless measured), "never caught".</p>
+  <div class="key"><span class="label">Recorded-replay fallback</span>
+    <ol>
+      <li>Record each beat live with its scenario hash, seed, allocator, defenses and commit.</li>
+      <li>If a component misbehaves, play that beat's run log in <code>view: playback</code> with a badge: "Replay of run r-… (recorded HH:MM)".</li>
+      <li>The studio beat keeps a cached compile for its exact prompt, badged "cached compile".</li>
+      <li>CI checks replay-equals-rerun hashes only for headless and lockstep runs; live distributed runs are recorded, not re-run, and the video says so.</li>
+    </ol>
+  </div>
+</section>
+
+<section id="s14">
+  <div class="sec-no">14 · Ask on site</div>
+  <h2>Questions for Base engineers, most build-changing first</h2>
+  <ol>
+    <li>When a unit loses the cloud, does it hold its set point until expiry, ramp to zero, or go idle? After how long? Do FFR and droop stay armed? (Sets rule 7 and <code>comms_loss_policy</code>.)</li>
+    <li>Do you enforce feeder or transformer limits in dispatch today? What do TDSPs give you (feeder IDs, transformer-to-meter maps, hosting limits)? Do they upgrade 25 kVA units when a Core goes in?</li>
+    <li><strong>Which ERCOT load zone do Oncor Austin-suburb members (Round Rock, Pflugerville, Hutto) settle in?</strong> Replaces our <code>LZ_NORTH</code> placeholder.</li>
+    <li>How is a partition's base point split across devices? Is there a random delay, enforced on the device, applied to every increase?</li>
+    <li>Do commands carry sequence numbers, expiries or a controller epoch? Can two BaseOS workers command one device? Where does Temporal sit on that path?</li>
+    <li>Which independent measurements do you receive: device-meter interval and latency, premise AMI latency, any feeder-head SCADA?</li>
+    <li>Does lowering a telemetered limit cap the next SCED base point for an ADER? How is deviation scored while the fleet gives frequency response?</li>
+    <li>What is the most MW any single credential or service can command?</li>
+    <li>What are the Core's usable kWh, round-trip efficiency, grid-charge limit and standby draw?</li>
+    <li>What are the storm-hold target and lead time, the reconnect delay, and the post-outage recharge stagger?</li>
+    <li>After an evening discharge, when does the fleet actually recharge? Do you see the morning price window?</li>
+    <li>When a utility program and an ADER award collide on the same devices (the GVEC case), which wins?</li>
+    <li>Do you see the decline in per-MW frequency sensitivity in your own data?</li>
+    <li>How do you detect tampering, or telemetry that disagrees with the meter? What false-positive rate is tolerable?</li>
+  </ol>
+</section>
+
+<section id="s15">
+  <div class="sec-no">15 · Decisions</div>
+  <h2>Rulings, resolutions, and a plain-language glossary</h2>
+  <h3>Rulings by RZ (not reopened)</h3>
+  <div class="tbl wide"><table>
+    <thead><tr><th>#</th><th>Ruling</th></tr></thead>
+    <tbody>
+      <tr><td>R-1</td><td>Stack and topology per the integration critique: Python 3.12, NATS JetStream, one physics process, orch and detector processes under a supervisor with a TCP fault proxy, an in-memory twin, Parquet + DuckDB, React + deck.gl + MapLibre + OpenFreeMap.</td></tr>
+      <tr><td>R-2</td><td>Claude for the studio only: <code>claude-sonnet-5</code> default, <code>claude-haiku-4-5-20251001</code> for repair, <code>claude-opus-5-5</code> only as fallback; API key only in the backend env.</td></tr>
+      <tr><td>R-3</td><td>SMART-DS feeders stand in for an Oncor suburb (e.g. Round Rock) on Base's ADER path. Zone is a labelled placeholder (<code>LZ_NORTH</code>, unconfirmed). Never <code>lz_houston</code>; the Houston trace is a labelled, rescaled replay input only.</td></tr>
+      <tr><td>R-4</td><td><code>kva</code> is already nameplate, no de-rating. Violations reported in tiers N, E and A.</td></tr>
+      <tr><td>R-5</td><td>The 1,000-battery frequency effect is the 3–17 mHz band, within normal wander (σ ≈ 13.7 mHz).</td></tr>
+      <tr><td>R-6</td><td>Fleet FFR/droop OFF by default with a toggle. Start delay is device-enforced and no command can override it.</td></tr>
+      <tr><td>R-7</td><td>Harm-vs-TTD curve replaces "never caught". Track 1 findings are the morning window and the stiffer grid, each with its caveat.</td></tr>
+      <tr><td>R-8</td><td>No staffing, schedule or cuts in the PRD. Spine plus tagged layers, organized by component.</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Decisions made while merging</h3>
+  <div class="tbl wide"><table>
+    <thead><tr><th>#</th><th>Decision</th><th>Reason</th></tr></thead>
+    <tbody>
+      <tr><td>D-4</td><td>Device delay uses <code>p_released</code> plus a pending target, one draw per pending episode</td><td>"Once per change" would re-draw every 2 s ramp update and stall legitimate ramps; an attacker's two-step still waits out the delay</td></tr>
+      <tr><td>D-14</td><td>Device class is per cabinet; <code>legacy_50</code> and <code>core_78_4</code> are home configurations</td><td>Consistent with <code>device_id = home#k</code></td></tr>
+      <tr><td>D-22</td><td>S1 = <code>p1uhs19_1247--p1udt17263</code>; fallback <code>p1uhs0_1247--p1udt22170</code>; S2 = <code>p1uhs0_1247</code></td><td>Consensus of all five docs and both critiques; fallback works offline</td></tr>
+      <tr><td>D-23</td><td>Feeder rating = head <code>normamps × √3 × 12.47 kV</code>, no ÷1.1</td><td>The ÷1.1 rested on the same misread as the de-rate</td></tr>
+      <tr><td>D-24</td><td>Shards = whole-transformer groups of ≤120 devices</td><td>Keeps transformer envelopes local to one worker</td></tr>
+      <tr><td>D-25</td><td>Demo fleet at 20% penetration (≈273 devices, ≈4.52 MW)</td><td>Stresses S1 without exceeding feeder load at discharge</td></tr>
+      <tr><td>D-26</td><td>Desk charge onset at ≤ 2 × the day's median (23:15 on 2026-07-22)</td><td>"≤ median" fires only at 02:45 on this record day; rule stated on screen; L-06b runs every rule</td></tr>
+      <tr><td>D-27</td><td>JSON frames to the browser in the spine</td><td>Binary deltas deferred to L-26</td></tr>
+      <tr><td>D-28</td><td>Spine = one self-failure and one attack; comms partition and feeder outage are ESSENTIAL layers</td><td>Judge critique §4.1</td></tr>
+      <tr><td>D-29</td><td>The conflicting principal is a hypothetical GVEC-style co-op</td><td>Austin Energy dispatches only in its own territory, and our framing is Oncor</td></tr>
+      <tr><td>D-30</td><td>Replay prices are 15-min SPP, not NP6-788-CD</td><td>NP6-788-CD needs an API key for July 2026</td></tr>
+      <tr><td>D-31</td><td>Detectors carry a "Base has the data?" column; D2 needs SCADA; D3 presumes a device meter</td><td>Judge critique §2.9, §3</td></tr>
+    </tbody>
+  </table></div>
+  <p class="src">All 21 integration-register rows were adopted as recommended, with the refinements noted in <code>PRD.md</code> §15.2.</p>
+
+  <h3>Glossary</h3>
+  <div class="tbl wide"><table>
+    <thead><tr><th>Term</th><th>Plain meaning</th></tr></thead>
+    <tbody>
+      <tr><td>ERCOT; SCED; base point</td><td>The Texas grid operator; its 5-minute dispatch run; the MW that run tells a resource to deliver.</td></tr>
+      <tr><td>Load zone</td><td>The pricing region where retail load settles. Austin Energy's is LZ_AEN; there is no LZ_AUSTIN.</td></tr>
+      <tr><td>ADER; partition</td><td>ERCOT's pilot letting many homes in one load zone bid as one resource; Base's fleet within one zone.</td></tr>
+      <tr><td>Feeder</td><td>One 12.47 kV neighbourhood circuit leaving a substation, like a water main serving a few streets.</td></tr>
+      <tr><td>Service transformer; kVA</td><td>The pole can or lawn box turning 7,200 V into 240 V for 2–3 homes; 25, 50 or 75 kVA, with a 110% normal and 150% emergency limit.</td></tr>
+      <tr><td>Headroom; hosting capacity</td><td>Spare capacity before a limit; how many batteries fit before something exceeds a limit.</td></tr>
+      <tr><td>SoC; reserve floor</td><td>How full a battery is; Base always keeps 20% for backup.</td></tr>
+      <tr><td>Frequency; FFR; droop</td><td>The grid's 60 Hz heartbeat, the same across Texas; automatic local pushes when it falls (off by default here).</td></tr>
+      <tr><td>Lease; epoch; fencing</td><td>A time-limited right to command a shard; a counter of lease changes; the battery ignoring older epochs, so a revived controller can do no harm.</td></tr>
+      <tr><td>TTL; expiry</td><td>How long a command stays valid; after that the battery idles with backup armed.</td></tr>
+      <tr><td>Truth; claim; meter</td><td>What really happened (sim only); what a battery reports; what an independent meter saw.</td></tr>
+      <tr><td>TTD; TTM</td><td>Time to detect; time to mitigate.</td></tr>
+      <tr><td>CUSUM</td><td>A running sum that catches small, persistent shifts that single alarms miss.</td></tr>
+      <tr><td>Blast radius per credential</td><td>The MW one stolen key can move, compared with what a feeder can absorb.</td></tr>
+      <tr><td>Spine</td><td>The smallest end-to-end loop that must work on video.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+  </article>
+</div>
+
+<footer class="foot">
+  <p>Headroom PRD v1, merged 26 Sep 2026 from five design proposals and two critiques. <code>PRD.md</code> in the project folder is the canonical copy; §7 there is the single source of truth for interfaces. Research behind it: the Base Power Grid Brief.</p>
+</footer>

@@ -1,0 +1,200 @@
+Hugging Basefeeder-aware battery fleet
+P1 · where to charge
+P2 · where the next battery goes
+More
+NREL SMART-DS 2018 AUS P1U feeder REAL
+Oncor-suburb stand-in settled at LZ_NORTH (placeholder) ASSUMPTION
+4:45–5:00
+How Base plugs it in tomorrow
+SIM
+‹ prev
+The siting file sits beside the install queue; allocate() sits behind the zone base point, deterministic, no model in the loop. It needs total transformer load, 60 s lagASSUMPTION. One OpenDSS step takes 2.1 msSIM; allocate() at the largest synthetic fleet takes 65.0 msSIM per call for 100,000ASSUMPTION batteries.
+The five-minute video, beat by beat
+Each beat is one deep link; every number in a caption is read from the committed data, with its label. A beat whose data is not built says so.
+0:00–0:25
+The problem
+REAL
+ERCOT dispatches one number per load zone and does not check feeders REAL. Our naive branch splits that number with no feeder check, all at once at the onset ASSUMPTION. Street A–D: 9REAL homes on 4REAL service transformers, every home with a battery, in a fleet of 96ASSUMPTION. The scale ladder: A's battery charge at once, 40 kWDERIVED, as a share of each scale: 160%DERIVED of A (25 kVAREAL); 0.50%DERIVED of this feeder (7,991.5 kVADERIVED); 0.000049%DERIVED of ERCOT (81,612 MWREAL on 2026-09-25). What overloads one service transformer does not register at the zone.
+0:25–0:50
+Afternoon peak: relief at its true size
+SIM
+At 16:45SIM, with no batteries, transformer A reaches 122.1%SIM of nameplate: over nameplate for 17 minSIM (amber; not a failure). The driver is one home's load, Home 0212 (SMART-DS profile res_kw_38274_pu), and the same profile runs at Home 0409 on T-240, Home 0504 on T-103: one shape, not two pieces of evidence. Feeder-aware, at 16:45SIM A reads 97.8%SIM, and its own batteries discharge up to 6.9 kWSIM (16:46SIM). T-240 has no battery and stays over nameplate; the next-battery view answers that.
+0:50–1:00
+When transformers peak vs when prices peak
+SIM
+Across August, transformers most often hit their monthly peak at 16:00SIM; the day's highest price most often falls at 18:00REAL. The two peaks fall at different hours: a market-only dispatcher saves its energy for the price peak and does nothing for the load peak.
+1:00–1:25
+Evening price peak: naive back-feed
+SIM
+The market plan discharges every battery in the highest-priced intervals (19:45, 20:00, 21:00, 21:15, 13 min of 20:15DERIVED). Naive, all at once, the street's back-feed reaches 139.7%SIM on C (T-246) at 21:29: back-feed is an overload too. Feeder-aware caps export by headroom: the worst street reading while exporting is 97.9%SIM on A (T-150).
+1:25–2:00
+The price collapse: naive rebound
+SIM
+The price falls from $566.42REAL at 21:00REAL to $55.42REAL at 22:00DERIVED, the charge onset. Naive: every battery charges at once, and the worst service transformer reaches 201.2%SIM (A (T-150) at 22:30SIM): 11SIM normal-tier events and 3SIM transformers past the emergency rating. This rule's fuse opens above 200%ASSUMPTION for 10 minASSUMPTION; it operated on 0SIM transformers. Grid check: minimum service voltage 0.9707 puSIM = 116.5 VSIM, so voltage stays in range at unity pf (0SIM homes below 0.95 pu); after the onset the feeder head peaks at 73.9%SIM of its rating at 22:00.
+2:00–2:30
+The price collapse: feeder-aware rotation
+SIM
+Feeder-aware: before sending charge, check each transformer's headroom and send only what fits. On street A–D the first charge reaches each transformer at D 22:00, A 22:30, B 22:55, C 23:05SIM; the ticker names every grant and hand-off. Battery-caused normal-tier events: 0SIM; emergency: 0SIM. No service transformer passes its limit because of battery charging. Charged by the morning deadline: 100.0%SIM. What the controller sees: total transformer load, 60 s lagASSUMPTION.
+2:30–3:00
+Pieces fail mid-balance
+SIM
+At 22:15SIM the battery at Home 0222 goes silent holding a +19.0 kWSIM command: stale after 180 sASSUMPTION, expired and idle with backup armed after 300 sASSUMPTION, and Home 0593 and Home 0934 on the same transformer pick up its headroom 0 sSIM after expiry. At 22:35SIM transformer C (T-246) runs hot (7.2 kWASSUMPTION of new load for 60 minASSUMPTION). Its batteries were not charging when the load arrived (0.0 kWSIM), so there was no charge to shift. During the event it peaked at 96.2%SIM of nameplate, with its batteries charging from 23:13SIM at up to +12.7 kWSIM. At 22:55SIM our controller stalls for 8 minASSUMPTION; every command expires on schedule. Battery-caused normal-tier events: 0SIM; emergency: 0SIM.
+3:00–3:30
+Where the next battery goes
+SIM
+A month-long what-if on real August LZ_NORTH prices REAL and SMART-DS loads SIM: 911DERIVED candidate homes, with and without a battery. Feeder-aware's first choice is Home 0409 on T-240. The OpenDSS referee ran 6SIM month runs; screening error p99 0.25 ptsSIM.
+3:30–3:55
+The flip
+DERIVED
+The flip is partial in this data (the headline needs at most five shared homes in both top tens). Naive and feeder-aware share 7DERIVED of their top ten (Spearman 0.94DERIVED); among candidates whose place no id tie-break decided, they share 4DERIVED of ten (Spearman 0.24DERIVED, over 109DERIVED candidates). Feeder-aware's first choice, Home 0409 on T-240, under naive dispatch: naive rank 345DERIVED (feeder-aware rank 1DERIVED); managed naively, a battery there takes its month peak from 119.3%SIMscreening to 145.6%SIMscreening and adds a violation (where NOT to put it).
+3:55–4:20
+Useful capacity and dark homes
+SIM
+From an empty feeder, naive dispatch fits 383SIM batteries before the first battery-caused normal-tier event; feeder-aware fits 1,007SIM: every eligible home, without curtailment passing the cap. Protection may operate ASSUMPTION in 2SIM naive candidate placements (Home 0314 on T-209, Home 0440 on T-253) and 3SIM transformers with the existing fleet managed naively (A (T-150), C (T-246), B (T-357)). Battery-less homes that would go dark: 0SIM: every home behind them has a battery and islands.
+4:20–4:45
+Money, labelled
+DERIVED
+Energy value, naive $894DERIVED vs feeder-aware $917DERIVED: the cost of awareness is -$23DERIVED. Feeder-aware, the fleet delivers 1,889 kWSIM at the price peak: at $3.12REAL to $8.50DERIVED per kW-month that is $5,893DERIVED to $16,055DERIVED a month of system-capacity value. A's local relief would have earned at most $0.64DERIVED at the price peak, and it is never priced with the capacity band. CoServ, GVEC and Austin Energy pay for system peak, coincident peaks and arbitrage, not local relief REAL: local relief is an unpriced opportunity ASSUMPTION.
+4:45–5:00
+How Base plugs it in tomorrow
+SIM
+The siting file sits beside the install queue; allocate() sits behind the zone base point, deterministic, no model in the loop. It needs total transformer load, 60 s lagASSUMPTION. One OpenDSS step takes 2.1 msSIM; allocate() at the largest synthetic fleet takes 65.0 msSIM per call for 100,000ASSUMPTION batteries.
+Money, labelled
+energy value, naive	$894DERIVED
+energy value, aware	$917DERIVED
+energy value, aware + faults	$918DERIVED
+cost of awareness (naive − aware; may be negative)	-$23DERIVED
+system-capacity value, naive: fleet 1,920 kWSIM at the price peak	$5,990DERIVED to $16,320DERIVED a month
+system-capacity value, aware: fleet 1,889 kWSIM at the price peak	$5,893DERIVED to $16,055DERIVED a month
+A's local relief (one home's spike; see the driver)	1.19 kWhSIM
+what that energy would have earned at the price peak (upper bound)	$0.64DERIVED
+local relief priced?	noASSUMPTION
+
+System-capacity value of fleet kW at the system or price peak: $3.12REAL (Modo's ERCOT storage market benchmark) to $8.50DERIVED per kW-month (implied from an unverified Austin Energy figure). Never applied to local relief.
+
+Who pays today, and for what REAL
+
+CoServ (100 MWREAL, 80% dispatchREAL): peak shaving and arbitrage
+GVEC (50 MWREAL): ERCOT summer four-coincident-peak and arbitrage
+Austin Energy (40 MWREAL): system peak demand and wholesale prices (it dispatches)
+El Paso Electric (10 MWREAL): local capacity constraints: the only local-constraint programme found, and it is outside ERCOT
+Base's own "distribution grid support" offering: no public price REAL
+
+Local transformer relief and upgrade deferral have no sourced price anywhere in our material: an opportunity for Base and the wires company, not revenue ASSUMPTION.
+
+How Base plugs it in tomorrow
+Where the next battery goes: data/out/siting-2026-08.csv sits beside the install queue. Base still schedules installs by demand; the file adds the grid lens.
+Where to charge: allocate() sits behind the zone base point and splits it by transformer headroom, deterministically, with no model in the loop.
+What it needs to see: total transformer load, 60 s lagASSUMPTION, which needs a utility meter-to-transformer map. On street A–D every home is a member, so member meters are enough there.
+Devices: commands carry a sequence number and an expiry; a silent unit goes stale, then idles with backup armed.
+
+See docs/how-base-plugs-in.md.
+
+Performance
+opendss · msPerSolve	2.13 msSIM
+opendss · msPerStep	4.20 msSIM
+p1 · buildSeconds	12.7 sSIM
+p1 · solves	2,884SIM
+allocate(), 96 batteries	66.6 µs per callSIM
+allocate(), 1,000 batteries	599 µs per callSIM
+allocate(), 10,000 batteries	6,131 µs per callSIM
+allocate(), 100,000 batteries	65,012 µs per callSIM
+loadAvg	13.1SIM
+
+All static: the browser replays committed JSON; no server, no network at view time.
+
+EVERYTHING THAT ALREADY WORKED, UNCHANGED
+Heat wave
+Prototype story: a scripted heat wave on the same feeder. Pick it in the prototype's story menu. Connor's prototype, unchanged; its prices and loads are scripted.
+Rebound
+Prototype story: the price rebound, even split vs feeder-aware. Pick it in the prototype's story menu. Connor's prototype, unchanged; its prices and loads are scripted.
+Covert channel + quarantine
+Prototype story: a fictional adversary signals through battery setpoints; the detector quarantines it. SIM, fictional. Pick it in the prototype's story menu. Connor's prototype, unchanged; its prices and loads are scripted.
+Siting board
+Prototype's next-battery board (its own score; see P2 for tonight's month what-if). Pick it in the prototype's story menu. Connor's prototype, unchanged; its prices and loads are scripted.
+Four-home simulation
+Michael's four-home model on real prices, unchanged.
+Chaos sweep
+The P1 evening, seeded failures; battery-caused violations only.
+runsWithBatteryCaused: 0SIM
+batteryCausedNormal: 0SIM
+batteryCausedEmergency: 0SIM
+homeOnlyNormal: 0SIM
+homeOnlyEmergency: 0SIM
+maxBatteryCausedAmberMin: 1SIM
+minChargedPctResponsive: 99.6SIM
+silentUnits: 257SIM
+silentIdleByExpiry: 257SIM
+silentExpiryAfterWindow: 0SIM
+reserveBreaches: 0SIM
+actedAfterExpiry: 0SIM
+nonIncreasingAccepted: 0SIM
+protectionOperated: 0SIM
+Runs: 50SIM; with any battery-caused violation: 0SIM
+ERCOT CONSOLE: THE SYSTEM DAY, 2026-09-25 REAL
+Recorded 2026-09-25, not live; the data ends at frequency 23:01:20, prc 23:04:24, load 23:15, sced 22:55:19, ties 23:00, prices interval ending 23:15. A different day from P1 (the 23 Aug replay). Source: site/ems (snapshot: synth-console.json sha256 e8933d6300be…, freq-series.json sha256 171e1c4fce90…); panels picked by site/ems/SYNTHESIS.md.
+Frequency REAL
+lowest ten-second sample
+59.966 HzREAL at 14:15:10REAL
+highest ten-second sample
+60.022 HzREAL at 03:03:10REAL
+day's wander (σ)
+13.5 mHzDERIVED
+clock minutes below the EEA frequency trigger
+0DERIVED
+59.96
+59.99
+60.03
+deadband
+00:00
+06:00
+12:00
+18:00
+Frequency, min and max per 5-min bin, 2026-09-25; the governor deadband dashedREAL
+Swinging Base's whole fleet (205.5 MWREAL) one way would move settling frequency by about 7.5DERIVED to 24.0 mHzDERIVED (median 11.9 mHzDERIVED): context, not a frequency actor.
+Physical responsive capability (reserves) REAL
+lowest PRC
+7,124 MWREAL07:40REAL
+watch trigger
+3,000 MWREAL
+PRC stayed above the watch trigger all day. DERIVED
+0
+10827
+21653
+watch
+EEA1
+00:00
+06:00
+12:00
+18:00
+PRC, lowest per 5-min bin (MW), 2026-09-25REAL
+Net load and its ramp DERIVED
+net-load peak (demand − wind − solar)
+65,882 MWDERIVED19:10DERIVED
+steepest quarter-hour ramp
++238.5 MW/minDERIVED18:25DERIVED
+25115
+53364
+81612
+00:00
+06:00
+12:00
+18:00
+Net load (accent) and demand (grey), MW, 2026-09-25DERIVED
+Base's whole fleet is 0.31%DERIVED of the net-load peak and covers 52 sDERIVED of the steepest ramp.
+Congestion: binding transmission constraints DERIVED
+most binding constraints in one bin
+12DERIVED16:15DERIVED
+five-minute bins with a violated constraint
+17DERIVED
+highest LZ_NORTH real-time price
+$59.99REAL18:45REAL
+0
+6
+12
+00:00
+06:00
+12:00
+18:00
+SCED binding constraints per 5-min bin, 2026-09-25DERIVED
+These are transmission constraints. ERCOT dispatches one number per load zone and checks no feeder or service transformer: that gap is what P1 and P2 fill.

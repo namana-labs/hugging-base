@@ -1,0 +1,55 @@
+2025 rt rows 35040 dam rows 8760 as rows 8760
+2026 rt rows 25148 dam rows 6287 as rows 6287
+2025 pf_rt_deg0 {'net_usd': 1012.96, 'energy_usd': 1012.96, 'dis_mwh': 32.788, 'cycles_equiv_37kwh': 886.2, 'days': 365, 'per_year_usd': 1012.96, 'secs': 0.61}
+2025 concentration {'top10_days_share': np.float64(0.208), 'top10pct_days_share': np.float64(0.364), 'best_day': '2025-01-15', 'best_day_usd': np.float64(52.13), 'median_day_usd': 1.966}
+2025 pf_rt_deg12 {'net_usd': 771.54, 'energy_usd': 946.42, 'dis_mwh': 14.573, 'cycles_equiv_37kwh': 393.9, 'days': 365, 'per_year_usd': 946.42, 'secs': 0.52}
+2025 pf_rt_deg30 {'net_usd': 575.34, 'energy_usd': 823.5, 'dis_mwh': 8.272, 'cycles_equiv_37kwh': 223.6, 'days': 365, 'per_year_usd': 823.5, 'secs': 0.51}
+2025 pf_rt_deg45 {'net_usd': 468.7, 'energy_usd': 745.3, 'dis_mwh': 6.147, 'cycles_equiv_37kwh': 166.1, 'days': 365, 'per_year_usd': 745.3, 'secs': 0.61}
+2025 pf_rt_deg0_cap500 {'net_usd': 981.93, 'energy_usd': 981.93, 'dis_mwh': 18.5, 'cycles_equiv_37kwh': 500.0, 'days': 365, 'per_year_usd': 981.93, 'secs': 1.25}
+2025 pf_rt_deg12_cap500 {'net_usd': 771.54, 'energy_usd': 946.42, 'dis_mwh': 14.573, 'cycles_equiv_37kwh': 393.9, 'days': 365, 'per_year_usd': 946.42, 'secs': 1.11}
+2026 pf_rt_deg0 {'net_usd': 717.62, 'energy_usd': 717.62, 'dis_mwh': 23.662, 'cycles_equiv_37kwh': 639.5, 'days': 262, 'per_year_usd': 999.74, 'secs': 0.43}
+2026 concentration {'top10_days_share': np.float64(0.322), 'top10pct_days_share': np.float64(0.482), 'best_day': '2026-01-28', 'best_day_usd': np.float64(37.19), 'median_day_usd': 1.422}
+2026 pf_rt_deg12 {'net_usd': 558.1, 'energy_usd': 666.47, 'dis_mwh': 9.031, 'cycles_equiv_37kwh': 244.1, 'days': 262, 'per_year_usd': 928.48, 'secs': 0.34}
+2026 pf_rt_deg30 {'net_usd': 433.83, 'energy_usd': 592.09, 'dis_mwh': 5.275, 'cycles_equiv_37kwh': 142.6, 'days': 262, 'per_year_usd': 824.86, 'secs': 0.36}
+2026 pf_rt_deg45 {'net_usd': 368.82, 'energy_usd': 525.73, 'dis_mwh': 3.487, 'cycles_equiv_37kwh': 94.2, 'days': 262, 'per_year_usd': 732.41, 'secs': 0.4}
+2026 pf_rt_deg0_cap500 {'net_usd': 700.52, 'energy_usd': 700.52, 'dis_mwh': 13.279, 'cycles_equiv_37kwh': 358.9, 'days': 262, 'per_year_usd': 975.91, 'secs': 0.71}
+2026 pf_rt_deg12_cap500 {'net_usd': 558.1, 'energy_usd': 666.47, 'dis_mwh': 9.031, 'cycles_equiv_37kwh': 244.1, 'days': 262, 'per_year_usd': 928.48, 'secs': 0.56}
+2025 pf_dam_energy_only {'net_usd': 691.74, 'energy_usd': 691.74, 'as_usd': {}, 'as_kw_mean': {}, 'dis_mwh': 18.787, 'days': 365, 'net_per_year_usd': 691.74, 'secs': 0.11}
+2025 pf_dam_energy+NSPIN+ECRS {'net_usd': 814.82, 'energy_usd': 655.23, 'as_usd': {'NSPIN': 47.57, 'ECRS': 112.02}, 'as_kw_mean': {'NSPIN': 1.34, 'ECRS': 4.77}, 'dis_mwh': 18.456, 'days': 365, 'net_per_year_usd': 814.82, 'secs': 0.24}
+2025 pf_dam_energy+NSPIN (ECRS cap full) {'net_usd': 772.74, 'energy_usd': 676.01, 'as_usd': {'NSPIN': 96.73}, 'as_kw_mean': {'NSPIN': 3.64}, 'dis_mwh': 18.803, 'days': 365, 'net_per_year_usd': 772.74, 'secs': 0.21}
+2026 pf_dam_energy_only {'net_usd': 451.82, 'energy_usd': 451.82, 'as_usd': {}, 'as_kw_mean': {}, 'dis_mwh': 13.523, 'days': 262, 'net_per_year_usd': 629.44, 'secs': 0.07}
+2026 pf_dam_energy+NSPIN+ECRS {'net_usd': 585.27, 'energy_usd': 414.51, 'as_usd': {'NSPIN': 55.42, 'ECRS': 115.33}, 'as_kw_mean': {'NSPIN': 2.29, 'ECRS': 6.98}, 'dis_mwh': 13.506, 'days': 262, 'net_per_year_usd': 815.35, 'secs': 0.23}
+2026 pf_dam_energy+NSPIN (ECRS cap full) {'net_usd': 522.54, 'energy_usd': 433.4, 'as_usd': {'NSPIN': 89.14}, 'as_kw_mean': {'NSPIN': 3.91}, 'dis_mwh': 13.707, 'days': 262, 'net_per_year_usd': 727.96, 'secs': 0.14}
+2025 policies {'da_plan_settle_dam': 665.2, 'da_plan_settle_rt': 631.46, 'persistence_days_skipped': 5.0, 'pf_daily_rt': 993.02, 'fixed_rule_settle_rt': 351.23, 'days': 365.0, 'persistence_settle_rt': 444.4, 'capture_da_plan_rt_vs_pf_daily': 0.636, 'capture_da_plan_dam_vs_pf_daily': 0.67, 'capture_persistence_vs_pf_daily': 0.448, 'capture_fixed_vs_pf_daily': 0.354}
+2026 policies {'da_plan_settle_dam': 421.19, 'da_plan_settle_rt': 341.41, 'persistence_days_skipped': 3.0, 'pf_daily_rt': 699.83, 'fixed_rule_settle_rt': 283.43, 'days': 262.0, 'persistence_settle_rt': 235.22, 'capture_da_plan_rt_vs_pf_daily': 0.488, 'capture_da_plan_dam_vs_pf_daily': 0.602, 'capture_persistence_vs_pf_daily': 0.336, 'capture_fixed_vs_pf_daily': 0.405}
+[
+ {
+  "cp": "2025-06-19 17:00",
+  "rt_interval_starting": 23.72,
+  "rt_interval_ending": 29.87,
+  "day_max_rt": 104.63,
+  "day_max_rt_at": "20:45"
+ },
+ {
+  "cp": "2025-07-30 17:00",
+  "rt_interval_starting": 36.95,
+  "rt_interval_ending": 31.67,
+  "day_max_rt": 331.02,
+  "day_max_rt_at": "19:45"
+ },
+ {
+  "cp": "2025-08-18 17:00",
+  "rt_interval_starting": 23.7,
+  "rt_interval_ending": 26.64,
+  "day_max_rt": 197.41,
+  "day_max_rt_at": "18:45"
+ },
+ {
+  "cp": "2025-09-04 17:30",
+  "rt_interval_starting": 27.9,
+  "rt_interval_ending": 27.07,
+  "day_max_rt": 255.79,
+  "day_max_rt_at": "18:45"
+ }
+]
+wrote /Users/rzalagbada/Desktop/projects/base-power-hackathon/overnight/evidence/market-profit/profit_bounds_out.json

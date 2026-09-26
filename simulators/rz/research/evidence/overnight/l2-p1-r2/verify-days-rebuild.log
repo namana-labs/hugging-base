@@ -1,0 +1,38 @@
+index  2026-08-23: row equals its meta (The evening we know best ; peak $566.42 at 21:00 ; naive max 201.2% on A (tier 4) ; aware $9.55/battery)   [INVARIANT]
+index  2026-07-22: row equals its meta (Texas's record demand ; peak $344.13 at 22:00 ; naive max 186.3% on B (tier 4) ; aware $4.33/battery)   [INVARIANT]
+files  2026-07-22: meta.json + none.json.gz, naive.json.gz, aware.json.gz ; gzip, A.6 shapes, labels ; branches none,naive,aware ; events {}   [INVARIANT]
+plan   2026-07-22: onset 23:15 $59.45 (D-26 binding) ; discharge 22:00 21:45 21:30 22:15 21:15(+13 min)   [INVARIANT]
+aware  2026-07-22: battery-caused normal 0 / emergency 0 ; reserve breaches 0 ; acted after expiry 0 ; non-increasing seq 0 ; charged by the deadline 100.0% (>= 95%) ; max 98.0% (tf 322, home load)   [INVARIANT]
+naive  2026-07-22: max 186.3% (tf 357 at 23:15) ; normal-tier events 8 (8 battery-caused) ; emergency tfs 3 ; protection operated 0 (ASSUMPTION rule; 0 homes dark, reserve used in the outage 0 battery-steps) ; charged 100.0%   [EXPECT: battery-caused normal >= 1] ok
+money 2026-07-22: naive sold $569.61 bought $183.44 net $386.17 ($4.02/battery) ; aware sold $559.59 bought $143.94 net $415.64 ($4.33/battery) ; cash ends at energyValueUSD (DERIVED)   [INVARIANT]
+money 2026-07-22: cash re-derived from the branch files' batKW (0.1 kW): max difference 0.8 cents   [EXPECT: <= 10 cents (rounding of the branch files)] ok
+relief 2026-07-22: A over nameplate 0 min (none.json: 0) ; text "A stays under its nameplate all evening (max 51.8%)" ; A marker no   [INVARIANT]
+onset  2026-07-22: at 23:15 naive charges 1,920.0 kW, aware 746.6 kW: 1,173.4 kW deferred (DERIVED) ; aware charged by the deadline 100.0% (SIM)   [INVARIANT]
+story  2026-07-22: "Texas's record demand" · ERCOT set its all-time demand record this day: 91,134 MW (REAL)   [INVARIANT]
+money  2026-07-22: calendar (prices only, one Core) $4.22 vs sim aware $4.33/battery   [EXPECT: within 5% or $0.10] ok
+index  2026-08-26: row equals its meta (August's priciest evening ; peak $780.72 at 22:15 ; naive max 182.3% on B (tier 4) ; aware $13.71/battery)   [INVARIANT]
+files  2026-08-26: meta.json + none.json.gz, naive.json.gz, aware.json.gz ; gzip, A.6 shapes, labels ; branches none,naive,aware ; events {}   [INVARIANT]
+plan   2026-08-26: onset 23:15 $81.42 (D-26 binding) ; discharge 22:15 22:00 21:15 20:00 21:30(+13 min)   [INVARIANT]
+aware  2026-08-26: battery-caused normal 0 / emergency 0 ; reserve breaches 0 ; acted after expiry 0 ; non-increasing seq 0 ; charged by the deadline 100.0% (>= 95%) ; max 98.1% (tf 322, home load)   [INVARIANT]
+naive  2026-08-26: max 182.3% (tf 357 at 23:15) ; normal-tier events 8 (8 battery-caused) ; emergency tfs 3 ; protection operated 0 (ASSUMPTION rule; 0 homes dark, reserve used in the outage 0 battery-steps) ; charged 100.0%   [EXPECT: battery-caused normal >= 1] ok
+money 2026-08-26: naive sold $1,494.42 bought $218.34 net $1,276.08 ($13.29/battery) ; aware sold $1,471.79 bought $155.89 net $1,315.90 ($13.71/battery) ; cash ends at energyValueUSD (DERIVED)   [INVARIANT]
+money 2026-08-26: cash re-derived from the branch files' batKW (0.1 kW): max difference 0.9 cents   [EXPECT: <= 10 cents (rounding of the branch files)] ok
+relief 2026-08-26: A over nameplate 0 min (none.json: 0) ; text "A stays under its nameplate all evening (max 50.5%)" ; A marker no   [INVARIANT]
+onset  2026-08-26: at 23:15 naive charges 1,920.0 kW, aware 748.4 kW: 1,171.6 kW deferred (DERIVED) ; aware charged by the deadline 100.0% (SIM)   [INVARIANT]
+story  2026-08-26: "August's priciest evening" · The month's highest price: $780.72/MWh at 22:15 (REAL)   [INVARIANT]
+money  2026-08-26: calendar (prices only, one Core) $13.53 vs sim aware $13.71/battery   [EXPECT: within 5% or $0.10] ok
+index  2026-08-14: row equals its meta (A quiet night ; peak $34.23 at 18:45 ; naive max 214.1% on B (tier 4) ; aware $-0.21/battery)   [INVARIANT]
+files  2026-08-14: meta.json + none.json.gz, naive.json.gz, aware.json.gz ; gzip, A.6 shapes, labels ; branches none,naive,aware ; events {}   [INVARIANT]
+plan   2026-08-14: onset 19:00 $28.56 (D-26 non-binding) ; discharge 18:45 18:30 18:15 17:45 17:30(+13 min)   [INVARIANT]
+aware  2026-08-14: battery-caused normal 0 / emergency 0 ; reserve breaches 0 ; acted after expiry 0 ; non-increasing seq 0 ; charged by the deadline 100.0% (>= 95%) ; max 97.6% (tf 91, home load)   [INVARIANT]
+naive  2026-08-14: max 214.1% (tf 357 at 19:00) ; normal-tier events 9 (9 battery-caused) ; emergency tfs 3 ; protection operated 2 (ASSUMPTION rule; 0 homes dark, reserve used in the outage 1948 battery-steps) ; charged 95.8%   [EXPECT: battery-caused normal >= 1] ok
+money 2026-08-14: naive sold $58.24 bought $87.93 net $-29.69 ($-0.31/battery) ; aware sold $57.64 bought $78.05 net $-20.41 ($-0.21/battery) ; cash ends at energyValueUSD (DERIVED)   [INVARIANT]
+money 2026-08-14: cash re-derived from the branch files' batKW (0.1 kW): max difference 0.5 cents   [EXPECT: <= 10 cents (rounding of the branch files)] ok
+relief 2026-08-14: A over nameplate 0 min (none.json: 0) ; text "A stays under its nameplate all evening (max 49.2%)" ; A marker no   [INVARIANT]
+onset  2026-08-14: at 19:00 naive charges 1,920.0 kW, aware 396.5 kW: 1,523.5 kW deferred (DERIVED) ; aware charged by the deadline 100.0% (SIM)   [INVARIANT]
+story  2026-08-14: "A quiet night" · A flat, cheap evening: the highest price was $34.23/MWh (REAL)   [INVARIANT]
+money  2026-08-14: calendar (prices only, one Core) $-0.23 vs sim aware $-0.21/battery   [EXPECT: within 5% or $0.10] ok
+index  : 4 evenings (2026-08-23, 2026-07-22, 2026-08-26, 2026-08-14) = every built day in sim.history.DAYS, in order   [INVARIANT]
+calendar: 2026-01-01 to 2026-09-18 (261 evenings, 2 gaps: 2026-03-07, 2026-03-08) ; sim = the built days ; 2026 net per Core $284.68 (DERIVED) ; 85 losing evenings ; 10 best = 55%   [INVARIANT]
+determinism: days rebuild byte-identical (14 files under ui/data/p1/days/; load slices 2026-07-22 re-cut identical)   [INVARIANT]
+VERIFY p1: PASS (days: 4 evenings; 0 expectations refuted, see NOTES.md)

@@ -1,0 +1,21 @@
+# Evidence
+
+Small, meaningful evidence behind the research and the build: real data pulls, analysis scripts and their outputs, gate and judge logs, and page-text dumps. Raw downloads (PDF, HTML, spreadsheets, zips), full screenshots and anything over 2 MB stayed local; `../DATA-NOT-COMMITTED.md` lists them with their source URLs.
+
+Labels: ERCOT and other public pulls are REAL. Model outputs are SIM or DERIVED, as each file or its log says. Cookie values in saved HTTP headers were replaced with `<redacted>`.
+
+| Folder | Original local path | What it is | Label |
+|---|---|---|---|
+| `research-20260925/ercot-live-20260925/` | `/Users/rzalagbada/Desktop/projects/base-power-hackathon/evidence/live-20260925/` | Live ERCOT dashboard and MIS pulls from 25 to 26 Sep (prices, fuel mix, supply and demand, DC ties, ancillary services, storage, settlement-point mapping, SCED binding constraints NP6-86-CD), each with its response header, retrieval time and fetch log; `dq-src-excerpts.txt` holds the cited passages for the operator-console specs. File prefixes name the console item that pulled them: `dq` data quality, `flow`, `freq`, `load`, `n1`, `res` reserves, `volt`. | FINAL (raw record) |
+| `research-20260925/scratch/` | `/Users/rzalagbada/Desktop/projects/base-power-hackathon/evidence/scratchpad-20260925/` | Research-phase analysis: `bp-data-ingest/` scripts (`extract_rtm.py`, `a1_zones.py` to `a4_flip.py`) and the ERCOT pulls they used; `ercot/` dashboard JSON, headers and small MIS report CSVs; `smartds-analysis/` SMART-DS feeder summary; weather pulls (Open-Meteo, NWS, NCEI); `p1u_metrics.csv`; frequency checks. | HISTORICAL |
+| `research-20260925/critique-scratch/` | `/Users/rzalagbada/Desktop/projects/base-power-hackathon/evidence/critique-scratch/` | Five checks the round-1 design critics ran (adversary, frequency noise, price profile, rebound exclusions, sensitivity). | HISTORICAL |
+| `overnight/C3/`, `judge-R0/`, `judge-R1/`, `judge-R2/` | `/Users/rzalagbada/Desktop/projects/base-power-hackathon/overnight/evidence/` | Round 1 freeze and judge rounds: `check_all.sh --full` logs from fresh clones, OpenDSS spot checks, dwell tests, screen-vs-JSON checks and the page text of every beat link. Judge scripts in `scripts/`. `judge-R2` here is round 1's third judge pass (after the C3 freeze, about 13:38Z on 26 Sep), not a round-2 judge; round 2 never reached its judge. | FINAL (round 1) |
+| `overnight/gate/` | same | The lead merge gate's `check_all.sh` logs per PR (branch, main and gate). | HISTORICAL |
+| `overnight/l0-foundation/` to `l5-p2-story/`, `l2-p1-r2/` | same | Per-lane logs: builds, verifies, acceptance runs, smoke runs; `l2-p1-r2/page-text/` is round 2's history-days lane. | HISTORICAL |
+| `overnight/audit-r2/` | same | Round 2 data audit: page text for all 44 links, OpenDSS spot re-solves, verify logs (feeds `../round2/AUDIT-R2.md`). | FINAL |
+| `overnight/hist-r2/` | same | Round 2 history scout: per-day metadata for 8 real days, the money calendar, scripts (feeds `../round2/HIST-R2.md`). | FINAL |
+| `overnight/probes/` | `/Users/rzalagbada/hb-overnight/tmp/` | One-off probes: critic power-balance checks, lane l3 capacity and phase probes, the ladder probe, the history-days check. They import the root app's `sim/`. | HISTORICAL |
+| `capacity-planner/grid-assets/` | `/Users/rzalagbada/Desktop/projects/base-power-hackathon/overnight/evidence/grid-assets/` | Public feeder and transformer loading samples (PG&E, SCE, Iowa State) behind `../capacity-planner/DATA-GRID-ASSETS.md`. | REAL |
+| `capacity-planner/market-profit/` | `.../overnight/evidence/market-profit/` | Day-ahead LZ_NORTH prices 2025 to 2026, ancillary clearing prices, MIS listings, `profit_bounds.py` and `sensitivity.py` with outputs (feeds `DATA-MARKET-PROFIT.md`). | REAL inputs, DERIVED outputs |
+| `capacity-planner/interconnection/` | `.../overnight/evidence/interconnection/` | Fetch log of every interconnection source (PUCT, TDSP tariffs, UL, IEEE, precedents), the 2025 TDSP DG-report summary. | REAL |
+| `capacity-planner/assets-demand/` | `.../overnight/evidence/assets-demand/` | Partial output of the asset-age and demand scout, which was stopped before it wrote its report: transformer age model, demand model, a transformer capacity sweep (0 to 50 batteries, OpenDSS check), census inputs, fetch log. | DRAFT |

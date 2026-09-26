@@ -1,0 +1,17 @@
+/Users/rzalagbada/hb-overnight/judge-2/four-home-simulation/four_home.py:95: ResourceWarning: unclosed file <_io.TextIOWrapper name='/Users/rzalagbada/hb-overnight/judge-2/four-home-simulation/data/spp_2026-09-25.csv' mode='r' encoding='utf-8'>
+  for r in csv.DictReader(open(DATA / "spp_2026-09-25.csv")) if r["lz_north_rt"]]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/Users/rzalagbada/hb-overnight/judge-2/four-home-simulation/four_home.py:97: ResourceWarning: unclosed file <_io.TextIOWrapper name='/Users/rzalagbada/hb-overnight/judge-2/four-home-simulation/data/freq_2026-09-25.csv' mode='r' encoding='utf-8'>
+  for r in csv.DictReader(open(DATA / "freq_2026-09-25.csv"))]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/Users/rzalagbada/hb-overnight/judge-2/four-home-simulation/four_home.py:99: ResourceWarning: unclosed file <_io.TextIOWrapper name='/Users/rzalagbada/hb-overnight/judge-2/four-home-simulation/data/demand_2026-09-25.csv' mode='r' encoding='utf-8'>
+  for r in csv.DictReader(open(DATA / "demand_2026-09-25.csv"))]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/Users/rzalagbada/hb-overnight/judge-2/four-home-simulation/four_home.py:101: ResourceWarning: unclosed file <_io.TextIOWrapper name='/Users/rzalagbada/hb-overnight/judge-2/four-home-simulation/data/storage_2026-09-25.csv' mode='r' encoding='utf-8'>
+  for r in csv.DictReader(open(DATA / "storage_2026-09-25.csv"))]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.................
+----------------------------------------------------------------------
+Ran 17 tests in 0.112s
+
+OK

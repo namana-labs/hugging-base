@@ -1,0 +1,526 @@
+TAP version 13
+# Subtest: charts: every chart refuses to draw without an honesty label
+ok 1 - charts: every chart refuses to draw without an honesty label
+  ---
+  duration_ms: 1.366292
+  type: 'test'
+  ...
+# Subtest: charts: loading bands (display only) at the tier lines
+ok 2 - charts: loading bands (display only) at the tier lines
+  ---
+  duration_ms: 0.695792
+  type: 'test'
+  ...
+# Subtest: charts: a 31 x 24 heat strip draws 744 cells in the right bands (pct tenths in)
+ok 3 - charts: a 31 x 24 heat strip draws 744 cells in the right bands (pct tenths in)
+  ---
+  duration_ms: 0.914959
+  type: 'test'
+  ...
+# Subtest: charts: line chart draws one path per series, breaks on gaps, and draws reference lines
+ok 4 - charts: line chart draws one path per series, breaks on gaps, and draws reference lines
+  ---
+  duration_ms: 0.237417
+  type: 'test'
+  ...
+# Subtest: charts: bar chart draws only positive bars; histogram mode
+ok 5 - charts: bar chart draws only positive bars; histogram mode
+  ---
+  duration_ms: 0.144125
+  type: 'test'
+  ...
+# Subtest: charts: price strip and the price-cliff strip on the committed fixture (REAL prices, 27 cliffs, 13 evening)
+ok 6 - charts: price strip and the price-cliff strip on the committed fixture (REAL prices, 27 cliffs, 13 evening)
+  ---
+  duration_ms: 1.724458
+  type: 'test'
+  ...
+# Subtest: charts: chartHTML wraps the SVG with a caption carrying the chip; DOM wrappers keep L0 names
+ok 7 - charts: chartHTML wraps the SVG with a caption carrying the chip; DOM wrappers keep L0 names
+  ---
+  duration_ms: 0.218666
+  type: 'test'
+  ...
+# Subtest: charts: y-axis ticks stay distinct on small ranges (judge R0: the naive capacity curve printed "1, 1, 0")
+ok 8 - charts: y-axis ticks stay distinct on small ranges (judge R0: the naive capacity curve printed "1, 1, 0")
+  ---
+  duration_ms: 0.174208
+  type: 'test'
+  ...
+# Subtest: format: a bare number throws, a labelled one formats with its chip
+ok 9 - format: a bare number throws, a labelled one formats with its chip
+  ---
+  duration_ms: 10.423333
+  type: 'test'
+  ...
+# Subtest: format: quantized bulk values
+ok 10 - format: quantized bulk values
+  ---
+  duration_ms: 0.078166
+  type: 'test'
+  ...
+# Subtest: format: time <-> step across midnight
+ok 11 - format: time <-> step across midnight
+  ---
+  duration_ms: 0.134083
+  type: 'test'
+  ...
+# Subtest: data: parseLink defaults, validation and round trip
+ok 12 - data: parseLink defaults, validation and round trip
+  ---
+  duration_ms: 1.068458
+  type: 'test'
+  ...
+# Subtest: data: a beat sets every key it names
+ok 13 - data: a beat sets every key it names
+  ---
+  duration_ms: 0.162375
+  type: 'test'
+  ...
+# Subtest: data: real file first, fixture on 404 (and the page is marked)
+ok 14 - data: real file first, fixture on 404 (and the page is marked)
+  ---
+  duration_ms: 0.283667
+  type: 'test'
+  ...
+# Subtest: static demo: no absolute http(s) URL in any src, href, import, fetch or url() (vendor excluded)
+ok 15 - static demo: no absolute http(s) URL in any src, href, import, fetch or url() (vendor excluded)
+  ---
+  duration_ms: 2.577292
+  type: 'test'
+  ...
+# Subtest: shell: index.html carries the health flags and loads the vendored deck.gl 9.4.0
+ok 16 - shell: index.html carries the health flags and loads the vendored deck.gl 9.4.0
+  ---
+  duration_ms: 1.262375
+  type: 'test'
+  ...
+# Subtest: shell: the stubs export the agreed names
+ok 17 - shell: the stubs export the agreed names
+  ---
+  duration_ms: 4.251459
+  type: 'test'
+  ...
+# Subtest: topology.json: 1,010 homes, 379 transformers, 96 batteries, focus A-D by id
+ok 18 - topology.json: 1,010 homes, 379 transformers, 96 batteries, focus A-D by id
+  ---
+  duration_ms: 1.403833
+  type: 'test'
+  ...
+# Subtest: deeplinks: exactly three canaries, one P1, one P2 (the default combo) and view=more
+ok 19 - deeplinks: exactly three canaries, one P1, one P2 (the default combo) and view=more
+  ---
+  duration_ms: 0.882958
+  type: 'test'
+  ...
+# Subtest: deeplinks: one beat line per ui/data/beats.json beat ("<link>&beat=<id>", same order), none without it
+ok 20 - deeplinks: one beat line per ui/data/beats.json beat ("<link>&beat=<id>", same order), none without it
+  ---
+  duration_ms: 0.199
+  type: 'test'
+  ...
+# Subtest: deeplinks: every P2 combo in p2/index.json, the home= link at its measured top 1, aware_faults at Tc+16
+ok 21 - deeplinks: every P2 combo in p2/index.json, the home= link at its measured top 1, aware_faults at Tc+16
+  ---
+  duration_ms: 2.744042
+  type: 'test'
+  ...
+# Subtest: transport: 1 simulated minute per 100 ms at 1x, 0.5x-8x
+ok 22 - transport: 1 simulated minute per 100 ms at 1x, 0.5x-8x
+  ---
+  duration_ms: 1.172292
+  type: 'test'
+  ...
+# Subtest: naive carries its ASSUMPTION framing (build prompt 3.4); branch names cover the four branches
+ok 23 - naive carries its ASSUMPTION framing (build prompt 3.4); branch names cover the four branches
+  ---
+  duration_ms: 0.271542
+  type: 'test'
+  ...
+# Subtest: worst transformer, tier counts and battery states at a step come from the JSON
+ok 24 - worst transformer, tier counts and battery states at a step come from the JSON
+  ---
+  duration_ms: 0.29425
+  type: 'test'
+  ...
+# Subtest: ticker: newest first, never ahead of the clock
+ok 25 - ticker: newest first, never ahead of the clock
+  ---
+  duration_ms: 0.075583
+  type: 'test'
+  ...
+# Subtest: evening stats per transformer: max, minutes above 110% (codes 2-4) and 150% (code 4), protection step
+ok 26 - evening stats per transformer: max, minutes above 110% (codes 2-4) and 150% (code 4), protection step
+  ---
+  duration_ms: 0.083834
+  type: 'test'
+  ...
+# Subtest: gauges: A-D and T-240 from `focus`, % of nameplate = kW / kVA, room from OpenDSS loading (DERIVED)
+ok 27 - gauges: A-D and T-240 from `focus`, % of nameplate = kW / kVA, room from OpenDSS loading (DERIVED)
+  ---
+  duration_ms: 0.630125
+  type: 'test'
+  ...
+# Subtest: opening step: the link time, else 30 min after the D-26 onset, else the middle
+ok 28 - opening step: the link time, else 30 min after the D-26 onset, else the middle
+  ---
+  duration_ms: 0.186584
+  type: 'test'
+  ...
+# Subtest: strip markers: meta.markers and the branch's fault events, in time order
+ok 29 - strip markers: meta.markers and the branch's fault events, in time order
+  ---
+  duration_ms: 0.358583
+  type: 'test'
+  ...
+# Subtest: labelled trees (money, ladder): chips on every value, units inherited, a bare headline number throws
+ok 30 - labelled trees (money, ladder): chips on every value, units inherited, a bare headline number throws
+  ---
+  duration_ms: 10.229459
+  type: 'test'
+  ...
+# Subtest: grid checks: measured, never asserted: "stays in range" only when no home is below 0.95 pu; head as % of 370 A
+ok 31 - grid checks: measured, never asserted: "stays in range" only when no home is below 0.95 pu; head as % of 370 A
+  ---
+  duration_ms: 0.647375
+  type: 'test'
+  ...
+# Subtest: money card: every line labelled, local relief never priced, capacity band only on fleet kW at the peak
+ok 32 - money card: every line labelled, local relief never priced, capacity band only on fleet kW at the peak
+  ---
+  duration_ms: 0.914917
+  type: 'test'
+  ...
+# Subtest: hero driver: a spike shown as the worst transformer names its home and shared SMART-DS profile, only near the spike
+ok 33 - hero driver: a spike shown as the worst transformer names its home and shared SMART-DS profile, only near the spike
+  ---
+  duration_ms: 0.206125
+  type: 'test'
+  ...
+# Subtest: scale ladder (judge R1 F2): three rungs, each its words + base chip, shares below 0.1% to 2 significant figures
+ok 34 - scale ladder (judge R1 F2): three rungs, each its words + base chip, shares below 0.1% to 2 significant figures
+  ---
+  duration_ms: 0.852708
+  type: 'test'
+  ...
+# Subtest: back-feed gauges (judge R1 F6): an exporting can shows export room, from the data
+ok 35 - back-feed gauges (judge R1 F6): an exporting can shows export room, from the data
+  ---
+  duration_ms: 13.058666
+  type: 'test'
+  ...
+# Subtest: relief peak time (judge R1 F7, hero): reliefKW is the peak discharge; the hero says when, from batKW
+ok 36 - relief peak time (judge R1 F7, hero): reliefKW is the peak discharge; the hero says when, from batKW
+  ---
+  duration_ms: 0.27075
+  type: 'test'
+  ...
+# Subtest: p2: combo ids round-trip over the 16 combos, and counterpart flips the policy
+ok 37 - p2: combo ids round-trip over the 16 combos, and counterpart flips the policy
+  ---
+  duration_ms: 0.931
+  type: 'test'
+  ...
+# Subtest: p2: findCandidate by home id and via alsoOnTf; rankOf
+ok 38 - p2: findCandidate by home id and via alsoOnTf; rankOf
+  ---
+  duration_ms: 1.497375
+  type: 'test'
+  ...
+# Subtest: p2: the flip headline appears only when the measured flip supports it
+ok 39 - p2: the flip headline appears only when the measured flip supports it
+  ---
+  duration_ms: 0.144625
+  type: 'test'
+  ...
+# Subtest: p2: fleet counterfactual totals sum per policy
+ok 40 - p2: fleet counterfactual totals sum per policy
+  ---
+  duration_ms: 0.813375
+  type: 'test'
+  ...
+# Subtest: p2: the counterfactual sentence is built from data, names the shared driver, and labels every number
+ok 41 - p2: the counterfactual sentence is built from data, names the shared driver, and labels every number
+  ---
+  duration_ms: 10.413917
+  type: 'test'
+  ...
+# Subtest: p2: the counterfactual says "where NOT to put it" and names dark homes only when the data says so
+ok 42 - p2: the counterfactual says "where NOT to put it" and names dark homes only when the data says so
+  ---
+  duration_ms: 0.722792
+  type: 'test'
+  ...
+# Subtest: p2: a bare number in a candidate fails loudly (format.js throws), never renders unlabelled
+ok 43 - p2: a bare number in a candidate fails loudly (format.js throws), never renders unlabelled
+  ---
+  duration_ms: 0.6235
+  type: 'test'
+  ...
+# Subtest: p2: fixture candidates all render a sentence; bulk values take their series label
+ok 44 - p2: fixture candidates all render a sentence; bulk values take their series label
+  ---
+  duration_ms: 14.498208
+  type: 'test'
+  ...
+# Subtest: p2: the scene gets numbered candidate pins and greedy placements as new columns
+ok 45 - p2: the scene gets numbered candidate pins and greedy placements as new columns
+  ---
+  duration_ms: 2.788041
+  type: 'test'
+  ...
+# Subtest: beats.json: envelope, unique ids, the video clock runs 0:00 -> 5:00 with no gaps
+ok 46 - beats.json: envelope, unique ids, the video clock runs 0:00 -> 5:00 with no gaps
+  ---
+  duration_ms: 0.161459
+  type: 'test'
+  ...
+# Subtest: beats.json: no bare digits in any caption or title (numbers come from data, with labels)
+ok 47 - beats.json: no bare digits in any caption or title (numbers come from data, with labels)
+  ---
+  duration_ms: 0.581875
+  type: 'test'
+  ...
+# Subtest: beats.json: every placeholder is a known fact or a chip with a valid label
+ok 48 - beats.json: every placeholder is a known fact or a chip with a valid label
+  ---
+  duration_ms: 0.173458
+  type: 'test'
+  ...
+# Subtest: beats.json: every link is a valid deep link (view, branch, combo) and the naive beats carry the ASSUMPTION chip
+ok 49 - beats.json: every link is a valid deep link (view, branch, combo) and the naive beats carry the ASSUMPTION chip
+  ---
+  duration_ms: 0.5045
+  type: 'test'
+  ...
+# Subtest: beats.json: captions resolve against the committed fixtures, with a label on every value
+ok 50 - beats.json: captions resolve against the committed fixtures, with a label on every value
+  ---
+  duration_ms: 6.849875
+  type: 'test'
+  ...
+# Subtest: docs/demo-script.md lists every beat with its exact deep link (same ids as beats.json)
+ok 51 - docs/demo-script.md lists every beat with its exact deep link (same ids as beats.json)
+  ---
+  duration_ms: 0.195875
+  type: 'test'
+  ...
+# Subtest: driver.sharedWith as real objects ({home, label, tf}) reads as names with their transformer
+ok 52 - driver.sharedWith as real objects ({home, label, tf}) reads as names with their transformer
+  ---
+  duration_ms: 0.659125
+  type: 'test'
+  ...
+# Subtest: L3 shapes: bare untied.n, OpenDSS numbers replace screening numbers in the sentence when refereed
+ok 53 - L3 shapes: bare untied.n, OpenDSS numbers replace screening numbers in the sentence when refereed
+  ---
+  duration_ms: 0.678791
+  type: 'test'
+  ...
+# Subtest: faults beat (F6): the caption template asserts no shift or throttle of its own; the clause comes from data
+ok 54 - faults beat (F6): the caption template asserts no shift or throttle of its own; the clause comes from data
+  ---
+  duration_ms: 0.144667
+  type: 'test'
+  ...
+# Subtest: faults beat (F6): idle batteries on the hot transformer -> "no charge to shift", never a shift or throttle
+ok 55 - faults beat (F6): idle batteries on the hot transformer -> "no charge to shift", never a shift or throttle
+  ---
+  duration_ms: 0.763208
+  type: 'test'
+  ...
+# Subtest: faults beat (F6): a real throttle is reported as measured (before -> after), and "kept charging" is not a throttle
+ok 56 - faults beat (F6): a real throttle is reported as measured (before -> after), and "kept charging" is not a throttle
+  ---
+  duration_ms: 0.604459
+  type: 'test'
+  ...
+# Subtest: faults beat (F6), REAL data: the clause matches aware_faults focus.C, the path sim.verify p1 prints
+ok 57 - faults beat (F6), REAL data: the clause matches aware_faults focus.C, the path sim.verify p1 prints
+  ---
+  duration_ms: 6.223125
+  type: 'test'
+  ...
+# Subtest: rebound-aware beat: states the measured order charge reaches A-D (the rotation EXPECT is refuted), no "down the street" claim
+ok 58 - rebound-aware beat: states the measured order charge reaches A-D (the rotation EXPECT is refuted), no "down the street" claim
+  ---
+  duration_ms: 5.714417
+  type: 'test'
+  ...
+# Subtest: beats.json on the REAL committed data: every placeholder resolves (no "(not built yet)"), every value labelled
+ok 59 - beats.json on the REAL committed data: every placeholder resolves (no "(not built yet)"), every value labelled
+  ---
+  duration_ms: 21.5325
+  type: 'test'
+  ...
+# Subtest: ranking table: refereed rows show the OpenDSS peak, screening rows the surrogate (judge R0: no screening mark on OpenDSS-able rows)
+ok 60 - ranking table: refereed rows show the OpenDSS peak, screening rows the surrogate (judge R0: no screening mark on OpenDSS-able rows)
+  ---
+  duration_ms: 2.99275
+  type: 'test'
+  ...
+# Subtest: outside the top 50: the naive standing of feeder-aware \#1 comes from flip.movers + index.bridge, labelled
+ok 61 - outside the top 50: the naive standing of feeder-aware \#1 comes from flip.movers + index.bridge, labelled
+  ---
+  duration_ms: 1.239958
+  type: 'test'
+  ...
+# Subtest: F3: the unscreened-chip check catches a surrogate number rendered without the chip (the admit half)
+ok 62 - F3: the unscreened-chip check catches a surrogate number rendered without the chip (the admit half)
+  ---
+  duration_ms: 0.273
+  type: 'test'
+  ...
+# Subtest: F3: every P2 link renders no "not OpenDSS-checked" number without the screening chip
+ok 63 - F3: every P2 link renders no "not OpenDSS-checked" number without the screening chip
+  ---
+  duration_ms: 84.620458
+  type: 'test'
+  ...
+# Subtest: F3, REAL data: the naive "where NOT to put it" card, the flip \#1 line and the handoff card
+ok 64 - F3, REAL data: the naive "where NOT to put it" card, the flip \#1 line and the handoff card
+  ---
+  duration_ms: 6.54175
+  type: 'test'
+  ...
+# Subtest: F3: beat captions (P1 and P2 bars, the More list) chip every screening number
+ok 65 - F3: beat captions (P1 and P2 bars, the More list) chip every screening number
+  ---
+  duration_ms: 18.763084
+  type: 'test'
+  ...
+# Subtest: F8: the P1 handoff merges into the T-240 label (no overlapping second label)
+ok 66 - F8: the P1 handoff merges into the T-240 label (no overlapping second label)
+  ---
+  duration_ms: 0.517125
+  type: 'test'
+  ...
+# Subtest: F4: the problem caption templates every scale-ladder rung from the data, with labels
+ok 67 - F4: the problem caption templates every scale-ladder rung from the data, with labels
+  ---
+  duration_ms: 0.494834
+  type: 'test'
+  ...
+# Subtest: F7: the relief caption gives the largest relief discharge and its minute, as the aware branch measured
+ok 68 - F7: the relief caption gives the largest relief discharge and its minute, as the aware branch measured
+  ---
+  duration_ms: 4.536458
+  type: 'test'
+  ...
+# Subtest: F9: engine.json rows carry their unit ("µs per call" for allocate)
+ok 69 - F9: engine.json rows carry their unit ("µs per call" for allocate)
+  ---
+  duration_ms: 0.284875
+  type: 'test'
+  ...
+# Subtest: P3 ERCOT console: the snapshot is byte-identical to what its manifest lists (sha256)
+ok 70 - P3 ERCOT console: the snapshot is byte-identical to what its manifest lists (sha256)
+  ---
+  duration_ms: 0.422458
+  type: 'test'
+  ...
+# Subtest: P3 ERCOT console: four REAL-system cards whose numbers equal the snapshot (computed independently here)
+ok 71 - P3 ERCOT console: four REAL-system cards whose numbers equal the snapshot (computed independently here)
+  ---
+  duration_ms: 1.638875
+  type: 'test'
+  ...
+# Subtest: P3: the More view renders the console and the rest of More, with every screening number chipped
+ok 72 - P3: the More view renders the console and the rest of More, with every screening number chipped
+  ---
+  duration_ms: 19.264625
+  type: 'test'
+  ...
+# Subtest: footprints.json: ODbL credit, labelled match counts, one ring per matched home id, inside the feeder bbox
+ok 73 - footprints.json: ODbL credit, labelled match counts, one ring per matched home id, inside the feeder bbox
+  ---
+  duration_ms: 6.384375
+  type: 'test'
+  ...
+# Subtest: homes: every home gets a polygon, the real footprint when matched, else a 12 m square (ASSUMPTION)
+ok 74 - homes: every home gets a polygon, the real footprint when matched, else a 12 m square (ASSUMPTION)
+  ---
+  duration_ms: 2.931834
+  type: 'test'
+  ...
+# Subtest: static geometry keeps its identity across frames (deck.gl does not re-tessellate 2,400 footprints per step)
+ok 75 - static geometry keeps its identity across frames (deck.gl does not re-tessellate 2,400 footprints per step)
+  ---
+  duration_ms: 9.176208
+  type: 'test'
+  ...
+# Subtest: zone colour: homes take their transformer's tier code; dark and battery-backup homes override it
+ok 76 - zone colour: homes take their transformer's tier code; dark and battery-backup homes override it
+  ---
+  duration_ms: 1.007417
+  type: 'test'
+  ...
+# Subtest: cans: ghost = 100% of nameplate, fill = loading (pokes out when over), radius ~ sqrt(kVA), 110% ring and 150% cap, open = grey
+ok 77 - cans: ghost = 100% of nameplate, fill = loading (pokes out when over), radius ~ sqrt(kVA), 110% ring and 150% cap, open = grey
+  ---
+  duration_ms: 0.351167
+  type: 'test'
+  ...
+# Subtest: batteries: 96 columns beside their homes, fill = SoC, reserve ring at 20%, colour by state, pulse on a changed command, ! when stale
+ok 78 - batteries: 96 columns beside their homes, fill = SoC, reserve ring at 20%, colour by state, pulse on a changed command, ! when stale
+  ---
+  duration_ms: 0.430166
+  type: 'test'
+  ...
+# Subtest: labels: A-D with kVA and room to nameplate (DERIVED), T-240 with no battery; short forms for low zoom
+ok 79 - labels: A-D with kVA and room to nameplate (DERIVED), T-240 with no battery; short forms for low zoom
+  ---
+  duration_ms: 4.929583
+  type: 'test'
+  ...
+# Subtest: back-feed: an exporting can is labelled with its export room, never its charge room (judge R1 F6)
+ok 80 - back-feed: an exporting can is labelled with its export room, never its charge room (judge R1 F6)
+  ---
+  duration_ms: 9.834875
+  type: 'test'
+  ...
+# Subtest: exportRoomKW / headroom: export room = sqrt(kVA^2 - Q^2) + P while P < 0; charge room otherwise
+ok 81 - exportRoomKW / headroom: export room = sqrt(kVA^2 - Q^2) + P while P < 0; charge room otherwise
+  ---
+  duration_ms: 0.111458
+  type: 'test'
+  ...
+# Subtest: roomKW: unity-pf room to nameplate from loading and real power; kVA difference without P
+ok 82 - roomKW: unity-pf room to nameplate from loading and real power; kVA difference without P
+  ---
+  duration_ms: 0.0845
+  type: 'test'
+  ...
+# Subtest: frames: quantized contract arrays decode (pct x10, kW x10, SoC per mille); k clamps; P2 month peaks
+ok 83 - frames: quantized contract arrays decode (pct x10, kW x10, SoC per mille); k clamps; P2 month peaks
+  ---
+  duration_ms: 4.907667
+  type: 'test'
+  ...
+# Subtest: every branch and step of the committed P1 data builds a valid model
+ok 84 - every branch and step of the committed P1 data builds a valid model
+  ---
+  duration_ms: 21.71
+  type: 'test'
+  ...
+# Subtest: camera presets: whole feeder, street A-D (zoom ~18, pitch 55), Northbank T-240
+ok 85 - camera presets: whole feeder, street A-D (zoom ~18, pitch 55), Northbank T-240
+  ---
+  duration_ms: 0.975292
+  type: 'test'
+  ...
+# Subtest: 3D: the translucent ghosts never write depth, so every fill below 100% shows (judge R1 F1)
+ok 86 - 3D: the translucent ghosts never write depth, so every fill below 100% shows (judge R1 F1)
+  ---
+  duration_ms: 0.120541
+  type: 'test'
+  ...
+1..86
+# tests 86
+# suites 0
+# pass 86
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 311.168

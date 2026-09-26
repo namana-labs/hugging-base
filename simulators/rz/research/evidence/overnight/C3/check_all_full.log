@@ -1,0 +1,35 @@
+CHECK root=/Users/rzalagbada/hb-overnight/c3 head=a79a1d9 lane=none full=1 py=/Users/rzalagbada/hb-overnight/.venv/bin/python logs=/Users/rzalagbada/Desktop/projects/base-power-hackathon/overnight/evidence/C3/check-logs
+== 1 unit
+STEP unit: PASS (Ran 121 tests)
+== 2 node
+STEP node: PASS (# pass 86 # fail 0 )
+== 3 keep (7.1)
+keep: grid-stories py ok (Ran 8 tests) ; grid-stories node ok (# pass 3 # fail 0 ) ; four-home ok (Ran 17 tests)
+STEP keep: PASS (prototype 8 + 3, four-home 17)
+== 4 contract
+contract total 52 files, 16.31 MB (budget 25.0 MB, 4.0 MB per file); 31689 labelled numbers
+CONTRACTS: PASS (52 files, 16.31 MB, 31689 labelled numbers)
+STEP contract: PASS ((52 files, 16.31 MB, 31689 labelled numbers))
+== 5 verify
+VERIFY labels: PASS (49 files, 31689 labelled numbers)
+VERIFY p1: PASS (1 expectations refuted, see NOTES.md: rotation)
+VERIFY p2: PASS (1 expectations refuted, see NOTES.md)
+STEP verify: PASS (labels p1 p2)
+== 7+8 smoke all + rebuild (one heavy-run lock hold)
+SMOKE root=/Users/rzalagbada/hb-overnight/c3 port=53055 mode=all links=38 shots=/Users/rzalagbada/Desktop/projects/base-power-hackathon/overnight/shots/C3
+SMOKE: 38/38 ok
+STEP smoke: PASS (all: SMOKE: 38/38 ok)
+BUILD topology: OK (0 s)
+BUILD fixtures: OK (1 s)
+BUILD p1: OK (12 s)
+BUILD p2: OK (20 s)
+BUILD referee: OK (131 s)
+BUILD: PASS
+determinism: rebuild left ui/data and data/out byte-identical
+VERIFY p1: PASS (1 expectations refuted, see NOTES.md: rotation)
+determinism: rebuild byte-identical (6 files)   [INVARIANT]
+VERIFY p2: PASS (1 expectations refuted, see NOTES.md)
+determinism: rebuild byte-identical (19 files)   [INVARIANT]
+STEP rebuild: PASS (build_all all + verify --rebuild)
+CHECK took 673 s
+ALL CHECKS: PASS

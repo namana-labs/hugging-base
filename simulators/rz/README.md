@@ -57,8 +57,11 @@ scripts/check_all.sh --full       # also rebuilds every artifact and byte-compar
 | `data/` | inputs with their sources: SMART-DS feeder, ERCOT LZ_NORTH prices, ERCOT demand, load profiles, footprints, the frozen fleet |
 | `scripts/` | setup, serve, build, gate (`check_all.sh`), smoke, deep links |
 | `docs/` | `run-the-demo.md`, `demo-script.md` (the video, beat by beat), `contracts.md` (data formats), `how-base-plugs-in.md`, `data-sources.md`, `overnight/REPORT.md` |
-| `research/` | RZ's research, specs, logs and evidence, sanitized and labelled (added by the lead) |
-| `TASKS.md` | the remaining work split into parallel workstreams (added by the lead) |
+| `research/` | RZ's research, specs, logs and evidence, sanitized and labelled; start at `research/README.md` |
+| `judges/` | the independent data-truth audit (inputs, on-screen numbers) and the orchestration explainer |
+| `story/` | what the four-page story needs from our data, and what already exists |
+| `RULINGS.md` | RZ's rulings from 26 Sep still to apply (Wi-Fi relabel, fuse rule, capacity-planner scope, team split) |
+| **Who does what** | `handoff/README.md` at the repo root: the team hub, plus `handoff/ENGINE.md` (RZ + Michael) and `handoff/CONNOR.md` |
 
 Team docs stay at the repo root: [docs/README.md](../../docs/README.md), [design.md](../../docs/design.md), [plan.md](../../docs/plan.md), [reconciliation.md](../../docs/reconciliation.md), [research-report.md](../../docs/research-report.md), [ui-brief.md](../../docs/ui-brief.md), [design-handoff/](../../docs/design-handoff/README.md).
 

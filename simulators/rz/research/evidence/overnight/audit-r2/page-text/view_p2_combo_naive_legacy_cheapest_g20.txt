@@ -1,0 +1,172 @@
+Hugging Basefeeder-aware battery fleet
+P1 · where to charge
+P2 · where the next battery goes
+More
+NREL SMART-DS 2018 AUS P1U feeder REAL
+Oncor-suburb stand-in settled at LZ_NORTH (placeholder) ASSUMPTION
+P2 · where the next battery goes
+August 2026 what-if · prices REAL · loads SMART-DS 2018, same calendar date SIM ASSUMPTION
+POLICY
+feeder-aware
+naive
+BATTERY
+Core 20 kW
+Legacy 11.4 kW
+CHARGE RULE
+D-26 onset
+cheapest hours
+LOAD
+today
++20% growth
+BATTERIES TO ADD
+1
+Naive: ERCOT's one number per zone split with no feeder check ASSUMPTION. Never implies Base charges this way today.
+OpenDSS referee: 6 month runs · surrogate error p99 0.25 ptsSIM (max 0.69 ptsSIM) · tier agreement 100.0%SIM
+FROM P1: LEFT UNRELIEVED ON 2026-08-23
+T-240: home load only, no battery: peak 119.5% at 16:45 (SIM). Driver: Home 0409 (SMART-DS profile res_kw_38274_pu, the same profile as Home 0212 on T-150, Home 0504 on T-103), 22.7 kWSIM at the peak. A new battery here (Home 0409, rank 345 under this policy): month peak 119.3%SIMscreening without, 145.6%SIMscreening with; it adds a violation (where NOT to put it). Open its card.
+THE FLIP: NAIVE VS FEEDER-AWARE RANKING
+7DERIVED
+of 10 in both top tens (naive vs feeder-aware, one entry per transformer)
+The two rankings overlap by the number above; the flip is partial in this data.
+Spearman 0.94DERIVED · untied candidates only: overlap 4DERIVED, Spearman 0.24DERIVED over 109DERIVED candidates · places decided by id: 802SIM of 911
+The feeder-aware top 10 is driven by 9SIM distinct SMART-DS load profiles (res_kw_38274_pu, res_kw_29237_pu, res_kw_38841_pu, res_kw_16275_pu, res_kw_5253_pu, res_kw_35369_pu, res_kw_30107_pu, res_kw_35547_pu, res_kw_629_pu): shared shapes are one piece of evidence, not several.
+Biggest movers (one entry per transformer):
+Home 0112 on T-92: naive rank 351DERIVED → feeder-aware rank 3DERIVED
+Home 0195 on T-142: naive rank 346DERIVED → feeder-aware rank 2DERIVED
+Home 0409 on T-240: naive rank 345DERIVED → feeder-aware rank 1DERIVED
+Home 0440 on T-253: naive rank 353DERIVED → feeder-aware rank 203DERIVED
+Home 0288 on T-195: naive rank 333DERIVED → feeder-aware rank 201DERIVED
+Headline rule: shown only when the two top tens share at most 5 homes (display rule ASSUMPTION).
+Feeder-aware #1 Home 0195 on T-142: under naive dispatch rank 1.
+Naive #1 Home 0195 on T-142: under feeder-aware dispatch rank 1.
+THE CANDIDATE
+#1 Home 0195 · T-142 · 25 kVAREAL
+screening
+relieves 0.50 h above nameplate (SIM); no new violation; month peak with the battery 129.7% (SIM)
+
+In August 2026 transformer T-142 spent 5.25 hSIMscreening above nameplate without a new battery (peak 123.3%SIMscreening), driven by one home's load, Home 0195 (SMART-DS profile res_kw_29237_pu). With a Legacy at Home 0195 under naive dispatch (no feeder check): 4.75 hSIMscreening above nameplate, peak 129.7%SIMscreening, August energy value $48DERIVED. It avoids 0.50 hSIMscreening of stress on its transformer.
+
+adds no new violation
+yesSIMscreening
+peak with the battery
+129.7%SIMscreening
+stress avoided
+0.50 hSIMscreening
+stress added
+0.00 hSIMscreening
+energy shaved above nameplate
+-1.1 kWhSIMscreening
+August energy value
+$48DERIVED
+curtailed
+0 kWhSIM
+protection operates (ASSUMPTION rule)
+noSIM
+Same transformer, identical in the screening model: Home 0635. The lowest id is shown.
+Managed feeder-aware instead: rank 1
+Without the battery: hourly max loading, by day and hourSIM
+With the batterySIM
+at or below nameplate over nameplate over the normal rating over the emergency rating (bands, not tier events) screening
+0%
+75%
+150%
+nameplate
+normal
+emergency
+00:00
+06:00
+12:00
+18:00
+Peak day 2026-08-15: loading without (grey) and with (accent) the battery, % of nameplateSIM
+RANKED CANDIDATES
+#	home	transformer	peak with, % (● OpenDSS, ○ screening)SIM	stress avoided, hSIMscreening	August valueDERIVED	
+1	Home 0195	T-142	129.7	0.50	$48	○
+2	Home 0531	T-285	37.3	0.00	$48	○
+3	Home 0431	T-248	43.4	0.00	$48	○
+4	Home 0339	T-218	43.6	0.00	$48	○
+5	Home 0170	T-130	43.7	0.00	$48	○
+6	Home 0240	T-167	44.7	0.00	$48	○
+7	Home 0054	T-51	46.6	0.00	$48	○
+8	Home 0126	T-104	46.8	0.00	$48	○
+9	Home 0171	T-131	47.1	0.00	$48	○
+10	Home 0322	T-211	47.8	0.00	$48	○
+11	Home 0167	T-128	47.9	0.00	$48	○
+12	Home 0753	T-336	48.2	0.00	$48	○
+13	Home 0141	T-113	49.5	0.00	$48	○
+14	Home 0271	T-185	49.9	0.00	$48	○
+15	Home 0243	T-170	50.0	0.00	$48	○
+Rank rule, no weights: adds no new violation; stress hours avoided; peak with the battery, lowest first; value minus curtailment; home id. Rows in red add a violation. ● OpenDSS-checked, ○ screening.
+GREEDY BUILD: BATTERIES PLACED ONE AT A TIME
+k	home	transformer	feeder tfs with a normal-tier eventSIMscreening	emergency tfsSIMscreening	h above normal ratingSIMscreening
+1	Home 0195	T-142	14	4	317.0
+Place #1, re-run its transformer, re-score, repeat (exact in the screening model).
+USEFUL CAPACITY FROM AN EMPTY FEEDER
+naive
+383SIM
+(stops: placement 384 (Home 0631 on tf 51) makes the first battery-caused normal-tier event; the per-phase feeder-head estimate (DERIVED) passes 100% at placement 94)
+feeder-aware
+1,007SIM
+(stops: all 1007 eligible homes used with the feeder-head cap)
+Batteries added from an empty feeder until the first battery-caused normal-tier event (naive) or curtailment above the cap of 10%ASSUMPTION (feeder-aware), or every eligible home is used.
+0
+0.5
+1
+1
+384
+Naive: transformers with a battery-caused normal-tier event, as batteries are added in greedy orderSIM
+0%
+5%
+10%
+cap
+50
+1007
+Feeder-aware: feeder curtailment, % of the energy the new batteries need, as batteries are addedSIM
+WHERE PROTECTION MAY OPERATE ASSUMPTION
+Existing fleet managed naively, A (T-150): peak 235.6%SIMscreening (2026-08-02 20:15); no battery-less home behind it (nothing goes dark); on battery: Home 0212, Home 0813.
+Existing fleet managed naively, C (T-246): peak 219.6%SIMscreening (2026-08-08 19:15); no battery-less home behind it (nothing goes dark); on battery: Home 0427, Home 0957.
+Existing fleet managed naively, B (T-357): peak 233.2%SIMscreening (2026-08-03 19:00); no battery-less home behind it (nothing goes dark); on battery: Home 0868, Home 0884.
+Battery-less homes behind an open transformer go dark; battery homes island on their own battery and stay lit. Only the homes the data lists are shown.
+WHEN TRANSFORMERS PEAK VS WHEN PRICES PEAK
+Transformers most often hit their monthly peak at 16:00 109SIM of 379SIM; the day's highest price most often falls at 18:00 10REAL of 31REAL days. A market-only dispatcher saves its energy for the price peak and leaves the load peak alone.
+109
+0
+00
+03
+06
+09
+12
+15
+18
+21
+Hour of each transformer's monthly peak loading (SMART-DS 2018 shapes)SIM
+10
+0
+00
+03
+06
+09
+12
+15
+18
+21
+Hour of each August day's maximum LZ_NORTH priceREAL
+THE EXISTING FLEET: DID OUR BATTERIES CAUSE IT?
+existing fleet	h above nameplate, all tfs	normal-tier events	emergency intervals
+no batteries	5.0SIMscreening	1SIMscreening	0SIMscreening
+managed naively	673.0SIMscreening	308SIMscreening	567SIMscreening
+feeder-aware	2.0SIMscreening	0SIMscreening	0SIMscreening
+REAL PRICES: THE MONTH AND THE CLIFFS
+max 781 $/MWh
+ERCOT RTM LZ_NORTH, 2026-08, 15-minute settlement pricesREAL
+27DERIVED price cliffs in 2026-01-01..2026-09-19; 13DERIVED in the evening, while home load is still high. Each would synchronize a market-only fleet.
+J
+F
+M
+A
+M
+J
+J
+A
+S
+Rule: prev >= $60 and next <= 0.5 x prev, consecutive 15-min starts. Accent = eveningDERIVED
+The next-battery score is not a Base product: Base schedules installs by demand; this adds the grid lens. Screening numbers come from a per-transformer surrogate calibrated against OpenDSS; shortlist cards carry OpenDSS numbers when the referee has run. Growth ASSUMPTION, the fleet placement ASSUMPTION and the curtailment cap ASSUMPTION are named constants.

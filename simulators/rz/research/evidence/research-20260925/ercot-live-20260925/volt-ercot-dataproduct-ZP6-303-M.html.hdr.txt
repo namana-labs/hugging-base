@@ -1,0 +1,34 @@
+HTTP/2 200 
+date: Sat, 26 Sep 2026 04:20:51 GMT
+server: Apache
+x-xss-protection: 1; mode=block
+x-frame-options: SAMEORIGIN
+strict-transport-security: max-age=31536000; includeSubdomains; preload
+cache-control: no-cache, no-store, max-age=0, must-revalidate
+pragma: no-cache
+expires: 0
+strict-transport-security: max-age=31536000 ; includeSubDomains
+x-xss-protection: 1; mode=block
+x-frame-options: ALLOW-FROM ercot.com
+x-content-type-options: nosniff
+referrer-policy: no-referrer
+content-security-policy-report-only: default-src * data: mediastream: blob: filesystem: about: ws: wss: 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline'
+x-permitted-cross-domain-policies: none
+vary: Origin,Access-Control-Request-Method,Access-Control-Request-Headers
+x-powered-by: CrafterCMS
+set-cookie: JSESSIONID=<redacted>; Path=/; Secure; HttpOnly
+content-type: text/html;charset=UTF-8
+content-language: en-US
+x-oneagent-js-injection: true
+x-ruxit-js-agent: true
+content-security-policy: frame-ancestors 'self' https://*.ercot.com:*;
+server-timing: dtSInfo;desc="0", dtRpid;desc="-1032586058"
+set-cookie: dtCookie=<redacted>; Path=/; Domain=.ercot.com
+set-cookie: visid_incap_1217363=<redacted>; expires=Sat, 25 Sep 2027 06:37:02 GMT; HttpOnly; path=/; Domain=.ercot.com; Secure; SameSite=None
+set-cookie: incap_ses_912_1217363=<redacted>; path=/; Domain=.ercot.com; Secure; SameSite=None
+x-cdn: Imperva
+access-control-allow-origin: https://mis.ercot.com
+x-iinfo: 52-69184626-69160783 2NNN RT(1790396451233 21) q(0 0 0 -1) r(0 0) U18
+
+url=https://www.ercot.com/mp/data-products/data-product-details?id=ZP6-303-M
+retrievedUtc=2026-09-26T04:20:51Z

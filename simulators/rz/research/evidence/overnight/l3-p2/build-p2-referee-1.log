@@ -1,0 +1,45 @@
+p2 naive-core-d26-g0: 0.3 s; #1 Home 0126
+p2 naive-core-d26-g20: 0.3 s; #1 Home 0126
+p2 naive-core-cheapest-g0: 0.3 s; #1 Home 0312
+p2 naive-core-cheapest-g20: 0.3 s; #1 Home 0541
+p2 naive-legacy-d26-g0: 0.3 s; #1 Home 0531
+p2 naive-legacy-d26-g20: 0.3 s; #1 Home 0195
+p2 naive-legacy-cheapest-g0: 0.3 s; #1 Home 0531
+p2 naive-legacy-cheapest-g20: 0.3 s; #1 Home 0195
+p2 aware-core-d26-g0: 0.9 s; #1 Home 0409
+p2 aware-core-d26-g20: 0.9 s; #1 Home 0195
+p2 aware-core-cheapest-g0: 0.9 s; #1 Home 0409
+p2 aware-core-cheapest-g20: 0.9 s; #1 Home 0195
+p2 aware-legacy-d26-g0: 0.8 s; #1 Home 0409
+p2 aware-legacy-d26-g20: 0.9 s; #1 Home 0195
+p2 aware-legacy-cheapest-g0: 0.9 s; #1 Home 0409
+p2 aware-legacy-cheapest-g20: 0.9 s; #1 Home 0195
+useful capacity: naive 383 / aware 1007
+p2 build: 17.9 s
+referee baseline aware-core-d26-g0: 2976 steps, 4.2 ms/step; shortlist err max 0.27 pts; normal events 0 (battery-caused 0); placed 0
+referee baseline naive-core-d26-g0: 2976 steps, 4.2 ms/step; shortlist err max 0.27 pts; normal events 308 (battery-caused 308); placed 0
+referee top5     aware-core-d26-g0: 2976 steps, 4.2 ms/step; shortlist err max 0.43 pts; normal events 0 (battery-caused 0); placed 5
+referee top5     naive-core-d26-g0: 2976 steps, 4.2 ms/step; shortlist err max 0.69 pts; normal events 308 (battery-caused 308); placed 5
+referee baseline aware-core-d26-g20: 2976 steps, 4.2 ms/step; shortlist err max 0.42 pts; normal events 5 (battery-caused 0); placed 0
+referee baseline naive-core-d26-g20: 2976 steps, 4.1 ms/step; shortlist err max 0.42 pts; normal events 374 (battery-caused 366); placed 0
+referee: 6 runs x 2976 | shortlist [104, 290, 95, 285, 201, 240, 142, 92] | error max 0.69 pts, p99 0.25 pts; all tfs max 1.25, p99 0.17; tier agreement 100.0% | 4.2 ms/step | 78 s
+referee: wrote data/out/referee-2026-08.json; re-merging into ui/data/p2 (sim.p2_build)
+p2 naive-core-d26-g0: 0.3 s; #1 Home 0126
+p2 naive-core-d26-g20: 0.3 s; #1 Home 0126
+p2 naive-core-cheapest-g0: 0.3 s; #1 Home 0312
+p2 naive-core-cheapest-g20: 0.3 s; #1 Home 0541
+p2 naive-legacy-d26-g0: 0.3 s; #1 Home 0531
+p2 naive-legacy-d26-g20: 0.3 s; #1 Home 0195
+p2 naive-legacy-cheapest-g0: 0.3 s; #1 Home 0531
+p2 naive-legacy-cheapest-g20: 0.3 s; #1 Home 0195
+p2 aware-core-d26-g0: 0.9 s; #1 Home 0409
+p2 aware-core-d26-g20: 0.9 s; #1 Home 0195
+p2 aware-core-cheapest-g0: 0.9 s; #1 Home 0409
+p2 aware-core-cheapest-g20: 0.9 s; #1 Home 0195
+p2 aware-legacy-d26-g0: 0.9 s; #1 Home 0409
+p2 aware-legacy-d26-g20: 0.9 s; #1 Home 0195
+p2 aware-legacy-cheapest-g0: 0.9 s; #1 Home 0409
+p2 aware-legacy-cheapest-g20: 0.9 s; #1 Home 0195
+useful capacity: naive 383 / aware 1007
+p2 build: 17.9 s
+exit 0

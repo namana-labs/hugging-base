@@ -1,0 +1,25 @@
+retrieved_utc=2026-09-26T04:32:05Z url=https://www.energy.gov/sites/default/files/oeprod/DocumentsandMedia/BlackoutFinal-Web.pdf
+HTTP/2 200 
+content-type: application/pdf
+content-length: 7012212
+date: Fri, 25 Sep 2026 12:07:03 GMT
+server: Apache
+nrgenv: nrg-prod
+last-modified: Thu, 28 Jul 2011 17:33:55 GMT
+cache-control: max-age=1209600
+expires: Fri, 09 Oct 2026 12:07:03 GMT
+x-varnish: 3410034
+accept-ranges: bytes
+cache-tags: MISS
+strict-transport-security: max-age=63072000; includeSubdomains; preload
+content-security-policy: 
+x-content-type-options: nosniff
+x-frame-options: SAMEORIGIN
+x-xss-protection: 1; mode=block
+referrer-policy: same-origin
+x-cache: Hit from cloudfront
+via: 1.1 bfb1b98239d1110e51eaf33df54a3cf2.cloudfront.net (CloudFront)
+x-amz-cf-pop: ATL59-P10
+x-amz-cf-id: fAxJ4dpYUWyWVzbzPQUom_XgkYiUH_YnPdGK2sFrjGUBBwi_hxmokg==
+age: 59102
+

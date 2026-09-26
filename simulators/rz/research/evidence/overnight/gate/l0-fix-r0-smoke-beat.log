@@ -1,0 +1,14 @@
+SMOKE root=/Users/rzalagbada/hb-overnight/wt/gate-l0fix port=61179 mode=beat links=12 shots=/Users/rzalagbada/hb-overnight/tmp/shots-gate-l0fix
+SMOKE view=p1&branch=naive&t=16:00&cam=street&beat=problem ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 11148 ms | 659 KB | 1848 colours
+SMOKE view=p1&branch=aware&t=16:45&cam=street&beat=peak-relief ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 8472 ms | 669 KB | 1851 colours
+SMOKE view=p2&combo=aware-core-d26-g0&beat=insight ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4163 ms | 687 KB | 1517 colours
+SMOKE view=p1&branch=naive&t=20:00&cam=street&beat=backfeed ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 6551 ms | 660 KB | 1965 colours
+SMOKE view=p1&branch=naive&t=22:30&cam=street&beat=rebound-naive ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 6286 ms | 681 KB | 2284 colours
+SMOKE view=p1&branch=aware&t=22:30&cam=street&beat=rebound-aware ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 6465 ms | 666 KB | 1905 colours
+SMOKE view=p1&branch=aware_faults&t=22:16&cam=street&beat=faults ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 7547 ms | 661 KB | 1880 colours
+SMOKE view=p2&combo=aware-core-d26-g0&n=5&beat=p2-controls ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3914 ms | 764 KB | 1671 colours
+SMOKE view=p2&combo=naive-core-d26-g0&beat=p2-flip ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4262 ms | 790 KB | 1670 colours
+SMOKE view=p2&combo=aware-core-d26-g0&n=10&beat=p2-capacity ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3938 ms | 742 KB | 1557 colours
+SMOKE view=more&beat=money ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 5327 ms | 632 KB | 868 colours
+SMOKE view=more&beat=plug-in ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 5335 ms | 628 KB | 826 colours
+SMOKE: 12/12 ok

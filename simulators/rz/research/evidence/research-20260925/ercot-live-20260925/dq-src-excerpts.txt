@@ -1,0 +1,210 @@
+dq source excerpts (verbatim), compiled 2026-09-26T05:47:15Z by the dq item. Full documents are saved alongside where noted.
+
+=== ERCOT Nodal Protocols, March 2 2026 edition (evidence/live-20260925/freq-nprotocols-20260302.pdf; https://www.ercot.com/files/docs/2026/02/26/March-2-2026-Nodal-Protocols.pdf; retrieved 2026-09-26T04:07:53Z by the freq item). Extracted with pdftotext -layout.
+--- s3.10.7.5.4 General Telemetry Performance Criteria (p. 3-181)
+3.10.7.5.4       General Telemetry Performance Criteria
+
+(1)    The following criteria will apply to telemetry provided to ERCOT. Performance is
+       posted on the MIS Secure Area in accordance with Nodal Operating Guide Section 9,
+       Monitoring Programs:
+
+       (a)     Each TSP shall maintain the sum of flows into any telemetered bus it owns or is
+               responsible for less than the greater of five MW or 5% of the largest normal line
+               rating at each bus.
+
+       (b)     Each TSP and QSE shall provide data to ERCOT that meets the following
+               availability:
+
+               (i)     92% of all telemetry provided to ERCOT must achieve a quarterly
+                       availability of 80%. Availability shall be measured based on end-to-end
+                       connectivity of the communications path and the passing of Real-Time
+                       data with a Valid, Manual, or Calculated quality code at the scheduled
+                       periodicity. Quality codes are defined in Section 3.10.7.5.8.1, Data
+                       Quality Codes.
+
+--- end of s3.10.7.5.5(4), then s3.10.7.5.6 TSP/QSE Telemetry Restoration (p. 3-183)
+       measured based on end-to-end connectivity of the communications path and the passing
+       of Real-Time data with Valid, Manual, or Calculated quality codes at the scheduled
+       periodicity. Quality codes are defined in Section 3.10.7.5.8.1, Data Quality Codes.
+
+
+3.10.7.5.6       TSP/QSE Telemetry Restoration
+
+(1)    Telemetered data shall be provided continuously. Real-Time data restoration shall
+       comply with Nodal Operating Guide Sections 7.3.3, Data from WAN Participants to
+       ERCOT, and 7.3.4, Resolving Real-Time Data Issues that affect ERCOT Network
+       Security Analysis.
+
+(2)    Some data may be more essential to the State Estimator solution. ERCOT shall inform
+       the TSP or QSE if, in the sole opinion of ERCOT, a data item is essential and needs to be
+       repaired as quickly as possible. QSEs and TSPs shall make repair procedures and records
+       available to ERCOT upon request. When ERCOT notifies a data provider that a data
+--- s3.10.7.5.8.1 Data Quality Codes (p. 3-184)
+3.10.7.5.8.1   Data Quality Codes
+
+(1)    Market Participants shall provide documentation to ERCOT describing their native
+       system quality codes and defining the conversion of their quality codes into the ERCOT-
+       defined quality codes.
+
+(2)    Statuses and analogs telemetered to ERCOT shall be identified with the following quality
+       codes:
+
+       (a)     Valid – Represents an analog or status the TSP or QSE considers valid.
+
+       (b)     Manual – Represents an analog or status entered manually at the Market
+               Participant (i.e., not received from the field electronically).
+
+       (c)     Calculated – Represents an analog point that the TSP or QSE calculates.
+
+       (d)     Suspect – Represents an analog or status of which the TSP or QSE is unsure of
+               the validity
+
+       (e)     Invalid – Represents an analog or status that the Market Participant has identified
+               as out of reasonability limits.
+
+       (f)     Com_fail – Informs ERCOT that due to communications failure, the analog or
+               status provided ERCOT is not current.
+
+--- s3.10.9 State Estimator Requirements (p. 3-193)
+
+3.10.9         State Estimator Requirements
+
+(1)      The appropriate TAC subcommittee shall coordinate with Market Participants to ensure a
+         common understanding of the level of State Estimator performance required to enable
+         LMP calculation and address the State Estimator’s ability to detect, correct, or otherwise
+         accommodate communications system failures, failed data points, stale data condition
+         codes, and missing or inaccurate measurements to the extent these capabilities contribute
+         to LMP accuracy and State Estimator performance or as needed to meet reliability
+         requirements.
+--- s3.10.9.5(4) (p. 3-196)
+(4)      ERCOT shall consider the quality codes sent by the data provider in determining how
+         confidence factors are assigned for the data to be used in the State Estimator. Valid and
+         manual quality codes as defined in Section 3.10.7.5.8.1, Data Quality Codes, shall be
+         considered as good quality. Quality codes sent as not good quality shall be considered at
+         a lower confidence.
+--- s6.3 (p. 6-4)
+       (a)    Data Input error: Missing, incomplete, stale, or incorrect versions of one or more
+              data elements input to the market applications may result in an invalid market
+              solution and/or prices.
+--- s6.5.7.1.13(1)(a) (p. 6-51)
+6.5.7.1.13      Data Inputs and Outputs for the Real-Time Sequence and SCED
+
+(1)    Inputs: The following information must be provided as inputs to the Real-Time
+       Sequence and SCED. ERCOT may require additional information as required, including:
+
+       (a)    Real-Time data from TSPs including status indication for each point if that data
+              element is stale for more than 20 seconds;
+
+
+=== U.S.-Canada Power System Outage Task Force, Final Report on the August 14, 2003 Blackout (April 2004) (evidence/live-20260925/dq-src-2003-blackout-final-report.pdf; https://www.energy.gov/sites/default/files/oeprod/DocumentsandMedia/BlackoutFinal-Web.pdf; retrieved 2026-09-26T04:32:05Z)
+--- p. 48 (MISO state estimator; two-column layout, read the right column)
+
+13:43 EDT to ask the plants for more voltage sup-         every 5 minutes, and the RTCA less frequently. If
+port. Again, while there was substantial effort to        the model does not have accurate and timely infor-
+support voltages in the Ohio area, FirstEnergy per-       mation about key pieces of system equipment or if
+sonnel characterized the conditions as not being          key input data are wrong, the state estimator may
+unusual for a peak load day, although this was not        be unable to reach a solution or it will reach a solu-
+an all-time (or record) peak load day.6                   tion that is labeled as having a high degree of error.
+                                                          In August, MISO considered its SE and RTCA
+Key Phase 1 Events                                        tools to be still under development and not fully
+                                                          mature; those systems have since been completed
+1A) 12:15 EDT to 16:04 EDT: MISO’s state estima-          and placed into full operation.
+    tor software solution was compromised, and
+    MISO’s single contingency reliability assess-         On August 14 at about 12:15 EDT, MISO’s state
+    ment became unavailable.                              estimator produced a solution with a high mis-
+                                                          match (outside the bounds of acceptable error).
+1B) 13:31:34 EDT: Eastlake Unit 5 generation trip-        This was traced to an outage of Cinergy’s
+    ped in northern Ohio.                                 Bloomington-Denois         Creek     230-kV    line—
+1C) 14:02 EDT: Stuart-Atlanta 345-kV transmis-            although it was out of service, its status was not
+    sion line tripped in southern Ohio.                   updated in MISO’s state estimator. Line status
+                                                          information within MISO’s reliability coordina-
+1A) MISO’s State Estimator Was Turned Off:
+                                                          tion area is transmitted to MISO by the ECAR data
+12:15 EDT to 16:04 EDT
+                                                          network or direct links and is intended to be auto-
+It is common for reliability coordinators and con-        matically linked to the SE. This requires coordi-
+trol areas to use a state estimator (SE) to improve       nated data naming as well as instructions that link
+the accuracy of the raw sampled data they have for        the data to the tools. For this line, the automatic
+the electric system by mathematically processing          linkage of line status to the state estimator had not
+raw data to make it consistent with the electrical        yet been established. The line status was corrected
+system model. The resulting information on                and MISO’s analyst obtained a good SE solution at
+equipment voltages and loadings is used in soft-          13:00 EDT and an RTCA solution at 13:07 EDT.
+ware tools such as real time contingency analysis         However, to troubleshoot this problem the analyst
+(RTCA) to simulate various conditions and out-            had turned off the automatic trigger that runs the
+--- pp. 52-53 (FirstEnergy alarm failure; two-column layout)
+2A) 14:14 EDT: FE alarm and logging software              ators rely heavily on audible and on-screen
+    failed. Neither FE’s control room operators           alarms, plus alarm logs, to reveal any significant
+    nor FE’s IT EMS support personnel were                changes in their system’s conditions. After 14:14
+    aware of the alarm failure.                           EDT on August 14, FE’s operators were working
+                                                          under a significant handicap without these tools.
+2B) 14:20 EDT: Several FE remote EMS consoles             However, they were in further jeopardy because
+    failed. FE’s Information Technology (IT) engi-        they did not know that they were operating with-
+    neer was computer auto-paged.                         out alarms, so that they did not realize that system
+2C) 14:27:16 EDT: Star-South Canton 345-kV                conditions were changing.
+    transmission line tripped and successfully            Alarms are a critical function of an EMS, and
+    reclosed.                                             EMS-generated alarms are the fundamental means
+ headlight high beam, a “parking brake on” indi-          without adequate indicators of when key ele-
+ cator, and the visual and audible alert when a gas       ments of that system were reaching and passing
+ tank is almost empty.                                    the limits of safe operation—and without aware-
+ Power systems, like cars, use “status” alarms and        ness that they were running the system without
+ “limit” alarms. A status alarm indicates the state       these alarms and should no longer assume that
+ of a monitored device. In power systems these            not getting alarms meant that system conditions
+ are commonly used to indicate whether such               were still safe and unchanging.
+ items as switches or breakers are “open” or
+
+=== Base Power blog, aggregated-ders-and-the-capacity-crunch (evidence/live-20260925/load-base-blog-capacity-crunch.html; retrieved 2026-09-26T04:20:41Z by the load item)
+...An interval is scored only where at least 80% of its evaluation window carries both telemetry and a set point, so 36 of the period’s intervals qualify. Max discharge capability 46.9 MW gives ± 7.03 MW; max charge capability 46 MW gives ± 6.9 MW. Telemetry held for more than 180 seconds is treated as stale rather than as a flat dispatch and is blanked from the realized trace. Source: Base fleet telemetry and ERCOT-iss...
+...Telemetry : The aggregate resource is networked to SCED via a standard SCADA protocol (ICCP) in accordance with ERCOT’s network connectivity requirements (direct and redundant connection to their Wide Area Network via a dedicated router). Qualification : The aggregate resource is then tested by dispatching directly through SCED, a basepoint is sent to the resource and defined tolerances are met . Ancillary Services :...
+
+=== CIM vocabulary (fetched via WebFetch 2026-09-26 ~05:25-05:30 UTC; page text summarised by the fetch tool, quotes as returned)
+https://ontology.tno.nl/IEC_CIM/cim_MeasurementValueQuality.html : "Measurement quality flags. Bits 0-10 are defined for substation automation in draft IEC 61850 part 7-3. Bits 11-15 are reserved for future expansion by that document. Bits 16-31 are reserved for EMS applications." Superclass cim:Quality61850; subclasses DiscreteMeasurementValueQuality, AnalogMeasurementValueQuality; association MeasurementValue.MeasurementValueQuality.
+https://ontology.tno.nl/IEC_CIM/cim_MeasurementValueSource.html : "MeasurementValueSource describes the alternative sources updating a MeasurementValue." Association MeasurementValue.MeasurementValueSource. Naming conventions: in the IEC 61970-301 introduction (not on the page).
+https://pythonhosted.org/PyCIM/CIM14.IEC61970.Meas.Quality61850'.Quality61850-class.html : class text "Quality flags in this class are as defined in IEC 61850, except for estimatorReplaced, which has been included in this class for convenience." validity {GOOD, QUESTIONABLE, INVALID}; source {PROCESS, SUBSTITUTED, DEFAULTED}; oldData: "Measurement value is old and possibly invalid, as it has not been successfully updated during a specified time interval."; suspect: "A correlation function has detected that the value is not consistent with other values."; failure: "A supervision function has detected an internal or external failure, e.g. communication failure."; outOfRange: "Measurement value is beyond a predefined range of value."; estimatorReplaced: "Value has been replaced by State Estimator."; operatorBlocked: "Measurement value is blocked and hence unavailable for transmission."; test, badReference, overFlow, oscillatory as listed in dq-quality.json vocabulary.
+ICCP/TASE.2 (SECONDARY, vendor docs, via WebSearch summary): https://doc.ipesoft.com/pages/viewpage.action?pageId=3444925 ; https://www.pcvue.com/ProductHelp/PcVue/en/Content/Extras/iccp_vtq.php : Validity VALID / HELD / SUSPECT / NOTVALID; CurrentSource TELEMETERED / CALCULATED / ENTERED / ESTIMATED.
+
+=== ERCOT Nodal Protocols, same PDF (evidence/live-20260925/freq-nprotocols-20260302.pdf), added 2026-09-26T07:44:12Z by the dq item, review round 2 (claim 4: quality as an input to how ERCOT enforces stability limits). Extracted with pdftotext -layout. Page footers carry each section's own revision date (s2 and s3: February 1, 2026; s5 and s6: December 5, 2025).
+--- s2 Definitions, Generic Transmission Constraint (GTC) (heading p. 2-38, text p. 2-39)
+Generic Transmission Constraint (GTC)
+A transmission constraint made up of one or more grouped Transmission Elements that is used to
+constrain flow between geographic areas of ERCOT for the purpose of managing stability,
+voltage, and other constraints that cannot otherwise be modeled directly in ERCOT’s powerflow
+and contingency analysis applications.
+--- s3.10.7.6(1) Use of Generic Transmission Constraints and Generic Transmission Limits (p. 3-188)
+3.10.7.6     Use of Generic Transmission Constraints and Generic Transmission Limits
+
+(1)    For the sole purpose of creating transmission flow constraints between areas of the
+       ERCOT Transmission Grid in ERCOT applications that are unable to recognize non-
+       thermal operating limits (such as system stability limits and voltage limits on Electrical
+       Buses), ERCOT may create new Generic Transmission Constraints (GTCs) or modify
+       existing GTCs for use in reliability and market analysis. GTCs created or modified as
+       described in this Section shall be used in the SCED application. ERCOT shall not use
+       GTCs in ERCOT applications to replace other constraints already capable of being
+       directly modeled in the SCED application.
+--- s6.5.7.1.10(1) Network Security Analysis Processor and Security Violation Alarm (p. 6-47)
+6.5.7.1.10      Network Security Analysis Processor and Security Violation Alarm
+
+(1)    Using the input provided by the State Estimator, ERCOT shall use the NSA processor to
+       perform analysis of all contingencies in the active list. For each contingency, ERCOT
+       shall use the NSA processor to monitor the elements for limit violations. ERCOT shall
+       use the NSA processor to verify Electrical Bus voltage limits to be within a percentage
+--- s6.5.7.1.11(1) Transmission Network and Power Balance Constraint Management (p. 6-49)
+6.5.7.1.11      Transmission Network and Power Balance Constraint Management
+
+(1)    ERCOT may not allow any constraint (contingency and limiting Transmission Element
+       pair) identified by NSA to be activated in SCED until it has verified that the contingency
+       definition in NSA associated with the constraint is accurate and appropriate given the
+       current operating state of the ERCOT Transmission Grid. ERCOT shall continuously
+       post to the MIS Secure Area all constraint contingencies in the NSA. ERCOT shall
+       provide relevant constraint information, including, but not limited to, the contingency
+       name as provided in the standard contingency list, whether or not the constraint is active
+       in SCED, the overloaded Transmission Element name, the Rating of the overloaded
+       Transmission Element including Generic Transmission Limits (GTLs) expressed in MW
+       and MVA, and pre-contingency or post-contingency flows expressed in MW and MVA.
+       For each Operating Day, ERCOT shall post to the MIS Secure Area within five days, a
+--- s5.8(1)(e) Annual RUC Reporting Requirement (p. 5-67)
+5.8       Annual RUC Reporting Requirement
+
+(1)     ERCOT shall report to the Technical Advisory Committee (TAC), each January, an
+        assessment of market impacts and Settlements for the aggregate Reliability Unit
+        Commitment (RUC) activity, delineated by type of RUC instruction as follows:
+        (e)      RUC instructions issued for system inertia;

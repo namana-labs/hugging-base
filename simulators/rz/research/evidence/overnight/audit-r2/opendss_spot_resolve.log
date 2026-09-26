@@ -1,0 +1,16 @@
+none           45 t=16:45 maxdiff=0.051 p99=0.050 worst=tf150 122.13 (committed tf150 122.1) head=294.2A (79.5%) vmin=0.9865
+   focus solve/committed {'A': (122.13, np.float64(122.1)), 'B': (49.41, np.float64(49.4)), 'C': (33.83, np.float64(33.8)), 'D': (29.16, np.float64(29.2)), '240': (119.46, np.float64(119.5))} raw {'A': 122.13, 'T240': 119.46} batt sum kW 0.0
+aware          45 t=16:45 maxdiff=0.102 p99=0.049 worst=tf240 119.46 (committed tf240 119.5) head=294.2A (79.5%) vmin=0.9863
+   focus solve/committed {'A': (97.7, np.float64(97.8)), 'B': (49.41, np.float64(49.4)), 'C': (33.83, np.float64(33.8)), 'D': (29.16, np.float64(29.2)), '240': (119.46, np.float64(119.5))} raw {'A': 97.7, 'T240': 119.46} batt sum kW -6.2
+aware          46 t=16:46 maxdiff=0.069 p99=0.050 worst=tf240 117.12 (committed tf240 117.1) head=294.0A (79.5%) vmin=0.9869
+   focus solve/committed {'A': (92.67, np.float64(92.6)), 'B': (49.51, np.float64(49.5)), 'C': (33.7, np.float64(33.7)), 'D': (29.32, np.float64(29.3)), '240': (117.12, np.float64(117.1))} raw {'A': 92.67, 'T240': 117.12} batt sum kW -6.9
+naive         240 t=20:00 maxdiff=0.052 p99=0.050 worst=tf246 124.02 (committed tf246 124.0) head=159.1A (43.0%) vmin=1.0020
+   focus solve/committed {'A': (116.67, np.float64(116.7)), 'B': (121.36, np.float64(121.4)), 'C': (124.02, np.float64(124.0)), 'D': (93.75, np.float64(93.8)), '240': (28.01, np.float64(28.0))} raw {'A': 116.67, 'T240': 28.01} batt sum kW -1920.0
+naive         390 t=22:30 maxdiff=0.050 p99=0.050 worst=tf150 201.23 (committed tf150 201.2) head=260.4A (70.4%) vmin=0.9740
+   focus solve/committed {'A': (201.23, np.float64(201.2)), 'B': (188.6, np.float64(188.6)), 'C': (179.98, np.float64(180.0)), 'D': (136.18, np.float64(136.2)), '240': (27.76, np.float64(27.8))} raw {'A': 201.23, 'T240': 27.76} batt sum kW 1920.0
+aware         390 t=22:30 maxdiff=0.159 p99=0.066 worst=tf231 96.57 (committed tf231 96.5) head=194.2A (52.5%) vmin=0.9842
+   focus solve/committed {'A': (96.04, np.float64(96.2)), 'B': (26.38, np.float64(26.4)), 'C': (17.99, np.float64(18.0)), 'D': (95.26, np.float64(95.3)), '240': (27.76, np.float64(27.8))} raw {'A': 96.04, 'T240': 27.76} batt sum kW 583.3
+aware_faults  376 t=22:16 maxdiff=0.163 p99=0.050 worst=tf231 95.15 (committed tf231 95.1) head=199.5A (53.9%) vmin=0.9838
+   focus solve/committed {'A': (35.71, np.float64(35.7)), 'B': (27.72, np.float64(27.7)), 'C': (18.33, np.float64(18.3)), 'D': (94.76, np.float64(94.8)), '240': (25.06, np.float64(25.1))} raw {'A': 35.71, 'T240': 25.06} batt sum kW 588.3
+naive         360 t=22:00 maxdiff=0.050 p99=0.049 worst=tf150 197.38 (committed tf150 197.4) head=273.3A (73.9%) vmin=0.9707
+   focus solve/committed {'A': (197.38, np.float64(197.4)), 'B': (195.39, np.float64(195.4)), 'C': (180.81, np.float64(180.8)), 'D': (139.58, np.float64(139.6)), '240': (23.84, np.float64(23.8))} raw {'A': 197.38, 'T240': 23.84} batt sum kW 1920.0

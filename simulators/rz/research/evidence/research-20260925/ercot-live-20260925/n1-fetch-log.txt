@@ -1,0 +1,17 @@
+n1 (contingency margin) raw fetch log. All keyless, User-Agent "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) hackathon-research/1.0", >= 1 s between requests.
+2026-09-26T04:04:39Z n1-mis-12302-listing.json            https://www.ercot.com/misapp/servlets/IceDocListJsonWS?reportTypeId=12302
+2026-09-26T04:04:40Z..04:05:33Z n1-np686-raw/<DocID>.zip (23 files, NP6-86-CD csv posted 2026-09-25 00:05..22:05 CDT)  https://www.ercot.com/misdownload/servlets/mirDownload?doclookupId=<DocID>
+2026-09-26T04:06:05Z n1-protocols-section6.docx          https://www.ercot.com/files/docs/2024/06/28/06-082826_Nodal.docx (Nodal Protocols Section 6, version 2026-08-28)
+2026-09-26T04:06:33Z n1-ercot-rtcb-sim-examples-training.pdf  https://www.ercot.com/files/docs/2025/04/17/RTC_RealTime_Market_Simulator_April-RTCBTF.pdf (via WebFetch)
+2026-09-26T04:07:39Z n1-nog-section2.docx                https://www.ercot.com/files/docs/2022/11/01/02-080126.docx (Nodal Operating Guide Section 2, version 2026-08-01)
+2026-09-26T04:07:53Z n1-protocols-section2.docx          https://www.ercot.com/files/docs/2024/06/28/02-080126_Nodal.docx (Nodal Protocols Section 2 definitions, version 2026-08-01)
+2026-09-26T04:08:19Z n1-mis-10008-listing.json           https://www.ercot.com/misapp/servlets/IceDocListJsonWS?reportTypeId=10008
+2026-09-26T04:08:23Z n1-np4-160-sp-eb-mapping-ML2-20260922.zip (+ unzipped n1-np4-160/)  mirDownload?doclookupId=1275076044
+2026-09-26T04:09:02Z n1-system-wide-prices.json          https://www.ercot.com/api/1/services/read/dashboards/system-wide-prices.json (lastUpdated 2026-09-25 23:02 CDT)
+2026-09-26T04:09:04Z n1-mis-12302-listing-2.json         (re-listing to pick up the 23:05 CDT file)
+2026-09-26T04:09:08Z n1-np686-raw/1279050919.zip         NP6-86-CD csv posted 2026-09-25 23:05 CDT (SCED runs 22:00..22:55)
+2026-09-26T04:09:27Z n1-ercot-trending-topic-gtcs-2024.pdf  https://www.ercot.com/files/docs/2024/08/09/ERCOT_Trending_Topic_GTCs.pdf (via WebFetch)
+2026-09-26T04:27:59Z n1-dataproduct-NP6-86-CD.html       https://www.ercot.com/mp/data-products/data-product-details?id=NP6-86-CD
+2026-09-26T05:46:54Z 200   100606 n1-oncor-intellirupter.html https://www.oncor.com/content/oncorwww/wire/en/home/innovation/intellirupter-pinpoints-faults--trims-outage-time.html
+2026-09-26T05:46:55Z 200   101411 n1-oncor-automated-devices.html https://www.oncor.com/content/oncorwww/wire/en/home/innovation/oncor-improves-system-with-automated-devices-to-boost-reliabilit.html
+2026-09-26T05:46:57Z 200  1945646 n1-doe-flisr-2014.pdf https://www.energy.gov/sites/prod/files/2016/10/f33/Fault_Location_Impact_Duration_Dec_2014.pdf

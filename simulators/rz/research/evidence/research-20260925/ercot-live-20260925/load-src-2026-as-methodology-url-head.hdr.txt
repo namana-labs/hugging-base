@@ -1,0 +1,21 @@
+HTTP/2 200 
+date: Sat, 26 Sep 2026 08:08:38 GMT
+server: Apache
+x-xss-protection: 1; mode=block
+x-frame-options: SAMEORIGIN
+strict-transport-security: max-age=31536000; includeSubdomains; preload
+last-modified: Mon, 15 Sep 2025 19:08:00 GMT
+etag: "19c2d1-63edbb8dd7790"
+accept-ranges: bytes
+content-length: 1688273
+x-frame-options: ALLOW-FROM ercot.com
+content-security-policy: frame-ancestors 'self' https://*.ercot.com:*;
+server-timing: dtSInfo;desc="0", dtRpid;desc="1879721651"
+set-cookie: dtCookie=<redacted>; Path=/; Domain=.ercot.com
+content-type: application/pdf
+set-cookie: visid_incap_1217363=<redacted>; expires=Sun, 26 Sep 2027 06:59:59 GMT; HttpOnly; path=/; Domain=.ercot.com; Secure; SameSite=None
+set-cookie: incap_ses_961_1217363=<redacted>; path=/; Domain=.ercot.com; Secure; SameSite=None
+x-cdn: Imperva
+access-control-allow-origin: https://mis.ercot.com
+x-iinfo: 51-64037831-64037838 NNNN CT(12 25 0) RT(1790410118249 19) q(0 0 0 0) r(0 0) U6
+

@@ -1,0 +1,266 @@
+{
+ "2025-07-11": {
+  "peakPrice": 1757.28,
+  "onset": "21:30",
+  "mode": "binding",
+  "naiveMax": [
+   195.4,
+   "A",
+   "21:45"
+  ],
+  "awareMax": [
+   115.1,
+   "T-240",
+   "17:00"
+  ],
+  "noneMax": [
+   116.8,
+   "A",
+   "17:00"
+  ],
+  "naiveNormal": 7,
+  "naiveEmerg": 3,
+  "naiveProt": 0,
+  "awareBattCaused": 0,
+  "evNaive": 952.74,
+  "evAware": 967.43,
+  "awareMinusNaive": 14.69,
+  "perBattAware": 10.08,
+  "AminOver100": 14,
+  "reliefKWh": 0.833,
+  "chargedNaive": 100.0,
+  "headNaive": 69.8,
+  "vMinNaive": 0.9749
+ },
+ "2026-03-29": {
+  "peakPrice": 23.43,
+  "onset": "20:45",
+  "mode": "binding",
+  "naiveMax": [
+   212.3,
+   "C",
+   "21:30"
+  ],
+  "awareMax": [
+   97.0,
+   322,
+   "20:50"
+  ],
+  "noneMax": [
+   90.3,
+   372,
+   "20:30"
+  ],
+  "naiveNormal": 9,
+  "naiveEmerg": 3,
+  "naiveProt": 1,
+  "awareBattCaused": 0,
+  "evNaive": -6.45,
+  "evAware": 8.8,
+  "awareMinusNaive": 15.25,
+  "perBattAware": 0.09,
+  "AminOver100": 0,
+  "reliefKWh": 0.0,
+  "chargedNaive": 98.8,
+  "headNaive": 60.9,
+  "vMinNaive": 0.9784
+ },
+ "2026-07-22": {
+  "peakPrice": 344.13,
+  "onset": "23:15",
+  "mode": "binding",
+  "naiveMax": [
+   186.3,
+   "B",
+   "23:15"
+  ],
+  "awareMax": [
+   98.0,
+   322,
+   "23:55"
+  ],
+  "noneMax": [
+   90.9,
+   92,
+   "16:45"
+  ],
+  "naiveNormal": 8,
+  "naiveEmerg": 3,
+  "naiveProt": 0,
+  "awareBattCaused": 0,
+  "evNaive": 386.17,
+  "evAware": 415.64,
+  "awareMinusNaive": 29.47,
+  "perBattAware": 4.33,
+  "AminOver100": 0,
+  "reliefKWh": 0.0,
+  "chargedNaive": 100.0,
+  "headNaive": 86.9,
+  "vMinNaive": 0.9774
+ },
+ "2026-08-14": {
+  "peakPrice": 34.23,
+  "onset": "19:00",
+  "mode": "non-binding",
+  "naiveMax": [
+   214.1,
+   "B",
+   "19:00"
+  ],
+  "awareMax": [
+   97.6,
+   91,
+   "22:20"
+  ],
+  "noneMax": [
+   79.0,
+   358,
+   "23:00"
+  ],
+  "naiveNormal": 9,
+  "naiveEmerg": 3,
+  "naiveProt": 2,
+  "awareBattCaused": 0,
+  "evNaive": -29.69,
+  "evAware": -20.41,
+  "awareMinusNaive": 9.28,
+  "perBattAware": -0.21,
+  "AminOver100": 0,
+  "reliefKWh": 0.0,
+  "chargedNaive": 95.8,
+  "headNaive": 90.2,
+  "vMinNaive": 0.9648
+ },
+ "2026-08-17": {
+  "peakPrice": 437.83,
+  "onset": "22:00",
+  "mode": "binding",
+  "naiveMax": [
+   201.4,
+   "A",
+   "22:00"
+  ],
+  "awareMax": [
+   98.0,
+   322,
+   "23:55"
+  ],
+  "noneMax": [
+   84.5,
+   "B",
+   "18:30"
+  ],
+  "naiveNormal": 8,
+  "naiveEmerg": 4,
+  "naiveProt": 0,
+  "awareBattCaused": 0,
+  "evNaive": 694.37,
+  "evAware": 713.07,
+  "awareMinusNaive": 18.7,
+  "perBattAware": 7.43,
+  "AminOver100": 0,
+  "reliefKWh": 0.0,
+  "chargedNaive": 100.0,
+  "headNaive": 80.9,
+  "vMinNaive": 0.9712
+ },
+ "2026-08-23": {
+  "peakPrice": 566.42,
+  "onset": "22:00",
+  "mode": "binding",
+  "naiveMax": [
+   201.2,
+   "A",
+   "22:30"
+  ],
+  "awareMax": [
+   119.5,
+   "T-240",
+   "16:45"
+  ],
+  "noneMax": [
+   122.1,
+   "A",
+   "16:45"
+  ],
+  "naiveNormal": 11,
+  "naiveEmerg": 3,
+  "naiveProt": 0,
+  "awareBattCaused": 0,
+  "evNaive": 893.83,
+  "evAware": 916.56,
+  "awareMinusNaive": 22.73,
+  "perBattAware": 9.55,
+  "AminOver100": 17,
+  "reliefKWh": 1.194,
+  "chargedNaive": 100.0,
+  "headNaive": 80.4,
+  "vMinNaive": 0.9707
+ },
+ "2026-08-26": {
+  "peakPrice": 780.72,
+  "onset": "23:15",
+  "mode": "binding",
+  "naiveMax": [
+   182.3,
+   "B",
+   "23:15"
+  ],
+  "awareMax": [
+   98.1,
+   322,
+   "23:55"
+  ],
+  "noneMax": [
+   84.1,
+   198,
+   "16:30"
+  ],
+  "naiveNormal": 8,
+  "naiveEmerg": 3,
+  "naiveProt": 0,
+  "awareBattCaused": 0,
+  "evNaive": 1276.08,
+  "evAware": 1315.9,
+  "awareMinusNaive": 39.82,
+  "perBattAware": 13.71,
+  "AminOver100": 0,
+  "reliefKWh": 0.0,
+  "chargedNaive": 100.0,
+  "headNaive": 81.8,
+  "vMinNaive": 0.9654
+ },
+ "2026-09-16": {
+  "peakPrice": 1016.32,
+  "onset": "21:15",
+  "mode": "binding",
+  "naiveMax": [
+   193.8,
+   "A",
+   "22:30"
+  ],
+  "awareMax": [
+   96.9,
+   "A",
+   "22:15"
+  ],
+  "noneMax": [
+   83.3,
+   92,
+   "17:00"
+  ],
+  "naiveNormal": 7,
+  "naiveEmerg": 3,
+  "naiveProt": 0,
+  "awareBattCaused": 0,
+  "evNaive": 2111.74,
+  "evAware": 2128.02,
+  "awareMinusNaive": 16.28,
+  "perBattAware": 22.17,
+  "AminOver100": 0,
+  "reliefKWh": 0.0,
+  "chargedNaive": 100.0,
+  "headNaive": 62.0,
+  "vMinNaive": 0.9792
+ }
+}

@@ -1,0 +1,15 @@
+retrieved_utc=2026-09-26T04:04:51Z url=https://www.ercot.com/content/cdr/html/real_time_system_conditions.html
+HTTP/2 200 
+etag: "c79-65c5aee0d7f94:dtagent10343260715123811IUdx"
+last-modified: Sat, 26 Sep 2026 04:04:29 GMT
+content-type: text/html
+content-length: 4152
+cache-control: max-age=10, public
+expires: Sat, 26 Sep 2026 04:05:01 GMT
+date: Sat, 26 Sep 2026 04:04:51 GMT
+strict-transport-security: max-age=31536000
+x-cdn: Imperva
+access-control-allow-origin: https://mis.ercot.com
+content-security-policy: frame-ancestors 'self' https://*.ercot.com:*
+x-iinfo: 52-68829420-0 0CNN RT(1790395491515 25) q(0 -1 -1 -1) r(0 -1)
+

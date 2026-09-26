@@ -1,0 +1,15 @@
+retrieved_utc=2026-09-26T04:07:26Z url=https://www.ercot.com/files/docs/2024/10/07/ERCOT-Ancillary-Services-Study-Final-White-Paper.pdf
+HTTP/2 200 
+etag: "237d13-623e7473f9d36"
+last-modified: Mon, 07 Oct 2024 18:35:00 GMT
+content-type: application/pdf
+content-length: 2325779
+cache-control: max-age=60, public
+expires: Sat, 26 Sep 2026 04:08:25 GMT
+date: Sat, 26 Sep 2026 04:07:25 GMT
+strict-transport-security: max-age=31536000
+x-cdn: Imperva
+access-control-allow-origin: https://mis.ercot.com
+content-security-policy: frame-ancestors 'self' https://*.ercot.com:*
+x-iinfo: 44-40936797-40926920 2VNN RT(1790395646546 23) q(0 0 0 -1) r(0 0) U20
+

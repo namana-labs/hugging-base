@@ -1,0 +1,18 @@
+rank 1: screen Home 0409 T-240 96.9 ● | json Home 0409 T-240 96.9 ● ok
+rank 2: screen Home 0195 T-142 97.3 ● | json Home 0195 T-142 97.3 ● ok
+rank 3: screen Home 0112 T-92 97.0 ● | json Home 0112 T-92 97.0 ● ok
+rank 4: screen Home 0126 T-104 53.3 ● | json Home 0126 T-104 53.3 ● ok
+rank 5: screen Home 0541 T-290 55.7 ● | json Home 0541 T-290 55.7 ● ok
+rank 6: screen Home 0115 T-95 56.1 ○ | json Home 0115 T-95 56.1 ○ ok
+rank 7: screen Home 0531 T-285 56.7 ○ | json Home 0531 T-285 56.7 ○ ok
+rank 8: screen Home 0302 T-201 58.3 ○ | json Home 0302 T-201 58.3 ○ ok
+rank 9: screen Home 0312 T-207 58.9 ○ | json Home 0312 T-207 58.9 ○ ok
+rank 10: screen Home 0055 T-52 59.1 ○ | json Home 0055 T-52 59.1 ○ ok
+rank 11: screen Home 0002 T-1 60.1 ○ | json Home 0002 T-1 60.1 ○ ok
+rank 12: screen Home 0036 T-33 60.4 ○ | json Home 0036 T-33 60.4 ○ ok
+rank 13: screen Home 0038 T-35 60.9 ○ | json Home 0038 T-35 60.9 ○ ok
+rank 14: screen Home 0008 T-7 61.7 ○ | json Home 0008 T-7 61.7 ○ ok
+rank 15: screen Home 0264 T-182 61.9 ○ | json Home 0264 T-182 61.9 ○ ok
+referee badge screen (6.0, 0.25, 0.69, 100.0) json (6, 0.25, 0.69, 100.0) ok
+rows compared 15
+SCREEN==JSON P2: PASS

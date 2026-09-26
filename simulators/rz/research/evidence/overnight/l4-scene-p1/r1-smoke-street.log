@@ -1,0 +1,6 @@
+SMOKE root=/Users/rzalagbada/hb-overnight/wt/l4-scene-p1 port=63311 mode=p1 links=4 shots=/Users/rzalagbada/Desktop/projects/base-power-hackathon/overnight/shots/l4-r1
+SMOKE view=p1&branch=aware&t=22:30&cam=street ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 10335 ms | 643 KB | 2039 colours
+SMOKE view=p1&branch=naive&t=22:30&cam=street ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 6468 ms | 651 KB | 2542 colours
+SMOKE view=p1&branch=naive&t=21:29&cam=street ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 5600 ms | 647 KB | 2207 colours
+SMOKE view=p1&branch=aware&t=16:45&cam=street ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 6974 ms | 648 KB | 2057 colours
+SMOKE: 4/4 ok

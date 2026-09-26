@@ -1,0 +1,20 @@
+HTTP/2 200 
+content-type: text/html; charset=utf-8
+via: 1.1 varnish, 1.1 varnish, 1.1 varnish
+status: 200 OK
+etag: W/"d8f1-Cc7IZVgD/slaWhMRwy/xTGDkQiI"
+server: openresty
+cache-control: public, max-age=0
+accept-ranges: bytes
+age: 0
+date: Sat, 26 Sep 2026 04:20:43 GMT
+x-served-by: cache-ams-eham8680040-AMS, cache-ams-eham8680040-AMS, cache-ams-eham8680074-AMS, cache-iah1720144-IAH
+x-cache: MISS, MISS, MISS
+x-cache-hits: 0, 0, 0
+x-timer: S1790396444.675176,VS0,VE302
+vary: Cookie, Accept-Encoding
+x-request-id: 67a02bfc-d42b-4c30-8157-5cf41c841d50
+ghost-fastly: true;production
+alt-svc: clear
+content-length: 55537
+

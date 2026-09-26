@@ -1,0 +1,22 @@
+diff --git a/ui/lib/scene3d.js b/private/tmp/claude-501/-Users-rzalagbada-Desktop-projects-REDACTED/db7213a8-6bab-44d3-b22b-9fe4a11f46ca/scratchpad/fixprobe/ui/lib/scene3d.js
+index 41f18ac..202dcca 100644
+--- a/ui/lib/scene3d.js
++++ b/private/tmp/claude-501/-Users-rzalagbada-Desktop-projects-REDACTED/db7213a8-6bab-44d3-b22b-9fe4a11f46ca/scratchpad/fixprobe/ui/lib/scene3d.js
+@@ -83,7 +83,7 @@ export function createScene(el, opts = {}) {
+     // transformer cans, one set of ColumnLayers per radius (kVA class)
+     const ghostsBy = groupBy(m.canGhosts, (d) => d.radius);
+     for (const [r, g] of ghostsBy) {
+-      out.push(new D.ColumnLayer({ id: `can-ghost-${r.toFixed(3)}`, data: g, radius: r, diskResolution: 14, extruded: true,
++      out.push(new D.ColumnLayer({ id: `can-ghost-${r.toFixed(3)}`, data: g, radius: r, diskResolution: 14, extruded: true, parameters: { depthWriteEnabled: false },
+         filled: true, wireframe: true, getPosition: (d) => d.position, getElevation: (d) => d.height,
+         getFillColor: [ink[0], ink[1], ink[2], 16], getLineColor: [ink[0], ink[1], ink[2], 70], pickable: false }));
+     }
+@@ -100,7 +100,7 @@ export function createScene(el, opts = {}) {
+         getPosition: (d) => d.position, getElevation: 0.6, getFillColor: [208, 59, 59, 150], pickable: false }));
+     }
+     out.push(
+-      new D.ColumnLayer({ id: 'battery-ghost', data: m.batteryGhosts, radius: BAT_R_M, diskResolution: 12, extruded: true,
++      new D.ColumnLayer({ id: 'battery-ghost', data: m.batteryGhosts, radius: BAT_R_M, diskResolution: 12, extruded: true, parameters: { depthWriteEnabled: false },
+         filled: true, wireframe: true, getPosition: (d) => d.position, getElevation: (d) => d.height,
+         getFillColor: [ink[0], ink[1], ink[2], 16], getLineColor: [ink[0], ink[1], ink[2], 110] }),
+       new D.ColumnLayer({ id: 'batteries', data: m.batteries, radius: BAT_R_M * 0.8, diskResolution: 12, extruded: true, pickable: true,

@@ -1,0 +1,55 @@
+{
+ "runs": 13,
+ "secondsPerRun": [
+  12.7,
+  12.9,
+  12.9,
+  12.8,
+  12.8,
+  13.0,
+  12.8,
+  12.6,
+  12.6,
+  12.6,
+  12.7,
+  12.6,
+  12.8
+ ],
+ "summary": {
+  "naive_at_cap": {
+   "transformers": 287,
+   "opendssCausedNormalTfs": 5,
+   "surrogateCausedNormalTfs": 0,
+   "agreeTfs": 282,
+   "opendssCausedEmergencyTfs": 4,
+   "disagree": [
+    54,
+    95,
+    123,
+    144,
+    366
+   ]
+  },
+  "naive_at_cap_plus1": {
+   "transformers": 379,
+   "opendssCausedNormalTfs": 379,
+   "surrogateCausedNormalTfs": 379,
+   "agreeTfs": 379,
+   "opendssCausedEmergencyTfs": 69,
+   "disagree": []
+  },
+  "aware_at_cap90": {
+   "transformers": 379,
+   "opendssCausedNormalTfs": 3,
+   "surrogateCausedNormalTfs": 0,
+   "agreeTfs": 376,
+   "opendssCausedEmergencyTfs": 3,
+   "disagree": [
+    123,
+    144,
+    366
+   ]
+  }
+ }
+}
+exit 0

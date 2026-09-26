@@ -1,0 +1,40 @@
+2026-09-26T16:31:49Z | 200 18719 | https://archive-api.open-meteo.com/v1/archive?latitude=30.4245&longitude=-97.8045&start_date=2018-08-01&end_date=2018-09-01&hourly=temperature_2m&timezone=America%2FChicago | openmeteo_austin_2018aug.json
+2026-09-26T16:31:49Z | 200 1038000 | https://arxiv.org/pdf/1706.06255 | arxiv_1706.06255.pdf
+2026-09-26T16:31:49Z | 200 2118313 | https://arxiv.org/pdf/1805.00630 | arxiv_1805.00630.pdf
+2026-09-26T16:36:13Z | 200 988504 | https://www.govinfo.gov/content/pkg/FR-2024-04-22/html/2024-07480.htm | doe_dt_final_rule_2024.htm
+2026-09-26T16:36:14Z | 200 4248248 | https://arxiv.org/pdf/2604.18411 | arxiv_2604.18411.pdf
+2026-09-26T16:36:45Z | 200 15815850 | https://www1.eere.energy.gov/buildings/appliance_standards/pdfs/dt_nopr_tsd_complete.pdf | doe_dt_nopr_tsd_complete.pdf
+2026-09-26T16:37:08Z | 200 636066 | https://www.osti.gov/servlets/purl/2309697 | nrel_dt_demand_2024.pdf
+2026-09-26T16:37:32Z | 200 697 | https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-97.7967&y=30.4271&benchmark=Public_AR_Current&vintage=Current_Current&layers=Census%20Tracts&format=json | geocode_1.json
+2026-09-26T16:37:32Z | 200 696 | https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-97.8060&y=30.4030&benchmark=Public_AR_Current&vintage=Current_Current&layers=Census%20Tracts&format=json | geocode_2.json
+2026-09-26T16:37:33Z | 200 695 | https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-97.7850&y=30.4360&benchmark=Public_AR_Current&vintage=Current_Current&layers=Census%20Tracts&format=json | geocode_3.json
+2026-09-26T16:37:33Z | 200 695 | https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-97.8060&y=30.4360&benchmark=Public_AR_Current&vintage=Current_Current&layers=Census%20Tracts&format=json | geocode_4.json
+2026-09-26T16:37:34Z | 200 695 | https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-97.7850&y=30.4030&benchmark=Public_AR_Current&vintage=Current_Current&layers=Census%20Tracts&format=json | geocode_5.json
+2026-09-26T16:37:40Z | 200 8531 | https://api.census.gov/data/2024/acs/acs5?get=NAME,group(B25034)&for=tract:033800,030500,033700,032600&in=state:48%20county:453 | acs2024_b25034_feeder_tracts.json
+2026-09-26T16:37:41Z | 200 8531 | https://api.census.gov/data/2024/acs/acs5?get=NAME,B25003_001E,B25003_002E,B25024_002E,B25024_001E&for=tract:033800,030500,033700,032600&in=state:48%20county:453 | acs2024_tenure_units_feeder_tracts.json
+2026-09-26T16:37:57Z | 200 50103592 | https://www2.census.gov/programs-surveys/acs/summary_file/2024/table-based-SF/data/5YRData/acsdt5y2024-b25034.dat | (scratchpad; filtered rows saved as acs2024_b25034_feeder_tracts.csv)
+2026-09-26T16:38:05Z | NOTE | the two api.census.gov calls above returned HTTP 200 with an 8,531-byte 'Missing Key' HTML page: the Census data API now requires a key (no account made); used the www2.census.gov bulk summary file instead
+2026-09-26T16:38:34Z | 200 201560 | https://docs.nlr.gov/docs/fy25osti/92076.pdf | nrel_fs_92076.pdf
+2026-09-26T16:39:21Z | 200 1086227 | https://resources.environment.yale.edu/gillingham/BollingerGillingham_PeerEffectsSolar.pdf | bollinger_gillingham_2012.pdf
+2026-09-26T16:39:23Z | 200 624412 | https://www.osti.gov/servlets/purl/1894504 | osti_1894504_peer_effects.pdf
+2026-09-26T16:39:23Z | 403 5576 | https://pubsonline.informs.org/doi/10.1287/mksc.1120.0727 | informs_mksc_1120_0727.html
+2026-09-26T16:39:54Z | 200 2566923 | https://resources.environment.yale.edu/gillingham/GrazianoGillingham_15_SpatialPatternsPVSystems.pdf | graziano_gillingham_2015.pdf
+2026-09-26T16:39:55Z | 200 161453 | https://pmc.ncbi.nlm.nih.gov/articles/PMC8060319/ | barton_henry_2021_pmc.html
+2026-09-26T16:40:18Z | 404 9115 | https://nrel.github.io/dgen/_modules/python/diffusion_functions_elec.html | dgen_diffusion_functions_elec.html
+2026-09-26T16:40:19Z | 200 3387545 | https://docs.nlr.gov/docs/fy16osti/65231.pdf | nrel_dgen_65231.pdf
+2026-09-26T16:40:22Z | 200 1949668 | https://osti.gov/servlets/purl/1347199 | osti_1347199_ca_pv_forecast.pdf
+2026-09-26T16:40:45Z | 200 89738 | https://help.basepowercompany.com/en/articles/10195265 | base_help_referral_10195265.html
+2026-09-26T16:40:46Z | 200 347156 | https://www.basepowercompany.com/oncor | base_oncor_page.html
+2026-09-26T16:41:05Z | 200 279140 | https://interchange.puc.texas.gov/Documents/54233_125_1528809.PDF | puct_54233_125_1528809.pdf
+2026-09-26T16:41:05Z | 200 1424318 | https://interchange.puc.texas.gov/Documents/54233_58_1312998.PDF | puct_54233_58_1312998.pdf
+2026-09-26T16:41:06Z | 200 1286953 | https://interchange.puc.texas.gov/Documents/54233_31_1265324.PDF | puct_54233_31_1265324.pdf
+2026-09-26T16:41:06Z | 200 312260 | https://interchange.puc.texas.gov/Documents/54224_49_1431740.PDF | puct_54224_49_1431740.pdf
+2026-09-26T16:41:07Z | 200 565912 | https://interchange.puc.texas.gov/Documents/54233_105_1513917.PDF | puct_54233_105_1513917.pdf
+2026-09-26T16:41:07Z | 200 216453 | https://ftp.puc.texas.gov/public/puct-info/agency/rulesnlaws/subrules/electric/25.211/45078adt.pdf | puct_25211_45078adt.pdf
+2026-09-26T16:41:38Z | 200 988377 | https://media.umbraco.io/ukpn-cms/1pfciexi/dnoa-methodology-march-2026-final-encrypted.pdf | ukpn_dnoa_methodology_2026.pdf
+2026-09-26T16:41:39Z | 200 74668 | https://ideas.repec.org/a/eee/rensus/v56y2016icp261-271.html | schachter_mancarella_2016_ideas.html
+2026-09-26T16:42:02Z | 403 5602 | https://www.cell.com/iscience/pdf/S2589-0042(21)01656-4.pdf | jenn_highleyman_2022.pdf
+2026-09-26T16:42:04Z | 200 292754 | https://iopscience.iop.org/article/10.1088/2634-4505/ac949c | elmallah_2022_iop.html
+2026-09-26T16:42:05Z | 200 5549602 | https://arxiv.org/pdf/2410.04540 | arxiv_2410.04540.pdf
+2026-09-26T16:43:31Z | 200 x379 of 379 | https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=..&y=..&layers=Census%20Tracts (one per transformer) | tf_census_tract.json
+2026-09-26T16:45:41Z | 200 84505736 | https://www2.census.gov/programs-surveys/acs/summary_file/2024/table-based-SF/data/5YRData/acsdt5y2024-b25032.dat | (scratchpad; Texas + feeder-tract rows saved as acs2024_b25032_tx_and_tracts.csv)

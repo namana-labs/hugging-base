@@ -1,0 +1,8 @@
+...................................................................................................................../Users/rzalagbada/hb-overnight/judge-2/sim/verify_p2.py:110: ResourceWarning: unclosed file <_io.TextIOWrapper name='/Users/rzalagbada/hb-overnight/judge-2/data/out/siting-2026-08.csv' mode='r' encoding='utf-8'>
+  rows = list(csv.reader(CSV_PATH.open())) if CSV_PATH.exists() else []
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+....
+----------------------------------------------------------------------
+Ran 121 tests in 26.506s
+
+OK

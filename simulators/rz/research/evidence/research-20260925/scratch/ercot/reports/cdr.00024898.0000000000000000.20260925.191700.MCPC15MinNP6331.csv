@@ -1,0 +1,6 @@
+DeliveryDate,DeliveryHour,DeliveryInterval,RepeatedHourFlag,ASType,MCPC
+09/25/2026,20,1,N,ECRS,0.29
+09/25/2026,20,1,N,NSPIN,1.15
+09/25/2026,20,1,N,REGDN,0.36
+09/25/2026,20,1,N,REGUP,1.41
+09/25/2026,20,1,N,RRS,0.15
