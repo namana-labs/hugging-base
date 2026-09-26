@@ -37,6 +37,13 @@ export function bulk(doc, key, v, cite) {
   return cite ? { v, label, cite } : { v, label };
 }
 
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+/** "2026-08" -> "August 2026" (a date, not a measured number). */
+export function monthName(ym) {
+  const m = /^(\d{4})-(\d{2})$/.exec(String(ym || ''));
+  return m && MONTHS[+m[2] - 1] ? `${MONTHS[+m[2] - 1]} ${m[1]}` : 'the month';
+}
+
 export function tfName(topology, i) {
   const t = topology.transformers[i];
   if (!t) return `T-${i}`;
@@ -118,7 +125,7 @@ export function counterfactualParts({ entry, doc, index, topology, combo }) {
   const c = parseCombo(combo) || {};
   const tf = entry.tf;
   const tname = tfName(topology, tf);
-  const month = (index && index.month) || 'the month';
+  const month = monthName(index && index.month);
   const parts = [];
   const od = checkedByOpenDSS(entry) ? entry.opendss : null;
   const B = od && od.before ? od.before : entry.before;
@@ -510,7 +517,7 @@ export async function mount(el, ctx) {
   el.classList.add('p2');
   el.innerHTML = `${beat}
     <h1>P2 · where the next battery goes</h1>
-    <div class="hb-sub">${esc(index.month)} what-if · prices ${fmt.chip('REAL', 'ERCOT RTM SPP LZ_NORTH 15-min')} · loads SMART-DS 2018, same calendar date ${fmt.chip('SIM')} ${fmt.chip('ASSUMPTION', '2018 weather-year load paired with 2026 prices by calendar date')}</div>
+    <div class="hb-sub">${esc(monthName(index.month))} what-if · prices ${fmt.chip('REAL', 'ERCOT RTM SPP LZ_NORTH 15-min')} · loads SMART-DS 2018, same calendar date ${fmt.chip('SIM')} ${fmt.chip('ASSUMPTION', '2018 weather-year load paired with 2026 prices by calendar date')}</div>
     <div class="p2-controls">
       <div><span>policy</span>${seg(ctx, cur, 'policy', POLICIES)}</div>
       <div><span>battery</span>${seg(ctx, cur, 'cls', CLASSES, clsLabel)}</div>

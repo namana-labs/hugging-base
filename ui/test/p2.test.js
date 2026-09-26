@@ -24,7 +24,7 @@ const beatsDoc = readJSON('beats.json');
 const beats = beatsDoc.beats;
 
 // Digits allowed in prose only as parts of ids: home labels, transformer names, SMART-DS profile names, the month.
-const ID_TOKENS = [/Home \d{4}/g, /T-\d+/g, /(res|com)_kw(ar)?_\d+_pu/g, /\b\d{4}-\d{2}(-\d{2})?\b/g];
+const ID_TOKENS = [/Home \d{4}/g, /T-\d+/g, /(res|com)_kw(ar)?_\d+_pu/g, /\b\d{4}-\d{2}(-\d{2})?\b/g, /[A-Z][a-z]+ \d{4}\b/g];
 const stripIds = (s) => ID_TOKENS.reduce((a, re) => a.replace(re, ''), s);
 
 test('p2: combo ids round-trip over the 16 combos, and counterpart flips the policy', () => {
@@ -100,7 +100,7 @@ test('p2: the counterfactual sentence is built from data, names the shared drive
   const e = stressedEntry(doc);
   const args = { entry: e, doc, index, topology, combo: 'aware-core-d26-g0' };
   const txt = counterfactualText(args, fmt);
-  assert.match(txt, /^In 2026-08 transformer T-240 spent 0\.50 h SIM above nameplate without a new battery \(peak 119\.5% SIM\)/);
+  assert.match(txt, /^In August 2026 transformer T-240 spent 0\.50 h SIM above nameplate without a new battery \(peak 119\.5% SIM\)/);
   assert.match(txt, /driven by one home's load, Home 0409 \(SMART-DS profile res_kw_38274_pu, the same profile as Home 0212, Home 0504: one shape, not independent evidence\)/);
   assert.match(txt, /With a Core at Home 0409 under feeder-aware dispatch: 0\.00 h SIM above nameplate, peak 96\.4% SIM, August energy value \$41 DERIVED\./);
   assert.match(txt, /It avoids 0\.50 h SIM of stress/);
