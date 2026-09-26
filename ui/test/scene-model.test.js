@@ -145,6 +145,9 @@ test('batteries: 96 columns beside their homes, fill = SoC, reserve ring at 20%,
   assert.deepEqual(m.batteries[1].color.slice(0, 3), [236, 131, 90]);
   assert.deepEqual(m.pulses.map((p) => p.j), [0]);
   assert.deepEqual(m.alerts.map((a) => a.text), ['!', '!']);
+  // the P1 `none` branch draws no batteries at all
+  const none = buildSceneModel({ topology, footprints, frame: null, hideBatteries: true });
+  assert.equal(none.batteries.length + none.batteryGhosts.length + none.reserveRings.length, 0);
   // beside, not inside: east of the home's footprint
   const h0 = m.homeGeom[topology.fleet[0]];
   assert.ok(m.batteries[0].position[0] > Math.max(...h0.polygon.map((p) => p[0])));

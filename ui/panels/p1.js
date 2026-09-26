@@ -490,7 +490,7 @@ export async function mount(el, ctx) {
       const batOn = g.batPct > 0.05 ? g.batPct : 0;
       const relief = g.batPct < -0.05 ? Math.min(homeW, -g.batPct) : 0;
       const tick = (p, cls) => `<span class="g-tick ${cls}" style="left:${w(p)}"></span>`;
-      const title = key === '240' ? `T-240 · ${g.kva} kVA · no battery` : `${key} · ${g.kva} kVA · ${g.homes} homes, ${g.batteries} batteries`;
+      const title = key === '240' ? `T-240 · ${g.kva} kVA · no battery` : `${key} · ${g.kva} kVA · ${g.homes} homes, ${branch === 'none' ? 'batteries off in this branch' : `${g.batteries} batteries`}`;
       const room = g.open ? 'open (protection)' : g.pct > 100
         ? `over nameplate by ${fmt.fmtHTML(L(+((g.pct / 100 - 1) * g.kva).toFixed(1), 'DERIVED', 'OpenDSS loading above 100%, times kVA'), { unit: ' kVA', digits: 1 })}`
         : `room ${fmt.fmtHTML(L(+Math.max(0, g.room).toFixed(1), 'DERIVED', 'kW of charge that still fits under nameplate, from OpenDSS loading and metered kW (unity-pf batteries)'), { unit: ' kW', digits: 1 })}`;
@@ -520,7 +520,7 @@ export async function mount(el, ctx) {
       <div class="hb-big tier-${w.code}">${fmt.fmtHTML(L(+w.pct.toFixed(1), lab, 'OpenDSS loading, % of nameplate'), { unit: '%', digits: 1 })}</div>
       <div class="hb-sub">${esc(tfName(w.tf))} · ${esc(sceneModel.TIER_NAMES[w.code] || '')}</div>
       <div class="p1-counts">transformers now: over nameplate ${nv(L(c[0] + c[1] + c[2] + c[3], lab))} · above 110% ${nv(L(c[1] + c[2] + c[3], lab))} · emergency ${nv(L(c[3], lab))} · protection open ${nv(L(c[4], lab))} ${fmt.chip(lab, 'tier codes from sim.tiers')}</div>
-      <div class="p1-counts">batteries now: charging ${nv(L(sc.C, 'SIM'))} · discharging ${nv(L(sc.D, 'SIM'))} · idle ${nv(L(sc.I, 'SIM'))}${sc.S + sc.X ? ` · stale/expired ${nv(L(sc.S + sc.X, 'SIM'))}` : ''}${sc.B ? ` · islanded ${nv(L(sc.B, 'SIM'))}` : ''} ${fmt.chip('SIM')}</div>`;
+      ${branch === 'none' ? '<div class="p1-counts">no batteries in this branch</div>' : `<div class="p1-counts">batteries now: charging ${nv(L(sc.C, 'SIM'))} · discharging ${nv(L(sc.D, 'SIM'))} · idle ${nv(L(sc.I, 'SIM'))}${sc.S + sc.X ? ` · stale/expired ${nv(L(sc.S + sc.X, 'SIM'))}` : ''}${sc.B ? ` · islanded ${nv(L(sc.B, 'SIM'))}` : ''} ${fmt.chip('SIM')}</div>`}`;
     renderGauges();
     const tk = tickerAt(doc, k, 6);
     $('p1-ticker').innerHTML = tk.length ? tk.map(([st, text]) => `<li class="${st === k ? 'now' : ''}">${esc(text)}</li>`).join('') : '<li class="hb-sub">nothing sent yet</li>';
@@ -545,7 +545,7 @@ export async function mount(el, ctx) {
     transport.querySelector('#p1-price').innerHTML = fmt.fmtHTML(L(pv, priceLabel, 'ERCOT RTM SPP LZ_NORTH, the interval containing this minute'), { money: true, digits: 2, unit: '/MWh' });
     drawCursor();
     const frame = sceneModel.frameFromP1(doc, k);
-    scene.update(sceneModel.buildSceneModel({ topology, footprints: ctx.footprints, frame, view: 'p1', theme: ctx.theme }));
+    scene.update(sceneModel.buildSceneModel({ topology, footprints: ctx.footprints, frame, view: 'p1', theme: ctx.theme, hideBatteries: branch === 'none' }));
   }
 
   // ---- price strip: REAL price line, the market plan's discharge intervals, a tier-count ribbon, markers, cursor ----

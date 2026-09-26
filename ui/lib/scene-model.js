@@ -3,7 +3,7 @@
 // deck.gl 9.4.0; fallback2d.js draws the same arrays top-down on a canvas. Build prompt 5.5.
 //
 // Exports (docs/contracts.md "Scene model"; L5 reuses them for the P2 view):
-//   buildSceneModel({topology, footprints, frame, view, theme, pins?, placed?}) -> model
+//   buildSceneModel({topology, footprints, frame, view, theme, pins?, placed?, hideBatteries?}) -> model
 //     model.homes[1010]      {i, id, polygon, height, color, state, tf}     tinted by their transformer's tier
 //     model.context[]        {polygon, height}                               unmatched OSM buildings (neutral)
 //     model.batteries[96]    {j, home, position, height, soc, kw, state, color}      fill height = SoC
@@ -155,7 +155,7 @@ export function cameraPreset(topology, name) {
     const pts = (topology.focus || []).map((f) => tfs[f.tf].lonlat);
     const lon = pts.reduce((s, p) => s + p[0], 0) / (pts.length || 1);
     const lat = pts.reduce((s, p) => s + p[1], 0) / (pts.length || 1);
-    return { longitude: lon, latitude: lat - 0.00022, zoom: 18, pitch: 55, bearing: -20 };
+    return { longitude: lon - 0.0006, latitude: lat - 0.00022, zoom: 18, pitch: 55, bearing: -20 };   // west a little: the legend sits top-left
   }
   if (name === 't240') {
     const b = (topology.bridge || [])[0];
@@ -213,7 +213,7 @@ export function staticScene(topology, footprints, theme = 'light') {
 function withAlpha(c, a) { return [c[0], c[1], c[2], a]; }
 
 /** The scene for one frame. frame = null draws the feeder at rest (every can empty, every home lit). */
-export function buildSceneModel({ topology, footprints = null, frame = null, view = 'p1', theme = 'light', pins = null, placed = null }) {
+export function buildSceneModel({ topology, footprints = null, frame = null, view = 'p1', theme = 'light', pins = null, placed = null, hideBatteries = false }) {
   const st = staticScene(topology, footprints, theme);
   const tfs = topology.transformers;
   const tier = frame && frame.tier ? frame.tier : tfs.map(() => 0);
@@ -233,7 +233,7 @@ export function buildSceneModel({ topology, footprints = null, frame = null, vie
     return { i: h.i, id: h.id, tf: h.tf, polygon: h.polygon, height: h.height, state, color: withAlpha(c, dim ? 110 : 245) };
   });
 
-  const fleet = topology.fleet || [];
+  const fleet = hideBatteries ? [] : (topology.fleet || []);   // the P1 `none` branch has no batteries to draw
   const batteries = [], batteryGhosts = [], reserveRings = [], pulses = [], alerts = [];
   fleet.forEach((hi, j) => {
     const position = st.batteryPos[j];
