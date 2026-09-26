@@ -847,8 +847,7 @@ export async function mount(el, ctx) {
         <div class="hb-sub">Each beat is one deep link; every number in a caption is read from the committed data, with its label. A beat whose data is not built says so.</div>
         <ol class="beat-list">${beatRows || '<li><span class="beat-na">beats.json not built yet</span></li>'}</ol></div>
       ${moneyCard(ctx, S)}
-      ${plugInCard(ctx, S)}
-      ${engineCard(ctx, S)}
+      <div class="more-col">${plugInCard(ctx, S)}${engineCard(ctx, S)}</div>
     </div>
     <h2 class="more-h">Everything that already worked, unchanged</h2>
     <div class="hb-cards">
