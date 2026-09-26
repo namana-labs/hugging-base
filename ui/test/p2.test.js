@@ -245,3 +245,13 @@ test('beats.json: captions resolve against the committed fixtures, with a label 
   const t = resolveCaption('A reads {{reliefNone}}.', { topology }, fmt, { html: false });
   assert.equal(t, 'A reads (not built yet).');
 });
+
+test('docs/demo-script.md lists every beat with its exact deep link (same ids as beats.json)', () => {
+  const doc = fs.readFileSync(path.join(UI, '..', 'docs', 'demo-script.md'), 'utf8');
+  for (const b of beats) {
+    assert.ok(doc.includes(`(\`${b.id}\`)`), `demo-script.md is missing beat ${b.id}`);
+    assert.ok(doc.includes(`\`?${b.link}&beat=${b.id}\``), `demo-script.md has a stale link for ${b.id}`);
+    assert.ok(doc.includes(`${b.t0}–${b.t1}`), `demo-script.md has a stale clock for ${b.id}`);
+  }
+  assert.equal((doc.match(/^\| \d:\d\d–\d:\d\d \|/gm) || []).length, beats.length);
+});
