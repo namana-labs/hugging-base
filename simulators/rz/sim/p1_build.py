@@ -37,15 +37,19 @@ from .constants import (export, P1_DAY, P1_START, P1_STEPS, P1_STEP_SECONDS, P1_
 from .contracts import envelope, inputs_sha, labelled, write_json
 from .devices import Battery, Device, CLASSES, discharge_limit
 from .feeder import Feeder, ROOT
-from .money import energy_value_usd, money_block, ercot_demand, scale_ladder, ERCOT_DEMAND_REL
+from .money import (energy_value_usd, money_block, ercot_demand, scale_ladder, ERCOT_DEMAND_REL, split_block, cash_cents,
+                    head_kva_per_phase, SPLIT_CITE)
 from .orchestrator import Controller, charge_target
 from .prices import price_at, onset_d26, discharge_plan
 from .tiers import tier_codes, tier_strings, normal_events, protection_events
+from .history import story_for             # the day chip's story line (tag + why), formatted from the meta
 
 OUT = ROOT / "ui" / "data" / "p1"
 QUICK_OUT = Path.home() / "hb-overnight" / "tmp" / "p1-quick"
 TIMING = ROOT / "data" / "cache" / "p1_build_timing.json"
 BRANCHES = ("none", "naive", "aware", "aware_faults")
+# lane L0's round-2 constants, exported by the meta once they exist in sim.constants (RZ adopt-now #2; audit L2)
+LEAD_CONSTS = tuple(n for n in ("BASE_HOUSTON_CHARGE_BLOCK_MW", "HEAD_RATING_KVA_PER_PHASE") if n in TAG)
 FMT = "%Y-%m-%dT%H:%M"
 DT_H = P1_STEP_SECONDS / 3600.0
 LOADS_TEXT = "NREL SMART-DS 2018 AUS P1U, same calendar date; 15->1 min linear (DERIVED)"
@@ -401,19 +405,21 @@ def _ticker(sc, win, k, dec, caps, grants, out):
         lab = sc.labels[int(sc.fleet[i])]
         changed = abs(now[i] - prev[i]) >= MIN_GRANT_KW
         if kind in ("grant", "cover") and changed and prev[i] <= MIN_GRANT_KW:
-            why = "lowest SoC on " + key if kind == "grant" else "covers the silent unit on " + key
-            out.append([k, f"{t} {key} room {room:.1f} kW → {lab} +{kw:.1f} kW ({why})"])
+            why = f"lowest charge on {key} goes first" if kind == "grant" else f"covers for the silent battery on {key}"
+            out.append([k, f"{t} {key}: {lab} starts charging, +{kw:.1f} kW of {room:.1f} kW room ({why})"])
         elif kind == "cut":
-            out.append([k, f"{t} {key} room shrank to {max(H[tf], 0):.1f} kW → {lab} cut to {kw:.1f} kW (newest grant first)"])
+            # the controller cuts the newest grant among the batteries it still hears (a silent unit is not booked)
+            out.append([k, f"{t} {key}: room shrank to {max(H[tf], 0):.1f} kW → {lab} cut to {kw:.1f} kW (newest live grant first)"])
         elif kind == "relief" and prev[i] > -MIN_GRANT_KW:
-            out.append([k, f"{t} {key} above {TAG['AWARE_MARGIN']['value']:.0%} of nameplate → {lab} {kw:.1f} kW (relief overrides the market)"])
+            out.append([k, f"{t} {key} above {TAG['AWARE_MARGIN']['value']:.0%} of nameplate → {lab} sends {abs(kw):.1f} kW out "
+                           f"(relief overrides the market)"])
     for i in range(sc.m):
         tf = int(sc.tf_of_batt[i])
         key = sc.focus_of_tf.get(tf)
         if key is None or key == "240" or i in seen:
             continue
         if prev[i] > MIN_GRANT_KW and now[i] <= MIN_GRANT_KW:
-            out.append([k, f"{t} {key} {sc.labels[int(sc.fleet[i])]} hands off (dwell over; SoC bucket rose)"])
+            out.append([k, f"{t} {key}: {sc.labels[int(sc.fleet[i])]} stops charging (taking turns)"])
 
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -446,14 +452,21 @@ def summarize(sc, run, loads_driver=None):
     v = run["vmin_home"].copy()
     v[v <= 0] = np.nan           # isolated homes read 0.0: not a voltage
     kv, hv = np.unravel_index(int(np.nanargmin(v)), v.shape)
-    below = int((np.nanmin(v, axis=0) < 0.95).sum())
+    below095 = int((np.nanmin(v, axis=0) < 0.95).sum())
     kh = int(np.argmax(run["head"]))
     ko = next((k for k in range(n) if sc.modes[k] == "charge"), None)
     if ko is not None:
         kh2 = ko + int(np.argmax(run["head"][ko:]))
     socs = run["soc"]
     islanded = np.array([[c == "B" for c in s] for s in run["state"]])
-    breaches = int(((socs < RESERVE_FLOOR - 1e-9) & ~islanded).sum())
+    # HIST-R2 3.5 (l2's decision): a battery behind an open transformer carries its home down to empty. That is the
+    # member backup in use during an outage, not a reserve breach; it is counted apart (reserveUsedInOutage).
+    outage = np.zeros(socs.shape, dtype=bool)
+    for t_iso, k_iso in run["isolated_at"].items():
+        outage[k_iso + 1:, sc.tf_of_batt == t_iso] = True
+    below = socs < RESERVE_FLOOR - 1e-9
+    breaches = int((below & ~islanded & ~outage).sum())
+    used_in_outage = int((below & outage).sum())
     has_batt = run["branch"] != "none"
     dl = min(win.deadline_step, n) - 1
     value = energy_value_usd(run["batkw"], sc.price, DT_H) + 0.0   # + 0.0: no "-0.0" in the JSON
@@ -468,17 +481,22 @@ def summarize(sc, run, loads_driver=None):
         "homesDark": labelled(len(dark), "SIM", "battery-less homes behind an open transformer"),
         "homesOnBattery": labelled(len(onbat), "SIM", "battery homes islanded on their own battery (lit)"),
         "maxLoading": labelled(round(float(pct.max()), 1), "SIM", "OpenDSS", tf=int(mx[1]), t=hhmm(win.time(mx[0]))),
-        "reserveBreaches": labelled(breaches if has_batt else 0, "SIM", "battery-steps below the 20% reserve (not islanded)"),
+        "reserveBreaches": labelled(breaches if has_batt else 0, "SIM", "battery-steps below the 20% reserve outside an outage "
+                                    "(a battery carrying its home behind an open transformer is the backup in use: reserveUsedInOutage)"),
+        "reserveUsedInOutage": labelled(used_in_outage if has_batt else 0, "SIM",
+                                        "battery-steps below the 20% reserve while carrying its home behind an open transformer "
+                                        "(the member backup in use during an outage, not a breach; ASSUMPTION fuse rule)"),
         "chargedPctBy0400": labelled(round(float(socs[dl].mean() * 100), 1) if has_batt else None, "SIM",
                                      f"fleet state of charge at {hhmm(win.time(dl + 1))}" if has_batt else "no batteries in this branch"),
         "energyValueUSD": labelled(round(value, 2) + 0.0, "DERIVED", "sum of -P x price x dt (gross energy value, not Base's P&L)"),
         "vMinHome": labelled(round(float(v[kv, hv]), 4), "SIM", "OpenDSS minimum home voltage (pu, 120 V base)",
                              volts=round(float(v[kv, hv]) * 120, 1), home=int(hv), t=hhmm(win.time(kv))),
-        "homesBelow095": labelled(below, "SIM", "homes below 0.95 pu at any step"),
+        "homesBelow095": labelled(below095, "SIM", "homes below 0.95 pu at any step"),
         "feederHead": labelled(round(float(run["head"][kh]) / HEAD_RATING_A * 100, 1), "SIM",
                                "OpenDSS current in the head cable as % of its rating", amps=round(float(run["head"][kh]), 1),
                                t=hhmm(win.time(kh)),
-                               ratingA=labelled(HEAD_RATING_A, "DERIVED", "site/ems/flow-spec.md (SMART-DS NormAmps)"),
+                               ratingA=labelled(HEAD_RATING_A, "REAL", "SMART-DS NormAmps of linecode 3P_UG_AL_350kcmil_3 "
+                                                                       "(data/smartds/LineCodes.dss); site/ems/flow-spec.md"),
                                **({"afterOnset": labelled(round(float(run["head"][kh2]) / HEAD_RATING_A * 100, 1), "SIM",
                                                           "head-cable maximum from the D-26 onset on", amps=round(float(run["head"][kh2]), 1),
                                                           t=hhmm(win.time(kh2)))} if ko is not None else {})),
@@ -511,7 +529,7 @@ def _acted_after_expiry(run):
                    if c == "X" and abs(run["batkw"][k, i]) > 1e-9))
 
 
-def branch_doc(sc, run, fixture=False, dwell=MIN_DWELL_MIN):
+def branch_doc(sc, run, fixture=False, dwell=MIN_DWELL_MIN, inputs=None):
     win = sc.win
     T = len(sc.kva)
     codes = tier_codes(run["pct"], P1_STEP_SECONDS / 60)
@@ -524,7 +542,7 @@ def branch_doc(sc, run, fixture=False, dwell=MIN_DWELL_MIN):
     vmin = np.nanmin(v, axis=1)
     counts = [[int((codes[k] == c).sum()) for c in (1, 2, 3, 4, 5)] for k in range(len(codes))]
     reverse = [[int(k), int(t)] for k, t in zip(*np.nonzero(run["P"] < 0))]
-    doc = envelope(f"p1.{run['branch']}", "sim.p1_build", inputs=inputs_sha(),
+    doc = envelope(f"p1.{run['branch']}", "sim.p1_build", inputs=inputs or inputs_sha(),
                    constants=constants_block(("AWARE_MARGIN", "CORE_POWER_KW", "CORE_USABLE_KWH", "CORE_RTE",
                                               "RESERVE_FLOOR", "SOC0", "BATTERY_PF", "MIN_DWELL_MIN", "COMMAND_TTL_S",
                                               "COMMS_STALE_S"), dwell),
@@ -560,7 +578,19 @@ def branch_doc(sc, run, fixture=False, dwell=MIN_DWELL_MIN):
     return doc
 
 
-def build(win, out=OUT, loads=None, feeder=None, quiet=False, dwell=MIN_DWELL_MIN):
+def build(win, out=OUT, loads=None, feeder=None, quiet=False, dwell=MIN_DWELL_MIN, branches=BRANCHES, story=story_for,
+          inputs=None, write_branch=None):
+    """Run the branches and write meta.json + one file per branch into `out`.
+
+    branches: BRANCHES (23 Aug, the default) or ("none", "naive", "aware") for a history day (HIST-R2 D2: the failure
+              script is tuned to 23 Aug and aware_faults is 23 Aug only);
+    story:    a function(meta) -> {tag, why{text, label, cite?}} (default sim.history.story_for), or None;
+    inputs:   the envelope's inputs block (a history day names the loads slice it read); default inputs_sha();
+    write_branch: function(path_without_suffix, doc) -> (name, bytes) for the branch files (a history day writes gzip);
+              default write_json to <branch>.json."""
+    branches = tuple(b for b in BRANCHES if b in branches)
+    if branches[:3] != ("none", "naive", "aware"):
+        raise ValueError(f"branches must include none, naive and aware: {branches}")
     t0 = time.time()
     sc = Scenario(win, loads=loads, feeder=feeder)
     runs = {}
@@ -574,32 +604,83 @@ def build(win, out=OUT, loads=None, feeder=None, quiet=False, dwell=MIN_DWELL_MI
     charging = np.flatnonzero((g > MIN_GRANT_KW).any(axis=1) & np.array([m == "charge" for m in sc.modes]))
     tc = int(charging[0]) if len(charging) else None
     faults = {"dwell": dwell}
-    if tc is not None:
-        for key, off in (("comms", FAULT_COMMS_AFTER_MIN), ("hot", FAULT_HOT_AFTER_MIN), ("stall", FAULT_STALL_AFTER_MIN)):
-            if tc + off < win.steps:
-                faults[key] = tc + off
-    runs["aware_faults"] = run_branch(sc, "aware_faults", faults=faults)
-    solves += win.steps + 1
+    if "aware_faults" in branches:
+        if tc is not None:
+            for key, off in (("comms", FAULT_COMMS_AFTER_MIN), ("hot", FAULT_HOT_AFTER_MIN), ("stall", FAULT_STALL_AFTER_MIN)):
+                if tc + off < win.steps:
+                    faults[key] = tc + off
+        runs["aware_faults"] = run_branch(sc, "aware_faults", faults=faults)
+        solves += win.steps + 1
     secs = time.time() - t0
-    if not quiet:
+    if not quiet and "aware_faults" in runs:
         print(f"  aware_faults ({secs:.1f} s)", flush=True)
-    meta, docs = assemble(sc, runs, tc, faults, solves, dwell=dwell)
+    meta, docs = assemble(sc, runs, tc, faults, solves, dwell=dwell, inputs=inputs)
+    if story is not None:
+        meta["story"] = story(meta)
     out = Path(out)
     sizes = {}
     sizes["meta.json"] = write_json(out / "meta.json", meta)
     for b, d in docs.items():
-        sizes[f"{b}.json"] = write_json(out / f"{b}.json", d)
+        if write_branch is None:
+            sizes[f"{b}.json"] = write_json(out / f"{b}.json", d)
+        else:
+            name, size = write_branch(out / b, d)
+            sizes[name] = size
     return {"sc": sc, "runs": runs, "meta": meta, "docs": docs, "sizes": sizes, "seconds": secs, "solves": solves,
             "tc": tc}
 
 
-def assemble(sc, runs, tc, faults, solves, dwell=MIN_DWELL_MIN):
+def relief_text(minutes_over, none_max, driver):
+    """relief.text, derived from the day (HIST-R2 3.1, audit L12): never a fixed 23 Aug sentence."""
+    if minutes_over == 0:
+        return f"A stays under its nameplate all evening (max {none_max:.1f}%)"
+    return f"over nameplate for {minutes_over} minutes (amber; not a failure): {driver['label']}'s load"
+
+
+def onset_deferral(sc, runs):
+    """Adopt #3: at the D-26 onset step, the fleet kW naive and aware charge (SIM) and what aware defers (DERIVED).
+    kW are the branch files' deliveredKW (0.1 kW), so the page and this block agree."""
+    ko = next((k for k in range(sc.win.steps) if sc.modes[k] == "charge"), None)
+    if ko is None or "naive" not in runs or "aware" not in runs:
+        return None
+    nk = round(float(np.rint(runs["naive"]["batkw"][ko].sum() * 10)) / 10, 1)
+    ak = round(float(np.rint(runs["aware"]["batkw"][ko].sum() * 10)) / 10, 1)
+    t = hhmm(sc.win.time(ko))
+    return {"step": ko, "t": t,
+            "naiveKW": labelled(nk, "SIM", f"fleet charge kW at the {t} onset, naive (every battery at full power at once)"),
+            "awareKW": labelled(ak, "SIM", f"fleet charge kW at the {t} onset, feeder-aware (only what fits each transformer)"),
+            "deferredKW": labelled(round(nk - ak, 1), "DERIVED", f"naive - aware fleet charge kW at the {t} onset: charge the "
+                                                                 f"feeder check moved later in the night")}
+
+
+def faults_note(sc, runs, values):
+    """Audit L7: aware + failures earns a little more than aware only because the silent battery stopped charging.
+    The note states the silent battery's end SoC and the kWh the fleet did not charge (SIM), and the $ delta (DERIVED)."""
+    af, aw = runs["aware_faults"], runs["aware"]
+    i = af["silent"]
+    if i is None or np.ndim(i) != 0:
+        return None
+    dl = min(sc.win.deadline_step, sc.win.steps) - 1
+    soc = float(af["soc"][dl, int(i)] * 100)
+    kwh = float((np.clip(aw["batkw"], 0, None).sum() - np.clip(af["batkw"], 0, None).sum()) * DT_H)
+    d = values["aware_faults"] - values["aware"]
+    lab = sc.labels[int(sc.fleet[int(i)])]
+    return {"text": (f"{'+' if d >= 0 else '-'}${abs(d):.2f} against feeder-aware is not a gain: the silent battery ({lab}) "
+                     f"ends at {soc:.1f}% charge, so the fleet charged {kwh:.1f} kWh less and bought less power back"),
+            "label": "DERIVED",
+            "silentEndSocPct": labelled(round(soc, 1), "SIM", f"{lab}'s state of charge at {hhmm(sc.win.time(dl + 1))}"),
+            "chargedKWhLess": labelled(round(kwh, 1), "SIM", "fleet charge energy, aware - aware + failures"),
+            "valueDeltaUSD": labelled(round(d, 2) + 0.0, "DERIVED", "energy value, aware + failures - aware")}
+
+
+def assemble(sc, runs, tc, faults, solves, dwell=MIN_DWELL_MIN, inputs=None):
     win = sc.win
+    inputs = inputs or inputs_sha()
     summaries = {}
     extra = {}
     for b, run in runs.items():
         summaries[b], extra[b] = summarize(sc, run)
-    docs = {b: branch_doc(sc, run, dwell=dwell) for b, run in runs.items()}
+    docs = {b: branch_doc(sc, run, dwell=dwell, inputs=inputs) for b, run in runs.items()}
     onset, onset_p, peak_ts, threshold, rule_mode = sc.onset
     a = sc.focus["A"]
     # relief (16:45 on A): measured, not assumed
@@ -629,8 +710,9 @@ def assemble(sc, runs, tc, faults, solves, dwell=MIN_DWELL_MIN):
                              **relief_when, atPeak=relief_at_peak),
         "reliefKWh": labelled(round(relief_kwh, 3), "SIM", "energy of that relief"),
         "driver": driver,
-        "text": "over nameplate for about 15 minutes (amber; not a failure): one home's 15-minute spike",
+        "text": relief_text(int((none_a > TIER_AMBER_PCT).sum()), float(none_a[kp]), driver),
     }
+    minutes_over = int((none_a > TIER_AMBER_PCT).sum())
     # unrelieved: over 100% in aware on home load only, no battery on the transformer
     fleet_tfs = set(sc.tf_of_batt.tolist())
     unrelieved = []
@@ -649,12 +731,23 @@ def assemble(sc, runs, tc, faults, solves, dwell=MIN_DWELL_MIN):
     fleet_at_peak = {b: float(-runs[b]["batkw"][kpk].sum()) for b in runs if b != "none"}
     harm = {b: {"normalEvents": len(extra[b]["normal"]), "emergencyTfs": int((runs[b]["pct"] > TIER_EMERGENCY_PCT).any(axis=0).sum()),
                 "protectionOperated": len(extra[b]["prot"])} for b in runs}
-    money = money_block({b: summaries[b]["energyValueUSD"]["v"] for b in runs}, relief_kwh, float(sc.price[kpk]),
+    values = {b: summaries[b]["energyValueUSD"]["v"] for b in runs}
+    money = money_block(values, relief_kwh, float(sc.price[kpk]),
                         float(sc.price[klo]), hhmm(win.time(kpk)), hhmm(win.time(klo)), fleet_at_peak, harm)
-    # events of aware_faults, with their measured outcomes
+    batt_runs = [b for b in runs if b != "none"]
+    money["split"] = split_block({b: runs[b]["batkw"] for b in batt_runs}, sc.price, DT_H, values, sc.m)
+    cash = {b: cash_cents(runs[b]["batkw"], sc.price, DT_H) for b in batt_runs}
+    for b in batt_runs:
+        if cash[b][-1] != int(round(values[b] * 100)):
+            raise AssertionError(f"cash {b}: {cash[b][-1]} cents != energy value {values[b]:.2f}")
+    if "aware_faults" in runs:
+        note = faults_note(sc, runs, values)
+        if note is not None:
+            summaries["aware_faults"]["note"] = note
+    # events of aware_faults, with their measured outcomes (a history day has no aware_faults: events {})
     ev = []
-    af = runs["aware_faults"]
-    for e in sorted(af["events"], key=lambda x: x["step"]):
+    af = runs.get("aware_faults")
+    for e in sorted(af["events"] if af else [], key=lambda x: x["step"]):
         e = dict(e)
         if e["kind"] == "comms_lost":
             i = e["batt"]
@@ -673,9 +766,10 @@ def assemble(sc, runs, tc, faults, solves, dwell=MIN_DWELL_MIN):
             e["coveredStep"] = cov
             e["coveredBy"] = [int(sc.fleet[j]) for j in others]
         ev.append(e)
-    markers = [
-        {"t": hhmm(win.time(kp)), "text": f"A peaks at {none_a[kp]:.1f}% with no batteries: one home's 15-minute spike", "label": "SIM"},
-    ]
+    # HIST-R2 3.2: the A marker is derived, and only when A actually went over its nameplate that evening
+    markers = ([{"t": hhmm(win.time(kp)), "text": f"A peaks at {none_a[kp]:.1f}% with no batteries: over nameplate for "
+                                                  f"{minutes_over} minutes ({driver['label']}'s load)", "label": "SIM"}]
+               if minutes_over > 0 else [])
     for ts, mins in sorted(sc.plan):
         markers.append({"t": ts[11:16], "text": f"market discharge, {mins} min (perfect-foresight plan)", "label": "DERIVED"})
     markers.append({"t": hhmm(win.time(kpk)), "text": f"price peak ${sc.price[kpk]:.2f}/MWh", "label": "REAL"})
@@ -690,8 +784,8 @@ def assemble(sc, runs, tc, faults, solves, dwell=MIN_DWELL_MIN):
     if len(pmax_a) != 1:
         raise AssertionError(f"the scale ladder needs one battery class on A, found {pmax_a}")
     ladder = scale_ladder(len(on_a), pmax_a[0], "A", sc.feeder.transformers[a]["id"], float(sc.kva[a]),
-                          HEAD_RATING_KVA, ercot)
-    meta = envelope("p1.meta", "sim.p1_build", inputs=inputs_sha(),
+                          head_kva_per_phase(), ercot)
+    meta = envelope("p1.meta", "sim.p1_build", inputs=inputs,
                     constants=constants_block(("TIER_AMBER_PCT", "TIER_NORMAL_PCT", "TIER_NORMAL_MIN", "TIER_EMERGENCY_PCT",
                                      "FUSE_PCT", "FUSE_MINUTES", "FUSE_INSTANT_PCT", "FUSE_INSTANT_SECONDS",
                                      "CONTROLLER_VIEW", "AWARE_MARGIN", "SOC0", "RESERVE_FLOOR", "CORE_POWER_KW",
@@ -701,14 +795,16 @@ def assemble(sc, runs, tc, faults, solves, dwell=MIN_DWELL_MIN):
                                      "HOT_MINUTES", "STALL_MIN", "P1_DAY", "P1_START", "P1_STEPS", "LOAD_PAIRING",
                                      "PROFILE_INDEX_RULE", "CAPACITY_BENCHMARK_USD_KW_MONTH", "CAPACITY_HIGH_USD_KW_MONTH",
                                      "TRANSFORMER_REPLACEMENT_USD", "HEAD_RATING_A", "HEAD_RATING_KVA",
-                                     "SCALE_LADDER_ERCOT"), dwell),
+                                     "SCALE_LADDER_ERCOT") + LEAD_CONSTS, dwell),
                     sources={"price": {"label": "REAL", "text": "ERCOT RTM SPP LZ_NORTH 15-min"},
                              "load": {"label": "SIM", "text": LOADS_TEXT},
                              "referee": {"label": "SIM", "text": "OpenDSSDirect.py 0.9.4 AC power flow, every step of every branch"},
                              "naive": {"label": "ASSUMPTION", "text": NAIVE_TEXT},
                              "ercotDemand": {"label": "REAL", "text": f"ERCOT system demand, 5 min, {ercot['day']} "
                                                                       f"({ERCOT_DEMAND_REL}; the scale ladder's ERCOT rung)"}},
-                    series={"price": {"label": "REAL", "unit": "$/MWh"}})
+                    series={"price": {"label": "REAL", "unit": "$/MWh"},
+                            "cash": {"label": "DERIVED", "unit": "USD cents, cumulative, fleet", "by": "REAL LZ_NORTH x SIM battery kW",
+                                     "cite": f"cumulative sum of -P x price x dt at the end of each step; {SPLIT_CITE}"}})
     meta.update({
         "day": win.day, "start": hhmm(win.t0), "stepSeconds": P1_STEP_SECONDS, "steps": win.steps,
         "tiers": {"amber": 100, "normal": 110, "normalMinutes": 30, "emergency": 150, "label": "REAL"},
@@ -719,16 +815,18 @@ def assemble(sc, runs, tc, faults, solves, dwell=MIN_DWELL_MIN):
                  "onsetPrice": labelled(onset_p, "REAL", "ERCOT RTM SPP LZ_NORTH"), "rule": "D-26", "mode": rule_mode,
                  "threshold": labelled(round(threshold, 2), "DERIVED", "2 x the day's median price"),
                  "label": "DERIVED"},
-        "branches": list(BRANCHES),
+        "branches": list(runs),
         "naiveLabel": {"text": NAIVE_TEXT, "label": "ASSUMPTION", "cite": "build prompt 3.4; §12 Q5"},
         "tc": {"step": tc, "t": hhmm(win.time(tc)) if tc is not None else None,
                "text": "first minute aware grants non-zero charge"},
-        "events": {"aware_faults": ev},
+        "events": {"aware_faults": ev} if af is not None else {},
         "markers": markers,
         "summary": summaries,
         "controllerView": {"text": CONTROLLER_VIEW, "label": "ASSUMPTION", "cite": TAG["CONTROLLER_VIEW"]["cite"]},
         "relief": relief,
         "money": money,
+        "cash": cash,
+        "onsetDeferral": onset_deferral(sc, runs),
         "unrelieved": unrelieved,
         "scaleLadder": ladder,
         "engine": {"solves": labelled(solves, "SIM", "OpenDSS solves in this build (incl. one warm-up per branch)"),
