@@ -54,11 +54,11 @@ Written by L0 (the lead) on 26 Sep 2026 for the overnight build. Two halves: **P
 | `p1/meta.json` | `sim.p1_build` (L2) | A.5 |
 | `p1/<branch>.json` | `sim.p1_build` (L2) | A.6; one file per branch (`none`, `naive`, `aware`, `aware_faults`), loaded lazily |
 | `p1/chaos.json` | `sim.chaos` (L2, P3 only) | A.6a: 50 seeded runs of the aware evening with failures; battery-caused violations only |
-| `engine.json` | `sim.bench` (L2) | ms per OpenDSS solve, P1 build seconds, `allocate()` µs at 96, 1k, 10k, 100k batteries (synthetic scale test), the load average; all SIM. Layout: `opendss{msPerSolve, msPerStep}`, `p1{buildSeconds, solves}`, `allocate{"96", "1000", "10000", "100000"}` (µs per stateless call), `loadAvg`; every leaf `{v, label:"SIM", cite}`. Timings are not deterministic, so they live here and not in `p1/meta.json` |
+| `engine.json` | `sim.bench` (L2) | ms per OpenDSS solve, P1 build seconds, `allocate()` µs at 96, 1k, 10k, 100k batteries (synthetic scale test). Layout: `opendss{msPerSolve, msPerStep}`, `p1{buildSeconds, solves}`, `allocate{"96", "1000", "10000", "100000"}` (µs per stateless call); every leaf `{v, label:"DERIVED", cite}`, and each cite says "measured on a shared machine" with the 1-minute load average (round 2, audit L4). There is no `loadAvg` key: the load average lives in each cite and in `sources.machine{text, label:"DERIVED", load}`. Timings are not deterministic, so they live here and not in `p1/meta.json` |
 | `p2/index.json` | `sim.p2_build` (L3) | A.7 |
 | `p2/<combo>.json` | `sim.p2_build` (L3) | A.8; combo id `policy-cls-rule-gN` |
 | `p1/days/index.json` | `sim.history` (L2, round 2) | A.10: one row per simulated evening; all the day picker needs |
-| `p1/days/calendar.json` | `sim.history` (L2, round 2, Should) | A.9h: prices-only money per evening, 2025-01-01 to 2026-09-18 |
+| `p1/days/calendar.json` | `sim.history` (L2, round 2, Should) | A.9h: prices-only money per evening; round 2 ships 2026-01-01 to 2026-09-18 (2025 needs the 2025 price extract) |
 | `p1/days/<date>/meta.json` | `sim.history` (L2, round 2) | A.5h |
 | `p1/days/<date>/<branch>.json.gz` | `sim.history` (L2, round 2) | A.6h: gzip of an A.6 branch doc (`none`, `naive`, `aware`; no `aware_faults`) |
 | `beats.json` | L5 | `{beats:[{id, t0, t1, title, caption, link, label}]}`; `link` is a query string (`"view=p1&branch=naive&t=22:30"`); captions are templated from data; `&beat=<id>` applies every key the link names. Numbers in captions come from data with their label (the L5 test fails on bare digits). |
@@ -152,6 +152,10 @@ Written by L0 (the lead) on 26 Sep 2026 for the overnight build. Two halves: **P
 - `onsetDeferral{step, t, naiveKW, awareKW, deferredKW}`: the kW fields `{v, label:"SIM"}`; `deferredKW` `{v, label:"DERIVED"}` = Σ naive batKW − Σ aware batKW at the onset step.
 - `constants.BASE_HOUSTON_CHARGE_BLOCK_MW` (REAL, −45.8: "Base's Houston charge block reached −45.8 MW within 15 minutes on 22 Jul 2026"; `sim/constants.py`), exported so L5 can template the `problem` caption. `constants.HEAD_RATING_KVA_PER_PHASE` (DERIVED, 2,663.8 kVA = 370 A × 7.2 kV, one conductor) for the scale ladder's feeder rung (audit L2).
 - `relief.text` and `markers[0]` are derived from `relief.minutesOver100` (HIST-R2 3.1–3.2); `markers[0]` only when it is above 0.
+- `money.split` and `cash` carry only the branches with batteries (`naive`, `aware`, `aware_faults` on 23 Aug; `naive`, `aware` on a history day), never `none`.
+- `summary.<branch>.reserveUsedInOutage{v, label:"SIM", cite}`: battery-steps below the 20% reserve **behind an open fuse** (the backup in use, HIST-R2 3.5). `reserveBreaches` counts only steps outside an outage.
+- `summary.aware_faults.note{text, label:"DERIVED", silentEndSocPct{v, label:"SIM", cite}, chargedKWhLess{v, label:"SIM", cite}, valueDeltaUSD{v, label:"DERIVED", cite}}` (audit L7): why aware + failures earning slightly more than aware is not a gain. 23 Aug only.
+- `money.systemCapacityPerMonth.<branch>.note{text, label:"DERIVED", cite}` (audit M5): the band is a grid-scale storage revenue benchmark that includes arbitrage, not a capacity payment.
 
 ### A.5h `p1/days/<date>/meta.json` (L2, round 2): A.5 + A.5r, with these differences
 
@@ -167,12 +171,16 @@ Written by L0 (the lead) on 26 Sep 2026 for the overnight build. Two halves: **P
 
 ### A.9h `p1/days/calendar.json` (L2, round 2, Should)
 
-Prices only, no OpenDSS: `from`, `to`, `n`; `net[]`, `sold[]`, `bought[]` (int USD cents per 20 kW Core, one D-26 cycle; null on a gap); `peak[]` (evening peak $/MWh × 100, REAL); `peakT`, `onset` (space-separated HHMM; "+" = after midnight); `mode` (one char per day: b binding, n non-binding, f fallback, - gap); `negMin[]`; `sim{<date>: <dir>}` (simulated evenings; `""` = `p1/`); `gaps[{day, reason}]`; `headline{perBattery2025, perBattery2026ytd, top10Share2026, losingNights2026, aug2026Top5Share}` each `{v, label:"DERIVED", cite}`; `series` labels every bulk array. The rule is HIST-R2 4.3.2.
+Prices only, no OpenDSS: `from`, `to`, `n`; `net[]`, `sold[]`, `bought[]` (int USD cents per 20 kW Core, one D-26 cycle; null on a gap); `peak[]` (evening peak $/MWh × 100, REAL); `peakT`, `onset` (space-separated HHMM; "+" = after midnight); `mode` (one char per day: b binding, n non-binding, f fallback, - gap); `negMin[]`; `sim{<date>: <dir>}` (simulated evenings; `""` = `p1/`); `gaps[{day, reason}]`; `headline{perBattery2025?, perBattery2026ytd, top10Share2026, losingNights2026, aug2026Top5Share}` each `{v, label:"DERIVED", cite}`; `series` labels every bulk array. The rule is HIST-R2 4.3.2.
+
+**Round 2 ships 2026 only:** `from` is `2026-01-01`, and `headline.perBattery2025` is absent until the 2025 price extract exists. The UI must treat a missing headline key as "not computed", never as zero.
 
 ### A.10 `p1/days/index.json` (L2, round 2)
 
-- `days[]`, 23 Aug first with `dir: ""`: `{date, dow, tag, why{text, label}, dir, branches[], peak{v, label:"REAL", t}, perBattery{aware{v, label:"DERIVED"}}, naiveMax{v, label:"SIM", tf, t, tier?}, awareBatteryCaused{v, label:"SIM"}, sparkline[48]}`.
-- `naiveMax.tf` is a display name (`"A"`..`"D"`) or a transformer index (the UI prints `T-<index>`, as T-240); `naiveMax.tier` (optional) is the tier code at that step, so the picker never re-derives a tier from a %.
+- Top level (beyond the envelope): `default` (the date the panel opens on, `"2026-08-23"`), `metaSha256{<date>: sha256 of that day's meta.json}`, `days[]`.
+- `days[]`, 23 Aug first with `dir: ""`: `{date, dow, tag, why{text, label, cite?}, dir, branches[], peak{v, label:"REAL", t}, perBattery{naive{v, label:"DERIVED", cite}, aware{v, label:"DERIVED", cite}}, awareMoreUSD{v, label:"DERIVED", cite}, naiveEvents{v, label:"SIM", cite}, reliefMinutes{v, label:"SIM", cite}, naiveMax{v, label:"SIM", cite, tf, t, tier}, awareBatteryCaused{v, label:"SIM"}, sparkline[48]}`.
+- `awareMoreUSD` is the fleet energy value, aware − naive, that evening; `naiveEvents` counts battery-caused normal-tier events under naive; `reliefMinutes` is minutes A spends above nameplate with no batteries (0 = no relief card). `why.cite` is present when `why` carries a number from outside the day's meta (22 Jul's ERCOT demand record).
+- `naiveMax.tf` is a display name (`"A"`..`"D"`) when the worst transformer is on the street, else a transformer index (the UI prints `T-<index>`, as T-240); `naiveMax.tier` is always present: the tier code at that step, so the picker never re-derives a tier from a %.
 - `sparkline`: the 48 fifteen-minute prices from 16:00 to 04:00, $/MWh, labelled once in `series.sparkline` (REAL).
 - This file is all the day picker needs; it never loads a branch file. A date absent from it is "not simulated".
 
