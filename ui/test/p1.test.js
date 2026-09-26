@@ -8,11 +8,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import * as fmt from '../lib/format.js';
-import { roomKW } from '../lib/scene-model.js';
+import { roomKW, exportRoomKW } from '../lib/scene-model.js';
 import {
   worstAt, countsAt, stateCounts, tickerAt, tfEvening, gaugeModel, initialStep, stripMarks, labelledTreeHTML, gridCheckHTML,
   faultText, seriesLabel, optsFor, humanKey, NAIVE_FRAMING, BRANCH_NAMES, SPEEDS, MS_PER_STEP, moneyHTML, isLabelledRecord,
-  spikeDriverAt, driverLineHTML, DRIVER_WINDOW_MIN,
+  spikeDriverAt, driverLineHTML, DRIVER_WINDOW_MIN, ladderHTML, pctOpts, ladderFrac, reliefPeakAt,
 } from '../panels/p1.js';
 
 const UI = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -210,4 +210,74 @@ test('hero driver: a spike shown as the worst transformer names its home and sha
   // a transformer with no driver entry gets nothing
   assert.equal(spikeDriverAt(meta, fmt, -1, k), null);
   assert.equal(driverLineHTML(fmt, null, homeLabel), '');
+});
+
+test('scale ladder (judge R1 F2): three rungs, each its words + base chip, shares below 0.1% to 2 significant figures', () => {
+  // formatter: never "0.0%" for a real, non-zero share
+  const f = (v) => fmt.fmtValue({ v, label: 'DERIVED' }, pctOpts(v));
+  assert.equal(f(4.9e-05), '0.000049%');
+  assert.equal(f(0.501), '0.5%');
+  assert.equal(f(160), '160%');
+  assert.equal(f(0.0123), '0.012%');
+  assert.equal(f(0), '0%');
+  assert.ok(ladderFrac(4.9e-05) > 0.05 && ladderFrac(4.9e-05) < ladderFrac(0.501) && ladderFrac(0.501) < ladderFrac(160));
+  // the generic tree also prints a small share to 2 significant figures
+  assert.match(labelledTreeHTML(fmt, { sharePct: { v: 4.9e-05, label: 'DERIVED' } }), />0\.000049%</);
+  const ladder = meta.scaleLadder || (meta.money && meta.money.scaleLadder);
+  if (!ladder) return;   // fixtures without a ladder: nothing to draw
+  const html = ladderHTML(fmt, ladder);
+  assert.equal((html.match(/class="p1-rung p1-rung-/g) || []).length, ladder.rungs.length);
+  const esc = (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  for (const r of ladder.rungs) {
+    assert.ok(html.includes(esc(r.text)), `rung text: ${r.text}`);
+    assert.ok(html.includes(`>${fmt.fmtValue(r.sharePct, pctOpts(r.sharePct.v))}<`), `share of ${r.scale}`);
+    assert.ok(html.includes(`chip-${r.base.label}`), `base chip of ${r.scale}`);
+  }
+  assert.ok(!/>0\.0%</.test(html), 'no share rounds to 0.0%');
+  assert.ok(!/Share Pct|Rungs|>Kw<|>Base</.test(html), 'no raw contract keys on screen');
+  // the money card never draws the ladder a second time through the generic tree
+  if (meta.money) assert.ok(!/Share Pct/.test(moneyHTML(fmt, { ...meta.money, scaleLadder: ladder }, 'naive', BRANCH_NAMES, meta.constants)));
+});
+
+test('back-feed gauges (judge R1 F6): an exporting can shows export room, from the data', () => {
+  const doc = docs.naive;
+  if (!doc) return;
+  let seen = 0;
+  for (let k = 0; k < doc.loading.length; k++) {
+    for (const key of ['A', 'B', 'C', 'D']) {
+      const f = doc.focus[key];
+      if (!f) continue;
+      const P = f.homeKW[k] / 10 + f.batKW[k] / 10;
+      const g = gaugeModel(meta, doc, topology, key, k, roomKW, exportRoomKW);
+      assert.equal(g.exporting, P < 0);
+      if (P < 0) {
+        assert.ok(Math.abs(g.exportRoom - exportRoomKW(g.kva, g.pct, P)) < 1e-9);
+        seen += 1;
+      } else assert.equal(g.exportRoom, null);
+    }
+  }
+  if (p1Dir === 'p1') {
+    assert.ok(seen > 0, 'the naive branch back-feeds a focus can');
+    // D at 21:29 (the judge's example): 98.4% of nameplate while exporting, so about 0.3 kW of export room, not 99.7
+    const k = fmt.timeToStep(meta, '21:29');
+    const g = gaugeModel(meta, doc, topology, 'D', k, roomKW, exportRoomKW);
+    if (g.exporting && g.pct <= 100) assert.ok(g.exportRoom < 5, `D export room ${g.exportRoom}`);
+  }
+  // the panel shows the export wording while exporting
+  const src = fs.readFileSync(path.join(UI, 'panels', 'p1.js'), 'utf8');
+  assert.match(src, /room to export/);
+});
+
+test('relief peak time (judge R1 F7, hero): reliefKW is the peak discharge; the hero says when, from batKW', () => {
+  const r = meta.relief;
+  const doc = docs.aware;
+  if (!r || !r.reliefKW || !doc) return;
+  const t = reliefPeakAt(meta, doc, fmt);
+  assert.ok(t, 'a relief peak time is found on the aware branch');
+  const f = Object.values(doc.focus).find((x) => x.tf === r.tf);
+  const k = fmt.timeToStep(meta, t);
+  assert.ok(Math.abs(-f.batKW[k] / 10 - r.reliefKW.v) <= 0.1, `batKW at ${t} = reliefKW`);
+  const src = fs.readFileSync(path.join(UI, 'panels', 'p1.js'), 'utf8');
+  assert.match(src, /discharged up to/);
+  assert.equal(reliefPeakAt(meta, { ...doc, focus: {} }, fmt), null);
 });
