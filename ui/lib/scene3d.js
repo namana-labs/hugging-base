@@ -4,20 +4,25 @@
 //   createScene(el, opts) -> scene        opts: {topology, theme, onError(err), viewState?}
 //   scene.update(model)                   model from scene-model.js buildSceneModel()
 //   scene.camera(preset)                  'feeder' | 'street' | 't240' (fly-to)
-//   scene.onPick(cb)                      cb({layer, object, index})
+//   scene.flyTo(lonlat, {zoom, pitch})    fly to a point (a click on a street column or a legend row)
+//   scene.onPick(cb)                      cb({layer, object, index}) on click
+//   scene.onHover(cb)                     cb({x, y, layer, object}) on hover, cb(null) on leave (UX_SPEC_R2 6.1)
 //   scene.dispose()                       deck.finalize(); only ?smoke=dump calls it in the page
 //   scene.whenRendered() -> Promise       resolves after the next completed render (the shell's "ready")
 //   scene.kind                            'webgl'
 // createScene THROWS when deck.gl or WebGL2 is unavailable; the shell then uses fallback2d.js.
 //
-// Layers (build prompt 5.5): context buildings + homes (extruded real OSM footprints, PolygonLayer), lines (PathLayer),
-// transformer cans (ColumnLayers: a wireframe ghost = 100% of nameplate, a fill = OpenDSS loading coloured by tier, a
-// ring at 110% and a red cap at 150%; ColumnLayer's radius is per layer, so one set per kVA class keeps radius ~ sqrt(kVA)),
-// batteries (ghost = full capacity, fill = SoC, a ring at the 20% reserve), a ScatterplotLayer pulse on a changed
-// command, '!' on stale/expired units, and TextLayer labels.
-import { cameraPreset, BAT_R_M } from './scene-model.js';
+// Layers (UX_SPEC_R2 6.1, lifted from the round-2 scene prototype): context buildings; lines; tier halos; service
+// drops (near zoom); walls (extruded footprints) and hip roofs (SolidPolygonLayer, _full3d, baked shading; tinted
+// only at tier >= 1); pad-mount plinths + green boxes; poles + crossarms + grey cans; white battery cabinets with a
+// teal cap; one-step command pulses; billboard load meters and battery icons from one canvas atlas (icons.js, drawn at
+// start-up: no network); "A".."D", "T-240"; and "worst now N%" with its label tag, the only number in the scene.
+import { cameraPreset, roofColor, dropStyle, TIER_RGB } from './scene-model.js';
+import { buildAtlas } from './icons.js';
 
-export const LABEL_FULL_ZOOM = 16.2;
+export const LABEL_FULL_ZOOM = 16.2;          // the near/far bucket (UX-R2-scene 3.5)
+export const PICKABLE = ['walls', 'roofs', 'pads', 'poles', 'cans', 'cabinets', 'caps', 'meters', 'battery-icons'];
+const FONT = 'Inter, "Helvetica Neue", Helvetica, Arial, sans-serif';
 
 export function webgl2Available() {
   try {
@@ -28,38 +33,29 @@ export function webgl2Available() {
   }
 }
 
-function groupBy(arr, keyFn) {
-  const m = new Map();
-  for (const x of arr) {
-    const k = keyFn(x);
-    if (!m.has(k)) m.set(k, []);
-    m.get(k).push(x);
-  }
-  return m;
-}
-
 export function createScene(el, opts = {}) {
   const D = window.deck;
   if (!D || !D.Deck) throw new Error('deck.gl not loaded');
   if (!webgl2Available()) throw new Error('WebGL2 unavailable');
   const topology = opts.topology;
   let waiters = [];
-  let pick = null;
+  let pick = null, hover = null;
   let model = null;
-  let version = 0;
+  const atlas = buildAtlas(64);
   const initial = opts.viewState || cameraPreset(topology, 'feeder');
-  let zoomBucket = initial.zoom >= LABEL_FULL_ZOOM ? 1 : 0;   // labels shorten when zoomed out (A, B, C, D, T-240)
+  let near = initial.zoom >= LABEL_FULL_ZOOM;
   const deck = new D.Deck({
     parent: el,
     views: [new D.MapView({ repeat: false })],
     initialViewState: initial,
     onViewStateChange: ({ viewState }) => {
-      const b = viewState.zoom >= LABEL_FULL_ZOOM ? 1 : 0;
-      if (b !== zoomBucket) { zoomBucket = b; if (model) deck.setProps({ layers: layers(model, version) }); }
+      const b = viewState.zoom >= LABEL_FULL_ZOOM;
+      if (b !== near) { near = b; if (model) deck.setProps({ layers: layers(model) }); }
     },
     controller: { dragRotate: true, touchRotate: true, scrollZoom: true, doubleClickZoom: true, keyboard: true },
     layers: [],
     useDevicePixels: true,
+    pickingRadius: 3,
     onAfterRender: () => {
       if (!model) return;
       const w = waiters; waiters = [];
@@ -67,58 +63,70 @@ export function createScene(el, opts = {}) {
     },
     onError: (err) => { if (opts.onError) opts.onError(err); },
     onClick: (info) => { if (pick && info && info.object) pick({ layer: info.layer && info.layer.id, object: info.object, index: info.index }); },
+    onHover: (info) => {
+      if (!hover) return;
+      if (info && info.object && info.layer) hover({ x: info.x, y: info.y, layer: info.layer.id, object: info.object });
+      else hover(null);
+    },
+    getCursor: ({ isHovering, isDragging }) => (isDragging ? 'grabbing' : isHovering ? 'pointer' : 'grab'),
   });
 
-  function layers(m, ver) {
+  function layers(m) {
     const ink = m.ink;
+    const trgb = (c, a = 255) => [...(TIER_RGB[c] || TIER_RGB[0]), a];
+    const paperBg = m.theme === 'dark' ? [17, 24, 21, 230] : [247, 249, 245, 235];
     const out = [
       new D.PolygonLayer({ id: 'context', data: m.context, extruded: true, filled: true, stroked: false, pickable: false,
         getPolygon: (d) => d.polygon, getElevation: (d) => d.height, getFillColor: (d) => d.color }),
-      new D.PathLayer({ id: 'lines', data: m.lines, getPath: (d) => d.path, getColor: (d) => d.color, widthUnits: 'pixels', getWidth: 1.4 }),
-      new D.PolygonLayer({ id: 'homes', data: m.homeGeom, extruded: true, filled: true, stroked: false, pickable: true,
-        getPolygon: (d) => d.polygon, getElevation: (d) => d.height,
-        getFillColor: (d) => m.homes[d.i].color,
-        updateTriggers: { getFillColor: ver } }),
+      new D.PathLayer({ id: 'lines', data: m.lines, getPath: (d) => d.path, getColor: (d) => d.color, widthUnits: 'pixels', getWidth: 1 }),
+      new D.ScatterplotLayer({ id: 'halos', data: m.halos, getPosition: (d) => d.position, getRadius: 7, radiusUnits: 'meters', radiusMinPixels: 6,
+        getFillColor: (d) => trgb(d.code, 80), getLineColor: (d) => trgb(d.code, 230), stroked: true, lineWidthUnits: 'pixels', getLineWidth: 2 }),
     ];
-    // transformer cans, one set of ColumnLayers per radius (kVA class)
-    const ghostsBy = groupBy(m.canGhosts, (d) => d.radius);
-    for (const [r, g] of ghostsBy) {
-      // depthWriteEnabled false: the translucent ghost must not occlude the narrower fill drawn after it (judge R1 F1)
-      out.push(new D.ColumnLayer({ id: `can-ghost-${r.toFixed(3)}`, data: g, radius: r, diskResolution: 14, extruded: true,
-        parameters: { depthWriteEnabled: false }, filled: true, wireframe: true, getPosition: (d) => d.position, getElevation: (d) => d.height,
-        getFillColor: [ink[0], ink[1], ink[2], 16], getLineColor: [ink[0], ink[1], ink[2], 70], pickable: false }));
-    }
-    for (const [r, g] of groupBy(m.cans, (d) => d.radius)) {
-      out.push(new D.ColumnLayer({ id: `can-fill-${r.toFixed(3)}`, data: g, radius: r * 0.8, diskResolution: 24, extruded: true,
-        getPosition: (d) => d.position, getElevation: (d) => d.height, getFillColor: (d) => d.color, pickable: true }));
-    }
-    for (const [r, g] of groupBy(m.canRings, (d) => d.radius)) {
-      out.push(new D.ColumnLayer({ id: `can-ring110-${r.toFixed(3)}`, data: g, radius: r, diskResolution: 24, extruded: true,
-        getPosition: (d) => d.position, getElevation: 0.5, getFillColor: [ink[0], ink[1], ink[2], 150], pickable: false }));
-    }
-    for (const [r, g] of groupBy(m.canCaps, (d) => d.radius)) {
-      out.push(new D.ColumnLayer({ id: `can-cap150-${r.toFixed(3)}`, data: g, radius: r, diskResolution: 24, extruded: true,
-        getPosition: (d) => d.position, getElevation: 0.6, getFillColor: [208, 59, 59, 150], pickable: false }));
+    if (near) {
+      out.push(new D.PathLayer({ id: 'drops', data: m.drops, getPath: (d) => d.path, widthUnits: 'pixels',
+        getColor: (d) => dropStyle(m.tier[d.tf] | 0, ink).color, getWidth: (d) => dropStyle(m.tier[d.tf] | 0, ink).width,
+        updateTriggers: { getColor: m.tierKey, getWidth: m.tierKey } }));
     }
     out.push(
-      new D.ColumnLayer({ id: 'battery-ghost', data: m.batteryGhosts, radius: BAT_R_M, diskResolution: 12, extruded: true,
-        parameters: { depthWriteEnabled: false }, filled: true, wireframe: true, getPosition: (d) => d.position, getElevation: (d) => d.height,
-        getFillColor: [ink[0], ink[1], ink[2], 16], getLineColor: [ink[0], ink[1], ink[2], 110] }),
-      new D.ColumnLayer({ id: 'batteries', data: m.batteries, radius: BAT_R_M * 0.8, diskResolution: 12, extruded: true, pickable: true,
-        getPosition: (d) => d.position, getElevation: (d) => d.height, getFillColor: (d) => d.color }),
-      new D.ColumnLayer({ id: 'battery-reserve', data: m.reserveRings, radius: BAT_R_M * 1.3, diskResolution: 12, extruded: true,
-        getPosition: (d) => d.position, getElevation: 0.3, getFillColor: [ink[0], ink[1], ink[2], 170] }),
-      new D.ScatterplotLayer({ id: 'pulses', data: m.pulses, getPosition: (d) => d.position, getRadius: 5.5, radiusUnits: 'meters',
+      new D.PolygonLayer({ id: 'walls', data: m.walls, extruded: true, filled: true, stroked: false, pickable: true,
+        getPolygon: (d) => d.polygon, getElevation: (d) => d.height, getFillColor: (d) => m.homes[d.i].color,
+        updateTriggers: { getFillColor: m.homeKey } }),
+      new D.SolidPolygonLayer({ id: 'roofs', data: m.roofs, _full3d: true, extruded: false, material: false, pickable: true,
+        getPolygon: (d) => d.poly, getFillColor: (d) => roofColor(d, m.tier[d.tf] | 0), updateTriggers: { getFillColor: m.tierKey } }),
+      new D.PolygonLayer({ id: 'plinths', data: m.plinths, extruded: true, stroked: false, pickable: false,
+        getPolygon: (d) => d.polygon, getElevation: (d) => d.height, getFillColor: m.colors.plinth }),
+      new D.PolygonLayer({ id: 'pads', data: m.pads, extruded: true, stroked: false, pickable: true,
+        getPolygon: (d) => d.polygon, getElevation: (d) => d.height, getFillColor: m.colors.pad }),
+      new D.ColumnLayer({ id: 'poles', data: m.poles, radius: 0.3, diskResolution: 8, extruded: true, pickable: true,
+        getPosition: (d) => d.position, getElevation: 10.5, getFillColor: m.colors.pole }),
+      new D.PathLayer({ id: 'arms', data: m.arms, getPath: (d) => d.path, getColor: m.colors.pole, widthUnits: 'meters', getWidth: 0.3, widthMinPixels: 1 }),
+      new D.ColumnLayer({ id: 'cans', data: m.cans, radius: 1.0, diskResolution: 16, extruded: true, pickable: true,
+        getPosition: (d) => d.position, getElevation: 2.3, getFillColor: m.colors.can }),
+      new D.PolygonLayer({ id: 'cabinets', data: m.cabinets, extruded: true, stroked: false, pickable: true,
+        getPolygon: (d) => d.polygon, getElevation: (d) => d.height, getFillColor: (d) => (d.placed ? [...m.colors.cabinet.slice(0, 3), 150] : m.colors.cabinet) }),
+      new D.PolygonLayer({ id: 'caps', data: m.caps, extruded: true, stroked: false, pickable: true,
+        getPolygon: (d) => d.polygon, getElevation: (d) => d.height, getFillColor: (d) => (d.placed ? [...m.colors.cap, 150] : m.colors.cap) }),
+      new D.ScatterplotLayer({ id: 'pulses', data: m.pulses, getPosition: (d) => d.position, getRadius: 5.5, radiusUnits: 'meters', radiusMinPixels: 5,
         filled: false, stroked: true, getLineColor: (d) => d.color, lineWidthUnits: 'pixels', getLineWidth: 2.5 }),
-      new D.TextLayer({ id: 'alerts', data: m.alerts, getPosition: (d) => d.position, getText: (d) => d.text, getSize: 20,
-        getColor: [255, 255, 255, 255], fontWeight: 800, background: true, getBackgroundColor: [110, 114, 111, 235],
-        backgroundPadding: [5, 1, 5, 1], billboard: true }),
-      new D.TextLayer({ id: 'labels', data: m.labels, getPosition: (d) => d.position,
-        getText: (d) => (zoomBucket ? d.text : (d.short || d.text)), updateTriggers: { getText: zoomBucket },
-        getColor: (d) => d.color, getSize: (d) => (d.pin ? 13 : 15), fontWeight: 700, characterSet: 'auto',
-        fontFamily: 'Inter, "Helvetica Neue", Helvetica, Arial, sans-serif',
-        background: true, getBackgroundColor: m.theme === 'dark' ? [17, 24, 21, 225] : [247, 249, 245, 230],
-        backgroundPadding: [6, 3, 6, 3], getPixelOffset: [0, -4], billboard: true }),
+      new D.IconLayer({ id: 'meters', data: m.meters, iconAtlas: atlas.canvas, iconMapping: atlas.mapping, pickable: true,
+        getIcon: (d) => d.icon, getPosition: (d) => d.position, getSize: near ? 44 : 30, sizeUnits: 'pixels', billboard: true,
+        updateTriggers: { getSize: near } }),
+      new D.IconLayer({ id: 'battery-icons', data: m.batteries, iconAtlas: atlas.canvas, iconMapping: atlas.mapping, pickable: true,
+        getIcon: (d) => d.icon, getPosition: (d) => d.position, getSize: near ? 34 : 22, sizeUnits: 'pixels', billboard: true,
+        updateTriggers: { getSize: near } }),
+      new D.TextLayer({ id: 'labels', data: m.labels, getPosition: (d) => d.position, getText: (d) => d.text,
+        getColor: (d) => d.color, getSize: (d) => (d.pin ? 13 : 16), fontWeight: 800, characterSet: 'auto', fontFamily: FONT,
+        background: true, getBackgroundColor: paperBg, backgroundPadding: [5, 2, 5, 2],
+        getPixelOffset: (d) => (d.pin ? [0, -4] : [near ? 30 : 22, near ? -30 : -22]), updateTriggers: { getPixelOffset: near }, billboard: true }),
+      new D.TextLayer({ id: 'worst', data: m.worst, getPosition: (d) => d.position, getText: (d) => d.text, getSize: 15, fontWeight: 800,
+        getColor: [255, 255, 255, 255], background: true, getBackgroundColor: (d) => trgb(d.code, 245), backgroundPadding: [6, 3, 6, 3],
+        getPixelOffset: [0, near ? -62 : -46], updateTriggers: { getPixelOffset: near }, billboard: true, fontFamily: FONT, characterSet: 'auto' }),
+      // the worst number's label tag (a compact letter, UX_SPEC_R2 2.5), right of the callout
+      new D.TextLayer({ id: 'worst-tag', data: m.worst, getPosition: (d) => d.position, getText: (d) => d.tag, getSize: 11, fontWeight: 700,
+        getColor: [85, 98, 90, 255], background: true, getBackgroundColor: [247, 249, 245, 245], backgroundPadding: [3, 1, 3, 1],
+        getBorderColor: [207, 202, 189, 255], getBorderWidth: 1,
+        getPixelOffset: (d) => [Math.round(d.text.length * 4.6) + 16, near ? -62 : -46], updateTriggers: { getPixelOffset: near },
+        billboard: true, fontFamily: FONT, pickable: true }),
     );
     return out;
   }
@@ -126,12 +134,18 @@ export function createScene(el, opts = {}) {
   return {
     kind: 'webgl',
     deck,
-    update(m) { model = m; version += 1; deck.setProps({ layers: layers(m, version) }); },
+    update(m) { model = m; deck.setProps({ layers: layers(m) }); },
     camera(preset) {
       deck.setProps({ initialViewState: { ...cameraPreset(topology, preset), transitionDuration: 1400,
         transitionInterpolator: new D.FlyToInterpolator() } });
     },
+    flyTo(lonlat, o = {}) {
+      const base = cameraPreset(topology, 'street');
+      deck.setProps({ initialViewState: { ...base, longitude: lonlat[0], latitude: lonlat[1] - 0.00025, zoom: o.zoom || 18.3, pitch: o.pitch ?? 55,
+        bearing: o.bearing ?? base.bearing, transitionDuration: 1200, transitionInterpolator: new D.FlyToInterpolator() } });
+    },
     onPick(cb) { pick = cb; },
+    onHover(cb) { hover = cb; },
     dispose() { deck.finalize(); },
     whenRendered() { return new Promise((res) => { waiters.push(res); deck.redraw(true); }); },
   };
