@@ -117,5 +117,38 @@ class ShortMonth(unittest.TestCase):
         self.assertEqual(sum(1 for (tf, k) in col_of if k > 0), len(ctx().eligible))
 
 
+
+class FeederHeadPerPhase(unittest.TestCase):
+    """The feeder-head cap is per primary phase (the 370 A rating is per conductor): every eligible home with a Core,
+    aware + head cap, 1 Aug 00:00 -> 3 Aug 06:00 (two full nights). Wherever a phase's batteries charge, that phase's
+    estimate stays within alpha x 100%, and the fleet still charges back what it needs (the admit half)."""
+
+    def test_phase_weights_from_transformers_dss(self):
+        w = ctx().phase_w
+        self.assertEqual(w.shape, (379, 3))
+        self.assertTrue(np.allclose(w.sum(axis=1), 1.0))
+        self.assertEqual(int((w.max(axis=1) == 1.0).sum()), 376)           # single-phase cans; 3 three-phase split 1/3
+        self.assertEqual(w.sum(axis=0).round(6).tolist(), [127.0, 128.0, 124.0])
+
+    def test_head_cap_holds_per_phase_and_still_charges(self):
+        c = ctx()
+        n = 2 * 96 + 24
+        world, sim = pb.capacity_sim(c, c.eligible, "aware", steps=n)
+        world_phase = c.phase_w[world.col_tf[world.col]].argmax(axis=1)
+        p_ph = (c.P[:n] + sim["col_kw"]) @ c.phase_w
+        q_ph = c.Q[:n] @ c.phase_w
+        est = np.hypot(p_ph, q_ph) / (pb.HEAD_RATING_KVA / 3.0) * 100.0
+        kw = sim["kw"][:n]
+        for p in range(3):
+            charging = (kw[:, world_phase == p] > 0).any(axis=1)
+            self.assertLessEqual(float(est[charging, p].max()), 100.0 * AWARE_MARGIN + 1e-6, f"phase {p + 1}")
+        self.assertEqual(sorted(set(world_phase.tolist())), [0, 1, 2])
+        # the admit half: the cap binds on some steps, yet the energy the batteries need is charged by 06:00 (curtailment
+        # well under CURTAIL_CAP), and it is a real amount of charge, not a fleet that avoids the cap by doing nothing
+        self.assertLess(float(sim["curtail_kwh"].sum()) / float(sim["need_kwh"].sum()), pb.CURTAIL_CAP)
+        _, naive = pb.capacity_sim(c, c.eligible, "naive", steps=n)
+        self.assertGreater(float(kw.clip(min=0).sum()), 0.5 * float(naive["kw"][:n].clip(min=0).sum()))
+
+
 if __name__ == "__main__":
     unittest.main()
