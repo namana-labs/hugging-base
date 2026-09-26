@@ -1,0 +1,91 @@
+{
+ "schema": "hb.ems.v1",
+ "producer": "scripts.snapshot",
+ "inputs": {
+  "prices_sha256": null,
+  "loads_sha256": null,
+  "topology_sha256": null
+ },
+ "constants": {},
+ "sources": {
+  "ems": {
+   "label": "REAL",
+   "text": "ERCOT public dashboards and MIS reports for 25 Sep 2026, recorded by the team's EMS workflow (site/ems/); SYNTHESIS.md picks the console panels"
+  }
+ },
+ "series": {},
+ "_doc": "L5 (P3, build prompt 5.7.3): a byte-for-byte snapshot of the site/ems files the ERCOT console reads, with sha256s. Made by: cp site/ems/{synth-console,freq-series}.json ui/data/ems/ and sha256 of every site/ems/*.json at snapshot time (listed in siteEms). ui/panels/more.js computes the cards from these files at view time; nothing here is edited. The day is 25 Sep 2026, a different day from P1 (23 Aug 2026).",
+ "snapshotOf": "site/ems/ (read-only; another workflow wrote it)",
+ "day": "2026-09-25",
+ "files": [
+  {
+   "name": "synth-console.json",
+   "bytes": 79159,
+   "sha256": "e8933d6300be8f299ac5be7db3b69628202cf312c3a679cb549a13b73a27462b",
+   "source": "site/ems/synth-console.json"
+  },
+  {
+   "name": "freq-series.json",
+   "bytes": 110841,
+   "sha256": "171e1c4fce903eb5114adca9150a55a522f783da1b6aa513875d12ff56b231ee",
+   "source": "site/ems/freq-series.json"
+  }
+ ],
+ "siteEms": [
+  {
+   "name": "dq-quality.json",
+   "bytes": 148215,
+   "sha256": "44dd3e6bda933d36ffb0694a5bde20a0413b9a45c6935072f4f14e4e72e49808"
+  },
+  {
+   "name": "dq-sim.json",
+   "bytes": 63900,
+   "sha256": "208feac616eba1c3eae1c37967dd785edcbe445a9e3282e8ae8bd7b765bebc20"
+  },
+  {
+   "name": "flow-limits.json",
+   "bytes": 148182,
+   "sha256": "5b030bfd49f6ee3bb89cd5278e9b6f4e43c813f629ceeb8fc463c8db11e291cf"
+  },
+  {
+   "name": "freq-series.json",
+   "bytes": 110841,
+   "sha256": "171e1c4fce903eb5114adca9150a55a522f783da1b6aa513875d12ff56b231ee"
+  },
+  {
+   "name": "load-netload.json",
+   "bytes": 58879,
+   "sha256": "5355c59d6ffc56f5aead822ae818f67f1c5bc34ee6e2dc092b0129937a332142"
+  },
+  {
+   "name": "load-sim-feeder.json",
+   "bytes": 2126,
+   "sha256": "0085380df4896821af97d79553cdc5981cdcf2fa436dd4007d244f0b2650f686"
+  },
+  {
+   "name": "n1-contingency.json",
+   "bytes": 138571,
+   "sha256": "9a7bdc2907f3d1b4b28dec54ec174544d60b63c457ad9bafc77809318186cbab"
+  },
+  {
+   "name": "res-reserves.json",
+   "bytes": 100699,
+   "sha256": "b085b8a96690cbf5b79631612916b791b369d9d4cbdfe38454bc2b1fef5eb8c3"
+  },
+  {
+   "name": "synth-console.json",
+   "bytes": 79159,
+   "sha256": "e8933d6300be8f299ac5be7db3b69628202cf312c3a679cb549a13b73a27462b"
+  },
+  {
+   "name": "volt-buses-full.json",
+   "bytes": 702917,
+   "sha256": "0327297eb8f5ba7215b939c53df342d4b0d0ae87655e34e41edef7484edbe247"
+  },
+  {
+   "name": "volt-profile.json",
+   "bytes": 149919,
+   "sha256": "d2ad500022aa9bb0b9f6ca69a29417e4f5536e2c9d4f472489fa1e107be8f695"
+  }
+ ]
+}
