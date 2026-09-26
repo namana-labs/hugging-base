@@ -21,6 +21,8 @@ export const NAIVE_FRAMING = 'ERCOT dispatches one number per zone and does not 
 export const SPEEDS = [0.5, 1, 2, 4, 8];
 export const MS_PER_STEP = 100;          // 1 simulated minute per 100 ms at 1x (build prompt 5.5)
 export const GAUGE_MAX_PCT = 220;        // the gauge's full width
+export const MARK_CHARS = 34;            // strip marker labels are cut here (the full text is the tooltip and the list)
+export const LABEL_BAND_PX = 40;         // three rows of marker labels above the price line
 
 const FOCUS_KEYS = ['A', 'B', 'C', 'D', '240'];
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -117,13 +119,36 @@ export function gaugeModel(meta, doc, topology, key, k, roomKW) {
 /** x-position (0..1) of each step's markers: meta.markers, the D-26 onset, and the branch's fault events. */
 export function stripMarks(meta, branch, fmt, homeLabel = null) {
   const out = [];
+  // a marker that restates a failure event belongs to that event's branch only (never "C runs hot" on aware)
+  const evKey = (e) => `${e.t}|${e.text || ''}`;
+  const otherEvents = new Set(), ownEvents = new Set();
+  for (const [b, list] of Object.entries(meta.events || {})) for (const e of list || []) (b === branch ? ownEvents : otherEvents).add(evKey(e));
+  const seenText = new Map();
   for (const m of meta.markers || []) {
+    const key = `${m.t}|${m.text}`;
+    if (otherEvents.has(key) || ownEvents.has(key)) continue;
     const k = fmt.timeToStep(meta, m.t);
-    if (k !== null) out.push({ k, t: m.t, text: m.text, label: m.label || 'SIM', kind: 'marker' });
+    if (k === null) continue;
+    const first = !seenText.has(m.text);
+    if (first) seenText.set(m.text, { n: 0 });
+    seenText.get(m.text).n += 1;
+    out.push({ k, t: m.t, text: m.text, label: m.label || 'SIM', kind: 'marker', repeat: !first, group: seenText.get(m.text) });
   }
   const ev = (meta.events && meta.events[branch]) || [];
-  for (const e of ev) out.push({ k: e.step, t: e.t, text: faultText(e, homeLabel), label: 'SIM', kind: 'fault' });
-  return out.sort((a, b) => a.k - b.k);
+  for (const e of ev) out.push({ k: e.step, t: e.t, text: e.text || faultText(e, homeLabel), label: 'SIM', kind: 'fault', group: { n: 1 } });
+  out.sort((a, b) => a.k - b.k);
+  // label rows: identical texts are labelled once ("x5"); labels that would collide drop to the next row (3 rows)
+  const rowEnd = [-1, -1, -1];
+  const n = meta.steps || 1;
+  for (const m of out) {
+    m.count = m.group.n;
+    delete m.group;
+    m.row = -1;
+    if (m.repeat) continue;
+    const x = (m.k + 0.5) / n, w = (m.t.length + 1 + Math.min(m.text.length, MARK_CHARS) + (m.count > 1 ? 3 : 0) + 6) * 0.0054;
+    for (let r = 0; r < rowEnd.length; r++) if (x > rowEnd[r]) { m.row = r; rowEnd[r] = x + w; break; }
+  }
+  return out;
 }
 
 export function faultText(e, homeLabel) {
@@ -168,7 +193,8 @@ const ID_KEYS = new Set(['rank', 'home', 'tf', 'step', 'k', 'n', 'index', 'of', 
  *  strings are text, id counters are plain, and a bare number anywhere else throws (format.js), raising data-errors. */
 export function labelledTreeHTML(fmt, x, key = '', depth = 0, inherit = '') {
   if (x === null || x === undefined) return '';
-  const own = Object.keys(optsFor(key)).length ? key : inherit;   // children inherit the parent's unit (energyValueUSD.naive)
+  let own = Object.keys(optsFor(key)).length ? key : inherit;   // children inherit the parent's unit (energyValueUSD.naive)
+  if (x && typeof x === 'object' && !Array.isArray(x) && typeof x.unit === 'string' && x.unit.includes('$')) own = 'USD';
   if (typeof x === 'string') return `<span class="p1-text">${esc(x)}</span>`;
   if (typeof x === 'boolean') return esc(x ? 'yes' : 'no');
   if (typeof x === 'number') {
@@ -226,7 +252,14 @@ export async function mount(el, ctx) {
   let k = initialStep(meta, link, fmt);
   let playing = false, speed = 1, acc = 0, last = 0;
   const stepSec = meta.stepSeconds || 60;
-  const homeLabel = (h) => (typeof h === 'number' ? (topology.homes[h] ? topology.homes[h].label : `home ${h}`) : String(h));
+  const homeLabel = (h) => {
+    if (typeof h === 'number') return topology.homes[h] ? topology.homes[h].label : `home ${h}`;
+    if (h && typeof h === 'object') {
+      const lab = h.label || (typeof h.home === 'number' && topology.homes[h.home] ? topology.homes[h.home].label : 'a home');
+      return h.tf !== undefined && h.tf !== null ? `${lab} on ${tfName(h.tf)}` : lab;
+    }
+    return String(h);
+  };
   const tfName = (tf) => {
     const f = (topology.focus || []).find((x) => x.tf === tf);
     if (f) return f.key;
@@ -243,10 +276,10 @@ export async function mount(el, ctx) {
     <div class="hb-seg p1-branches" role="tablist">${branches.map((b) => `<a href="${ctx.href({ branch: b, t: fmt.stepToTime(meta, k) })}" data-branch="${b}" aria-current="${b === branch}">${esc(BRANCH_NAMES[b] || b)}${b === 'naive' ? fmt.chip('ASSUMPTION', NAIVE_FRAMING) : ''}</a>`).join('')}</div>
     <div class="p1-framing" id="p1-framing"></div>
     <section class="p1-hero" id="p1-hero"></section>
+    <section id="p1-faults-sec" hidden><h2>Pieces fail ${fmt.chip('ASSUMPTION', 'event times and sizes are named constants (build prompt 5.4.4)')}</h2><div id="p1-faults"></div></section>
     <section><h2>Street A–D and T-240 · headroom now</h2><div id="p1-gauges"></div>
       <div class="p1-legend-gauge"><span class="sw sw-home"></span>home load <span class="sw sw-bat"></span>battery charging <span class="sw sw-relief"></span>battery discharging (relief) · ticks: 100% nameplate, 110% normal rating, 150% emergency ${fmt.chip('REAL', 'SMART-DS normhkva / EmergHKVA')}, 200% fuse rule ${fmt.chip('ASSUMPTION', meta.protection && meta.protection.cite)}</div></section>
     <section><h2>Orchestrator ticker ${fmt.chip(seriesLabel(doc, 'ticker', 'SIM'), 'sim.orchestrator.allocate(): deterministic, no model in the loop')}</h2><ol class="p1-ticker" id="p1-ticker"></ol></section>
-    <section id="p1-faults-sec" hidden><h2>Pieces fail</h2><div id="p1-faults"></div></section>
     <section id="p1-relief-sec" hidden><h2>Peak relief</h2><div id="p1-relief"></div></section>
     <section id="p1-unrel-sec" hidden><h2>Not relieved here → P2</h2><div id="p1-unrel"></div></section>
     <section><h2>Grid checks · this branch</h2><div id="p1-grid" class="p1-grid"></div></section>
@@ -292,7 +325,10 @@ export async function mount(el, ctx) {
 
   // ---- rendering ----
   function framingHTML() {
-    if (branch === 'naive') return `<div class="p1-note">${esc(NAIVE_FRAMING)} ${fmt.chip('ASSUMPTION', 'build prompt 3.4, 12 Q5')}</div>`;
+    if (branch === 'naive') {
+      const nl = meta.naiveLabel && meta.naiveLabel.text ? meta.naiveLabel : { text: NAIVE_FRAMING, label: 'ASSUMPTION', cite: 'build prompt 3.4, 12 Q5' };
+      return `<div class="p1-note">${esc(nl.text)} ${fmt.chip(nl.label || 'ASSUMPTION', nl.cite)}</div>`;
+    }
     if (branch === 'none') return '<div class="p1-note">No batteries: what the homes alone do to their transformers.</div>';
     if (branch === 'aware_faults') return '<div class="p1-note">Feeder-aware, while a battery goes silent, a transformer runs hot and our controller stalls.</div>';
     return '<div class="p1-note">Feeder-aware: before sending charge, each transformer\'s headroom is checked and only what fits is sent.</div>';
@@ -333,21 +369,23 @@ export async function mount(el, ctx) {
       const d = r.driver;
       const shared = d && d.sharedWith && d.sharedWith.length ? `, also used at ${esc(d.sharedWith.map(homeLabel).join(', '))}` : '';
       const mins = r.minutesOver100;
-      const minsHTML = !mins ? '' : fmt.isLabelled(mins) ? fmt.fmtHTML(mins, { unit: ' min' })
+      const minsHTML = !mins ? '' : fmt.isLabelled(mins) && mins.none !== undefined && mins.aware !== undefined
+        ? `none ${nv(L(mins.none, mins.label), { unit: ' min' })} → aware ${nv(L(mins.aware, mins.label), { unit: ' min' })} ${fmt.chip(mins.label, mins.cite)}`
+        : fmt.isLabelled(mins) ? fmt.fmtHTML(mins, { unit: ' min' })
         : `none ${mins.none ? fmt.fmtHTML(mins.none, { unit: ' min' }) : 'n/a'} → aware ${mins.aware ? fmt.fmtHTML(mins.aware, { unit: ' min' }) : 'n/a'}`;
       $('p1-relief').innerHTML = `
         <div class="p1-relief-big">${esc(tfName(r.tf))} at ${esc(r.t || '')}: ${r.none ? fmt.fmtHTML(r.none, { unit: '%', digits: 1 }) : 'n/a'} without batteries → ${r.aware ? fmt.fmtHTML(r.aware, { unit: '%', digits: 1 }) : 'n/a'} feeder-aware</div>
         <div class="p1-row"><span class="p1-k">Minutes over nameplate</span><span class="p1-v">${minsHTML}</span></div>
         ${r.reliefKW ? `<div class="p1-row"><span class="p1-k">Batteries discharged</span><span class="p1-v">${fmt.fmtHTML(r.reliefKW, { unit: ' kW', digits: 1 })}${r.reliefKWh ? ' · ' + fmt.fmtHTML(r.reliefKWh, { unit: ' kWh', digits: 1 }) : ''}</span></div>` : ''}
         ${d ? `<div class="p1-driver">Driver: one home's 15-minute spike: ${esc(d.label || homeLabel(d.home))}, SMART-DS profile <code>${esc(d.profile || '')}</code>${d.kwAtPeak ? ' at ' + fmt.fmtHTML(d.kwAtPeak, { unit: ' kW', digits: 1 }) : ''}${shared}. The same shape elsewhere is not independent evidence.</div>` : ''}
-        <div class="hb-sub">Over nameplate for about 15 minutes is amber, not a failure.</div>`;
+        <div class="hb-sub">${esc(r.text || 'Over nameplate for about 15 minutes is amber, not a failure.')}</div>`;
     }
     // unrelieved -> P2
     const un = meta.unrelieved || [];
     $('p1-unrel-sec').hidden = !un.length;
     $('p1-unrel').innerHTML = un.map((u) => {
       const d = u.driver;
-      return `<div class="p1-unrel">${esc(tfName(u.tf))}: ${esc(u.reason || '')}${d ? `; driver ${esc(d.label || homeLabel(d.home))} (<code>${esc(d.profile || '')}</code>${d.sharedWith && d.sharedWith.length ? ', shared with ' + esc(d.sharedWith.map(homeLabel).join(', ')) : ''})` : ''}. <a href="${ctx.href({ view: 'p2', branch: null, t: null, cam: u.tf === ((topology.bridge || [])[0] || {}).tf ? 't240' : null })}">Where the next battery goes →</a></div>`;
+      return `<div class="p1-unrel">${esc(tfName(u.tf))}: ${esc(u.reason || '')}${u.peak && fmt.isLabelled(u.peak) ? ` (peak ${fmt.fmtHTML(u.peak, { unit: '%', digits: 1 })}${u.peak.t ? ' at ' + esc(u.peak.t) : ''})` : ''}${d ? `; driver ${esc(d.label || homeLabel(d.home))} (<code>${esc(d.profile || '')}</code>${d.sharedWith && d.sharedWith.length ? ', shared with ' + esc(d.sharedWith.map(homeLabel).join(', ')) : ''})` : ''}. <a href="${ctx.href({ view: 'p2', branch: null, t: null, cam: u.tf === ((topology.bridge || [])[0] || {}).tf ? 't240' : null })}">Where the next battery goes →</a></div>`;
     }).join('');
     // money + ladder (generic labelled trees: every value carries its label)
     $('p1-money-sec').hidden = !meta.money;
@@ -410,14 +448,14 @@ export async function mount(el, ctx) {
         const past = e.step <= k;
         let now = '';
         if (e.kind === 'comms_lost' && e.home !== undefined) {
-          const j = (topology.fleet || []).indexOf(e.home);
+          const j = Number.isInteger(e.batt) ? e.batt : (topology.fleet || []).indexOf(e.home);
           if (j >= 0) now = ` · now: ${esc(sceneModel.STATE_NAMES[doc.state[k][j]] || doc.state[k][j])}`;
         }
         const vals = [];
         if (e.cmdKW !== undefined) vals.push(`command ${fmt.fmtHTML(L(e.cmdKW, 'SIM'), { unit: ' kW', digits: 1, signed: true })}`);
         if (e.deltaKW !== undefined) vals.push(`+${fmt.fmtHTML(L(e.deltaKW, 'ASSUMPTION', 'EV_KW: a Level 2 EV'), { unit: ' kW', digits: 1 })}`);
         if (e.minutes !== undefined) vals.push(fmt.fmtHTML(L(e.minutes, 'ASSUMPTION'), { unit: ' min' }));
-        return `<div class="p1-fault ${past ? 'past' : ''}"><b>${esc(e.t)}</b> ${esc(faultText(e, homeLabel))}${vals.length ? ' · ' + vals.join(' · ') : ''}${past ? now : ''}</div>`;
+        return `<div class="p1-fault ${past ? 'past' : ''}"><b>${esc(e.t)}</b> ${esc(e.text || faultText(e, homeLabel))}${vals.length ? ' · ' + vals.join(' · ') : ''}${past ? now : ''}</div>`;
       }).join('');
     }
     const pv = meta.price[k];
@@ -441,7 +479,7 @@ export async function mount(el, ctx) {
     const css = getComputedStyle(document.body);
     const col = (v, d) => (css.getPropertyValue(v).trim() || d);
     c.clearRect(0, 0, W, H);
-    const ribbon = 12 * dpr, top = 14 * dpr, ph = H - ribbon - top - 3 * dpr;
+    const ribbon = 11 * dpr, top = LABEL_BAND_PX * dpr, ph = H - ribbon - top - 14 * dpr;
     const xs = (i) => (i + 0.5) / n * W;
     // discharge plan (DERIVED)
     c.fillStyle = 'rgba(236,131,90,0.16)';
@@ -460,7 +498,9 @@ export async function mount(el, ctx) {
     c.stroke();
     c.fillStyle = col('--muted', '#55625A');
     c.font = `${10 * dpr}px sans-serif`;
-    c.fillText(`$${pmax.toFixed(0)}/MWh max (${priceLabel})`, 4 * dpr, top - 3 * dpr);
+    c.textAlign = 'right';
+    c.fillText(`max $${pmax.toFixed(0)}/MWh (${priceLabel} price)`, W - 2 * dpr, top + 9 * dpr);
+    c.textAlign = 'left';
     // tier ribbon: the worst code present at each step, alpha by how many transformers
     const TR = sceneModel.TIER_RGB;
     for (let i = 0; i < n; i++) {
@@ -480,13 +520,17 @@ export async function mount(el, ctx) {
       const t = fmt.stepToTime(meta, i);
       if (t.endsWith(':00') && (n <= 180 || Number(t.slice(0, 2)) % 2 === 0)) {
         c.fillRect(xs(i), H - ribbon - 3 * dpr, 1 * dpr, 3 * dpr);
-        c.fillText(t, xs(i) + 2 * dpr, H - ribbon - 4 * dpr);
+        c.fillText(t, xs(i) + 2 * dpr, H - ribbon - 3 * dpr);
       }
     }
     stripBase = c.getImageData(0, 0, W, H);
     // markers as DOM (legible, labelled)
     const marks = stripMarks(meta, branch, fmt, homeLabel);
-    $marks.innerHTML = marks.map((m) => `<button type="button" class="mark mark-${m.kind}" style="left:${(100 * (m.k + 0.5) / n).toFixed(2)}%" data-k="${m.k}" title="${esc(m.t + ' ' + m.text + ' (' + m.label + ')')}"><span>${esc(m.t)} ${esc(m.text)}</span></button>`).join('');
+    $marks.innerHTML = marks.map((m) => {
+      const txt = m.text.length > MARK_CHARS ? m.text.slice(0, MARK_CHARS - 1) + '…' : m.text;
+      const lab = m.row < 0 ? '' : `<span style="top:${m.row * 13}px">${esc(m.t)} ${esc(txt)}${m.count > 1 ? ` ×${m.count}` : ''}${fmt.chip(m.label)}</span>`;
+      return `<button type="button" class="mark mark-${m.kind}" style="left:${(100 * (m.k + 0.5) / n).toFixed(2)}%" data-k="${m.k}" title="${esc(m.t + ' ' + m.text + ' (' + m.label + ')')}">${lab}</button>`;
+    }).join('');
     drawCursor();
   }
   const $marks = transport.querySelector('#p1-marks');

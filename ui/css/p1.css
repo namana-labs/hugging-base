@@ -1,6 +1,6 @@
 /* ui/css/p1.css (L4): the P1 panel, gauges, and the overlays on the scene (camera presets, legend, credits,
    transport + price strip). Tokens come from base.css. 1080p first. */
-:root { --transport-h: 104px; }
+:root { --transport-h: 122px; }
 
 /* scene area leaves room for the transport bar on P1 */
 body.view-p1 .hb-scene { bottom: var(--transport-h); }
@@ -95,12 +95,13 @@ body.has-fixture .p1-cams { top: calc(var(--header-h) + 38px); }
 .p1-strip-wrap { position: relative; flex: 1; height: 100%; min-width: 200px; }
 .p1-strip { width: 100%; height: 100%; display: block; cursor: ew-resize; touch-action: none; }
 .p1-strip-marks { position: absolute; left: 0; right: 0; top: 0; height: 0; }
-.p1-strip-marks .mark { position: absolute; top: 0; transform: translateX(-1px); border: 0; padding: 0; background: none; cursor: pointer; height: 64px; }
+.p1-strip-marks .mark { position: absolute; top: 0; transform: translateX(-1px); border: 0; padding: 0; background: none; cursor: pointer; height: 92px; width: 6px; }
 .p1-strip-marks .mark::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; border-left: 1.5px dashed var(--muted); }
-.p1-strip-marks .mark span { position: absolute; left: 3px; top: -2px; font-size: 10.5px; white-space: nowrap; color: var(--ink);
+.p1-strip-marks .mark > span { position: absolute; left: 3px; top: -2px; font-size: 10px; line-height: 12px; white-space: nowrap; color: var(--ink);
   background: color-mix(in srgb, var(--paper) 85%, transparent); padding: 0 3px; border-radius: 3px; }
 .p1-strip-marks .mark-fault::before { border-left-color: var(--crit); }
-.p1-strip-marks .mark-fault span { color: var(--crit); top: 14px; }
+.p1-strip-marks .mark-fault > span { color: var(--crit); }
+.p1-strip-marks .mark > span .chip { font-size: 7.5px; padding: 0 3px; margin-left: 2px; }
 
 @media (max-width: 900px) {
   body.view-p1 .hb-scene { bottom: 50vh; }
