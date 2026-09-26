@@ -636,15 +636,20 @@ test('P3 ERCOT console: four REAL-system cards whose numbers equal the snapshot 
     for (const x of c.thread || []) if (typeof x !== 'string') assert.ok(fmt.isLabelled(x), `${c.key} thread: ${JSON.stringify(x)}`);
   }
   assert.equal(stat('frequency', 'lowest ten-second sample').parts[0].v, freq.stats.frequency.min_hz);
-  assert.equal(stat('prc', 'lowest PRC').parts[0].v, Math.min(...num(r.prcMinMW)));
-  assert.equal(stat('prc', 'lowest PRC').parts[0].label, r.fields.prcMinMW.status);
+  // audit R2 L10: the lowest PRC is the SAMPLE and its own time (07:44:52), not the 5-min bin start (07:40)
+  assert.equal(stat('prc', 'lowest PRC sample').parts[0].v, freq.stats.prc.min_mw);
+  assert.equal(stat('prc', 'lowest PRC sample').parts[0].v, Math.min(...num(r.prcMinMW)), 'the sample min equals the 1-min bin min');
+  assert.equal(stat('prc', 'lowest PRC sample').parts[0].label, r.fields.prcMinMW.status);
+  assert.equal(stat('prc', 'lowest PRC sample').parts[2].v, freq.stats.prc.min_time_cdt);
   assert.equal(stat('netload', 'net-load peak (demand − wind − solar)').parts[0].v, Math.max(...num(r.netLoadMW)));
   assert.equal(Math.abs(stat('netload', 'steepest quarter-hour ramp').parts[0].v), Math.max(...num(r.ramp15MWperMin).map(Math.abs)));
   assert.equal(stat('congestion', 'most binding constraints in one bin').parts[0].v, Math.max(...num(r.scedBinding)));
   assert.equal(stat('congestion', 'highest LZ_NORTH real-time price').parts[0].v, Math.max(...num(r.lzNorthUSD)));
-  // the time printed is the bin of that extreme
-  const i = r.prcMinMW.indexOf(Math.min(...num(r.prcMinMW)));
-  assert.equal(stat('prc', 'lowest PRC').parts[1].v, r.t[i]);
+  assert.notEqual(stat('prc', 'lowest PRC sample').parts[2].v, r.t[r.prcMinMW.indexOf(Math.min(...num(r.prcMinMW)))], 'not the bin start');
+  // audit R2 L11: the fleet line says settling, not nadir, and carries the research band too
+  const th = m.cards.find((c) => c.key === 'frequency').thread.filter((x) => typeof x === 'string').join(' ');
+  assert.match(th, /settles/);
+  assert.match(th, /nadir/);
   assert.match(m.caveat, /not live/);
   assert.equal(emsModel(null, null, null), null);
 });

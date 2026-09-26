@@ -83,15 +83,17 @@ function minutesOver100(S, which) {
   }
   return withO(m[which], { unit: ' min' });
 }
-/** Max loading on A-D while their own batteries export (batKW < 0), from a p1 branch file. */
-function backfeed(doc, topology) {
+/** Max loading on A-D while the transformer actually exports: net P (homes + batteries, focus.homeKW + focus.batKW)
+ *  below zero, from a p1 branch file. Audit R2 M4: testing batKW < 0 alone counted 16:39 on A, when A's batteries
+ *  gave 1.7 kW of relief but A still imported 23.0 kW (so that 97.9% was not back-feed). Exported for the tests. */
+export function backfeed(doc, topology) {
   if (!doc || !doc.focus || !doc.loading) return null;
   let best = null;
   for (const key of ['A', 'B', 'C', 'D']) {
     const f = doc.focus[key];
-    if (!f || !Array.isArray(f.batKW)) continue;
+    if (!f || !Array.isArray(f.batKW) || !Array.isArray(f.homeKW)) continue;
     f.batKW.forEach((b, k) => {
-      if (b >= 0) return;
+      if (!(b < 0) || !(Number(f.homeKW[k]) + Number(b) < 0)) return;
       const pct = doc.loading[k] && doc.loading[k][f.tf];
       if (typeof pct === 'number' && (!best || pct > best.pct)) best = { pct, key, tf: f.tf, k };
     });
@@ -330,7 +332,7 @@ export const FACTS = {
     return x.v === 0 ? ['voltage stays in range at unity pf (', { ...x, o: {} }, ' homes below 0.95 pu)'] : [{ ...x, o: {} }, ' homes fall below 0.95 pu'];
   }],
   naiveBackfeedMax: [['p1:naive', 'topology'], (S) => { const b = backfeed(S['p1:naive'], S.topology); return b ? [{ v: b.v, label: b.label, o: { unit: '%', digits: 1 } }, ` on ${b.name} at ${stepTime(S['p1:naive'], b.k)}`] : null; }],
-  awareBackfeedMax: [['p1:aware', 'topology'], (S) => { const b = backfeed(S['p1:aware'], S.topology); return b ? [{ v: b.v, label: b.label, o: { unit: '%', digits: 1 } }, ` on ${b.name}`] : 'no export above its cap'; }],
+  awareBackfeedMax: [['p1:aware', 'topology'], (S) => { const b = backfeed(S['p1:aware'], S.topology); return b ? [{ v: b.v, label: b.label, cite: 'OpenDSS loading while the transformer exports (net P < 0: homes + batteries), feeder-aware', o: { unit: '%', digits: 1 } }, ` on ${b.name} at ${stepTime(S['p1:aware'], b.k)}`] : 'no street transformer exports'; }],
   faultCommsT: [['p1meta'], (S) => { const e = (get(S, 'p1meta.events.aware_faults') || []).find((x) => x.kind === 'comms_lost'); return e ? L(e.t, 'SIM') : null; }],
   faultCommsHome: [['p1meta', 'topology'], (S) => { const e = (get(S, 'p1meta.events.aware_faults') || []).find((x) => x.kind === 'comms_lost'); return e ? homeLabel(S.topology, e.home) : null; }],
   faultCommsKW: [['p1meta'], (S) => { const e = (get(S, 'p1meta.events.aware_faults') || []).find((x) => x.kind === 'comms_lost'); return e && typeof e.cmdKW === 'number' ? L(e.cmdKW, 'SIM', 'its last charge command', { unit: ' kW', digits: 1, signed: true }) : null; }],
@@ -707,6 +709,7 @@ async function chaosCard(ctx) {
 // byte-for-byte snapshot of site/ems (ui/data/ems/index.json lists the sha256s). site/ems/SYNTHESIS.md picks the
 // panels: frequency, PRC reserves, net load and its ramp, SCED congestion. Each number carries the status the EMS
 // bundle gives its field (real5.fields; UNVERIFIED maps to ASSUMPTION with "unverified" in the cite).
+const RESEARCH_FREQ_CITE = 'docs/research-report.md:308-318: 0.075-0.12 mHz per MW from two recorded events (NERC Odessa 2021; ERCOT NP12-261-M, 2026-08-07), applied to the 411 MW full swing; includes the dip, so it reads above the settling shift';
 const EMS_LABEL = (st) => (/^REAL/.test(String(st || '')) ? 'REAL' : /^DERIVED/.test(String(st || '')) ? 'DERIVED' : /^SIM/.test(String(st || '')) ? 'SIM' : 'ASSUMPTION');
 
 /** argmin/argmax over a numeric array (nulls skipped): {i, v} or null. */
@@ -757,9 +760,15 @@ export function emsModel(synth, freq, manifest) {
     caption: `Frequency, min and max per 5-min bin, ${r.day}${db !== null ? '; the governor deadband dashed' : ''}`, title: 'ercot frequency' };
   if (Array.isArray(sc.fleetNameplate_mHz) && sc.inputs && sc.inputs.fleetNameplateMW) {
     const [lo, mid, hi] = sc.fleetNameplate_mHz;
+    // Audit R2 L11: this is a SETTLING shift (ERCOT's measured beta), not the nadir. The research report's event-rate
+    // band (0.075-0.12 mHz per MW, docs/research-report.md:308-318) reads higher; both are shown, neither is a nadir.
+    const full = Array.isArray(sc.fleetFullSwing411MW_mHz) ? sc.fleetFullSwing411MW_mHz : null;
     f.thread = ['Swinging Base\'s whole fleet (', { v: sc.inputs.fleetNameplateMW.value, label: 'REAL', cite: `Base-published; ${sc.inputs.fleetNameplateMW.source || ''}`, o: { unit: ' MW', digits: 1 } },
-      ') one way would move settling frequency by about ', { v: lo, label: scLab, cite: sc.formula || 'synth scale', o: { digits: 1 } }, ' to ', { v: hi, label: scLab, cite: sc.formula || 'synth scale', o: { unit: ' mHz', digits: 1 } },
-      ' (median ', { v: mid, label: scLab, cite: sc.formula || 'synth scale', o: { unit: ' mHz', digits: 1 } }, '): context, not a frequency actor.'];
+      ') one way would shift where frequency settles by about ', { v: lo, label: scLab, cite: sc.formula || 'synth scale', o: { digits: 1 } }, ' to ', { v: hi, label: scLab, cite: sc.formula || 'synth scale', o: { unit: ' mHz', digits: 1 } },
+      ' (median ', { v: mid, label: scLab, cite: sc.formula || 'synth scale', o: { unit: ' mHz', digits: 1 } }, '). That is the settling shift from ERCOT\'s measured response, not the lowest point (nadir) of a fast swing, which dips further',
+      ...(full ? ['; the full charge-to-discharge swing doubles the MW (', { v: full[0], label: scLab, cite: `${sc.formula || 'synth scale'}; 2 x the fleet nameplate`, o: { digits: 0 } }, ' to ', { v: full[2], label: scLab, cite: `${sc.formula || 'synth scale'}; 2 x the fleet nameplate`, o: { unit: ' mHz', digits: 0 } }, ')'] : []),
+      '. Event-based rates from Odessa and a 2026 ERCOT event read higher, about ', { v: 30, label: 'DERIVED', cite: RESEARCH_FREQ_CITE, o: { digits: 0 } }, ' to ', { v: 50, label: 'DERIVED', cite: RESEARCH_FREQ_CITE, o: { unit: ' mHz', digits: 0 } },
+      ' for that full swing. Either way it sits near the day\'s normal wander: context, not a frequency actor.'];
   }
   cards.push(f);
 
@@ -767,7 +776,11 @@ export function emsModel(synth, freq, manifest) {
   const pLo = extreme(r.prcMinMW, -1);
   const T = C.prc_thresholds_mw || {};
   const p = { key: 'prc', title: 'Physical responsive capability (reserves)', label: lab('prcMinMW'), stats: [] };
-  if (pLo) p.stats.push({ name: 'lowest PRC', parts: at('prcMinMW', pLo, { unit: ' MW', digits: 0 }) });
+  // The lowest PRC sample and its own time (audit R2 L10: the 5-min bin start 07:40 is not when it happened, 07:44:52 is)
+  const ps = freq && freq.stats && freq.stats.prc;
+  if (ps && typeof ps.min_mw === 'number' && ps.min_time_cdt) {
+    p.stats.push({ name: 'lowest PRC sample', parts: [{ v: ps.min_mw, label: 'REAL', cite: `freq-series.json stats.prc.min_mw (ERCOT daily PRC dashboard, ${(freq.stats.data_quality && freq.stats.data_quality.daily_prc && freq.stats.data_quality.daily_prc.points) || 'every'} samples)`, o: { unit: ' MW', digits: 0 } }, ' at ', { v: ps.min_time_cdt, label: 'REAL', cite: 'the sample time, CDT (stats.prc.min_time_cdt)' }] });
+  } else if (pLo) p.stats.push({ name: 'lowest PRC (5-min bin start)', parts: at('prcMinMW', pLo, { unit: ' MW', digits: 0 }) });
   if (typeof T.watch === 'number') p.stats.push({ name: 'watch trigger', parts: [{ v: T.watch, label: 'REAL', cite: fsrc, o: { unit: ' MW', digits: 0 } }] });
   if (pLo && typeof T.watch === 'number') p.verdict = pLo.v >= T.watch ? 'PRC stayed above the watch trigger all day.' : 'PRC fell below the watch trigger.';
   p.chart = { series: [{ name: 'PRC min', values: r.prcMinMW, cls: 's-with' }], label: lab('prcMinMW'), yMin: 0,
