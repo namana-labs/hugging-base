@@ -9,7 +9,8 @@
 #   5 verify    $PY -m sim.verify labels, p1, p2      (committed JSON, no rebuild; SKIP before the data exists)
 #   6 paths     python3 scripts/check_paths.py --lane <id>        (only with --lane)
 #   7 smoke     scripts/smoke_ui.sh --lane <id> | canary | (--full) all under the heavy-run lock
-#   8 rebuild   (--full only) build_all.sh all, then sim.verify p1/p2 --rebuild, all in ONE lock hold
+#   8 rebuild   (--full only) build_all.sh all, then sim.verify p1/p2 --rebuild, and (once sim/history.py exists)
+#               sim.verify p1 --days --rebuild, all in ONE lock hold
 # Ends with exactly one line: "ALL CHECKS: PASS" or "ALL CHECKS: FAIL (<steps>)". Gate on that anchored line.
 set -u
 ROOT="$(git rev-parse --show-toplevel)" || exit 2
@@ -119,6 +120,8 @@ if [ $FULL = 1 ]; then
     scripts/build_all.sh all > "$0/8-build.log" 2>&1
     git status --porcelain -- ui/data data/out > "$0/8-dirty.log"
     for part in p1 p2; do "$PY" -m sim.verify "$part" --rebuild > "$0/8-rebuild-$part.log" 2>&1; done
+    if [ -f sim/history.py ]; then "$PY" -m sim.verify p1 --days --rebuild > "$0/8-rebuild-p1-days.log" 2>&1
+    else echo "VERIFY p1: SKIP (sim/history.py not on this branch; no history days to rebuild)" > "$0/8-rebuild-p1-days.log"; fi
     exit 0' "$LOGS"
   rc=$?
   if [ $rc = 75 ]; then fail smoke "heavy-run lock not acquired in 2400 s"; fail rebuild "lock"; else
@@ -128,10 +131,11 @@ if [ $FULL = 1 ]; then
     RB=()
     grep -qE '^BUILD: PASS' "$LOGS/8-build.log" || RB+=("build")
     if [ -s "$LOGS/8-dirty.log" ]; then echo "rebuild changed committed data:"; head -20 "$LOGS/8-dirty.log"; RB+=("not-byte-identical"); else echo "determinism: rebuild left ui/data and data/out byte-identical"; fi
-    for part in p1 p2; do
-      line="$(grep -E "^VERIFY $part: " "$LOGS/8-rebuild-$part.log" | tail -1)"; echo "${line:-VERIFY $part --rebuild: (no verdict line)}"
+    for part in p1 p2 p1-days; do
+      v="${part%-days}"
+      line="$(grep -E "^VERIFY $v: " "$LOGS/8-rebuild-$part.log" | tail -1)"; echo "${line:-VERIFY $part --rebuild: (no verdict line)}"
       grep -E '^determinism' "$LOGS/8-rebuild-$part.log"
-      case "$line" in "VERIFY $part: PASS"*|"VERIFY $part: SKIP"*) ;; *) RB+=("$part") ;; esac
+      case "$line" in "VERIFY $v: PASS"*|"VERIFY $v: SKIP"*) ;; *) RB+=("$part") ;; esac
     done
     if [ ${#RB[@]} -eq 0 ]; then pass rebuild "build_all all + verify --rebuild"; else fail rebuild "${RB[*]}"; fi
   fi

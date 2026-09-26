@@ -57,13 +57,18 @@ Written by L0 (the lead) on 26 Sep 2026 for the overnight build. Two halves: **P
 | `engine.json` | `sim.bench` (L2) | ms per OpenDSS solve, P1 build seconds, `allocate()` µs at 96, 1k, 10k, 100k batteries (synthetic scale test), the load average; all SIM. Layout: `opendss{msPerSolve, msPerStep}`, `p1{buildSeconds, solves}`, `allocate{"96", "1000", "10000", "100000"}` (µs per stateless call), `loadAvg`; every leaf `{v, label:"SIM", cite}`. Timings are not deterministic, so they live here and not in `p1/meta.json` |
 | `p2/index.json` | `sim.p2_build` (L3) | A.7 |
 | `p2/<combo>.json` | `sim.p2_build` (L3) | A.8; combo id `policy-cls-rule-gN` |
+| `p1/days/index.json` | `sim.history` (L2, round 2) | A.10: one row per simulated evening; all the day picker needs |
+| `p1/days/calendar.json` | `sim.history` (L2, round 2, Should) | A.9h: prices-only money per evening, 2025-01-01 to 2026-09-18 |
+| `p1/days/<date>/meta.json` | `sim.history` (L2, round 2) | A.5h |
+| `p1/days/<date>/<branch>.json.gz` | `sim.history` (L2, round 2) | A.6h: gzip of an A.6 branch doc (`none`, `naive`, `aware`; no `aware_faults`) |
 | `beats.json` | L5 | `{beats:[{id, t0, t1, title, caption, link, label}]}`; `link` is a query string (`"view=p1&branch=naive&t=22:30"`); captions are templated from data; `&beat=<id>` applies every key the link names. Numbers in captions come from data with their label (the L5 test fails on bare digits). |
 
 ### A.4 `topology.json` (L0; committed; regenerate with `python -m sim.topology`)
 
 - `meta{feeder, standIn:"Oncor-suburb stand-in settled at LZ_NORTH (placeholder)", license, shaping{weakLine, originalLengthKm, modifiedLengthKm, denseHomes[], description, label:"ASSUMPTION"}, source[lon,lat], counts{homes, transformers, edges, fleet, eligible}}`
 - `homes[1010]`: `{id, label:"Home 0212", lonlat[lon,lat], tf (index), kwNameplate, eligible, battery:{cls:"core"}|null, district}`
-- `transformers[379]`: `{id, kva, lonlat, homes[] (indices), focus:"A".."D"|null}`
+- `transformers[379]`: `{id, kva, lonlat, homes[] (indices), focus:"A".."D"|null, mount:"pad"|"pole"}`. `mount` (round 2) is DERIVED, labelled once in `series.mount`: pole when any line touching the transformer's low-voltage bus has an overhead linecode (`*_OH_*`, SMART-DS `Lines.dss`), else pad (ASSUMPTION: a pad-mount cannot feed an overhead secondary). 304 pad, 75 pole; A and C pole, B, D and T-240 pad (`sim/tests/test_topology.py`). `sim.topology.transformer_mounts()` computes it without OpenDSS.
+- `constants.STAND_IN.cite`: the real P1U buses sit in **Pedernales Electric Cooperative** territory (PUCT service-area map, 2023, "information purposes only"): 988 of 1,010 homes, 369 of 379 transformers, 93 of 96 fleet homes, A–D and T-240. The on-screen label "Oncor-suburb stand-in settled at LZ_NORTH (placeholder)" is unchanged.
 - `edges[2531]`: `[lon, lat, lon, lat]`
 - `fleet[96]`: **home indices**, in `data/fleet.json` order. This order is the battery axis of every `[96]` array (`batKW`, `soc`, `state`).
 - `focus[4]`: `{key:"A".."D", tf (index), id}` for A `tr(r:p1udt9411-p1udt9411lv)` (150), B `…p1udt23656…` (357), C `…p1udt16141…` (246), D `…p1udt9796…` (156). **Key by id**; the index is a convenience.
@@ -139,6 +144,38 @@ Written by L0 (the lead) on 26 Sep 2026 for the overnight build. Two halves: **P
   - `cover{releasedKW, expiryStep, regrantedKW, stalledAtExpiry}` (`releasedKW`, `regrantedKW` labelled): the live charge the silent units held, and the change in the responsive fleet's grants within 60 s of their expiry.
 - `runs` bulk values are labelled once in `series.runs`. `sim.verify p1` re-derives the chaos invariants (plan ranges, battery-caused 0, reserve, seq, expiry, labels) from this file; `sim.verify p1 --rebuild` rebuilds and byte-compares it.
 
+### A.5r Round-2 additions to `p1/meta.json` (L2; also on every history day's meta)
+
+- `money.split{<branch>: {sold, bought, net, perBattery}}`, each `{v, label:"DERIVED", cite:"REAL LZ_NORTH × SIM battery kW; gross energy value, not Base's P&L"}`. `sold` = Σ over discharging steps of −P·price·dt; `bought` = Σ over charging steps of P·price·dt; `net` = sold − bought = `energyValueUSD` to the cent **[INVARIANT]**; `perBattery` = net / 96.
+- `cash{<branch>: [steps] int}`: cumulative fleet energy value in **USD cents** at the end of each step, labelled once in `series.cash` (`{label:"DERIVED", unit:"USD cents, cumulative, fleet", by:"REAL LZ_NORTH x SIM battery kW"}`). `cash[b][steps-1] / 100 == energyValueUSD[b]` **[INVARIANT]**. The UI never does money arithmetic.
+- `story{tag, why{text, label, cite?}}`: `tag` is editorial and holds no digits; `why` carries its numbers already formatted from this meta (a number from outside the meta needs `cite`).
+- `onsetDeferral{step, t, naiveKW, awareKW, deferredKW}`: the kW fields `{v, label:"SIM"}`; `deferredKW` `{v, label:"DERIVED"}` = Σ naive batKW − Σ aware batKW at the onset step.
+- `constants.BASE_HOUSTON_CHARGE_BLOCK_MW` (REAL, −45.8: "Base's Houston charge block reached −45.8 MW within 15 minutes on 22 Jul 2026"; `sim/constants.py`), exported so L5 can template the `problem` caption. `constants.HEAD_RATING_KVA_PER_PHASE` (DERIVED, 2,663.8 kVA = 370 A × 7.2 kV, one conductor) for the scale ladder's feeder rung (audit L2).
+- `relief.text` and `markers[0]` are derived from `relief.minutesOver100` (HIST-R2 3.1–3.2); `markers[0]` only when it is above 0.
+
+### A.5h `p1/days/<date>/meta.json` (L2, round 2): A.5 + A.5r, with these differences
+
+- `day`: the date; `start`, `stepSeconds` and `steps` as A.5.
+- `branches: ["none", "naive", "aware"]`, `events: {}`, and no `aware_faults` keys anywhere (`summary`, `money.energyValueUSD`, `systemCapacityPerMonth`, `avoidedHarm`). The UI disables "+ Failures" on these days; a `branch=aware_faults` link opens aware with a notice (the shell does it).
+- Plain JSON (not gzipped).
+
+### A.6h `p1/days/<date>/<branch>.json.gz` (L2, round 2)
+
+- The A.6 doc, gzipped with `sim.contracts.write_json_gz()` (`gzip.compress(bytes, 9, mtime=0)`, so a rebuild is byte-identical).
+- `sim.contracts` decompresses every `*.json.gz` and applies the same envelope, label and shape rules; the size on disk counts toward the 25 MB / 4 MB caps.
+- The UI reads it with `data.getGz(path)` (`DecompressionStream('gzip')` when the bytes start `1f 8b`, plain `JSON.parse` when the host already decoded them).
+
+### A.9h `p1/days/calendar.json` (L2, round 2, Should)
+
+Prices only, no OpenDSS: `from`, `to`, `n`; `net[]`, `sold[]`, `bought[]` (int USD cents per 20 kW Core, one D-26 cycle; null on a gap); `peak[]` (evening peak $/MWh × 100, REAL); `peakT`, `onset` (space-separated HHMM; "+" = after midnight); `mode` (one char per day: b binding, n non-binding, f fallback, - gap); `negMin[]`; `sim{<date>: <dir>}` (simulated evenings; `""` = `p1/`); `gaps[{day, reason}]`; `headline{perBattery2025, perBattery2026ytd, top10Share2026, losingNights2026, aug2026Top5Share}` each `{v, label:"DERIVED", cite}`; `series` labels every bulk array. The rule is HIST-R2 4.3.2.
+
+### A.10 `p1/days/index.json` (L2, round 2)
+
+- `days[]`, 23 Aug first with `dir: ""`: `{date, dow, tag, why{text, label}, dir, branches[], peak{v, label:"REAL", t}, perBattery{aware{v, label:"DERIVED"}}, naiveMax{v, label:"SIM", tf, t, tier?}, awareBatteryCaused{v, label:"SIM"}, sparkline[48]}`.
+- `naiveMax.tf` is a display name (`"A"`..`"D"`) or a transformer index (the UI prints `T-<index>`, as T-240); `naiveMax.tier` (optional) is the tier code at that step, so the picker never re-derives a tier from a %.
+- `sparkline`: the 48 fifteen-minute prices from 16:00 to 04:00, $/MWh, labelled once in `series.sparkline` (REAL).
+- This file is all the day picker needs; it never loads a branch file. A date absent from it is "not simulated".
+
 ### A.7 `p2/index.json` (L3)
 
 `month, stepMinutes:15, steps:2976, controls{policy, cls, rule, growth}, combos[16] (ids), default:"aware-core-d26-g0", price[2976], cliffs{count, evening, rule, period, events}, fleetCounterfactual{none|naive|aware:{h100[379], normalEvents[379], emergencyN[379]}}, flip{top10Overlap, spearman, untied{top10Overlap, spearman, n}, combos}, ties{byId, of:911}, drivers{top10DistinctProfiles, profiles[]}, insight{tfPeakHour[24], priceMaxHour[24]}, usefulCapacity{naive{v,label,stop}, aware{v,label,stop}, curve{naive[], aware[]}}, referee{runs, errorPts{max,p99}, tierAgreementPct}, bridge[], engine{screenSecondsPerCombo}`.
@@ -173,21 +210,35 @@ Written by L0 (the lead) on 26 Sep 2026 for the overnight build. Two halves: **P
 
 **Loaders** (`ui/lib/data.js`): `loadTopology()`, `loadFootprints()` (null if absent), `loadBeats()` (null if absent), `loadEngine()`, `loadP1Meta()`, `loadP1Branch(b)`, `loadP2Index()`, `loadP2Combo(id)`. P1/P2 loaders read `ui/data/<path>` and fall back to `ui/data/fixtures/<path>` on 404, which marks the page as fixture. `parseLink(search)`, `linkQuery(link)`, `applyBeat(link, beats)`.
 
+**Round 2 loaders and dates** (`ui/lib/data.js`): `DEFAULT_DATE = '2026-08-23'`, `SPEEDS = [0.1, 0.25, 0.5, 1, 2, 4]`; `loadP1Days()` (A.10, null if absent), `loadCalendar()` (A.9h, null if absent), `loadP1MetaFor(date)`, `loadP1BranchFor(date, b)` (the default date reads `p1/*.json` with the fixture fallback as before; any other date reads `p1/days/<date>/…` with **no fixture fallback**), `getGz(path)`, `resolveP1Date(date) -> {date, simulated, row, notice, faults}`. The shell routes `&date=` before `mount()`: a date not in the index (or while `p1.js` does not export `supportsDates = true`) becomes a visible notice plus the 23 Aug evening, and `ctx.link.date` is the date the panel must load. `aware_faults` on a history day becomes `aware` with a notice. Notices set `body[data-notice]` and never count in `data-errors`. `format.js` adds `dateLabel(iso)` ("Sun 23 Aug 2026"; the weekday is computed), `addDays(iso, n)`, `dateAtStep(meta, k)` (the clock after midnight shows the next day).
+
+**Tooltips** (`ui/lib/tip.js`, L0): `mountTips(document)` (the shell calls it once), `showTip(html, x, y)` (viewport pixels; the scene's hover), `hideTip()`, `tipHTMLFor(el)`, `LABEL_TIPS`, `speedTip(speed)`. Any element with `data-tip` (text), `data-tip-html` (HTML our code built from labelled values), `class="chip"` or `title` explains itself on hover, focus or tap. Tooltip-bearing icons get `tabindex="0"`.
+
+**Provenance tags** (`ui/css/base.css`, CSS only): `fmt.chip()` is unchanged; the word renders at font-size 0 and a neutral 14 × 14 tag shows R / S / D / A (ASSUMPTION dashed). A card whose numbers share one label shows one tag.
+
+**Icons** (`ui/lib/icons.js`; added by L0, owned by L4, imported by L5): `svg(name, opts)`, `drawIcon(ctx, name, x, y, size, opts)`, `buildAtlas()`, `atlasIds()`, `batteryId(state, soc)` (`bat-<C|D|I|S|X|B|N>-<decile>`), `meterId(tier, pct)` (`m-<tier>-<pct in 5% steps, 0..200>`), `meterGeom(pct)`, `PATHS`, `ALIASES`, `TIER_RGB` (tier 0 sage), `STATE_RGB` (D violet), `TIER_WORDS`, `TIER_TIPS`, `TIER_GLYPH`, `STATE_WORDS`, `legendHTML({title, rows, extraHTML, foot, footHTML, open, cls})` (the legend container, `<details class="hb-legend …">`, collapsible to a pill), `LEGEND_OBJECTS`, `TAG_LEGEND`. The meter takes panel-only `{homeKW, batKW}` (grey homes / teal batteries split) and `{exporting}` (violet + out-arrow).
+
+**Day picker** (`ui/lib/days.js`, L0): `dayChipHTML(index, date)`, `dayRowsHTML(index, date)`, `sparklineSVG(values)` (pure), `mountDayPicker(el, {index, calendar, date, onPick})` → `{close(), destroy()}`. It reads A.10 only.
+
+**Sections** (`ui/css/base.css`): `<details class="hb-sec" data-sec="<id>"><summary>icon <span class="sec-t">…</span><span class="sec-teaser">…</span> chevron</summary><div class="hb-sec-body">…</div></details>`, closed by default; the panel persists open state per viewer in `localStorage["hb.sec."+id]` (try/catch).
+
 **Formatting** (`ui/lib/format.js`): `fmt(x, opts)`, `fmtHTML(x, opts)` and `fmtValue(x, opts)` throw `LabelError` on a bare number; `chip(label, cite)`; `pct10`, `kw10`, `socPm` for bulk values; `timeToStep(meta, "HH:MM")` (a time before `start` counts as the next day), `stepToTime(meta, k)`.
 
-**Panel API** (`ui/panels/{p1,p2,more}.js`): `export async function mount(el, ctx)`, resolving after the panel's first render and its first `ctx.scene.update(...)`. `ctx = {topology, footprints, link, scene, data, fmt, sceneModel, theme, reportError(err), href(linkPatch), go(linkPatch)}`. The shell sets `data-status=ready` after `mount()` resolves **and** `scene.whenRendered()` resolves (20 s timeout).
+**Panel API** (`ui/panels/{p1,p2,more}.js`): `export async function mount(el, ctx)`, resolving after the panel's first render and its first `ctx.scene.update(...)`. `ctx = {topology, footprints, link, scene, data, fmt, sceneModel, theme, reportError(err), showNotice(msg), href(linkPatch), go(linkPatch)}`. `ctx.link.bare` is true only for a link that names none of `branch`, `t`, `beat`, `date` (the P1 intro card); it is non-enumerable, so `href()`/`go()` patches are never bare. `p1.js` exports `supportsDates = true` once it loads through `loadP1MetaFor(ctx.link.date)` / `loadP1BranchFor(ctx.link.date, b)`. The shell sets `data-status=ready` after `mount()` resolves **and** `scene.whenRendered()` resolves (20 s timeout).
 
 **Scene API** (`ui/lib/scene3d.js` and `ui/lib/fallback2d.js`, same shape; L4):
 - `createScene(el, {topology, theme, onError, viewState?}) -> scene`; `scene3d.createScene` **throws** when deck.gl or WebGL2 is missing, and the shell falls back.
 - `scene.update(model)`, `scene.camera('feeder'|'street'|'t240')`, `scene.onPick(cb)`, `scene.dispose()` (deck.finalize; only `?smoke=dump` calls it), `scene.whenRendered() -> Promise` (after the next completed render), `scene.kind` (`'webgl'`|`'fallback'`).
+- Round 2 (UX_SPEC_R2 6.1): `scene.onHover(cb)`, `cb({x, y, layer, object})` or `cb(null)` (deck.gl `onHover`, `pickingRadius: 3`; x, y in viewport pixels, ready for `tip.showTip`); `scene.flyTo(lonlat, {zoom: 18.3, pitch: 55})` (Should). The 2D fallback keeps the same names (its hover hit-test is Should).
 
-**Scene model** (`ui/lib/scene-model.js`, pure, node-tested; L4): `buildSceneModel({topology, footprints, frame, view, theme}) -> {homes[], batteries[], cans[], lines[], labels[]}`, `cameraPreset(topology, name)`, `frameFromP1(branchDoc, k)`, `frameFromP2(comboDoc)`, `TIER_RGB[0..5]`.
+**Scene model** (`ui/lib/scene-model.js`, pure, node-tested; L4): `buildSceneModel({topology, footprints, frame, view, theme}) -> {homes[], batteries[], cans[], lines[], labels[]}`, `cameraPreset(topology, name)`, `frameFromP1(branchDoc, k)`, `frameFromP2(comboDoc)`, `TIER_RGB[0..5]` (tier 0 sage `[138,165,143]` in round 2).
+- Round 2 model (UX_SPEC_R2 6.1): keep the field names **`labels`** and **`batteries`** (so `p2.js`'s fallback stays dormant); `batteries[] = {j, home, position, polygon, icon, soc, state, kw, placed?}`; `buildSceneModel` still honours P2 `pins` and `placed` (placed ones render as ghost cabinets plus a `bat-N-9` icon; `labels` entries get `pin: true`, `batteries` entries `placed: true`). New fields: `walls`, `roofs`, `drops`, `halos`, `tfs` (with `mount`), `pads`, `plinths`, `poles`, `cans`, `meters`, `worst`. Static geometry is memoized per (topology, footprints, theme); per step only meters, battery icons, halos, drop colours, pulses and `worst` are rebuilt. **P2 must keep rendering** (the P2 canary is in every lane's gate).
 
 **Charts** (`ui/lib/charts.js`; L5): `priceStrip`, `heatStrip`, `lineChart`, `barChart` (stubs; L5 may add).
 
 The L0 stubs of every L4/L5 file above render a placeholder and keep these names. From the foundation merge on, those files belong to L4 / L5 (`scripts/lanes.json`).
 
-**Deep links:** `?view=p1&branch=none|naive|aware|aware_faults&t=HH:MM&cam=feeder|street|t240`, `?view=p2&combo=<id>&home=<id>&n=1..10`, `?view=more`, `&beat=<id>`, `&nowebgl=1` (2D fallback), `&smoke=dump` (finalize after first render; manual `--dump-dom` only, never in the gate). The smoke list is `scripts/deeplinks.txt`.
+**Deep links:** `?view=p1&branch=none|naive|aware|aware_faults&t=HH:MM&cam=feeder|street|t240`, `?view=p2&combo=<id>&home=<id>&n=1..10`, `?view=more`, `&beat=<id>`, `&nowebgl=1` (2D fallback), `&smoke=dump` (finalize after first render; manual `--dump-dom` only, never in the gate). Round 2: `&date=YYYY-MM-DD` (default `2026-08-23`, never written), `&speed=0.1|0.25|0.5|1|2|4` (else the panel's default, 0.25), `&hold=0` (no 1.5 s hold at story moments), `&cap=0` (no story line, for clean takes). `linkQuery` writes only non-defaults of these four. The smoke list is `scripts/deeplinks.txt`.
 
 ---
 
@@ -223,12 +274,14 @@ sim.siting.per_tf_rule(bg_kw[379], bg_kvar[379], kva[379], soc[m], pmax[m], emax
 - `sim.topology.load_table()` gives the same load/home/transformer maps **without OpenDSS** (safe while a `Feeder` is live).
 - `sim.tiers.normal_events(pct, step_minutes) -> [(tf, start, end_exclusive)]`, `tier_strings(codes)`, `summary_counts(pct, step_minutes)`. A normal-tier event is a run above 110% lasting ≥ 30 min: 30 steps at 60 s, 2 intervals at 15 min. Protection: 10 consecutive 60 s steps above 200% or one step above 300%; at 15-min steps one interval above 200% operates it.
 - `sim.prices.day_prices(day) -> [(start, price)] x96`. Clock: interval start = (hour−1)·60 + (interval−1)·15 min (ERCOT hour-ending). `discharge_plan` returns full 15-min intervals then one partial interval floored to whole minutes, in price order (on 08-23: 21:00, 21:15, 20:00, 19:45 and 13 min of 20:15).
-- `sim.contracts`: `envelope(name, producer, inputs, constants, sources, series, fixture=False)`, `labelled(v, label, cite=None, **siblings)`, `inputs_sha(prices=True, loads=True, topology=True)`, `write_json(path, doc) -> bytes`, `dumps(doc)`.
+- `sim.contracts`: `envelope(name, producer, inputs, constants, sources, series, fixture=False)`, `labelled(v, label, cite=None, **siblings)`, `inputs_sha(prices=True, loads=True, topology=True)`, `write_json(path, doc) -> bytes`, `dumps(doc)`. Round 2: `write_json_gz(path, doc) -> bytes` (level 9, mtime 0: byte-identical rebuilds) and `read_json_any(path)`. `python -m sim.contracts` decompresses every `*.json.gz` and applies the same envelope, label and shape rules (A.5h, A.6h, A.9h, A.10); sizes are counted on disk. An unknown file under `p1/days/` fails.
 - `sim.constants.const(name, value, label, cite)` registers a constant; `export(*names)` gives the envelope block. **Every constant is one named `const()`**; lane modules may register their own (a redefinition with a different value raises).
 
 **Parity (P1 ↔ P2).** The stateless core is `allocate(..., state=None, cover=False)`: no dwell, no bucket memory, no flip limit, no cover. A parity test compares it with `siting.per_tf_rule()` on 1,000 random **single-step** states and requires agreement to 1e-6. Both use `sim.caps.transformer_caps`.
 
 **Verifiers.** `sim.verify_p1` and `sim.verify_p2` expose `main(argv) -> int` and print their lines (build prompt 7.3 / 7.4), ending `VERIFY p1: PASS (k expectations refuted, see NOTES.md)` or `VERIFY p1: FAIL (<invariants>)`. `python -m sim.verify p1|p2 [--rebuild]` dispatches to them; before the data exists it prints `VERIFY p1: SKIP (...)`. `[INVARIANT]` lines gate; `[EXPECT]` lines print `ok <measured>` or `REFUTED: <measured>` and never gate. A plain run prints `determinism: not checked (run --full)`.
+
+**History days (round 2).** `python -m sim.verify p1 --days [--rebuild]` passes `--days` through to `sim.verify_p1.main(argv)` (L2), which verifies every day under `ui/data/p1/days/` (HIST-R2 4.4 [INVARIANT]s and [EXPECT]s) and, with `--rebuild`, rebuilds them into a temp dir and byte-compares the plain and `.gz` files. Before `p1/days/index.json` exists (and, for `--rebuild`, before `sim/history.py` exists) the line is `VERIFY p1: SKIP (...)`. If the index exists but `sim.verify_p1` does not handle `--days`, that is a FAIL, never a PASS that did not look at the days. `scripts/build_all.sh history` runs `sim.history` under the lock (not part of `all`); `check_all.sh --full` adds `sim.verify p1 --days --rebuild` to its one lock hold once `sim/history.py` exists.
 
 **Builders.** `sim.p1_build`, `sim.p2_build`, `sim.referee` (and `sim.calibrate`) are run by `scripts/build_all.sh p1|p2|referee|calibrate` and accept `--quick` (under 20 s, no lock, short window, for tests). Heavy runs take the shared lock: `lockf -k -t 2400 /private/tmp/claude-501/forge-heavy-local.lock nice -n 10 <cmd>` (`build_all.sh` does this; `HB_LOCK_HELD=1` when the caller already holds it).
 

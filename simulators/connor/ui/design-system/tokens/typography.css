@@ -1,0 +1,9 @@
+:root{
+  --font-sans:'Hanken Grotesk',system-ui,sans-serif;
+  --w-regular:400; --w-bold:700;
+  --fs-hero:150px; --fs-stat-xl:96px; --fs-stat-l:58px; --fs-stat:34px;
+  --fs-title:26px; --fs-clock:30px; --fs-body:14px; --fs-small:12.5px; --fs-tag:10px;
+  --lh-tight:1.1; --lh-body:1.5;
+  --tracking-display:-0.02em; --tracking-tag:0.08em;
+  --numeric:tabular-nums;
+}
