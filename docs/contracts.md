@@ -38,7 +38,7 @@ Written by L0 (the lead) on 26 Sep 2026 for the overnight build. Two halves: **P
             "referee":{"label":"SIM","text":"OpenDSSDirect.py 0.9.4 AC power flow"}},
  "series":{"loading":{"label":"SIM","unit":"pct x10","by":"OpenDSS"}}}
 ```
-- `schema` matches `hb.<name>.v<N>`; `producer` matches `sim.<module>`.
+- `schema` matches `hb.<name>.v<N>`; `producer` matches `sim.<module>`, or `scripts.<name>` for a fetcher in `scripts/` (`footprints.json`: `scripts.fetch_footprints`).
 - `inputs`: sha256 strings or `null` when the file does not depend on that input. `sim.contracts.inputs_sha()` computes them: prices = `data/ercot/lz_north_2026.csv`; loads = `data/profiles/smartds_2018_aug.npz`; topology = `data/smartds/*.dss` + `data/fleet.json`.
 - `constants`: `sim.constants.export(*names)` gives `{NAME: {value, label, cite}}`.
 - `sources` / `series`: each value needs `label` (and `text` for sources).
@@ -54,7 +54,7 @@ Written by L0 (the lead) on 26 Sep 2026 for the overnight build. Two halves: **P
 | `p1/meta.json` | `sim.p1_build` (L2) | A.5 |
 | `p1/<branch>.json` | `sim.p1_build` (L2) | A.6; one file per branch (`none`, `naive`, `aware`, `aware_faults`), loaded lazily |
 | `p1/chaos.json` | `sim.chaos` (L2, P3 only) | 50 seeded runs; battery-caused violations only |
-| `engine.json` | `sim.bench` (L2) | ms per OpenDSS solve, P1 build seconds, `allocate()` µs at 96, 1k, 10k, 100k batteries (synthetic scale test), the load average; all SIM |
+| `engine.json` | `sim.bench` (L2) | ms per OpenDSS solve, P1 build seconds, `allocate()` µs at 96, 1k, 10k, 100k batteries (synthetic scale test), the load average; all SIM. Layout: `opendss{msPerSolve, msPerStep}`, `p1{buildSeconds, solves}`, `allocate{"96", "1000", "10000", "100000"}` (µs per stateless call), `loadAvg`; every leaf `{v, label:"SIM", cite}`. Timings are not deterministic, so they live here and not in `p1/meta.json` |
 | `p2/index.json` | `sim.p2_build` (L3) | A.7 |
 | `p2/<combo>.json` | `sim.p2_build` (L3) | A.8; combo id `policy-cls-rule-gN` |
 | `beats.json` | L5 | `{beats:[{id, t0, t1, title, caption, link, label}]}`; `link` is a query string (`"view=p1&branch=naive&t=22:30"`); captions are templated from data; `&beat=<id>` applies every key the link names. Numbers in captions come from data with their label (the L5 test fails on bare digits). |
@@ -75,17 +75,29 @@ Written by L0 (the lead) on 26 Sep 2026 for the overnight build. Two halves: **P
 - `tiers{amber:100, normal:110, normalMinutes:30, emergency:150, label:"REAL"}`.
 - `protection{fusePct:200, fuseMinutes:10, instantPct:300, instantSeconds:60, label:"ASSUMPTION", cite}`.
 - `price[720]` (REAL, $/MWh, labelled in `series`).
-- `plan{discharge[[HH:MM, minutes]…], partial[…], onset:"HH:MM", onsetPrice{v,label}, rule:"D-26", label:"DERIVED"}` (from `sim.prices.onset_d26` + `discharge_plan`).
+- `plan{discharge[[HH:MM, minutes]…], partial[…], onset:"HH:MM", onsetPrice{v,label}, rule:"D-26", mode:"binding"|"non-binding"|"fallback", threshold{v,label:"DERIVED"} (2 × the day median), label:"DERIVED"}` (from `sim.prices.onset_d26` + `discharge_plan`).
+- `naiveLabel{text, label:"ASSUMPTION", cite}`: the naive-branch framing of build prompt 3.4, shown on the branch toggle.
+- `tc{step, t, text}`: `Tc`, the first minute `aware` grants non-zero charge (5.4.4); the `aware_faults` event times are relative to it.
 - `branches[4]`.
-- `events{aware_faults[{step, t, kind, home|tf, cmdKW|deltaKW|minutes}]}` (kind: `comms_lost`, `hot`, `stall`).
+- `events{aware_faults[{step, t, kind, home|tf, cmdKW|deltaKW|minutes, text}]}` (kind: `comms_lost`, `hot`, `stall`). Outcome fields, measured in the build:
+  - `comms_lost`: `batt` (fleet index), `tf`, `cmdKW` (the silenced command, non-zero), `silentFrom`, `expiresStep`, `staleStep`, `expiredStep`, `coveredStep`, `coveredBy[]` (home indices that took the released kW);
+  - `hot`: `tf`, `home` (the one home the EV load goes on), `deltaKW`, `minutes`;
+  - `stall`: `minutes`, `resumeStep` (the first step the controller acts again).
 - `markers[{t, text, label}]`, computed from data.
-- `summary{<branch>: {...}}`, each a labelled number: `normalEvents`, `emergencyTfs`, `batteryCausedNormal`, `batteryCausedEmergency`, `batteryCausedAmberMin`, `homeOnlyOver100`, `protectionOperated`, `homesDark`, `homesOnBattery`, `maxLoading{v, tf, t}`, `reserveBreaches`, `chargedPctBy0400`, `energyValueUSD`, and the measured grid checks `vMinHome{v:pu, volts, home, t}`, `homesBelow095`, `feederHead{v:maxPct, amps, t, ratingA:{v:370, label:"DERIVED", cite:"site/ems/flow-spec.md"}}`.
+- `summary{<branch>: {...}}`, each a labelled number: `normalEvents`, `emergencyTfs`, `batteryCausedNormal`, `batteryCausedEmergency`, `batteryCausedAmberMin`, `homeOnlyOver100`, `protectionOperated`, `homesDark`, `homesOnBattery`, `maxLoading{v, tf, t}`, `reserveBreaches`, `chargedPctBy0400`, `energyValueUSD`, and the measured grid checks `vMinHome{v:pu, volts, home, t}`, `homesBelow095`, `feederHead{v:maxPct, amps, t, ratingA:{v:370, label:"DERIVED", cite:"site/ems/flow-spec.md"}, afterOnset{v:maxPct, label, cite, amps, t}}` (`afterOnset` = the head maximum from the D-26 onset on).
+  - `fuseMargin{v:peakPct, label:"SIM", cite, tf, t, minutesAbove200{v,label}, fuseMinutes{v,label:"ASSUMPTION"}}`: the branch's peak loading against 4.5's fuse rule (the gauge's fuse-margin line).
+  - Command audit (seq + expiry, 5.4.3 step 8): `commands` (issued), `seqRejected` (deliveries a device refused for a non-increasing seq), `nonIncreasingAccepted` (must be 0), `actedAfterExpiry` (battery-steps with non-zero kW in state `X`; must be 0).
 - `controllerView{text, label:"ASSUMPTION", cite}` (the `CONTROLLER_VIEW` constant; shown on the P1 panel).
-- `relief{tf, t, none, aware, minutesOver100, reliefKW, reliefKWh, driver}`.
-- `money{…}` (5.4.6 lines, each labelled; never prices local relief).
-- `unrelieved[{tf, reason, driver}]` (the P2 bridge).
+- `relief{tf, t, step, none, aware, minutesOver100{v, label, cite, none, aware}, reliefKW, reliefKWh, driver, text}` (`text` is the on-screen wording, e.g. "over nameplate for about 15 minutes (amber; not a failure): one home's 15-minute spike").
+- `money{…}` (5.4.6 lines, each labelled; never prices local relief). Layout:
+  - `energyValueUSD{none, naive, aware, aware_faults}` (DERIVED) and `costOfAwareness` (naive − aware, DERIVED, may be negative);
+  - `relief{kwh (SIM), opportunityUpperUSD (DERIVED upper bound), priced}` (`priced` is false: no sourced price for local relief);
+  - `systemCapacityPerMonth{<branch with batteries>: {fleetKW, low, high, unit}}`: fleet kW at the system/price peak × the $3.12 (REAL benchmark) to $8.50 (DERIVED, UNVERIFIED) band; never A's relief kW;
+  - `whoPays[{who, for, label, cite}]`, `localRelief{text, label:"ASSUMPTION", cite}`, `transformerReplacementUSD` (`v: null` unless sourced);
+  - `avoidedHarm{<branch>: {normalEvents, emergencyTfs, protectionOperated}}` (SIM).
+- `unrelieved[{tf, reason, peak{v, label, cite, t}, driver}]` (the P2 bridge).
 - **`driver`** = `{home, label, profile, kwAtPeak{v,label}, sharedWith[]}`: the home whose load makes the peak, its SMART-DS profile name, its kW at that step, and the other homes using the same profile.
-- `engine{solves, msPerSolve}` (labelled).
+- `engine{solves, msPerSolve}` (labelled). `msPerSolve.v` is `null` by design: timings are not deterministic, so they live in `engine.json` and a rebuild stays byte-identical.
 
 ### A.6 `p1/<branch>.json` (L2)
 
@@ -102,6 +114,7 @@ Written by L0 (the lead) on 26 Sep 2026 for the overnight build. Two halves: **P
 | `vMin` | `[steps]` int | min home voltage, 1e-4 pu |
 | `counts` | `[steps][5]` int | number of transformers at tier codes **1, 2, 3, 4, 5** at that step (the tier-count ribbon) |
 | `ticker` | `[[step, text]]` | e.g. `"22:14 A room 6.1 kW → Home 0212 +6.1 kW (lowest SoC on A)"` |
+| `reverse` | `[[step, tf]]` int, sparse | steps where transformer `tf` has net P < 0 (back-feed); labelled once in `series.reverse` (SIM, OpenDSS). The verifier re-derives "battery-caused" from it |
 
 ### A.7 `p2/index.json` (L3)
 
