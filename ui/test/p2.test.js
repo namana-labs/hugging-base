@@ -826,7 +826,7 @@ test('R2 More: the real-evenings facts read p1/days/index.json, labelled; absent
   assert.equal(say('daysCount'), '2 DERIVED');
   assert.equal(say('daysAwareMoreEvery'), 'on every one of them');
   assert.equal(say('daysNaiveBroke'), '2 SIM');
-  assert.match(say('daysBest'), /Sun 23 Aug 2026 REAL \(the evening we know best\), \$9\.55 DERIVED a battery/);
+  assert.match(say('daysBest'), /Sun 23 Aug 2026 REAL \(The evening we know best\), \$9\.55 DERIVED a battery/);
   assert.match(say('daysWorst'), /-\$0\.21 DERIVED/);
   assert.equal(say('awareMoreTonight'), '$22.73 DERIVED');
   // no index: the facts are "not built", never a guess

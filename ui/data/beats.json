@@ -18,7 +18,7 @@
       "title": "The problem",
       "label": "REAL",
       "link": "view=p1&branch=naive&t=16:00&cam=street",
-      "headline": "ERCOT sends one number per zone and checks no street transformer, yet Base's Houston batteries already move {{houstonBlock}} together.",
+      "headline": "ERCOT sends one number per zone and checks no street transformer, while Base's Houston batteries already charge as one block ({{houstonBlock}}).",
       "caption": "ERCOT dispatches one number per load zone and does not check feeders {{chip:REAL:ERCOT base points are per resource and load zone; no feeder or service-transformer check}}. Base's own Houston fleet already moves as one block: its charge reached {{houstonBlock}}. Our naive branch splits that number with no feeder check, all at once at the onset {{chip:ASSUMPTION:Base's real split is not public (build prompt 12 Q5); never implies Base charges this way today}}. Street A–D: {{streetHomes}} homes on {{streetTfs}} service transformers, every home with a battery, in a fleet of {{fleetSize}}. The scale ladder: A's battery charge at once, {{scaleLadderKW}}, as a share of each scale: {{scaleLadder}}. What overloads one service transformer does not register at the zone."
     },
     {

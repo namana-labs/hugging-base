@@ -586,7 +586,7 @@ function dayExtreme(S, dir) {
   const ds = daysOf(S).filter((r) => r.perBattery && isL(r.perBattery.aware));
   if (ds.length < 2) return null;
   const r = ds.reduce((a, b) => ((b.perBattery.aware.v - a.perBattery.aware.v) * dir > 0 ? b : a));
-  return [L(dateText(r.date), 'REAL', 'a real ERCOT evening (LZ_NORTH prices)'), r.tag ? ` (${String(r.tag).toLowerCase()})` : '', ', ', { ...r.perBattery.aware, o: { money: true, digits: 2 } }, ' a battery'];
+  return [L(dateText(r.date), 'REAL', 'a real ERCOT evening (LZ_NORTH prices)'), r.tag ? ` (${String(r.tag)})` : '', ', ', { ...r.perBattery.aware, o: { money: true, digits: 2 } }, ' a battery'];
 }
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 /** "Sun 23 Aug 2026" from an ISO date; the weekday is computed, never typed. */
@@ -757,8 +757,9 @@ function moneyCard(ctx, S) {
   }
   const more = evalFact('awareMoreTonight', S);
   const cost = m && isL(m.costOfAwareness) ? m.costOfAwareness : null;
-  const moreLine = more ? `<div class="money-more">${svg('turns', { size: 15 })} Feeder-aware earned ${more.map((x) => renderPart(x, fmt, true)).join('')} more than naive tonight, and caused no overload.</div>`
-    : cost ? `<div class="money-more">Cost of awareness (naive − feeder-aware; negative means feeder-aware earned more): ${fmt.fmtHTML(cost, { money: true, digits: 2 })}</div>` : '';
+  const safe = m && S.p1meta.summary && S.p1meta.summary.aware && isL(S.p1meta.summary.aware.batteryCausedNormal) ? S.p1meta.summary.aware.batteryCausedNormal : null;
+  const moreLine = more ? `<div class="money-more">${svg('turns', { size: 15 })}<span>Feeder-aware earned ${more.map((x) => renderPart(x, fmt, true)).join('')} more than naive tonight${safe ? `, with ${fmt.fmtHTML(safe)} battery-caused overloads` : ''}.</span></div>`
+    : cost ? `<div class="money-more"><span>Cost of awareness (naive − feeder-aware; negative means feeder-aware earned more): ${fmt.fmtHTML(cost, { money: true, digits: 2 })}</span></div>` : '';
   const r = m && m.relief;
   const relief = r && isL(r.opportunityUpperUSD)
     ? `<p class="hb-sub">A's local relief on this evening (one home's spike) would have earned at most ${fmt.fmtHTML(r.opportunityUpperUSD, { money: true, digits: 2 })} at the price peak: it is <b>not paid for today</b> ${fmt.chip('ASSUMPTION', 'no sourced price for local transformer relief anywhere in our material (build prompt 5.4.6)')}.</p>` : '';
@@ -1070,8 +1071,8 @@ export async function mount(el, ctx) {
         <ol class="beat-list">${beatRows || '<li><span class="beat-na">beats.json not built yet</span></li>'}</ol></div>
       <div class="more-col">${moneyCard(ctx, S)}${payersCard(ctx, S)}</div>
       ${daysCard(ctx, S)}
-      <div class="more-col">${plugInCard(ctx, S)}${engineCard(ctx, S)}</div>
     </div>
+    <div class="hb-cards more-mid">${plugInCard(ctx, S)}${engineCard(ctx, S)}</div>
     <h2 class="more-h">Everything that already worked, unchanged</h2>
     <div class="hb-cards">
       ${STORIES.map(([t, d]) => `<div class="hb-card"><h3><a href="../demos/grid-stories/ui/dist/">${esc(t)}</a></h3><div class="hb-sub">${esc(d)} Pick it in the prototype's story menu. Connor's prototype, unchanged; its prices and loads are scripted.</div></div>`).join('')}
@@ -1080,6 +1081,12 @@ export async function mount(el, ctx) {
       ${await chaosCard(ctx)}
     </div>
     ${await emsCards(ctx)}</div>`;
+  // the money calendar's simulated evenings open on P1 (the same link as the evening rows)
+  if (typeof el.querySelectorAll === 'function') {
+    for (const b of el.querySelectorAll('.more-days .hb-cal-cell.sim[data-date]')) {
+      b.addEventListener('click', () => ctx.go({ view: 'p1', date: b.dataset.date, branch: 'aware', t: null, combo: null, home: null, n: null }));
+    }
+  }
   if (ctx.link.beat) {
     const t = el.querySelector(`[data-beat="${typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(ctx.link.beat) : ctx.link.beat}"]`);
     const bar = el.querySelector('.beat-bar');

@@ -189,7 +189,11 @@ body.view-more .hb-panel { overflow: hidden; }
 .money-more { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; margin: 6px 0; }
 .money-more .ic { color: var(--accent); }
 
-.more-days { grid-row: span 2; }
+.more-top { grid-template-columns: minmax(360px, 1.15fr) minmax(320px, 1fr) minmax(480px, 1.5fr); }
+.more-beats { grid-row: auto; }
+.more-mid { padding-top: 0; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); }
+@media (max-width: 1280px) { .more-top { grid-template-columns: minmax(340px, 1fr) minmax(320px, 1fr); } .more-days { grid-column: 1 / -1; } }
+@media (max-width: 900px) { .more-top, .more-mid { grid-template-columns: 1fr; } .day-head { display: none; } .day-row { grid-template-columns: 1fr auto; } .day-spark, .day-naive { display: none; } }
 .day-head, .day-row { display: grid; grid-template-columns: minmax(150px, 1.4fr) 110px 1fr 30px 44px; align-items: center; gap: 8px; }
 .day-head { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 8px 0 2px; }
 .day-rows { display: grid; gap: 2px; }
