@@ -7,9 +7,12 @@
 Lines are tagged [INVARIANT] (gates: a failure is a bug), [EXPECT] (prints ok/REFUTED, never gates; build prompt 3.5)
 or [report]. Ends "VERIFY p1: PASS (k expectations refuted, see NOTES.md)" or "VERIFY p1: FAIL (<invariants>)".
 """
+import gzip
 import json
 import math
 import os
+import re
+import shutil
 import shlex
 import subprocess
 import sys
@@ -22,11 +25,12 @@ from .constants import (CORE_POWER_KW, CORE_USABLE_KWH, CORE_RTE, SOC0, RESERVE_
                         TIER_NORMAL_PCT, TIER_EMERGENCY_PCT, MIN_GRANT_KW, PRICES_SHA256, COMMS_STALE_S,
                         COMMAND_TTL_S, STALL_MIN, FAULT_COMMS_AFTER_MIN, FAULT_HOT_AFTER_MIN, FAULT_STALL_AFTER_MIN,
                         HEAD_RATING_KVA, LEGACY_POWER_KW, LABELS)
-from .contracts import UI_DATA, audit_labels
+from .contracts import UI_DATA, audit_labels, check_envelope, check_shapes
 from .money import ercot_demand, pct_text, scale_ladder, sig, head_kva_per_phase
 from .orchestrator import handoffs
 from .prices import onset_d26, discharge_plan
 from .tiers import normal_events
+from datetime import datetime, timedelta
 
 P1 = UI_DATA / "p1"
 BRANCHES = ("none", "naive", "aware", "aware_faults")
@@ -89,6 +93,8 @@ def caused_mask(doc, tf_of_batt):
 
 def main(argv=None):
     argv = list(argv or [])
+    if "--days" in argv:
+        return main_days(argv)
     if not (P1 / "meta.json").exists():
         print("VERIFY p1: SKIP (no ui/data/p1/meta.json yet)")
         return 0
@@ -314,6 +320,18 @@ def main(argv=None):
     ok, txt = check_scale_ladder(meta, topo, focus["A"])
     v.inv(ok, "scale-ladder", txt)
 
+    # round 2: money per evening (split, cash), the derived relief text, the onset deferral, the story line, L7's note
+    check_evening(v, meta, docs, focus["A"])
+    note = meta["summary"].get("aware_faults", {}).get("note")
+    e = evs.get("comms_lost")
+    if "aware_faults" in docs:
+        ok = note is not None and e is not None
+        if ok:
+            soc = docs["aware_faults"]["soc"][n - 1][e["batt"]] / 10
+            ok = abs(soc - note["silentEndSocPct"]["v"]) <= 0.051 and note["valueDeltaUSD"]["v"] == round(
+                mo["aware_faults"]["v"] - mo["aware"]["v"], 2)
+        v.inv(ok, "faults-note", f"money  : aware + failures note (audit L7): {note['text'] if note else 'missing'}")
+
     # P3 chaos sweep (5.7 item 2), when built: re-derived from ui/data/p1/chaos.json
     check_chaos(v, meta, topo)
 
@@ -506,6 +524,246 @@ def rebuild_compare():
         if diff:
             return False, f"rebuild differs: {', '.join(diff)}"
         return True, f"rebuild byte-identical ({len(names)} files)"
+
+
+
+
+# ---- round 2: the evening's money, story and relief text (every day, 23 Aug included) --------------------------------
+def check_evening(v, meta, docs, a_tf, tag=""):
+    """[INVARIANT]s on the round-2 meta fields (UX_SPEC_R2 5.1, HIST-R2 4.4), re-derived from meta + branch docs."""
+    n = meta["steps"]
+    mo = meta["money"]
+    ev = mo["energyValueUSD"]
+    split = mo.get("split") or {}
+    cash = meta.get("cash") or {}
+    batt = [b for b in meta["branches"] if b != "none"]
+    probs = []
+    for b in batt:
+        sp = split.get(b)
+        c = cash.get(b)
+        if sp is None or c is None:
+            probs.append(f"{b}: split or cash missing")
+            continue
+        if sp["net"]["v"] != ev[b]["v"]:
+            probs.append(f"{b}: split.net {sp['net']['v']} != energyValueUSD {ev[b]['v']}")
+        if abs(sp["sold"]["v"] - sp["bought"]["v"] - sp["net"]["v"]) > 0.0101:
+            probs.append(f"{b}: sold - bought != net")
+        if len(c) != n or c[-1] != int(round(ev[b]["v"] * 100)):
+            probs.append(f"{b}: cash has {len(c)} steps, ends {c[-1] if c else None} != {ev[b]['v']}")
+        if abs(sp["perBattery"]["v"] - round(ev[b]["v"] / 96, 2)) > 0.005:
+            probs.append(f"{b}: perBattery")
+        if any(x["label"] != "DERIVED" for x in sp.values()):
+            probs.append(f"{b}: split not DERIVED")
+    extra = sorted(set(split) - set(batt)) + sorted(set(cash) - set(batt))
+    if extra:
+        probs.append(f"split/cash name branches not in meta.branches: {extra}")
+    ok = not probs and meta["series"].get("cash", {}).get("label") == "DERIVED"
+    v.inv(ok, "money-split", f"money {tag}: " + " ; ".join(
+        f"{b} sold ${split[b]['sold']['v']:,.2f} bought ${split[b]['bought']['v']:,.2f} net ${split[b]['net']['v']:,.2f} "
+        f"(${split[b]['perBattery']['v']:.2f}/battery)" for b in batt if b in split)
+        + " ; cash ends at energyValueUSD (DERIVED)" + (" ; " + "; ".join(probs) if probs else ""))
+    # the same money re-derived from the branch files (kW x10): rounding only
+    worst = 0.0
+    for b in batt:
+        kw = np.asarray(docs[b]["batKW"], dtype=float) / 10
+        steps = -(kw.sum(axis=1) * np.asarray(meta["price"])) / 60.0 / 1000.0
+        cum = np.cumsum(steps) * 100.0
+        worst = max(worst, float(np.abs(cum - np.asarray(cash[b])).max()) if b in cash else 0.0)
+    v.exp(worst <= 10.0, "money-rederive", f"money {tag}: cash re-derived from the branch files' batKW (0.1 kW): "
+          f"max difference {worst:.1f} cents", "<= 10 cents (rounding of the branch files)")
+    # relief text and the A marker: derived from minutesOver100 (HIST-R2 3.1-3.2, audit L12)
+    rel = meta["relief"]
+    mo_n = rel["minutesOver100"]["none"]
+    txt = rel["text"]
+    a_marks = [m for m in meta["markers"] if m["text"].startswith("A peaks")]
+    na = np.asarray(docs["none"]["loading"], dtype=float)[:, a_tf] / 10
+    ok = (int((na > TIER_AMBER_PCT).sum()) == mo_n
+          and (("under its nameplate" in txt) == (mo_n == 0))
+          and (mo_n == 0 or f"{mo_n} minutes" in txt) and "about 15" not in txt
+          and (len(a_marks) == (1 if mo_n > 0 else 0)))
+    v.inv(ok, "relief-text", f"relief {tag}: A over nameplate {mo_n} min (none.json: {int((na > TIER_AMBER_PCT).sum())}) ; "
+          f"text \"{txt}\" ; A marker {'yes' if a_marks else 'no'}")
+    # the onset deferral (adopt #3)
+    od = meta.get("onsetDeferral")
+    ok = od is not None
+    if ok:
+        k = od["step"]
+        nk = docs["naive"]["deliveredKW"][k] / 10
+        ak = docs["aware"]["deliveredKW"][k] / 10
+        ok = (hm(meta, k) == meta["plan"]["onset"] == od["t"] and abs(nk - od["naiveKW"]["v"]) < 1e-9
+              and abs(ak - od["awareKW"]["v"]) < 1e-9 and abs(od["deferredKW"]["v"] - round(nk - ak, 1)) < 1e-9
+              and od["deferredKW"]["label"] == "DERIVED")
+    v.inv(ok, "onset-deferral", f"onset  {tag}: " + (f"at {od['t']} naive charges {od['naiveKW']['v']:,.1f} kW, aware "
+          f"{od['awareKW']['v']:,.1f} kW: {od['deferredKW']['v']:,.1f} kW deferred (DERIVED) ; aware charged by the "
+          f"deadline {meta['summary']['aware']['chargedPctBy0400']['v']}% (SIM)" if od else "missing"))
+    # the story line: an editorial tag with no digits, a labelled why
+    st = meta.get("story") or {}
+    why = st.get("why") or {}
+    ok = bool(st.get("tag")) and not re.search(r"\d", st["tag"]) and why.get("label") in LABELS and bool(why.get("text"))
+    v.inv(ok, "story", f"story  {tag}: \"{st.get('tag')}\" · {why.get('text')} ({why.get('label')})")
+
+
+# ---- the history days (HIST-R2 4.4): `python -m sim.verify p1 --days [--rebuild]` ------------------------------------
+def gz_json(p):
+    raw = Path(p).read_bytes()
+    return json.loads(gzip.decompress(raw) if raw[:2] == b"\x1f\x8b" else raw)
+
+
+def main_days(argv):
+    from .history import DAYS, HIST_BRANCHES, index_row, day_row
+    days_dir = P1 / "days"
+    if not (days_dir / "index.json").exists():
+        print("VERIFY p1: SKIP (no ui/data/p1/days/index.json yet)")
+        return 0
+    v = V()
+    topo = json.loads((UI_DATA / "topology.json").read_text())
+    fleet = topo["fleet"]
+    tf_of_batt = [topo["homes"][h]["tf"] for h in fleet]
+    focus = {f["key"]: f["tf"] for f in topo["focus"]}
+    idx = json.loads((days_dir / "index.json").read_text())
+    cal = json.loads((days_dir / "calendar.json").read_text()) if (days_dir / "calendar.json").exists() else None
+    usable = (SOC0 - RESERVE_FLOOR) * CORE_USABLE_KWH * math.sqrt(CORE_RTE)
+    built = []
+    for row in idx["days"]:
+        d = row["date"]
+        base = P1 if row["dir"] == "" else P1 / row["dir"]
+        meta = json.loads((base / "meta.json").read_text())
+        want_row = index_row(meta, day_row(d))
+        v.inv(want_row == row, "index-row", f"index  {d}: row equals its meta ({row['tag']} ; peak ${row['peak']['v']:,.2f} at "
+              f"{row['peak']['t']} ; naive max {row['naiveMax']['v']}% ; aware ${row['perBattery']['aware']['v']:.2f}/battery)")
+        built.append(d)
+        if row["dir"] == "":
+            continue                                  # 23 Aug: `sim.verify p1` checks its four branches
+        tag = d
+        # the files: gzip branch docs that pass the A.6 shape checks; no aware_faults anywhere
+        docs, shape = {}, []
+        for b in HIST_BRANCHES:
+            p = base / f"{b}.json.gz"
+            raw = p.read_bytes()
+            if raw[:2] != b"\x1f\x8b":
+                shape.append(f"{p.name} is not gzip")
+            docs[b] = gz_json(p)
+            shape += [f"{b}: {e}" for e in check_envelope(docs[b]) + check_shapes(f"p1/{b}.json", docs[b])
+                      + audit_labels(docs[b])[0]]
+            if len(docs[b]["loading"]) != meta["steps"]:
+                shape.append(f"{b}: {len(docs[b]['loading'])} steps != {meta['steps']}")
+        shape += [f"meta: {e}" for e in check_envelope(meta) + check_shapes("p1/meta.json", meta) + audit_labels(meta)[0]]
+        leftovers = [b for b in (set(meta["branches"]) | set(meta["summary"]) | set(meta["money"]["energyValueUSD"])
+                                 | set(meta["money"]["systemCapacityPerMonth"]) | set(meta["money"]["avoidedHarm"])
+                                 | set(meta.get("cash", {})) | set(meta["money"].get("split", {}))) if b not in HIST_BRANCHES]
+        ok = not shape and meta["branches"] == list(HIST_BRANCHES) and meta["events"] == {} and not leftovers \
+            and sorted(p.name for p in base.iterdir()) == sorted(["meta.json"] + [f"{b}.json.gz" for b in HIST_BRANCHES])
+        v.inv(ok, "days-files", f"files  {d}: meta.json + {', '.join(b + '.json.gz' for b in HIST_BRANCHES)} ; gzip, A.6 "
+              f"shapes, labels ; branches {','.join(meta['branches'])} ; events {meta['events']}"
+              + (f" ; {'; '.join(shape[:4])}" if shape else "") + (f" ; leftover {leftovers}" if leftovers else ""))
+        # the plan (prices.onset_d26 + discharge_plan) for that day
+        onset, op, _, thr, mode = onset_d26(d)
+        plan = discharge_plan(d, onset, usable, CORE_POWER_KW)
+        ok = meta["plan"]["discharge"] == [[a[11:16], m] for a, m in plan] and meta["plan"]["onset"] == onset[11:16]
+        v.inv(ok, "days-plan", f"plan   {d}: onset {onset[11:16]} ${op:.2f} (D-26 {mode}) ; discharge "
+              f"{' '.join(t[11:16] + ('' if m == 15 else f'(+{m} min)') for t, m in plan)}")
+        # aware: battery-caused 0, the reserve holds, seq and expiry honoured, charged by the deadline
+        pct = {b: np.asarray(docs[b]["loading"], dtype=float) / 10 for b in docs}
+        cm, _, _ = caused_mask(docs["aware"], tf_of_batt)
+        cn = [e for e in normal_events(pct["aware"], 1.0) if cm[e[1]:e[2], e[0]].any()]
+        ce = int(((pct["aware"] > TIER_EMERGENCY_PCT) & cm).any(axis=0).sum())
+        s_aw = meta["summary"]["aware"]
+        soc = np.asarray(docs["aware"]["soc"])
+        isl = np.array([[c == "B" for c in st] for st in docs["aware"]["state"]])
+        breach = int(((soc < 200) & ~isl).sum())
+        acted = sum(1 for k, st in enumerate(docs["aware"]["state"]) for i, c in enumerate(st)
+                    if c == "X" and docs["aware"]["batKW"][k][i] != 0)
+        charged = float(soc[-1].mean() / 10)
+        ok = (not cn and ce == 0 and s_aw["batteryCausedNormal"]["v"] == 0 and s_aw["batteryCausedEmergency"]["v"] == 0
+              and breach == 0 and s_aw["reserveBreaches"]["v"] == 0 and acted == 0 and s_aw["actedAfterExpiry"]["v"] == 0
+              and s_aw["nonIncreasingAccepted"]["v"] == 0 and charged >= 95.0)
+        v.inv(ok, "days-aware", f"aware  {d}: battery-caused normal {len(cn)} / emergency {ce} ; reserve breaches {breach} ; "
+              f"acted after expiry {acted} ; non-increasing seq {s_aw['nonIncreasingAccepted']['v']} ; charged by the "
+              f"deadline {charged:.1f}% (>= 95%) ; max {s_aw['maxLoading']['v']}% (tf {s_aw['maxLoading']['tf']}, home load)")
+        s_nv = meta["summary"]["naive"]
+        v.exp(s_nv["batteryCausedNormal"]["v"] >= 1, "days-naive",
+              f"naive  {d}: max {s_nv['maxLoading']['v']}% (tf {s_nv['maxLoading']['tf']} at {s_nv['maxLoading']['t']}) ; "
+              f"normal-tier events {s_nv['normalEvents']['v']} ({s_nv['batteryCausedNormal']['v']} battery-caused) ; "
+              f"emergency tfs {s_nv['emergencyTfs']['v']} ; protection operated {s_nv['protectionOperated']['v']} "
+              f"(ASSUMPTION rule; {s_nv['homesDark']['v']} homes dark, reserve used in the outage "
+              f"{s_nv['reserveUsedInOutage']['v']} battery-steps) ; charged {s_nv['chargedPctBy0400']['v']}%",
+              "battery-caused normal >= 1")
+        check_evening(v, meta, docs, focus["A"], tag=d)
+        # the calendar's prices-only per-battery net vs the sim's aware per battery
+        if cal is not None:
+            k = (datetime.strptime(d, "%Y-%m-%d") - datetime.strptime(cal["from"], "%Y-%m-%d")).days
+            cn_ = cal["net"][k] / 100 if 0 <= k < len(cal["net"]) and cal["net"][k] is not None else None
+            aw = meta["money"]["split"]["aware"]["perBattery"]["v"]
+            ok = cn_ is not None and abs(cn_ - aw) <= max(0.10, 0.05 * abs(aw))
+            v.exp(ok, "days-calendar", f"money  {d}: calendar (prices only, one Core) ${cn_ if cn_ is None else f'{cn_:.2f}'} "
+                  f"vs sim aware ${aw:.2f}/battery", "within 5% or $0.10")
+    ok = [r["date"] for r in DAYS if (P1 / r["dir"] / "meta.json").exists()] == built
+    v.inv(ok, "days-index", f"index  : {len(built)} evenings ({', '.join(built)}) = every built day in sim.history.DAYS, in order")
+    if cal is not None:
+        want_sim = {d: day_row(d)["dir"] for d in built}
+        cols = all(len(cal[k]) == cal["n"] for k in ("net", "sold", "bought", "peak", "negMin"))
+        y26 = [x for x, d in zip(cal["net"], _dates(cal)) if x is not None and d[:4] == "2026"]
+        head = cal["headline"]
+        ok = (cal["sim"] == want_sim and cols and len(cal["mode"]) == cal["n"] and len(cal["peakT"].split()) == cal["n"]
+              and abs(head["perBattery2026ytd"]["v"] - round(sum(y26) / 100, 2)) < 1e-9
+              and head["losingNights2026"]["v"] == sum(1 for x in y26 if x < 0)
+              and all(g["day"] in _dates(cal) for g in cal["gaps"])
+              and all(cal["net"][i] is None for i, d in enumerate(_dates(cal)) if d in {g["day"] for g in cal["gaps"]}))
+        v.inv(ok, "days-calendar-shape",
+              f"calendar: {cal['from']} to {cal['to']} ({cal['n']} evenings, {len(cal['gaps'])} gaps: "
+              f"{', '.join(g['day'] for g in cal['gaps'])}) ; sim = the built days ; 2026 net per Core "
+              f"${head['perBattery2026ytd']['v']:.2f} (DERIVED) ; {head['losingNights2026']['v']} losing evenings ; "
+              f"10 best = {head['top10Share2026']['v']}%")
+    else:
+        v.rep("calendar: ui/data/p1/days/calendar.json not built")
+    if "--rebuild" in argv:
+        ok, text = rebuild_days_compare()
+        v.inv(ok, "determinism-days", f"determinism: {text}")
+    else:
+        print("determinism: not checked (run --full)")
+    if v.fails:
+        print(f"VERIFY p1: FAIL (days: {', '.join(sorted(set(v.fails)))})")
+        return 1
+    print(f"VERIFY p1: PASS (days: {len(built)} evenings; {len(v.refuted)} expectations refuted, see NOTES.md"
+          f"{': ' + ', '.join(v.refuted) if v.refuted else ''})")
+    return 0
+
+
+def _dates(cal):
+    d0 = datetime.strptime(cal["from"], "%Y-%m-%d")
+    return [(d0 + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(cal["n"])]
+
+
+def rebuild_days_compare():
+    """Rebuild every history day, the index and the calendar into a temp root (23 Aug's committed meta copied in for
+    the index row), in one hold of the shared lock unless HB_LOCK_HELD=1, and byte-compare everything under
+    ui/data/p1/days/. Non-August load slices are re-cut from the SMART-DS cache and compared with data/profiles/days/."""
+    from .history import SLICES, CACHE
+    with tempfile.TemporaryDirectory(prefix="p1-days-rebuild-") as tmp:
+        shutil.copy(P1 / "meta.json", Path(tmp) / "meta.json")
+        code = ("import sys; from pathlib import Path; from sim.history import main, slice_loads; "
+                "sys.exit(main(['--out', sys.argv[1]]))")
+        steps = [[sys.executable, "-c", code, tmp]]
+        cut = sorted(p.stem for p in SLICES.glob("*.npz")) if SLICES.exists() else []
+        if cut and CACHE.is_dir():
+            steps.append([sys.executable, "-c", "import sys; from sim.history import slice_loads; "
+                          "[slice_loads(d, out_dir=sys.argv[1], force=True) for d in sys.argv[2:]]", tmp + "/slices"] + cut)
+        cmd = ["bash", "-c", " && ".join(shlex.join(s) for s in steps)]
+        if os.environ.get("HB_LOCK_HELD") != "1":
+            cmd = ["lockf", "-k", "-t", "2400", LOCK, "nice", "-n", "10"] + cmd
+        r = subprocess.run(cmd, cwd=Path(__file__).resolve().parents[1], capture_output=True, text=True)
+        if r.returncode != 0:
+            return False, f"rebuild failed (exit {r.returncode}): {r.stderr.strip()[-300:]}"
+        mine = sorted(p.relative_to(P1 / "days") for p in (P1 / "days").rglob("*") if p.is_file())
+        theirs = sorted(p.relative_to(Path(tmp) / "days") for p in (Path(tmp) / "days").rglob("*") if p.is_file())
+        diff = [str(x) for x in mine if x in theirs and (P1 / "days" / x).read_bytes() != (Path(tmp) / "days" / x).read_bytes()]
+        missing = sorted(set(map(str, mine)) ^ set(map(str, theirs)))
+        sdiff = [d for d in cut if CACHE.is_dir() and (SLICES / f"{d}.npz").read_bytes() != (Path(tmp) / "slices" / f"{d}.npz").read_bytes()]
+        if diff or missing or sdiff:
+            return False, f"days rebuild differs: {', '.join(diff + missing + [s + '.npz' for s in sdiff])}"
+        return True, (f"days rebuild byte-identical ({len(mine)} files under ui/data/p1/days/"
+                      + (f"; load slices {', '.join(cut)} re-cut identical" if cut and CACHE.is_dir() else
+                         ("; no non-August slice" if not cut else "; slices not re-cut: no SMART-DS cache")) + ")")
 
 
 if __name__ == "__main__":

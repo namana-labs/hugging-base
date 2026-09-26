@@ -114,6 +114,46 @@ class TestShortWindow(unittest.TestCase):
         self.assertFalse(check_scale_ladder(bad, topo, a)[0])
         self.assertFalse(check_scale_ladder({k: v for k, v in meta.items() if k != "scaleLadder"}, topo, a)[0])
 
+    def test_round2_meta_fields(self):
+        """UX_SPEC_R2 5.1: money.split, cash, onsetDeferral, story; relief text derived; L7's note; L1's label."""
+        from sim.verify_p1 import V, check_evening
+        meta = self.r["meta"]
+        docs = {b: json.loads((Path(self.tmp.name) / f"{b}.json").read_text()) for b in meta["branches"]}
+        topo = json.loads((UI_DATA / "topology.json").read_text())
+        a = {f["key"]: f["tf"] for f in topo["focus"]}["A"]
+        v = V()
+        with redirect_stdout(io.StringIO()):
+            check_evening(v, meta, docs, a)
+        self.assertEqual(v.fails, [])
+        self.assertEqual(set(meta["cash"]), {"naive", "aware", "aware_faults"})
+        self.assertEqual(meta["onsetDeferral"]["step"], 0)               # the window starts at the 22:00 onset
+        self.assertEqual(meta["onsetDeferral"]["naiveKW"]["v"], 1920.0)   # 96 x 20 kW at once
+        note = meta["summary"]["aware_faults"]["note"]
+        self.assertEqual(note["label"], "DERIVED")
+        self.assertIn("not a gain", note["text"])
+        self.assertEqual(meta["summary"]["aware"]["feederHead"]["ratingA"]["label"], "REAL")
+        # the refuse half: an edited cash or split fails the invariant
+        bad = json.loads(json.dumps(meta))
+        bad["cash"]["aware"][-1] += 1
+        v2 = V()
+        with redirect_stdout(io.StringIO()):
+            check_evening(v2, bad, docs, a)
+        self.assertIn("money-split", v2.fails)
+        bad = json.loads(json.dumps(meta))
+        bad["relief"]["text"] = "over nameplate for about 15 minutes (amber; not a failure): one home's 15-minute spike"
+        v3 = V()
+        with redirect_stdout(io.StringIO()):
+            check_evening(v3, bad, docs, a)
+        self.assertIn("relief-text", v3.fails)
+
+    def test_ticker_plain_words(self):
+        doc = json.loads((Path(self.tmp.name) / "aware_faults.json").read_text())
+        text = " ".join(t for _, t in doc["ticker"])
+        self.assertNotIn("(newest grant first)", text)
+        self.assertNotIn("SoC bucket", text)
+        cuts = [t for _, t in doc["ticker"] if " cut to " in t]
+        self.assertTrue(all("newest live grant first" in t for t in cuts))
+
     def test_quantization(self):
         doc = json.loads((Path(self.tmp.name) / "aware.json").read_text())
         self.assertTrue(all(isinstance(x, int) for x in doc["loading"][0]))

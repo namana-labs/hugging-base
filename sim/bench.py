@@ -1,7 +1,9 @@
-"""Engine numbers for the "performance" beat (lane L2): writes ui/data/engine.json. Every number is SIM (measured here).
+"""Engine numbers for the "performance" beat (lane L2): writes ui/data/engine.json. Every timing is DERIVED: measured
+on this (shared) machine, not a simulation output (audit L4); the load average while measuring goes in the cites.
 
     python -m sim.bench            # about 10-20 s: OpenDSS per-step timing on the P1 evening, allocate() scale test
     python -m sim.bench --quick    # fewer repeats, writes to ~/hb-overnight/tmp/engine-quick.json
+    python -m sim.bench --relabel  # rewrite the committed engine.json's labels and cites without re-measuring
 
 - OpenDSS: ms per solve (solve alone) and ms per P1 step (set 2,021 loads + 96 batteries + solve + readout), measured
   on 60 steps of the real P1 evening (2026-08-23 22:00, SMART-DS loads, naive charge);
@@ -9,7 +11,7 @@
   written by the build; not committed);
 - allocate(): microseconds per call of the stateless core at 96, 1k, 10k and 100k batteries on a synthetic feeder
   (about 3.9 transformers per battery, as on this feeder), charge mode, median of repeats;
-- the 1-minute load average while measuring (this machine runs other jobs; numbers are not a benchmark).
+- the 1-minute load average while measuring, in every cite (this machine runs other jobs; not a benchmark).
 Timings are not deterministic, so no other committed file depends on this one.
 """
 import argparse
@@ -70,10 +72,39 @@ def bench_allocate(m, repeats):
     return statistics.median(out)
 
 
+MEASURED = "DERIVED"
+
+
+def measured(v, what, load):
+    """A timing measured on this machine: DERIVED (audit L4), with the machine's load in the cite."""
+    return labelled(v, MEASURED, f"{what}; measured on a shared machine (1-minute load average {load:.1f} while measuring)")
+
+
+def relabel(doc):
+    """The committed measurements with round 2's labels: every timing DERIVED with the load average in its cite, and no
+    loadAvg number of its own (audit L4). Values unchanged."""
+    load = doc["loadAvg"]["v"] if isinstance(doc.get("loadAvg"), dict) else doc["sources"]["machine"]["load"]
+    base = lambda c: c.split("; measured on a shared machine")[0]
+    for grp in ("opendss", "p1", "allocate"):
+        for k, x in doc[grp].items():
+            doc[grp][k] = measured(x["v"], base(x["cite"]), load)
+    doc.pop("loadAvg", None)
+    doc["sources"]["machine"] = {"label": MEASURED, "text": f"timings measured on a shared machine; 1-minute load "
+                                                            f"average {load:.1f} while measuring (not a benchmark)",
+                                 "load": load}
+    return doc
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--quick", action="store_true")
+    ap.add_argument("--relabel", action="store_true", help="relabel the committed engine.json (no re-measure)")
     a = ap.parse_args(argv)
+    if a.relabel:
+        doc = relabel(json.loads(OUT.read_text()))
+        write_json(OUT, doc)
+        print(f"engine: relabelled {OUT} (values unchanged)")
+        return 0
     load0 = os.getloadavg()[0]
     solve_ms, step_ms = bench_opendss(20 if a.quick else 60)
     us = {}
@@ -101,6 +132,7 @@ def main(argv=None):
                      for m, v in us.items()},
         "loadAvg": labelled(round((load0 + load1) / 2, 1), "SIM", "1-minute load average while measuring (shared machine)"),
     })
+    doc = relabel(doc)
     out = QUICK_OUT if a.quick else OUT
     write_json(out, doc)
     print(f"engine: OpenDSS {solve_ms:.2f} ms/solve, {step_ms:.2f} ms/step ; P1 build "

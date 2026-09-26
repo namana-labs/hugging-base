@@ -42,6 +42,7 @@ from .money import (energy_value_usd, money_block, ercot_demand, scale_ladder, E
 from .orchestrator import Controller, charge_target
 from .prices import price_at, onset_d26, discharge_plan
 from .tiers import tier_codes, tier_strings, normal_events, protection_events
+from .history import story_for             # the day chip's story line (tag + why), formatted from the meta
 
 OUT = ROOT / "ui" / "data" / "p1"
 QUICK_OUT = Path.home() / "hb-overnight" / "tmp" / "p1-quick"
@@ -577,13 +578,13 @@ def branch_doc(sc, run, fixture=False, dwell=MIN_DWELL_MIN, inputs=None):
     return doc
 
 
-def build(win, out=OUT, loads=None, feeder=None, quiet=False, dwell=MIN_DWELL_MIN, branches=BRANCHES, story=None,
+def build(win, out=OUT, loads=None, feeder=None, quiet=False, dwell=MIN_DWELL_MIN, branches=BRANCHES, story=story_for,
           inputs=None, write_branch=None):
     """Run the branches and write meta.json + one file per branch into `out`.
 
     branches: BRANCHES (23 Aug, the default) or ("none", "naive", "aware") for a history day (HIST-R2 D2: the failure
               script is tuned to 23 Aug and aware_faults is 23 Aug only);
-    story:    None, or a function(meta) -> {tag, why{text, label, cite?}} (sim.history.story_for);
+    story:    a function(meta) -> {tag, why{text, label, cite?}} (default sim.history.story_for), or None;
     inputs:   the envelope's inputs block (a history day names the loads slice it read); default inputs_sha();
     write_branch: function(path_without_suffix, doc) -> (name, bytes) for the branch files (a history day writes gzip);
               default write_json to <branch>.json."""
@@ -849,8 +850,7 @@ def main(argv=None):
     if a.dwell != MIN_DWELL_MIN and out == OUT:
         raise SystemExit("--dwell changes the committed data; pass --out")
     print(f"P1 build {win.day} {hhmm(win.t0)} + {win.steps} x {P1_STEP_SECONDS} s -> {out}", flush=True)
-    from .history import story_for      # the day's story line (tag + why), from this meta
-    r = build(win, out=out, dwell=a.dwell, story=story_for)
+    r = build(win, out=out, dwell=a.dwell)
     tot = sum(r["sizes"].values())
     for name, size in r["sizes"].items():
         print(f"  wrote {name} {size / 1024:.0f} KB")

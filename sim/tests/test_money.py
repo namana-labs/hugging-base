@@ -7,7 +7,8 @@ import numpy as np
 
 from sim.constants import HEAD_RATING_KVA
 from sim.contracts import audit_labels
-from sim.money import energy_value_usd, money_block, ercot_demand, scale_ladder, pct_text, sig, ERCOT_DEMAND_CSV
+from sim.money import (energy_value_usd, money_block, ercot_demand, scale_ladder, pct_text, sig, ERCOT_DEMAND_CSV,
+                       energy_split_usd, cash_cents, split_block, head_kva_per_phase)
 from sim.verify_p1 import bare_numbers
 
 
@@ -28,7 +29,50 @@ class TestMoney(unittest.TestCase):
         # the capacity band prices fleet kW at the price peak only, never the relief
         self.assertAlmostEqual(b["systemCapacityPerMonth"]["naive"]["low"]["v"], 1920.0 * 3.12)
         self.assertNotIn("relief", b["systemCapacityPerMonth"])
+        # audit M5: the $3.12 band is a storage revenue benchmark that includes arbitrage, not a capacity payment
+        cap = b["systemCapacityPerMonth"]["naive"]
+        self.assertIn("includes arbitrage", cap["low"]["cite"])
+        self.assertIn("not a capacity payment", cap["note"]["text"])
 
+
+
+class TestSplitAndCash(unittest.TestCase):
+    def test_sold_bought_net(self):
+        # one battery sells 20 kW for 30 min at $500, then two charge 10 kW for 60 min at $40 (and one at -$5)
+        kw = np.zeros((150, 2))
+        kw[:30, 0] = -20.0
+        kw[30:90, :] = 10.0
+        kw[90:150, 0] = 10.0
+        price = np.r_[np.full(90, 500.0), np.full(60, -5.0)]
+        price[30:90] = 40.0
+        sold, bought = energy_split_usd(kw, price, 1 / 60)
+        self.assertAlmostEqual(sold, 20 * 0.5 * 500 / 1000)                # $5.00
+        self.assertAlmostEqual(bought, (2 * 10 * 1 * 40 + 10 * 1 * -5) / 1000)  # $0.80 - $0.05
+        self.assertAlmostEqual(sold - bought, energy_value_usd(kw, price, 1 / 60))
+        c = cash_cents(kw, price, 1 / 60)
+        self.assertEqual(len(c), 150)
+        self.assertEqual(c[29], 500)
+        self.assertEqual(c[-1], int(round(energy_value_usd(kw, price, 1 / 60) * 100)))
+
+    def test_split_block_labels_and_net(self):
+        kw = {"aware": np.full((60, 3), 5.0)}
+        price = np.full(60, 30.0)
+        ev = {"aware": round(energy_value_usd(kw["aware"], price, 1 / 60), 2)}
+        b = split_block(kw, price, 1 / 60, ev, 3)
+        self.assertEqual(b["aware"]["net"]["v"], ev["aware"])
+        self.assertEqual({x["label"] for x in b["aware"].values()}, {"DERIVED"})
+        self.assertEqual(audit_labels({"money": b})[0], [])
+        with self.assertRaises(AssertionError):                               # a net that is not sold - bought
+            split_block(kw, price, 1 / 60, {"aware": ev["aware"] + 1.0}, 3)
+
+    def test_feeder_rung_is_per_conductor(self):
+        self.assertAlmostEqual(head_kva_per_phase(), round(370.0 * 12.47 / 3 ** 0.5, 1))
+        self.assertAlmostEqual(head_kva_per_phase(), round(HEAD_RATING_KVA / 3, 1), places=0)
+        sl = scale_ladder(2, 20.0, "A", "tr(x)", 25.0, head_kva_per_phase(), TestScaleLadder.ERCOT)
+        r = {x["scale"]: x for x in sl["rungs"]}
+        self.assertEqual(r["feeder"]["sharePct"]["v"], 1.5)                   # audit L2: 40 kW of one conductor
+        self.assertIn("1.5%", r["feeder"]["text"])
+        self.assertIn("conductor", r["feeder"]["name"])
 
 
 class TestScaleLadder(unittest.TestCase):
