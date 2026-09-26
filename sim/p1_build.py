@@ -11,6 +11,7 @@
     python -m sim.p1_build                 # the full build: writes ui/data/p1/{meta,none,naive,aware,aware_faults}.json
     python -m sim.p1_build --quick         # 60 steps, 22:00-23:00, to ~/hb-overnight/tmp/p1-quick (under 20 s, no lock)
     python -m sim.p1_build --out DIR       # write somewhere else (verify --rebuild uses this)
+    python -m sim.p1_build --dwell N --out DIR   # MIN_DWELL_MIN override (the judge's check); the envelope exports N
 
 Heavy (about 3,000 OpenDSS solves): run through scripts/build_all.sh p1 (takes the shared lock).
 Prices REAL (ERCOT LZ_NORTH), loads SIM (SMART-DS 2018, same calendar date, 15 -> 1 min linear: DERIVED), battery
@@ -27,15 +28,16 @@ from pathlib import Path
 
 import numpy as np
 
-from .constants import (export, P1_DAY, P1_START, P1_STEPS, P1_STEP_SECONDS, P1_CHARGE_DEADLINE, SOC0, RESERVE_FLOOR,
-                        CORE_POWER_KW, CORE_USABLE_KWH, CORE_RTE, FOCUS_TFS, BRIDGE_TF, FAULT_COMMS_AFTER_MIN,
-                        FAULT_HOT_AFTER_MIN, FAULT_STALL_AFTER_MIN, EV_KW, HOT_MINUTES, STALL_MIN, MIN_GRANT_KW,
-                        MIN_DWELL_MIN, TIER_AMBER_PCT, TIER_NORMAL_PCT, TIER_EMERGENCY_PCT, FUSE_PCT, FUSE_MINUTES,
-                        FUSE_INSTANT_PCT, FUSE_INSTANT_SECONDS, CONTROLLER_VIEW, HEAD_RATING_A, TAG)
+from .constants import (export, P1_DAY, P1_START, P1_STEPS, P1_STEP_SECONDS, P1_CHARGE_DEADLINE, SOC0,
+                        RESERVE_FLOOR, CORE_POWER_KW, CORE_USABLE_KWH, CORE_RTE, FOCUS_TFS, BRIDGE_TF,
+                        FAULT_COMMS_AFTER_MIN, FAULT_HOT_AFTER_MIN, FAULT_STALL_AFTER_MIN, EV_KW, HOT_MINUTES, STALL_MIN,
+                        MIN_GRANT_KW, MIN_DWELL_MIN, TIER_AMBER_PCT, TIER_NORMAL_PCT, TIER_EMERGENCY_PCT, FUSE_PCT,
+                        FUSE_MINUTES, FUSE_INSTANT_PCT, FUSE_INSTANT_SECONDS, CONTROLLER_VIEW, HEAD_RATING_A,
+                        HEAD_RATING_KVA, TAG)
 from .contracts import envelope, inputs_sha, labelled, write_json
 from .devices import Battery, Device, CLASSES, discharge_limit
 from .feeder import Feeder, ROOT
-from .money import energy_value_usd, money_block
+from .money import energy_value_usd, money_block, ercot_demand, scale_ladder, ERCOT_DEMAND_REL
 from .orchestrator import Controller, charge_target
 from .prices import price_at, onset_d26, discharge_plan
 from .tiers import tier_codes, tier_strings, normal_events, protection_events
@@ -57,6 +59,17 @@ def hhmm(dt):
 
 def i10(x):
     return np.rint(np.asarray(x, dtype=float) * 10).astype(int).tolist()
+
+
+def constants_block(names, dwell=MIN_DWELL_MIN):
+    """The envelope's `constants`: the values that ran. A --dwell override replaces MIN_DWELL_MIN's value and cite, so
+    a judge-check build never exports the default it did not use (build prompt 5.3)."""
+    c = export(*names)
+    if "MIN_DWELL_MIN" in c and dwell != MIN_DWELL_MIN:
+        c["MIN_DWELL_MIN"] = {"value": dwell, "label": "ASSUMPTION",
+                              "cite": f"override: judge check (--dwell {dwell}); the committed build uses {MIN_DWELL_MIN} "
+                                      f"({TAG['MIN_DWELL_MIN']['cite']})"}
+    return c
 
 
 class Window:
@@ -476,7 +489,7 @@ def _acted_after_expiry(run):
                    if c == "X" and abs(run["batkw"][k, i]) > 1e-9))
 
 
-def branch_doc(sc, run, fixture=False):
+def branch_doc(sc, run, fixture=False, dwell=MIN_DWELL_MIN):
     win = sc.win
     T = len(sc.kva)
     codes = tier_codes(run["pct"], P1_STEP_SECONDS / 60)
@@ -490,8 +503,9 @@ def branch_doc(sc, run, fixture=False):
     counts = [[int((codes[k] == c).sum()) for c in (1, 2, 3, 4, 5)] for k in range(len(codes))]
     reverse = [[int(k), int(t)] for k, t in zip(*np.nonzero(run["P"] < 0))]
     doc = envelope(f"p1.{run['branch']}", "sim.p1_build", inputs=inputs_sha(),
-                   constants=export("AWARE_MARGIN", "CORE_POWER_KW", "CORE_USABLE_KWH", "CORE_RTE", "RESERVE_FLOOR",
-                                    "SOC0", "BATTERY_PF", "MIN_DWELL_MIN", "COMMAND_TTL_S", "COMMS_STALE_S"),
+                   constants=constants_block(("AWARE_MARGIN", "CORE_POWER_KW", "CORE_USABLE_KWH", "CORE_RTE",
+                                              "RESERVE_FLOOR", "SOC0", "BATTERY_PF", "MIN_DWELL_MIN", "COMMAND_TTL_S",
+                                              "COMMS_STALE_S"), dwell),
                    sources={"price": {"label": "REAL", "text": "ERCOT RTM SPP LZ_NORTH 15-min"},
                             "load": {"label": "SIM", "text": LOADS_TEXT},
                             "referee": {"label": "SIM", "text": "OpenDSSDirect.py 0.9.4 AC power flow, every step"}},
@@ -547,7 +561,7 @@ def build(win, out=OUT, loads=None, feeder=None, quiet=False, dwell=MIN_DWELL_MI
     secs = time.time() - t0
     if not quiet:
         print(f"  aware_faults ({secs:.1f} s)", flush=True)
-    meta, docs = assemble(sc, runs, tc, faults, solves)
+    meta, docs = assemble(sc, runs, tc, faults, solves, dwell=dwell)
     out = Path(out)
     sizes = {}
     sizes["meta.json"] = write_json(out / "meta.json", meta)
@@ -557,13 +571,13 @@ def build(win, out=OUT, loads=None, feeder=None, quiet=False, dwell=MIN_DWELL_MI
             "tc": tc}
 
 
-def assemble(sc, runs, tc, faults, solves):
+def assemble(sc, runs, tc, faults, solves, dwell=MIN_DWELL_MIN):
     win = sc.win
     summaries = {}
     extra = {}
     for b, run in runs.items():
         summaries[b], extra[b] = summarize(sc, run)
-    docs = {b: branch_doc(sc, run) for b, run in runs.items()}
+    docs = {b: branch_doc(sc, run, dwell=dwell) for b, run in runs.items()}
     onset, onset_p, peak_ts, threshold, rule_mode = sc.onset
     a = sc.focus["A"]
     # relief (16:45 on A): measured, not assumed
@@ -641,8 +655,15 @@ def assemble(sc, runs, tc, faults, solves):
         markers.append({"t": e["t"], "text": e["text"], "label": "ASSUMPTION"})
     markers = [x for x in markers if win.t0 <= datetime.strptime(f"{win.day}T{x['t']}", FMT) + (timedelta(days=1) if x["t"] < hhmm(win.t0) else timedelta()) <= win.time(win.steps - 1)]
     part = [[a_[11:16], mm] for a_, mm in sc.plan if mm < 15]
+    ercot = ercot_demand()
+    on_a = np.flatnonzero(sc.tf_of_batt == a)
+    pmax_a = sorted(set(float(x) for x in sc.pmax[on_a]))
+    if len(pmax_a) != 1:
+        raise AssertionError(f"the scale ladder needs one battery class on A, found {pmax_a}")
+    ladder = scale_ladder(len(on_a), pmax_a[0], "A", sc.feeder.transformers[a]["id"], float(sc.kva[a]),
+                          HEAD_RATING_KVA, ercot)
     meta = envelope("p1.meta", "sim.p1_build", inputs=inputs_sha(),
-                    constants=export("TIER_AMBER_PCT", "TIER_NORMAL_PCT", "TIER_NORMAL_MIN", "TIER_EMERGENCY_PCT",
+                    constants=constants_block(("TIER_AMBER_PCT", "TIER_NORMAL_PCT", "TIER_NORMAL_MIN", "TIER_EMERGENCY_PCT",
                                      "FUSE_PCT", "FUSE_MINUTES", "FUSE_INSTANT_PCT", "FUSE_INSTANT_SECONDS",
                                      "CONTROLLER_VIEW", "AWARE_MARGIN", "SOC0", "RESERVE_FLOOR", "CORE_POWER_KW",
                                      "CORE_USABLE_KWH", "CORE_RTE", "BATTERY_PF", "CHARGE_URGENCY", "MIN_DWELL_MIN",
@@ -650,11 +671,14 @@ def assemble(sc, runs, tc, faults, solves):
                                      "FAULT_COMMS_AFTER_MIN", "FAULT_HOT_AFTER_MIN", "FAULT_STALL_AFTER_MIN", "EV_KW",
                                      "HOT_MINUTES", "STALL_MIN", "P1_DAY", "P1_START", "P1_STEPS", "LOAD_PAIRING",
                                      "PROFILE_INDEX_RULE", "CAPACITY_BENCHMARK_USD_KW_MONTH", "CAPACITY_HIGH_USD_KW_MONTH",
-                                     "TRANSFORMER_REPLACEMENT_USD", "HEAD_RATING_A"),
+                                     "TRANSFORMER_REPLACEMENT_USD", "HEAD_RATING_A", "HEAD_RATING_KVA",
+                                     "SCALE_LADDER_ERCOT"), dwell),
                     sources={"price": {"label": "REAL", "text": "ERCOT RTM SPP LZ_NORTH 15-min"},
                              "load": {"label": "SIM", "text": LOADS_TEXT},
                              "referee": {"label": "SIM", "text": "OpenDSSDirect.py 0.9.4 AC power flow, every step of every branch"},
-                             "naive": {"label": "ASSUMPTION", "text": NAIVE_TEXT}},
+                             "naive": {"label": "ASSUMPTION", "text": NAIVE_TEXT},
+                             "ercotDemand": {"label": "REAL", "text": f"ERCOT system demand, 5 min, {ercot['day']} "
+                                                                      f"({ERCOT_DEMAND_REL}; the scale ladder's ERCOT rung)"}},
                     series={"price": {"label": "REAL", "unit": "$/MWh"}})
     meta.update({
         "day": win.day, "start": hhmm(win.t0), "stepSeconds": P1_STEP_SECONDS, "steps": win.steps,
@@ -677,6 +701,7 @@ def assemble(sc, runs, tc, faults, solves):
         "relief": relief,
         "money": money,
         "unrelieved": unrelieved,
+        "scaleLadder": ladder,
         "engine": {"solves": labelled(solves, "SIM", "OpenDSS solves in this build (incl. one warm-up per branch)"),
                    "msPerSolve": labelled(None, "SIM", "timings live in ui/data/engine.json (not deterministic)")},
     })

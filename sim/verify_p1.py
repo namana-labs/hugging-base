@@ -19,8 +19,10 @@ import numpy as np
 
 from .constants import (CORE_POWER_KW, CORE_USABLE_KWH, CORE_RTE, SOC0, RESERVE_FLOOR, TIER_AMBER_PCT,
                         TIER_NORMAL_PCT, TIER_EMERGENCY_PCT, MIN_GRANT_KW, PRICES_SHA256, COMMS_STALE_S,
-                        COMMAND_TTL_S, STALL_MIN, FAULT_COMMS_AFTER_MIN, FAULT_HOT_AFTER_MIN, FAULT_STALL_AFTER_MIN)
+                        COMMAND_TTL_S, STALL_MIN, FAULT_COMMS_AFTER_MIN, FAULT_HOT_AFTER_MIN, FAULT_STALL_AFTER_MIN,
+                        HEAD_RATING_KVA, LEGACY_POWER_KW, LABELS)
 from .contracts import UI_DATA, audit_labels
+from .money import ercot_demand, pct_text, scale_ladder, sig
 from .orchestrator import handoffs
 from .prices import onset_d26, discharge_plan
 from .tiers import normal_events
@@ -304,6 +306,10 @@ def main(argv=None):
     v.rep(f"money  : energy value naive ${mo['naive']['v']:.2f} / aware ${mo['aware']['v']:.2f} / aware_faults "
           f"${mo['aware_faults']['v']:.2f} (DERIVED) ; cost of awareness ${ca['v']:.2f} (DERIVED, may be negative)")
 
+    # the scale ladder (3.4): re-derived from topology.json, the fleet and four-home's REAL demand CSV
+    ok, txt = check_scale_ladder(meta, topo, focus["A"])
+    v.inv(ok, "scale-ladder", txt)
+
     if "--rebuild" in argv:
         ok, text = rebuild_compare()
         v.inv(ok, "determinism", f"determinism: {text}")
@@ -314,6 +320,47 @@ def main(argv=None):
         return 1
     print(f"VERIFY p1: PASS ({len(v.refuted)} expectations refuted, see NOTES.md{': ' + ', '.join(v.refuted) if v.refuted else ''})")
     return 0
+
+
+def bare_numbers(x, path="scaleLadder"):
+    """Paths of numbers not inside a labelled {"v", "label"} dict (the ladder is shown number by number)."""
+    if isinstance(x, dict):
+        if "v" in x and "label" in x:
+            return [] if x["label"] in LABELS else [f"{path}: label {x['label']!r}"]
+        return [p for k, y in x.items() for p in bare_numbers(y, f"{path}.{k}")]
+    if isinstance(x, list):
+        return [p for i, y in enumerate(x) for p in bare_numbers(y, f"{path}[{i}]")]
+    if isinstance(x, (int, float)) and not isinstance(x, bool):
+        return [path]
+    return []
+
+
+def check_scale_ladder(meta, topo, a_tf):
+    """[INVARIANT] meta.scaleLadder equals a re-derivation from topology.json (A's kVA, the fleet homes on A and their
+    class), HEAD_RATING_KVA and four-home's demand CSV; each share equals battery kW / base; every number labelled."""
+    sl = meta.get("scaleLadder")
+    if not isinstance(sl, dict):
+        return False, "scale  : meta.scaleLadder missing"
+    on_a = [h for h in topo["fleet"] if topo["homes"][h]["tf"] == a_tf]
+    cls = {(topo["homes"][h].get("battery") or {}).get("cls") for h in on_a}
+    pmax = {"core": CORE_POWER_KW, "legacy": LEGACY_POWER_KW}.get(cls.pop()) if len(cls) == 1 else None
+    tf = topo["transformers"][a_tf]
+    if pmax is None:
+        return False, f"scale  : batteries on A are not one class ({sorted(map(str, cls))})"
+    want = scale_ladder(len(on_a), pmax, "A", tf["id"], float(tf["kva"]), HEAD_RATING_KVA, ercot_demand())
+    kw = sl["kw"]["v"]
+    arith = all(abs(r["sharePct"]["v"] - sig(kw / (r["base"]["v"] * (1000.0 if r["base"]["unit"] == "MW" else 1.0)) * 100))
+                <= 1e-12 * max(1.0, abs(r["sharePct"]["v"])) for r in sl["rungs"])
+    bare = bare_numbers(sl)
+    ok = sl == want and arith and not bare and [r["scale"] for r in sl["rungs"]] == ["can", "feeder", "ercot"]
+    r = {x["scale"]: x for x in sl["rungs"]}
+    txt = (f"scale  : {kw:g} kW ({len(on_a)} batteries on A) = {pct_text(r['can']['sharePct']['v'])} of A's "
+           f"{r['can']['base']['v']:g} kVA can ; {pct_text(r['feeder']['sharePct']['v'])} of the feeder head "
+           f"({r['feeder']['base']['v']:,.1f} kVA) ; {pct_text(r['ercot']['sharePct']['v'])} of ERCOT "
+           f"({r['ercot']['base']['v']:,.0f} MW peak demand, {r['ercot']['base'].get('at')}) "
+           f"(DERIVED){'' if sl == want else ' ; differs from the re-derivation'}{'' if arith else ' ; share != kW / base'}"
+           f"{(' ; bare numbers: ' + ', '.join(bare[:3])) if bare else ''}")
+    return ok, txt
 
 
 def rebuild_compare():

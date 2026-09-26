@@ -20,7 +20,7 @@ class TestVerifyP1(unittest.TestCase):
         self.assertTrue(last.startswith("VERIFY p1: PASS"), out)
         self.assertIn("determinism: not checked (run --full)", out)
         for tag in ("plan DERIVED", "labels :", "aware  :", "faults :", "none   :", "naive  :", "relief :", "bridge :",
-                    "rotation:", "grid   :", "money  :"):
+                    "rotation:", "grid   :", "money  :", "scale  :"):
             self.assertIn(tag, out)
 
 
