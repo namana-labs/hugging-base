@@ -3,7 +3,8 @@
     python -m sim.contracts            # validate every ui/data/**/*.json; print sizes; fail on a bad file
 
 Checks, per file (ui/data/ems/** is a P3 snapshot of site/ems: size-checked only):
-  1. the envelope: schema "hb.<name>.v1", producer "sim.<module>", inputs{prices_sha256, loads_sha256,
+  1. the envelope: schema "hb.<name>.v1", producer "sim.<module>" or "scripts.<name>" (a fetcher such as
+     scripts/fetch_footprints.py), inputs{prices_sha256, loads_sha256,
      topology_sha256}, constants{NAME:{value,label,cite}}, sources{k:{label,text}}, series{k:{label,...}};
   2. labels: under a headline key (HEADLINE_KEYS), every scalar number sits in a labelled dict
      {"v": n, "label": "REAL|SIM|DERIVED|ASSUMPTION", "cite"?: "..."}; siblings of "v" inside a labelled
@@ -33,6 +34,8 @@ HEADLINE_KEYS = {"summary", "relief", "money", "referee", "flip", "usefulCapacit
                  "metrics", "headline", "fleetCounterfactualTotals"}
 ID_KEYS = {"rank", "home", "tf", "step", "k", "n", "index", "of", "runs", "minute", "seq", "batt"}
 ENVELOPE_KEYS = ("schema", "producer", "inputs", "constants", "sources", "series")
+# sim.<module> for simulator output; scripts.<name> for a fetcher in scripts/ (footprints.json: scripts.fetch_footprints)
+PRODUCER_RE = r"(sim|scripts)\.[a-z0-9_]+"
 INPUT_KEYS = ("prices_sha256", "loads_sha256", "topology_sha256")
 
 
@@ -122,8 +125,8 @@ def check_envelope(doc):
         return errs
     if not re.fullmatch(r"hb\.[A-Za-z0-9_.-]+\.v\d+", str(doc["schema"])):
         errs.append(f"envelope: schema {doc['schema']!r} is not hb.<name>.v<N>")
-    if not re.fullmatch(r"sim\.[a-z0-9_]+", str(doc["producer"])):
-        errs.append(f"envelope: producer {doc['producer']!r} is not sim.<module>")
+    if not re.fullmatch(PRODUCER_RE, str(doc["producer"])):
+        errs.append(f"envelope: producer {doc['producer']!r} is not sim.<module> or scripts.<name>")
     inp = doc["inputs"]
     if not isinstance(inp, dict) or any(k not in inp for k in INPUT_KEYS):
         errs.append(f"envelope: inputs must carry {INPUT_KEYS}")
