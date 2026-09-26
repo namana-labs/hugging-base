@@ -9,10 +9,11 @@ from pathlib import Path
 
 import numpy as np
 
-from sim.constants import RESERVE_FLOOR, TIER_EMERGENCY_PCT, MIN_GRANT_KW
-from sim.contracts import validate
+from sim.constants import RESERVE_FLOOR, TIER_EMERGENCY_PCT, MIN_GRANT_KW, MIN_DWELL_MIN, TAG
+from sim.contracts import UI_DATA, validate
 from sim.p1_build import Window, build, market, battery_active
 from sim.tiers import normal_events
+from sim.verify_p1 import check_scale_ladder
 
 
 class TestMarketPlan(unittest.TestCase):
@@ -94,12 +95,48 @@ class TestShortWindow(unittest.TestCase):
             for name in ("meta.json", "none.json", "naive.json", "aware.json", "aware_faults.json"):
                 self.assertEqual((Path(self.tmp.name) / name).read_bytes(), (Path(t2) / name).read_bytes(), name)
 
+    def test_constants_are_the_values_that_ran(self):
+        # default dwell: MIN_DWELL_MIN exported as registered (the committed build)
+        for name in ("meta.json", "aware.json", "naive.json"):
+            c = json.loads((Path(self.tmp.name) / name).read_text())["constants"]["MIN_DWELL_MIN"]
+            self.assertEqual(c, TAG["MIN_DWELL_MIN"], name)
+
+    def test_scale_ladder_in_meta(self):
+        meta = self.r["meta"]
+        topo = json.loads((UI_DATA / "topology.json").read_text())
+        a = {f["key"]: f["tf"] for f in topo["focus"]}["A"]
+        ok, txt = check_scale_ladder(meta, topo, a)
+        self.assertTrue(ok, txt)
+        self.assertEqual(meta["scaleLadder"]["kw"]["v"], 40.0)            # 2 Cores on A x 20 kW
+        # the refuse half: a stale or edited ladder fails the invariant
+        bad = json.loads(json.dumps(meta))
+        bad["scaleLadder"]["rungs"][2]["sharePct"]["v"] = 1.0
+        self.assertFalse(check_scale_ladder(bad, topo, a)[0])
+        self.assertFalse(check_scale_ladder({k: v for k, v in meta.items() if k != "scaleLadder"}, topo, a)[0])
+
     def test_quantization(self):
         doc = json.loads((Path(self.tmp.name) / "aware.json").read_text())
         self.assertTrue(all(isinstance(x, int) for x in doc["loading"][0]))
         self.assertEqual(len(doc["tier"][0]), 379)
         self.assertEqual(len(doc["state"][0]), 96)
         self.assertEqual(set(doc["focus"]), {"A", "B", "C", "D", "240"})
+
+
+
+class TestDwellOverrideExported(unittest.TestCase):
+    """The judge's check (build prompt 9): --dwell N changes the rotation, and the envelope exports N, not the default."""
+
+    def test_override_value_and_cite(self):
+        with tempfile.TemporaryDirectory(prefix="p1-dwell-") as t:
+            r = build(Window(start="22:00", steps=20), out=t, quiet=True, dwell=15)
+            for name in ("meta.json", "none.json", "naive.json", "aware.json", "aware_faults.json"):
+                c = json.loads((Path(t) / name).read_text())["constants"]["MIN_DWELL_MIN"]
+                self.assertEqual(c["value"], 15, name)
+                self.assertEqual(c["label"], "ASSUMPTION", name)
+                self.assertTrue(c["cite"].startswith("override: judge check"), c["cite"])
+                self.assertIn(f"uses {MIN_DWELL_MIN}", c["cite"])
+        self.assertEqual(r["runs"]["aware"]["ctl"].state.dwell, 15)
+        self.assertEqual(TAG["MIN_DWELL_MIN"]["value"], MIN_DWELL_MIN)      # the registry is never mutated
 
 
 if __name__ == "__main__":
