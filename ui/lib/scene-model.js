@@ -162,12 +162,11 @@ export function cameraPreset(topology, name) {
     const p = b ? tfs[b.tf].lonlat : tfs[0].lonlat;
     return { longitude: p[0], latitude: p[1] - 0.0003, zoom: 18, pitch: 52, bearing: 15 };
   }
-  let lo = [180, 90], hi = [-180, -90];
-  for (const h of topology.homes) {
-    lo = [Math.min(lo[0], h.lonlat[0]), Math.min(lo[1], h.lonlat[1])];
-    hi = [Math.max(hi[0], h.lonlat[0]), Math.max(hi[1], h.lonlat[1])];
-  }
-  return { longitude: (lo[0] + hi[0]) / 2, latitude: (lo[1] + hi[1]) / 2 - 0.002, zoom: 14.9, pitch: 42, bearing: -12 };
+  // the neighbourhood, not the long tail to the substation: the 2nd-98th percentile box of the homes
+  const lons = topology.homes.map((h) => h.lonlat[0]).sort((a, b) => a - b);
+  const lats = topology.homes.map((h) => h.lonlat[1]).sort((a, b) => a - b);
+  const q = (a, p) => a[Math.min(a.length - 1, Math.max(0, Math.floor(p * a.length)))];
+  return { longitude: (q(lons, 0.02) + q(lons, 0.98)) / 2, latitude: (q(lats, 0.02) + q(lats, 0.98)) / 2 - 0.0016, zoom: 15.0, pitch: 40, bearing: -12 };
 }
 
 // ---- static geometry, memoized per (topology, footprints, theme): stable identities let deck.gl skip re-tessellation
@@ -281,7 +280,8 @@ export function buildSceneModel({ topology, footprints = null, frame = null, vie
     const fd = frame && frame.focus ? frame.focus[key] : null;
     const pKW = fd ? fd.homeKW + fd.batKW : null;
     const room = roomKW(t.kva, pct[i] || 0, pKW);
-    const roomTxt = !frame ? '' : room >= 0 ? ` · room ${room.toFixed(1)} kW` : ` · over by ${(-room).toFixed(1)} kW`;
+    const p = pct[i] || 0;
+    const roomTxt = !frame ? '' : p > 100 ? ` · over by ${((p / 100 - 1) * t.kva).toFixed(1)} kVA` : ` · room ${Math.max(0, room).toFixed(1)} kW`;
     labels.push({ key, short: key, text: `${key} · ${t.kva} kVA${roomTxt}`, position: [t.lonlat[0], t.lonlat[1], CAN_H_M * Math.max(1.55, (pct[i] || 0) / 100) + 6], color: ink, room });
   }
   for (const b of topology.bridge || []) {

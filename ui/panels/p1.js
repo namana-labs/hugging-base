@@ -410,8 +410,9 @@ export async function mount(el, ctx) {
       const relief = g.batPct < -0.05 ? Math.min(homeW, -g.batPct) : 0;
       const tick = (p, cls) => `<span class="g-tick ${cls}" style="left:${w(p)}"></span>`;
       const title = key === '240' ? `T-240 · ${g.kva} kVA · no battery` : `${key} · ${g.kva} kVA · ${g.homes} homes, ${g.batteries} batteries`;
-      const room = g.open ? 'open (protection)' : g.room >= 0 ? `room ${fmt.fmtHTML(L(+g.room.toFixed(1), 'DERIVED', 'kW to nameplate from OpenDSS loading and metered kW (unity-pf batteries)'), { unit: ' kW', digits: 1 })}`
-        : `over nameplate by ${fmt.fmtHTML(L(+(-g.room).toFixed(1), 'DERIVED', 'kW above nameplate'), { unit: ' kW', digits: 1 })}`;
+      const room = g.open ? 'open (protection)' : g.pct > 100
+        ? `over nameplate by ${fmt.fmtHTML(L(+((g.pct / 100 - 1) * g.kva).toFixed(1), 'DERIVED', 'OpenDSS loading above 100%, times kVA'), { unit: ' kVA', digits: 1 })}`
+        : `room ${fmt.fmtHTML(L(+Math.max(0, g.room).toFixed(1), 'DERIVED', 'kW of charge that still fits under nameplate, from OpenDSS loading and metered kW (unity-pf batteries)'), { unit: ' kW', digits: 1 })}`;
       return `<div class="gauge tier-bg-${g.code}">
         <div class="g-head"><span class="g-key">${esc(title)}</span><span class="g-pct tier-${g.code}">${fmt.fmtHTML(L(+g.pct.toFixed(1), lab, 'OpenDSS loading, % of nameplate'), { unit: '%', digits: 1 })}</span></div>
         <div class="g-bar">

@@ -159,10 +159,12 @@ test('labels: A-D with kVA and room to nameplate (DERIVED), T-240 with no batter
   for (const key of ['A', 'B', 'C', 'D']) {
     const l = m.labels.find((x) => x.key === key);
     const tf = focusTf(key);
-    assert.match(l.text, new RegExp(`^${key} · ${topology.transformers[tf].kva} kVA · (room|over by) \\d+\\.\\d kW$`));
+    const pct = doc.loading[k][tf] / 10, kva = topology.transformers[tf].kva;
+    if (pct > 100) assert.equal(l.text, `${key} · ${kva} kVA · over by ${((pct / 100 - 1) * kva).toFixed(1)} kVA`);
+    else assert.match(l.text, new RegExp(`^${key} · ${kva} kVA · room \\d+\\.\\d kW$`));
     assert.equal(l.short, key);
     const f = doc.focus[key];
-    const expect = roomKW(topology.transformers[tf].kva, doc.loading[k][tf] / 10, f.homeKW[k] / 10 + f.batKW[k] / 10);
+    const expect = roomKW(kva, pct, f.homeKW[k] / 10 + f.batKW[k] / 10);
     assert.ok(Math.abs(l.room - expect) < 1e-9);
   }
   assert.match(m.labels.find((x) => x.key === '240').text, /^T-240 · 25 kVA · no battery$/);
@@ -222,6 +224,9 @@ test('camera presets: whole feeder, street A-D (zoom ~18, pitch 55), Northbank T
   assert.ok(Math.abs(b[0] - t.longitude) < 0.001 && Math.abs(b[1] - t.latitude) < 0.001);
   const f = cameraPreset(topology, 'feeder');
   assert.ok(f.zoom < 16 && f.zoom > 13);
+  // framed on the neighbourhood (the homes' median sits near the centre), not on the tail to the substation
+  const lats = topology.homes.map((h) => h.lonlat[1]).sort((a, b) => a - b);
+  assert.ok(Math.abs(lats[lats.length >> 1] - f.latitude) < 0.004);
   assert.deepEqual(cameraPreset(topology, 'nope'), f);
   const sq = squareRing([-97.8, 30.42], 12);
   assert.equal(sq.length, 4);

@@ -27,7 +27,7 @@ export function createScene(el, opts = {}) {
   // no pitch in 2D: undo the preset's pitch offset and fit the whole feeder
   const flat = (preset) => {
     const v = { ...cameraPreset(topology, preset) };
-    if (preset === 'feeder') { v.latitude += 0.002; v.zoom -= 0.2; }
+    if (preset === 'feeder') { v.latitude += 0.0012; v.zoom -= 0.35; }
     return v;
   };
   let view = flat('feeder');
