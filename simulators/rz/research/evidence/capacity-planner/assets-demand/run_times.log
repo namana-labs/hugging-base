@@ -1,0 +1,2 @@
+PYTHONDONTWRITEBYTECODE=1 nice -n 10 ~/hb-overnight/.venv/bin/python  >  2>&1  25.33s user 0.25s system 99% cpu 25.725 total
+PYTHONDONTWRITEBYTECODE=1 nice -n 10 ~/hb-overnight/.venv/bin/python  --growt  26.09s user 0.25s system 99% cpu 26.508 total

@@ -1,0 +1,21 @@
+<!doctype html><html><head><meta charset="utf-8"><title>R2 icon sheet</title>
+<style>body{margin:0;padding:24px;background:#F7F9F5;color:#101613;font:13px Inter,Helvetica,Arial,sans-serif}
+.g{display:grid;grid-template-columns:repeat(9,150px);gap:14px}.c{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px;border:1px solid #CAD3CA;border-radius:8px;background:#fff}
+h2{font-size:14px;margin:18px 0 8px;letter-spacing:.05em;text-transform:uppercase;color:#55625A}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;font:700 9px/1 Inter,Helvetica,Arial,sans-serif;color:#fff;vertical-align:1px;margin-left:3px}
+.dot-REAL{background:#0B6B6F}.dot-SIM{background:#55625A}.dot-DERIVED{background:#6a4fa3}.dot-ASSUMPTION{background:#9a6a00}
+.num{font-size:22px;font-weight:700}</style></head>
+<body data-status="loading" data-webgl="ok" data-errors="0" data-fixture="0" data-offsite="0"><div id="o"></div>
+<script type="module">
+import { svg, PATHS } from './icons.js';
+const cell = (h, t) => `<div class="c">${h}<div>${t}</div></div>`;
+let h = '<h2>Glyphs (24 px grid, stroke 1.8, currentColor), shown at 48 px</h2><div class="g">';
+for (const n of Object.keys(PATHS)) h += cell(`<span style="color:${n === 'warn' ? '#d03b3b' : n === 'padmount' ? '#3e6244' : n === 'cabinet' ? '#0B6B6F' : '#101613'}">${svg(n, { size: 48 })}</span>`, n);
+h += '</div><h2>Battery: fill = charge, glyph = what it is doing (48 px)</h2><div class="g">';
+for (const [st, t] of [['C', 'charging'], ['D', 'giving back'], ['I', 'idle'], ['S', 'silent'], ['B', 'powering home']]) for (const l of [0.2, 0.9]) h += cell(svg('battery', { size: 48, level: l, state: st }), `${t} ${Math.round(l * 100)}%`);
+h += '</div><h2>Transformer load meter: box = its limit; over the lid = overloaded (48 px)</h2><div class="g">';
+for (const [p, t] of [[35, 0], [80, 0], [96, 0], [104, 1], [118, 2], [135, 3], [160, 4], [201, 4], [0, 5]]) h += cell(svg('meter', { size: 48, pct: p, tier: t }), `${p}% · tier ${t}`);
+h += '</div><h2>Honesty dots (replace text chips; hover = source)</h2><div class="num">201.2%<span class="dot dot-SIM">S</span> &nbsp; $55.42<span class="dot dot-REAL">R</span> &nbsp; $916.56<span class="dot dot-DERIVED">D</span> &nbsp; 200% fuse<span class="dot dot-ASSUMPTION">A</span></div>';
+document.getElementById('o').innerHTML = h;
+document.body.dataset.status = 'ready';
+</script></body></html>

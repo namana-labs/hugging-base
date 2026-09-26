@@ -1,0 +1,43 @@
+CHECK root=/Users/rzalagbada/hb-overnight/wt/gate head=35339b8 lane=l2-p1 full=0 py=/Users/rzalagbada/hb-overnight/.venv/bin/python logs=/Users/rzalagbada/hb-overnight/tmp/check-gate
+== 1 unit
+STEP unit: PASS (Ran 160 tests)
+== 2 node
+STEP node: PASS (# pass 94 # fail 0 )
+== 3 keep (7.1)
+keep: grid-stories py ok (Ran 8 tests) ; grid-stories node ok (# pass 3 # fail 0 ) ; four-home ok (Ran 17 tests)
+STEP keep: PASS (prototype 8 + 3, four-home 17)
+== 4 contract
+contract total 66 files, 19.20 MB (budget 25.0 MB, 4.0 MB per file); 32097 labelled numbers
+CONTRACTS: PASS (66 files, 19.20 MB, 32097 labelled numbers)
+STEP contract: PASS ((66 files, 19.20 MB, 32097 labelled numbers))
+== 5 verify
+VERIFY labels: PASS (63 files, 32097 labelled numbers)
+VERIFY p1: PASS (1 expectations refuted, see NOTES.md: rotation)
+VERIFY p2: PASS (1 expectations refuted, see NOTES.md)
+STEP verify: PASS (labels p1 p2)
+== 6 paths
+PATHS: PASS (31 changed paths, all inside lane l2-p1; base 432b888)
+STEP paths: PASS (lane l2-p1)
+== 7 smoke
+SMOKE root=/Users/rzalagbada/hb-overnight/wt/gate port=64135 mode=--lane links=17 shots=/Users/rzalagbada/hb-overnight/tmp/shots-gate
+SMOKE view=p1&branch=none&t=16:45&cam=street ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 9912 ms | 586 KB | 1918 colours
+SMOKE view=p1&branch=aware&t=16:45 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 5062 ms | 775 KB | 1617 colours
+SMOKE view=p1&branch=naive&t=22:30 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4095 ms | 784 KB | 1668 colours
+SMOKE view=p1&branch=aware&t=22:30 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4566 ms | 768 KB | 1621 colours
+SMOKE view=p1&branch=aware_faults&t=22:16 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4329 ms | 766 KB | 1595 colours
+SMOKE view=p1&branch=naive&t=20:00&cam=feeder ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4043 ms | 786 KB | 1645 colours
+SMOKE view=p1&branch=aware&t=22:30&nowebgl=1 ok | status=ready webgl=fallback errors=0 fixture=0 offsite=0 | 1145 ms | 394 KB | 743 colours
+SMOKE view=p1 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4398 ms | 768 KB | 1622 colours
+SMOKE view=p1&branch=naive&t=22:00&cam=street ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 7402 ms | 664 KB | 2499 colours
+SMOKE view=p1&branch=aware&t=22:00&cam=street&nowebgl=1 ok | status=ready webgl=fallback errors=0 fixture=0 offsite=0 | 767 ms | 447 KB | 847 colours
+SMOKE view=p1&date=2026-01-01 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4865 ms | 773 KB | 1628 colours
+SMOKE view=p1&date=2026-07-22&branch=naive&t=23:15 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4969 ms | 790 KB | 1662 colours
+SMOKE view=p1&date=2026-08-14&branch=naive&t=19:00 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4126 ms | 784 KB | 1638 colours
+SMOKE view=p1&date=2026-08-26&branch=aware&t=22:15 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4431 ms | 776 KB | 1626 colours
+SMOKE view=p1&date=2026-08-14&branch=aware_faults ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 5031 ms | 776 KB | 1638 colours
+SMOKE view=p2&combo=aware-core-d26-g0 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4017 ms | 735 KB | 1595 colours
+SMOKE view=more ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 5897 ms | 618 KB | 629 colours
+SMOKE: 17/17 ok
+STEP smoke: PASS (SMOKE: 17/17 ok)
+CHECK took 116 s
+ALL CHECKS: PASS

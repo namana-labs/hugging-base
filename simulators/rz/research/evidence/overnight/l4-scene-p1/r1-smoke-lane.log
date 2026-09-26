@@ -1,0 +1,11 @@
+SMOKE root=/Users/rzalagbada/hb-overnight/wt/l4-scene-p1 port=63207 mode=--lane links=9 shots=/Users/rzalagbada/Desktop/projects/base-power-hackathon/overnight/shots/l4-r1
+SMOKE view=p1&branch=none&t=16:45&cam=street ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 8970 ms | 600 KB | 1966 colours
+SMOKE view=p1&branch=aware&t=16:45 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4316 ms | 789 KB | 1693 colours
+SMOKE view=p1&branch=naive&t=22:30 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3747 ms | 784 KB | 1738 colours
+SMOKE view=p1&branch=aware&t=22:30 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4118 ms | 783 KB | 1702 colours
+SMOKE view=p1&branch=aware_faults&t=22:16 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4107 ms | 778 KB | 1661 colours
+SMOKE view=p1&branch=naive&t=20:00&cam=feeder ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3831 ms | 786 KB | 1699 colours
+SMOKE view=p1&branch=aware&t=22:30&nowebgl=1 ok | status=ready webgl=fallback errors=0 fixture=0 offsite=0 | 1084 ms | 409 KB | 825 colours
+SMOKE view=p2&combo=aware-core-d26-g0 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3944 ms | 746 KB | 1602 colours
+SMOKE view=more ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 5148 ms | 650 KB | 833 colours
+SMOKE: 9/9 ok

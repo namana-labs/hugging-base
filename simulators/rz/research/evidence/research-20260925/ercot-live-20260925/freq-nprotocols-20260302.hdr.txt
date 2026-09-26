@@ -1,0 +1,15 @@
+retrieved_utc=2026-09-26T04:07:53Z url=https://www.ercot.com/files/docs/2026/02/26/March-2-2026-Nodal-Protocols.pdf
+HTTP/2 200 
+etag: "b9497d-64bbbd5eaa4be"
+last-modified: Thu, 26 Feb 2026 15:33:00 GMT
+content-type: application/pdf
+content-length: 12142973
+cache-control: max-age=60, public
+expires: Sat, 26 Sep 2026 04:08:53 GMT
+date: Sat, 26 Sep 2026 04:07:53 GMT
+strict-transport-security: max-age=31536000
+x-cdn: Imperva
+access-control-allow-origin: https://mis.ercot.com
+content-security-policy: frame-ancestors 'self' https://*.ercot.com:*
+x-iinfo: 51-67580513-67568346 2VNN RT(1790395674032 33) q(0 0 0 -1) r(0 0) U18
+

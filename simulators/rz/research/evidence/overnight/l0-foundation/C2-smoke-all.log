@@ -1,0 +1,44 @@
+C2 smoke all, main 82b30f8, lock requested 11:44:50
+lock acquired 11:51:25 load { 5.98 9.91 9.94 }
+SMOKE root=/Users/rzalagbada/hb-overnight/wt/gate-l0fix port=61771 mode=all links=38 shots=/Users/rzalagbada/Desktop/projects/base-power-hackathon/overnight/shots/C2
+SMOKE view=p1&branch=none&t=16:45&cam=street ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 9416 ms | 616 KB | 1754 colours
+SMOKE view=p1&branch=aware&t=16:45 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4998 ms | 789 KB | 1657 colours
+SMOKE view=p1&branch=naive&t=22:30 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3850 ms | 784 KB | 1701 colours
+SMOKE view=p1&branch=aware&t=22:30 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4123 ms | 783 KB | 1662 colours
+SMOKE view=p1&branch=aware_faults&t=22:16 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4121 ms | 778 KB | 1626 colours
+SMOKE view=p1&branch=naive&t=20:00&cam=feeder ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3840 ms | 786 KB | 1659 colours
+SMOKE view=p1&branch=aware&t=22:30&nowebgl=1 ok | status=ready webgl=fallback errors=0 fixture=0 offsite=0 | 1421 ms | 406 KB | 823 colours
+SMOKE view=p2&combo=aware-core-d26-g0 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 5022 ms | 754 KB | 1573 colours
+SMOKE view=p2&combo=aware-core-d26-g20 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3923 ms | 751 KB | 1582 colours
+SMOKE view=p2&combo=aware-core-cheapest-g0 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3746 ms | 753 KB | 1573 colours
+SMOKE view=p2&combo=aware-core-cheapest-g20 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3860 ms | 752 KB | 1586 colours
+SMOKE view=p2&combo=aware-legacy-d26-g0 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3796 ms | 754 KB | 1575 colours
+SMOKE view=p2&combo=aware-legacy-d26-g20 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3802 ms | 752 KB | 1574 colours
+SMOKE view=p2&combo=aware-legacy-cheapest-g0 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3797 ms | 753 KB | 1576 colours
+SMOKE view=p2&combo=aware-legacy-cheapest-g20 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3759 ms | 752 KB | 1578 colours
+SMOKE view=p2&combo=naive-core-d26-g0 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3799 ms | 763 KB | 1669 colours
+SMOKE view=p2&combo=naive-core-d26-g20 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3757 ms | 757 KB | 1670 colours
+SMOKE view=p2&combo=naive-core-cheapest-g0 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3752 ms | 763 KB | 1641 colours
+SMOKE view=p2&combo=naive-core-cheapest-g20 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3779 ms | 757 KB | 1670 colours
+SMOKE view=p2&combo=naive-legacy-d26-g0 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4017 ms | 763 KB | 1660 colours
+SMOKE view=p2&combo=naive-legacy-d26-g20 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4006 ms | 754 KB | 1654 colours
+SMOKE view=p2&combo=naive-legacy-cheapest-g0 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4203 ms | 762 KB | 1647 colours
+SMOKE view=p2&combo=naive-legacy-cheapest-g20 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3712 ms | 753 KB | 1653 colours
+SMOKE view=p2&combo=naive-core-d26-g0&home=p1ulv24700 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3751 ms | 689 KB | 1480 colours
+SMOKE view=p2&combo=aware-core-d26-g0&n=5 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4215 ms | 754 KB | 1573 colours
+SMOKE view=more ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4923 ms | 650 KB | 824 colours
+SMOKE view=p1&branch=naive&t=16:00&cam=street&beat=problem ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 5509 ms | 659 KB | 1856 colours
+SMOKE view=p1&branch=aware&t=16:45&cam=street&beat=peak-relief ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 7743 ms | 669 KB | 1852 colours
+SMOKE view=p2&combo=aware-core-d26-g0&beat=insight ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3944 ms | 687 KB | 1516 colours
+SMOKE view=p1&branch=naive&t=20:00&cam=street&beat=backfeed ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 6447 ms | 660 KB | 1976 colours
+SMOKE view=p1&branch=naive&t=22:30&cam=street&beat=rebound-naive ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 5017 ms | 681 KB | 2280 colours
+SMOKE view=p1&branch=aware&t=22:30&cam=street&beat=rebound-aware ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 5082 ms | 666 KB | 1895 colours
+SMOKE view=p1&branch=aware_faults&t=22:16&cam=street&beat=faults ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 7604 ms | 663 KB | 1886 colours
+SMOKE view=p2&combo=aware-core-d26-g0&n=5&beat=p2-controls ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4422 ms | 764 KB | 1671 colours
+SMOKE view=p2&combo=naive-core-d26-g0&beat=p2-flip ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3849 ms | 790 KB | 1668 colours
+SMOKE view=p2&combo=aware-core-d26-g0&n=10&beat=p2-capacity ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3730 ms | 743 KB | 1554 colours
+SMOKE view=more&beat=money ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 5221 ms | 632 KB | 867 colours
+SMOKE view=more&beat=plug-in ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 5813 ms | 628 KB | 826 colours
+SMOKE: 38/38 ok
+smoke exit 0
+lockf exit 0 at 11:54:17

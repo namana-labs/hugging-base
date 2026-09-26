@@ -1,0 +1,278 @@
+{
+ "oncor": {
+  "facilities_total": 122767,
+  "fuel_counts": [
+   [
+    "Solar",
+    103541
+   ],
+   [
+    "Solar & Battery",
+    14817
+   ],
+   [
+    "Battery",
+    3199
+   ],
+   [
+    "Battery & Solar",
+    695
+   ],
+   [
+    "Wind",
+    202
+   ],
+   [
+    "Diesel",
+    123
+   ]
+  ],
+  "battery_only": 3199,
+  "battery_only_kw": 210746,
+  "battery_only_small": 3181,
+  "battery_only_small_in_11_24kW_band": 3086,
+  "battery_only_in_service_2024": 283,
+  "battery_only_in_service_2025": 2871,
+  "top_kw_values": [
+   [
+    11.5,
+    2494
+   ],
+   [
+    23.0,
+    566
+   ],
+   [
+    10.0,
+    18
+   ],
+   [
+    15.0,
+    15
+   ],
+   [
+    5.0,
+    13
+   ]
+  ],
+  "feeders_with_small_battery": 426,
+  "per_feeder_p50": 2.0,
+  "per_feeder_p90": 12,
+  "per_feeder_max": 281,
+  "note": "Oncor 'Feeder #' is numeric only (values like 1, 2, 7 occur); IDs may repeat across substations, so per-feeder counts are UNVERIFIED"
+ },
+ "centerpoint": {
+  "Existing": {
+   "facilities": 53455,
+   "battery_only": 854,
+   "battery_only_small": 847,
+   "in_11_24kW_band": 138,
+   "top_kw_values": [
+    [
+     10.0,
+     203
+    ],
+    [
+     5.0,
+     200
+    ],
+    [
+     11.2,
+     67
+    ],
+    [
+     3.8,
+     51
+    ]
+   ]
+  },
+  "New": {
+   "facilities": 9602,
+   "battery_only": 4336,
+   "battery_only_small": 4322,
+   "in_11_24kW_band": 4046,
+   "top_kw_values": [
+    [
+     11.5,
+     1629
+    ],
+    [
+     11.3,
+     1065
+    ],
+    [
+     22.6,
+     909
+    ],
+    [
+     23.0,
+     343
+    ]
+   ]
+  },
+  "Pending": {
+   "facilities": 6029,
+   "battery_only": 3087,
+   "battery_only_small": 3050,
+   "in_11_24kW_band": 2756,
+   "top_kw_values": [
+    [
+     11.3,
+     982
+    ],
+    [
+     22.6,
+     829
+    ],
+    [
+     11.5,
+     694
+    ],
+    [
+     23.0,
+     197
+    ]
+   ]
+  },
+  "Cancelled": {
+   "facilities": 6814,
+   "battery_only": 341,
+   "battery_only_small": 319,
+   "in_11_24kW_band": 194,
+   "top_kw_values": [
+    [
+     11.3,
+     78
+    ],
+    [
+     22.6,
+     50
+    ],
+    [
+     11.5,
+     40
+    ],
+    [
+     5.0,
+     36
+    ]
+   ]
+  },
+  "Removed": {
+   "facilities": 836,
+   "battery_only": 20,
+   "battery_only_small": 20,
+   "in_11_24kW_band": 8,
+   "top_kw_values": [
+    [
+     5.0,
+     3
+    ],
+    [
+     10.0,
+     3
+    ],
+    [
+     11.5,
+     2
+    ],
+    [
+     11.4,
+     2
+    ]
+   ]
+  },
+  "battery_only_small_existing_new_pending_by_feeder": {
+   "feeders": 1031,
+   "total": 8219,
+   "p50": 3,
+   "p90": 22,
+   "p99": 58,
+   "max": 215,
+   "top": [
+    [
+     "VCR43",
+     215
+    ],
+    [
+     "SPW50",
+     95
+    ],
+    [
+     "HK44",
+     82
+    ],
+    [
+     "VCR45",
+     81
+    ],
+    [
+     "KT42",
+     78
+    ]
+   ]
+  },
+  "cancel_share_battery_only_small_DERIVED": 0.041
+ },
+ "aep_texas": {
+  "applications_2025": 2489,
+  "battery_only_apps": 68,
+  "status": [
+   [
+    "AEPTX - In Service",
+    1176
+   ],
+   [
+    "Canceled",
+    334
+   ],
+   [
+    "AEPTX - Customer Installation",
+    263
+   ],
+   [
+    "AEPTX - Installation Verification",
+    118
+   ],
+   [
+    "AEPTX - Awaiting Agreement Signatures",
+    115
+   ],
+   [
+    "Withdrawn",
+    114
+   ]
+  ]
+ },
+ "tnmp": {
+  "applications_2025": 1102,
+  "storage_only_apps": 40,
+  "pv_plus_storage_apps": 682,
+  "status": [
+   [
+    "Complete",
+    642
+   ],
+   [
+    "Waiting for Notice of Installation",
+    233
+   ],
+   [
+    "Withdrawn",
+    116
+   ],
+   [
+    "TNMP Inspection - Corrections Needed",
+    48
+   ],
+   [
+    "Application Review - Corrections Needed",
+    21
+   ],
+   [
+    "TNMP Inspection",
+    15
+   ]
+  ]
+ }
+}

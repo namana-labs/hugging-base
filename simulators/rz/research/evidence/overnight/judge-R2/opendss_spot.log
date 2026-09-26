@@ -1,0 +1,6 @@
+none   16:45: A dss 122.1 json 122.1 B dss 49.4 json 49.4 C dss 33.8 json 33.8 D dss 29.2 json 29.2 240 dss 119.5 json 119.5 | all 379 tfs max |dss-json| 0.05 pts ; head 294.2 A
+aware  16:45: A dss 97.7 json 97.8 B dss 49.4 json 49.4 C dss 33.8 json 33.8 D dss 29.2 json 29.2 240 dss 119.5 json 119.5 | all 379 tfs max |dss-json| 0.10 pts ; head 294.2 A
+naive  22:30: A dss 201.2 json 201.2 B dss 188.6 json 188.6 C dss 180.0 json 180.0 D dss 136.2 json 136.2 240 dss 27.8 json 27.8 | all 379 tfs max |dss-json| 0.05 pts ; head 260.4 A
+aware  22:30: A dss 96.0 json 96.2 B dss 26.4 json 26.4 C dss 18.0 json 18.0 D dss 95.3 json 95.3 240 dss 27.8 json 27.8 | all 379 tfs max |dss-json| 0.16 pts ; head 194.2 A
+naive  20:29: A dss 42.0 json 42.0 B dss 38.0 json 38.0 C dss 30.5 json 30.5 D dss 23.4 json 23.4 240 dss 26.7 json 26.7 | all 379 tfs max |dss-json| 0.05 pts ; head 223.1 A
+aware  18:30: A dss 56.3 json 56.3 B dss 62.6 json 62.6 C dss 25.0 json 25.1 D dss 32.1 json 32.1 240 dss 43.7 json 43.7 | all 379 tfs max |dss-json| 0.05 pts ; head 274.9 A

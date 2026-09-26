@@ -1,0 +1,607 @@
+<title>Base Power Grid Brief</title>
+<meta name="description" content="Research on Base Power's business, battery fleet and ERCOT data, and what it means for our hackathon build.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap">
+<style>
+:root{
+  --bg:#F3F5F4; --surface:#FFFFFF; --surface-2:#E8EEEA; --ink:#16211C; --muted:#56655D; --rule:#D2DAD5;
+  --accent:#2F6A48; --accent-soft:#DCEBE1; --accent-ink:#FFFFFF;
+  --flag:#9A5700; --flag-soft:#F6E9D4; --flag-rule:#E2C597;
+  --good:#2F6A48; --crit:#B23A2A;
+  --display:"Barlow Condensed","Arial Narrow","Roboto Condensed",sans-serif;
+  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0E1411; --surface:#151D19; --surface-2:#1C2621; --ink:#E3EBE6; --muted:#9CAAA2; --rule:#2B3731;
+    --accent:#88C69E; --accent-soft:#1D3226; --accent-ink:#0E1411;
+    --flag:#E8AB4E; --flag-soft:#342813; --flag-rule:#5C4520;
+    --good:#88C69E; --crit:#F08472;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0E1411; --surface:#151D19; --surface-2:#1C2621; --ink:#E3EBE6; --muted:#9CAAA2; --rule:#2B3731;
+  --accent:#88C69E; --accent-soft:#1D3226; --accent-ink:#0E1411;
+  --flag:#E8AB4E; --flag-soft:#342813; --flag-rule:#5C4520;
+  --good:#88C69E; --crit:#F08472;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;padding-inline:16px;padding-block:0 64px}
+a{color:var(--accent);text-underline-offset:2px;text-decoration-thickness:1px}
+a:hover{text-decoration-thickness:2px}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+code,.mono{font-family:var(--mono);font-size:.86em}
+code{background:var(--surface-2);padding:1px 5px;border-radius:3px;overflow-wrap:anywhere}
+strong{font-weight:700}
+
+.frame{max-width:1160px;margin:0 auto;display:grid;grid-template-columns:210px minmax(0,1fr);gap:48px}
+@media (max-width:900px){.frame{grid-template-columns:minmax(0,1fr);gap:0}}
+
+/* Masthead */
+.mast{max-width:1160px;margin:0 auto;padding-block:40px 28px;border-bottom:1px solid var(--rule);margin-bottom:32px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 16px}
+.eyebrow span+span::before{content:"/";margin-right:16px;color:var(--rule)}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(2.3rem,5.4vw,3.7rem);line-height:1.02;letter-spacing:.005em;margin:14px 0 16px;text-wrap:balance;max-width:20ch}
+.lede{font-size:1.1rem;max-width:68ch;margin:0;color:var(--ink)}
+
+.readout{margin-top:26px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:1px solid var(--rule);background:var(--surface);border-radius:4px}
+.readout div{padding:12px 14px;border-left:1px solid var(--rule);display:flex;flex-direction:column;gap:2px}
+.readout div:first-child{border-left:0}
+.readout b{font-family:var(--mono);font-weight:500;font-size:1.25rem;font-variant-numeric:tabular-nums;color:var(--ink);line-height:1.2}
+.readout span{font-size:12.5px;color:var(--muted);line-height:1.35}
+@media (max-width:900px){.readout{grid-template-columns:repeat(2,minmax(0,1fr))}.readout div{border-left:0;border-top:1px solid var(--rule)}.readout div:nth-child(-n+2){border-top:0}.readout div:nth-child(even){border-left:1px solid var(--rule)}.readout div:last-child{grid-column:1/-1;border-left:0}}
+
+/* TOC */
+.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;font-size:14px}
+.toc p{font-family:var(--mono);font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;counter-reset:t}
+.toc li{counter-increment:t}
+.toc a{display:block;padding:5px 8px 5px 10px;border-left:2px solid var(--rule);color:var(--muted);text-decoration:none;line-height:1.35}
+.toc a::before{content:counter(t) ". ";font-family:var(--mono);font-size:12px}
+.toc a:hover{color:var(--ink);border-left-color:var(--accent)}
+.toc a.build{color:var(--accent);font-weight:600;border-left-color:var(--accent)}
+@media (max-width:900px){.toc{position:static;margin-bottom:28px}.toc ol{flex-direction:row;flex-wrap:wrap;gap:6px}.toc a{border:1px solid var(--rule);border-radius:3px;padding:4px 9px}}
+
+/* Article */
+article{min-width:0;max-width:760px}
+section{padding-block:8px 36px;border-bottom:1px solid var(--rule);margin-bottom:36px;scroll-margin-top:16px}
+section:last-of-type{border-bottom:0}
+.sec-no{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+h2{font-family:var(--display);font-weight:700;font-size:clamp(1.75rem,3.4vw,2.3rem);line-height:1.08;margin:4px 0 18px;text-wrap:balance}
+h3{font-family:var(--body);font-weight:700;font-size:1.08rem;margin:30px 0 10px;text-wrap:balance}
+p{margin:0 0 14px;max-width:68ch}
+ul,ol.steps{margin:0 0 16px;padding-left:1.25em;max-width:66ch}
+li{margin-bottom:6px}
+li::marker{color:var(--muted)}
+.src{font-size:13.5px;color:var(--muted)}
+.tag{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.05em;padding:1px 6px;border-radius:3px;white-space:nowrap;vertical-align:1px}
+.t-unv{background:var(--flag-soft);color:var(--flag)}
+.t-der{background:var(--surface-2);color:var(--muted)}
+.t-src{background:var(--accent-soft);color:var(--accent)}
+.t-asm{background:var(--surface-2);color:var(--muted);border:1px dashed var(--muted)}
+
+/* Callouts */
+.key{background:var(--surface);border:1px solid var(--rule);border-left:4px solid var(--accent);padding:16px 18px;border-radius:0 4px 4px 0;margin:0 0 18px;max-width:68ch}
+.key p:last-child{margin-bottom:0}
+.key .label{font-family:var(--mono);font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;display:block}
+.fix{border-left-color:var(--flag);background:var(--flag-soft);border-color:var(--flag-rule)}
+.fix .label{color:var(--flag)}
+blockquote{margin:0 0 16px;padding:10px 16px;border-left:3px solid var(--rule);color:var(--ink);font-style:italic;max-width:64ch}
+
+/* Tables */
+.tbl{overflow-x:auto;margin:6px 0 20px;border:1px solid var(--rule);border-radius:4px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px;line-height:1.45}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--rule)}
+tr:last-child td{border-bottom:0}
+th{font-family:var(--mono);font-weight:500;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--surface-2);white-space:nowrap}
+td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+td:first-child{font-weight:600}
+.wide table{min-width:720px}
+
+/* Control-chain diagram */
+.chain{margin:6px 0 24px;border:1px solid var(--rule);border-radius:4px;background:var(--surface);overflow:hidden}
+.chain-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--rule);background:var(--surface-2)}
+.chain-head b{font-family:var(--display);font-size:1.25rem;letter-spacing:.01em}
+.chain-head span{font-size:13px;color:var(--muted)}
+.lvl{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;padding:12px 16px;align-items:start;position:relative}
+.lvl+.lvl{border-top:1px solid var(--rule)}
+.lvl .dot{width:12px;height:12px;border-radius:50%;background:var(--accent);margin:6px 0 0 8px;position:relative}
+.lvl .dot::after{content:"";position:absolute;left:5px;top:12px;width:2px;height:52px;background:var(--accent);opacity:.45}
+.lvl:last-child .dot::after{display:none}
+.lvl h4{margin:0;font-size:15px;font-weight:700}
+.lvl p{margin:2px 0 0;font-size:13.5px;color:var(--muted);max-width:none}
+.lvl .who{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right;white-space:nowrap}
+.lvl.blind .dot{background:var(--flag)}
+.lvl.blind .dot::after{background:var(--flag)}
+.cut{padding:9px 16px;background:var(--flag-soft);color:var(--flag);font-family:var(--mono);font-size:12px;letter-spacing:.04em;border-top:1px dashed var(--flag);border-bottom:1px dashed var(--flag)}
+@media (max-width:560px){.lvl{grid-template-columns:24px minmax(0,1fr)}.lvl .who{grid-column:2;text-align:left;white-space:normal}.lvl .dot::after{height:80px}}
+
+.foot{max-width:1160px;margin:0 auto;padding-top:20px;border-top:1px solid var(--rule);font-size:13.5px;color:var(--muted)}
+.foot p{max-width:none}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+</style>
+
+<header class="mast">
+  <div class="eyebrow"><span>Research brief</span><span>Base Power &amp; AITX hackathon</span><span>Compiled 25 Sep 2026</span></div>
+  <h1>Base turns backyard batteries into grid capacity</h1>
+  <p class="lede">Base Power is a three-year-old Austin electricity retailer. It owns, installs and remotely operates big lithium-iron-phosphate batteries at members' homes, and runs them together as one power plant. This brief covers who Base is, how the fleet works, what ERCOT data is public, and what all of it means for the simulator we are building this weekend.</p>
+  <div class="readout" aria-label="Key figures">
+    <div><b>205.5 MW</b><span>self-operated Texas fleet, Jul 2026</span></div>
+    <div><b>23,000+</b><span>batteries at ~17,000 homes, Aug 2026</span></div>
+    <div><b>5 min</b><span>ERCOT dispatch interval (SCED)</span></div>
+    <div><b>20%</b><span>charge always held for backup</span></div>
+    <div><b>LZ_AEN</b><span>Austin Energy's price zone (no LZ_AUSTIN)</span></div>
+  </div>
+</header>
+
+<div class="frame">
+  <nav class="toc" aria-label="Contents">
+    <p>Contents</p>
+    <ol>
+      <li><a href="#summary">The short version</a></li>
+      <li><a href="#company">Base the company</a></li>
+      <li><a href="#battery">The battery and its rules</a></li>
+      <li><a href="#ercot">How the fleet meets ERCOT</a></li>
+      <li><a href="#physics">Grid physics, plainly</a></li>
+      <li><a href="#data">Data we can use</a></li>
+      <li><a href="#build" class="build">What this means for our build</a></li>
+    </ol>
+  </nav>
+
+  <article>
+
+<section id="summary">
+  <div class="sec-no">1 · Summary</div>
+  <h2>The gap worth building on is the feeder, not backup</h2>
+  <div class="key fix">
+    <span class="label">Corrected 26 Sep after design review</span>
+    <p>Two figures below were revised: SMART-DS transformers are already at standard 25/50/75 kVA nameplate (do not de-rate them), and the 1,000-battery hijack's effect on Texas frequency is a 3–17 mHz band rather than 3–5 mHz. Details are in <code>design/round1/critique-judge.md</code>.</p>
+  </div>
+  <div class="key">
+    <span class="label">The finding that matters most</span>
+    <p>ERCOT dispatches and pays Base by <strong>load zone</strong>. Its rulebook for aggregated home batteries says distribution limits <em>"will not explicitly be enforced"</em> when it dispatches them. Nothing in the market protects a neighbourhood feeder or a 25 kVA street transformer from thousands of batteries that all start charging at once. That is the "dynamic charge/discharge interplay" Base's engineer pointed us to, and a feeder-aware orchestrator is what fills it.</p>
+  </div>
+  <p>The physics backs this up. A hijacked slice of 1,000 batteries swings about 40 MW. That moves Texas-wide frequency by roughly 3 to 17 thousandths of a hertz, no more than the grid's normal second-to-second wander, yet it is more power than a whole neighbourhood feeder carries.</p>
+  <p>Almost every input we need is public, and most needs no key:</p>
+  <ul>
+    <li>ERCOT's live dashboard feeds: frequency every 10 seconds, prices every 15 minutes, grid condition, fuel mix, grid-battery output.</li>
+    <li>ERCOT's archives, with prices back to 2010. Enough to replay Winter Storm Uri or the September 2023 emergency.</li>
+    <li>ERCOT's own monthly reports on the aggregated home-battery pilot.</li>
+    <li>NREL's synthetic feeders, wired to real north-Austin buildings. OpenDSS solves a 6,800-home substation in 41 ms.</li>
+  </ul>
+  <div class="key fix">
+    <span class="label">Three assumptions to correct</span>
+    <ul style="margin-bottom:0">
+      <li><strong>17,000 is homes, not batteries.</strong> There are 23,000+ batteries.</li>
+      <li><strong>Austin's price zone is <code>LZ_AEN</code>.</strong> There is no <code>LZ_AUSTIN</code>.</li>
+      <li><strong>Austin Energy territory is a Base market</strong>, through a 40 MW deal where Austin Energy itself dispatches the batteries.</li>
+    </ul>
+  </div>
+  <p class="src">Labels used throughout: <span class="tag t-unv">UNVERIFIED</span> a number we could not confirm from a primary source; <span class="tag t-der">DERIVED</span> our own arithmetic from sourced numbers; <span class="tag t-asm">ASSUMPTION</span> a placeholder where nothing public exists.</p>
+</section>
+
+<section id="company">
+  <div class="sec-no">2 · Company</div>
+  <h2>A power company that parks its power plants in 17,000 backyards</h2>
+  <p>Base was incorporated in Austin in mid-2023 by <strong>[Base's CEO]</strong> (CEO, formerly an investor at Thrive Capital) and <strong>[Base's COO]</strong> (COO, one of the first four people at SpaceX's Starbase, later ran manufacturing at Anduril). It launched commercially in May 2024. Early leaders came from Starlink, Tesla Energy and Anduril, including [Base's Head of Software] (Head of Software, ex-Starlink) and [Base's Head of Markets] (ex-Tesla Autobidder), who now writes Base's most technical posts as <strong>Head of Markets</strong>. Headcount roughly doubled from about 100 in April 2025 to 198 in October 2025, and on 25 Sep 2026 Base listed <strong>194 open roles</strong>, 164 in Austin. <span class="src">(<a href="https://research.contrary.com/company/base-power">Contrary</a>, <a href="https://www.notboring.co/p/base-power-company-chapter-2">Not Boring</a>, <a href="https://api.ashbyhq.com/posting-api/job-board/base-power">Ashby job board</a>)</span></p>
+  <p>The judges come from that culture: first-principles reasoning, and failure modes treated as the thing to design around.</p>
+
+  <h3>How the money works</h3>
+  <p>Texas splits electricity in two. A regulated wires company (a TDSP, such as Oncor or CenterPoint) delivers the power. A competitive Retail Electric Provider (REP) sells it. Base is a licensed REP (PUCT #10338) that also <strong>owns, installs, maintains and remotely operates</strong> a large battery at each member's home.</p>
+  <ul>
+    <li><strong>Member pays:</strong> a one-time install fee of $95–$695 (typically $695 in Oncor territory), a $19 monthly membership, and electricity on a 36-month fixed plan of 8¢/kWh plus delivery, about 14.3¢/kWh all-in on Oncor at 2,000 kWh a month (27 Aug 2026). <span class="src">(<a href="https://www.basepowercompany.com/energy">Base energy page</a>, <a href="https://electrek.co/2026/08/03/base-power-raises-1b-to-roll-out-its-giant-new-home-battery/">Electrek</a>)</span></li>
+    <li><strong>Base earns from four streams:</strong> retail margin, wholesale energy arbitrage, ancillary-service payments, and fixed capacity (tolling) payments from utilities. [Base's CEO] describes the two books as a natural hedge: price volatility hurts a fixed-rate retailer and pays a battery owner. <span class="src">(<a href="https://www.latitudemedia.com/news/catalyst-how-base-power-plans-to-use-its-fresh-1b/">Latitude Media</a>)</span></li>
+  </ul>
+  <p>That is what "a power company, not a battery company" means: the battery is generation and hedging capacity, sited for free at the customer's meter, and the product sold is electricity plus backup. No primary source splits revenue by stream. Sacra's estimates of about $12M for 2025 and $70M projected for 2026 are <span class="tag t-unv">UNVERIFIED</span>.</p>
+
+  <h3>Scale</h3>
+  <ul>
+    <li>Batteries at <strong>~17,000 homes</strong> delivering 500+ MWh (Aug 2026, <a href="https://www.canarymedia.com/articles/batteries/base-power-raises-1b-to-get-big-batteries-into-more-homes">Canary Media</a>).</li>
+    <li><strong>23,000+ batteries</strong> (WSJ via <a href="https://www.thedailyupside.com/industries/energy/zach-dell-yes-that-dell-charges-up-his-13-billion-backyard-battery-startup/">The Daily Upside</a>), about 1.35 per home, which fits the popular two-cabinet setups.</li>
+    <li>The homepage's "30,000+ homeowners" includes energy-only customers. Contrary's "~50,000 customers" conflicts with every other source.</li>
+    <li>The most precise figure is Base's own: <strong>205.5 MW</strong> of self-operated discharge capacity in Texas, July 2026, up from 28.9 MW in May 2025. It excludes partner-utility fleets. <span class="src">(<a href="https://www.basepowercompany.com/blog/aggregated-ders-and-the-capacity-crunch">Base blog</a>)</span></li>
+    <li>Installs run at about 100 batteries and 8 MWh a day, with a goal of doubling by year-end. At that pace the count is roughly 27,000–28,000 batteries by late September <span class="tag t-der">DERIVED</span>.</li>
+  </ul>
+
+  <h3>Where Base operates, and who controls each battery</h3>
+  <ul>
+    <li><strong>Competitive areas</strong> (Oncor, CenterPoint, AEP Texas Central and North, TNMP): Base is the retailer and its Markets desk dispatches.</li>
+    <li><strong>Utility partnerships</strong> elsewhere: co-ops CoServ, Guadalupe Valley (GVEC) and Farmers EC; El Paso Electric (outside ERCOT); and <strong>Austin Energy</strong>.</li>
+    <li><strong>Austin Energy</strong> is municipal and has no retail choice, so Base cannot sell electricity there. But on 19 May 2026 Austin Energy announced a <strong>40 MW</strong> deal under which Austin Energy dispatches Base batteries at its customers' homes to shave peaks, about 1.5 hours at 40 MW. Installs began July 2026. <span class="src">(<a href="https://austinenergy.com/about/news/news-releases/2026/Austin-Energy-expands-local-battery-storage-to-support-reliable-affordable-power">Austin Energy</a>)</span> A reported value of about $4.08M a year is <span class="tag t-unv">UNVERIFIED</span>.</li>
+    <li>Around the city it's a patchwork: Austin Energy reaches into parts of Pflugerville and Cedar Park; Oncor serves Round Rock, other parts of Pflugerville, and Hutto. <strong>Pedernales Electric Cooperative is not a Base territory.</strong></li>
+    <li>Beyond Texas: ComEd's Illinois territory (PJM market) since 24 Jun 2026; a job posting points to Connecticut (Eversource, United Illuminating).</li>
+    <li>Homebuilders: Lennar installs Base batteries in new homes during construction, which puts a battery in nearly every home on one feeder.</li>
+  </ul>
+
+  <h3>Funding</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Round</th><th>Date</th><th>Amount</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Seed + Series A</td><td class="n">May 2024</td><td class="n">~$68M</td><td>Some sources say $60M</td></tr>
+      <tr><td>Series B</td><td class="n">Apr 2025</td><td class="n">$200M</td><td></td></tr>
+      <tr><td>Series C</td><td class="n">Oct 2025</td><td class="n">$1B</td><td>Led by Addition</td></tr>
+      <tr><td>Series D</td><td class="n">Aug 2026</td><td class="n">$1B</td><td><strong>$13B post-money</strong></td></tr>
+    </tbody>
+  </table></div>
+  <p>Base says it has raised more than $2.5B. The priced rounds sum to about $2.27B; the rest is probably debt. Base now builds its own <strong>Base Core</strong> in the former Austin American-Statesman building, "thousands" a month. <span class="src">(<a href="https://techcrunch.com/2026/08/03/base-power-raises-another-1b-to-save-the-grid-using-backyard-batteries/">TechCrunch</a>, <a href="https://www.solarpowerworldonline.com/2026/08/base-power-begins-manufacturing-39-2-kwh-residential-battery-in-texas/">Solar Power World</a>)</span></p>
+
+  <h3>Competition and direction</h3>
+  <ul>
+    <li>On 13 Aug 2026 Tesla launched a zero-down Powerwall lease bundled with a Texas retail plan, with the same 20% outage reserve and a storm mode. <span class="src">(<a href="https://pv-magazine-usa.com/2026/08/13/tesla-unveils-zero-down-powerwall-lease-program-with-retail-electric-plan-in-texas-touts-global-vpp-potential/">pv magazine</a>)</span></li>
+    <li>Base's messaging now leads with grid capacity: ERCOT's 91 GW record, data-center load growth, transmission constraints.</li>
+    <li>Job postings describe a <strong>Distributed Compute</strong> program putting GPU inference servers on battery sites, dispatched alongside energy planning. No press coverage, so cite it as "per your postings".</li>
+    <li>Member complaints are few: BBB B+ with six closed complaints in three years. One reportedly concerns "rapid repeated grid surges" <span class="tag t-unv">UNVERIFIED</span>.</li>
+  </ul>
+</section>
+
+<section id="battery">
+  <div class="sec-no">3 · Product</div>
+  <h2>Each battery is a 20 kW grid asset that must never strand its home</h2>
+  <p>A Base system is three things mounted at the meter wall: a <strong>battery cabinet</strong> on a 3 ft × 3 ft pad, about 36 in tall, within 20 ft of the meter; an <strong>inverter</strong> (battery DC to the home's 120/240 V AC); and an <strong>automatic transfer switch</strong>, about 13 in wide, between meter and main panel, which cuts the whole house off the grid in an outage. Each Base home therefore behaves as one controllable point at the service drop. <span class="src">(<a href="https://help.basepowercompany.com/en/articles/10280705">Help: spacing</a>)</span></p>
+  <div class="tbl wide"><table>
+    <thead><tr><th>Class</th><th>Energy / cabinet</th><th>Power</th><th>Switchover</th><th>Backup starts if home draws</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Gen 1 (2024)</td><td class="n">~20 kWh</td><td class="n">11 kW</td><td>not published</td><td>not published</td><td>Wall-mounted, white-labeled</td></tr>
+      <tr><td>Legacy ground-mount (2025–26)</td><td class="n">25 kWh; 50 as a pair</td><td class="n">11.4 kW</td><td class="n">&lt;0.5 s</td><td class="n">≤11 kW</td><td>Probably Growatt APX HV + MIN 11400, so ~22.5 kWh usable <span class="tag t-der">INFERENCE</span></td></tr>
+      <tr><td>Base Core (Aug 2026)</td><td class="n">39.2 kWh; 78.4 as a pair</td><td class="n">20 kW</td><td class="n">50 ms</td><td class="n">&lt;20 kW</td><td>Base-built LFP, −22 to 122 °F, IP67, generator port</td></tr>
+    </tbody>
+  </table></div>
+  <p>Base never names the maker of the legacy unit, but its lease tells members to follow Growatt's APX HV manual, which rates 25 kWh at 22.5 kWh usable; the matching inverter is 11,400 W. Both units run about two hours at full power, matching Base's description of discharge events as brief, 1–2 hours. Round-trip efficiency, usable Core capacity, surge rating and weight are not published.</p>
+
+  <h3>Operating rules precise enough to code</h3>
+  <ul>
+    <li><strong>Base controls the battery, not the member.</strong> Base calls it a grid-balancing battery, not a self-consumption system.</li>
+    <li><strong>20% reserve at all times.</strong> Base says this covers 97% of Texas outages (under 2.5 hours), and that batteries rarely drop below 50% in practice. The contract only promises to "endeavor" to hold it.</li>
+    <li><strong>Utility programs</strong> may dispatch 80% of capacity; 20% stays for backup.</li>
+    <li><strong>Storm mode:</strong> when long outages are likely, the battery holds more charge and pulls back from grid activity. Target level and lead time are unpublished.</li>
+    <li><strong>Outages:</strong> the system powers the home alone and never discharges to the grid. Backup only starts if the home draws less than the start limit; after an overload it retries three times, then needs a manual restart.</li>
+    <li><strong>Normal use:</strong> grid support mostly mid-to-late afternoon on hot days; dispatchable up to 500 cycles a year.</li>
+    <li><strong>Backup duration (one Core):</strong> 22–36 h at 750 W, 4–6 h at 4 kW, 2–3 h at 8 kW.</li>
+  </ul>
+  <div class="key fix">
+    <span class="label">Not public: what a battery does when it loses its connection</span>
+    <p>Base's engineer told us it goes idle (no charge, no discharge) <span class="tag t-unv">UNVERIFIED</span>. Everything public fits: backup works locally without internet; each unit has Wi-Fi plus built-in 4G; members must keep internet up; and Base's dispatch scoring treats telemetry older than <strong>180 seconds</strong> as stale. The Growatt pack the lease references powers itself off 12 minutes after losing contact with its inverter, and Base can remotely make a system inoperable, so a kill switch is a real control.</p>
+  </div>
+
+  <h3>Device state machine <span class="tag t-der">DERIVED</span></h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Mode</th><th>Trigger</th><th>Behaviour</th></tr></thead>
+    <tbody>
+      <tr><td><code>GRID_DISPATCH</code></td><td>Fresh telemetry plus a market or utility set point</td><td>Charge or discharge to set point; SoC ≥ 20%</td></tr>
+      <tr><td><code>GRID_IDLE</code></td><td>No set point</td><td>Standby</td></tr>
+      <tr><td><code>STORM_HOLD</code></td><td>Outage-risk forecast</td><td>Raise charge target (90–100% <span class="tag t-asm">ASSUMPTION</span>); no export</td></tr>
+      <tr><td><code>COMMS_LOST</code></td><td>No cloud contact</td><td>Power = 0, backup armed <span class="tag t-unv">UNVERIFIED</span>; stale after 180 s</td></tr>
+      <tr><td><code>BACKUP_ISLANDED</code></td><td>Grid voltage lost</td><td>Serve own home only; never export</td></tr>
+      <tr><td><code>OVERLOAD_RETRY</code></td><td>Home load above start limit</td><td>Three automatic retries, then manual restart</td></tr>
+      <tr><td><code>FAULT / THERMAL</code></td><td>Over-temperature or maintenance</td><td>Charge and discharge disabled</td></tr>
+      <tr><td><code>REMOTE_DISABLED</code></td><td>Decommissioned or terminated</td><td>Inoperable</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Base's software, from its job postings</h3>
+  <ul>
+    <li><strong>Firmware:</strong> from the battery-management microcontroller through edge gateways into the telemetry pipeline, over Modbus, MQTT and cellular. Postings stress sub-second telemetry, automated fault detection and recovery ("every truck roll is a loss"), and over-the-air updates with rollback for a fleet that can never go dark. <span class="src">(<a href="https://jobs.ashbyhq.com/base-power/396ea381-f4ef-4dc7-b79a-9c6ce8783897">Head of Firmware</a>)</span></li>
+    <li><strong>BaseOS</strong>, the cloud platform coordinating the fleet: Go and Python on AWS, with Temporal workflows for device control. <span class="src">(<a href="https://jobs.ashbyhq.com/base-power/d5149c86-5649-48bd-8d30-7708c3e36233">Senior SWE, Backend</a>)</span></li>
+    <li><strong>Markets team:</strong> treats dispatch as sequential decision-making (MPC, reinforcement learning, MDPs), and wants controls for concentrations of aggregated batteries at distribution voltages, including voltage regulation and peak shaving. <span class="src">(<a href="https://jobs.ashbyhq.com/base-power/a059e0be-15d9-4e98-94a0-8c99952a9f6a">Algorithms Engineer</a>)</span> A quant internship validates physics and economics models in a simulation environment before anything reaches production.</li>
+    <li><strong>Security:</strong> private backhaul, encrypted edge protocols, isolated edge devices, a SOC 2 cloud, US-sourced "smart" components.</li>
+  </ul>
+  <p>A simulator with fault isolation, stale-telemetry handling and feeder-aware control is a small version of what Base is hiring for.</p>
+</section>
+
+<section id="ercot">
+  <div class="sec-no">4 · Market</div>
+  <h2>ERCOT dispatches Base by load zone and never sees a feeder</h2>
+
+  <div class="chain" role="figure" aria-label="Control chain from ERCOT down to a home battery">
+    <div class="chain-head"><b>Who sees what, from ERCOT down to one battery</b><span>Numbers from the research; see sources below</span></div>
+    <div class="lvl"><div class="dot"></div><div><h4>ERCOT SCED</h4><p>Re-dispatches the whole Texas grid every 5 minutes; prices each location.</p></div><div class="who">ERCOT</div></div>
+    <div class="lvl"><div class="dot"></div><div><h4>Load-zone ADER resource</h4><p>One aggregated resource per load zone, e.g. LZ_HOUSTON 50.5 MW. Telemetry every 2 s; dispatched with load-zone shift factors.</p></div><div class="who">Base Markets desk</div></div>
+    <div class="cut">ERCOT's dispatch view ends here. Distribution limits below are not enforced.</div>
+    <div class="lvl blind"><div class="dot"></div><div><h4>Substation</h4><p>Steps transmission voltage down; feeds several feeders.</p></div><div class="who">TDSP (Oncor, CenterPoint) or city utility</div></div>
+    <div class="lvl blind"><div class="dot"></div><div><h4>Feeder, 12.47 kV</h4><p>One circuit per breaker. Austin median: ~660 customers, 6.9 MW peak.</p></div><div class="who">TDSP</div></div>
+    <div class="lvl blind"><div class="dot"></div><div><h4>Service transformer, 25/50/75 kVA</h4><p>About 2.5 homes each. One 20 kW Core is ~80% of a 25 kVA unit.</p></div><div class="who">TDSP</div></div>
+    <div class="lvl blind"><div class="dot"></div><div><h4>Home + Base battery</h4><p>11.4 kW legacy or 20 kW Core, 20% backup floor, islands in 50–500 ms.</p></div><div class="who">Member's reserve is a hard limit</div></div>
+  </div>
+
+  <h3>The Texas market in plain terms</h3>
+  <p>ERCOT runs a market that pays only for energy and reserves, not for capacity. Every five minutes its Security-Constrained Economic Dispatch (SCED) picks the cheapest mix of generators and batteries that meets demand without overloading transmission lines, and sets a price at each location (the LMP). Retail load settles on 15-minute prices averaged over <strong>load zones</strong>.</p>
+  <p>Ancillary services are paid standby jobs:</p>
+  <ul>
+    <li><strong>Regulation</strong> adjusts output every four seconds.</li>
+    <li><strong>Responsive Reserve (RRS)</strong> catches generator trips. Its Fast Frequency Response slice must deliver fully within 0.25 s once frequency hits 59.85 Hz.</li>
+    <li><strong>ECRS</strong> must respond within 10 minutes; <strong>Non-Spin</strong> within 30.</li>
+  </ul>
+  <p>On <strong>5 Dec 2025</strong> ERCOT switched to <strong>RTC+B</strong> (Real-Time Co-optimization plus Batteries): SCED buys reserves alongside energy every five minutes; each battery is modeled as one device with a state of charge; the old ORDC scarcity adder on energy prices is gone (scarcity now shows up in reserve prices); the real-time offer cap is $2,000/MWh, with $5,000/MWh for day-ahead and the system price ceiling. Batteries must hold enough energy behind each reserve award: 30 min for Regulation and RRS, 1 h for ECRS, 4 h for Non-Spin. <span class="src">(<a href="https://www.ercot.com/news/release/12052025-ercot-goes-live">ERCOT</a>, <a href="https://modoenergy.com/research/en/rtcb-real-time-cooptimization-rtc-ercot-ancillary-service-duration-soc-management">Modo Energy</a>)</span></p>
+  <div class="tbl"><table>
+    <thead><tr><th>Available reserves (PRC)</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td class="n">Below 3,000 MW</td><td>Watch</td></tr>
+      <tr><td class="n">Below 2,500 MW</td><td>EEA1</td></tr>
+      <tr><td class="n">Below 2,000 MW</td><td>EEA2</td></tr>
+      <tr><td class="n">Below 1,500 MW</td><td>EEA3, rotating outages</td></tr>
+    </tbody>
+  </table></div>
+  <p>Transmission costs are allocated by <strong>4CP</strong>: each customer's demand in the single highest 15-minute interval of June, July, August and September. That's why co-ops pay to shave those peaks.</p>
+
+  <h3>How Base's fleet plugs in</h3>
+  <p>Base reaches the wholesale market through ERCOT's <strong>ADER pilot</strong> (Aggregate Distributed Energy Resource), which lets many metered homes in one load zone and one distribution utility bid as a single resource. Each home must be ≤1 MW and the aggregation ≥100 kW; telemetry goes to ERCOT every two seconds. The distribution utility can reject homes at registration for safety or reliability, but after that, nothing in ERCOT's dispatch knows which feeder or transformer a battery sits on. <span class="src">(<a href="https://www.ercot.com/files/docs/2026/03/02/ADER-Pilot-Project-Governing-Document-Phase-3.3.docx">ADER Governing Document 3.3</a>)</span></p>
+  <ul>
+    <li>Base forms <strong>one ADER per load zone</strong>, bids it into SCED every five minutes, settles at the load-zone price, and carries Non-Spin and ECRS.</li>
+    <li>Jul–Aug 2026 partitions: LZ_NORTH 22.9 MW, LZ_SOUTH 7.2 MW, LZ_HOUSTON 50.5 MW, 30 MW pending. That's 39% of the 205.5 MW fleet.</li>
+    <li>About 60 days from install to SCED participation, paced by manual registration and ERCOT's network-model releases.</li>
+    <li>ERCOT raised the pilot cap to 500 MW in March 2026. ECRS hit its 100 MW cap by June, so new ADER megawatts can only earn energy and Non-Spin for now. <strong>LZ_AEN carried zero ADER MW.</strong></li>
+    <li>Market share doesn't reconcile: Base claims 103 of 145 MW (71%); ERCOT's June tracker shows 248.7 MW approved and its August workbook 292.9 MW across nine aggregations. Use ERCOT for totals, Base for Base.</li>
+  </ul>
+  <div class="key">
+    <span class="label">Base's published tracking record</span>
+    <p>Houston partition, evening of 22 Jul 2026 (ERCOT's all-time demand record): 46.9 MW of discharge capability; <strong>36 of 36</strong> five-minute intervals inside ERCOT's tolerance (the greater of 2 MW or 15%); mean miss 1.59 MW (about 3.3%); worst miss 5.45 MW during a ramp from 12.1 to 46.7 MW in 15 minutes. Charging swung from −15.9 to −45.8 MW in 10–15 minutes. Data path: homes → MQTT on private backhaul → Base cloud → Base's QSE → ICCP to ERCOT's control centers. Base markets 96% fleet availability and under 5% forced outage rate. <span class="src">(<a href="https://www.basepowercompany.com/blog/aggregated-ders-and-the-capacity-crunch">Base blog</a>)</span></p>
+  </div>
+
+  <h3>Four utilities also hold the joystick</h3>
+  <ul>
+    <li><strong>CoServ</strong> (Denton County co-op): 100 MW across 5,000+ homes; peak shaving and arbitrage with 80% of each battery.</li>
+    <li><strong>GVEC</strong>: 50 MW; dispatches through Base's software for 4CP peaks and arbitrage; also qualified in ADER.</li>
+    <li><strong>El Paso Electric</strong> (outside ERCOT): up to 10 MW for local capacity constraints.</li>
+    <li><strong>Austin Energy</strong>: its own 40 MW.</li>
+  </ul>
+  <p>So one physical fleet answers to <strong>several principals with different goals</strong>: the Markets desk chasing SCED base points, utilities shaving their own peaks, and every member's 20% reserve as a hard constraint on both. In Austin, a battery in Austin Energy territory answers to Austin Energy and prices at LZ_AEN, while one a few miles north in Oncor's Round Rock answers to Base. Which load zone Oncor's Austin suburbs settle in is <span class="tag t-unv">UNVERIFIED</span>; ask on site.</p>
+
+  <h3>Location is becoming the product</h3>
+  <p>On 16 Jan 2026 Base's hourly charge and discharge blocks moved ERCOT's estimated flow at two 138 kV buses in the expected direction on all ten transitions, by 1.4–1.7 MW per MW cycled, a greater-than-one ratio Base calls unexplained. Its siting math: 40 MW placed in an import pocket (PTDF 0.83–0.88 on the constrained line) gives as much relief as about 490 MW spread across the zone. Base backs a proposed ADER Phase IV that would recognize aggregations by transmission node.</p>
+  <p>The economics point the same way. Batteries already supply most of ERCOT's reserves (2025: 94% of Reg-Up, 51% of RRS, 42% of ECRS). Revenue per MW of storage fell about 37% in 2025 as the statewide fleet passed 17 GW. In the record week of July 2026, batteries discharged a record 11,980 MW, yet real-time prices peaked at only $378/MWh. <span class="src">(<a href="https://www.potomaceconomics.com/wp-content/uploads/2026/06/2025-State-of-the-Market-Report-for-ERCOT.pdf">Potomac Economics</a>, <a href="https://blog.gridstatus.io/ercot-record-july-2026/">Grid Status</a>)</span> Arbitrage alone is a shrinking prize; firm, locatable capacity that keeps working when parts fail is not.</p>
+  <p>For scale, grid-scale ERCOT storage earned about $28,800/MW-year: roughly $1.58 a day for a 20 kW Core and $0.90 for an 11.4 kW legacy unit <span class="tag t-der">DERIVED</span>, a benchmark rather than Base's revenue.</p>
+</section>
+
+<section id="physics">
+  <div class="sec-no">5 · Physics</div>
+  <h2>Frequency is one number for Texas; voltage is a street-by-street problem</h2>
+  <h3>Grid physics without the jargon</h3>
+  <p>Picture every large generator in Texas pedalling one enormous tandem bicycle at 60 turns a second. If riders drop off (a generator trips) or the load gets heavier, the bike slows and <strong>frequency</strong> falls. Three things then happen in order:</p>
+  <ol class="steps">
+    <li>Spinning mass (<strong>inertia</strong>) buys a few seconds.</li>
+    <li>Automatic governors push harder in proportion to the slowdown (<strong>droop</strong>).</li>
+    <li>If frequency keeps falling, relays disconnect customers (<strong>under-frequency load shedding</strong>).</li>
+  </ol>
+  <p>ERCOT plans for losing <strong>2,750 MW</strong> at once and keeps a critical inertia of about 100 GW·s. Real events: the 2022 Odessa disturbance lost 2,555 MW and pulled frequency to 59.7 Hz; on 15 Feb 2021 Winter Storm Uri drove it to <strong>59.302 Hz</strong> and held it below 59.4 Hz for 4 min 23 s, against a 9-minute limit before more generators would trip. Shedding stages: 5% of load at 59.3 Hz, 15% cumulative at 58.9 Hz, 25% at 58.5 Hz (a 2025 notice adds 59.1 and 58.7 Hz without clear percentages). The IEEE 1547 default for home inverters is 5% droop with a 0.036 Hz deadband. <span class="src">(<a href="https://www.nerc.com/globalassets/our-work/reports/white-papers/nerc_2022_odessa_disturbance_report-1.pdf">NERC Odessa</a>, <a href="https://www.ercot.com/files/docs/2021/03/03/Texas_Legislature_Hearings_2-25-2021.pdf">ERCOT Uri review</a>)</span></p>
+  <div class="key">
+    <span class="label">The rule that shapes everything else</span>
+    <p><strong>Frequency is the same everywhere on the Texas grid. Voltage is local</strong>, sagging along each street as current flows. A fleet's effect on frequency is counted in system-wide megawatts; its voltage and overheating effects are counted feeder by feeder.</p>
+  </div>
+  <p>Distribution is where the fleet lives. A <strong>substation</strong> steps transmission voltage down. Each <strong>feeder</strong> is one medium-voltage circuit, commonly 12.47 kV, leaving the substation through its own breaker to serve a neighbourhood. <strong>Service transformers</strong> on poles or pads step 7.2 kV down to 120/240 V for a few homes. NREL's synthetic Austin feeders have medians of about 660 customers, a 6.9 MW peak and 2.5 homes per transformer.</p>
+  <ul>
+    <li>Customer voltage must stay within <strong>114–126 V</strong> (ANSI Range A).</li>
+    <li>Transformer insulation ages about twice as fast for every 6 °C its hot spot runs above rating.</li>
+    <li>A worked example of an 11 MW feeder could accept only 0.17–3.3 MW pushed back from homes, depending on location; voltage usually bound first.</li>
+  </ul>
+
+  <h3>Each additional battery, with Base's real numbers <span class="tag t-der">DERIVED</span></h3>
+  <ul>
+    <li><strong>Feeder:</strong> an 11 MW feeder at 90% loading has 1.1 MW of room. <strong>56 Cores</strong> (or 97 legacy units) charging at once use it up; each extra Core adds about 0.18 points of loading.</li>
+    <li><strong>Transformer:</strong> one Core charging flat out is about <strong>80% of a 25 kVA transformer</strong> by itself. With 4–6 kW of evening load on each of 2.5 homes, one charging Core takes a 25 kVA unit to about 123–144%: past its 110% normal limit but under its 150% emergency rating, so it ages the transformer rather than blowing a fuse. Only about a quarter of SMART-DS transformers are 25 kVA; a 50 kVA unit in the same case sits near 70%.</li>
+    <li><strong>Concentration:</strong> penetration grows 1–2% of homes a year, but Lennar-style subdivisions put a battery on nearly every home, and Base's zone-wide charging blocks (−45.8 MW in Houston inside 15 minutes) land on whichever feeders host the batteries.</li>
+  </ul>
+  <p>A feeder-aware controller computes headroom per transformer and feeder from forecast load, staggers charging after a price drop, and discharges first on overloaded feeders.</p>
+
+  <h3>A 1,000-battery hijack is a neighbourhood emergency, not a Texas one</h3>
+  <p>A battery is a better weapon than an air conditioner because it swings both ways. A Core flipping from full charge to full discharge moves 40 kW, so <strong>1,000 Cores swing 40 MW</strong> (1,000 legacy units about 23 MW). Two public data points give a rough rate: Odessa moved frequency about 0.12 mHz per MW; ERCOT's 7 Aug 2026 event about 0.075 mHz per MW. So 40 MW moves Texas frequency by roughly <strong>3–17 mHz</strong> <span class="tag t-der">DERIVED</span>, depending on load damping and deadband assumptions. Normal ERCOT wander on 25 Sep 2026 had a standard deviation of about 13.7 mHz, so either end is lost in the noise. Quote it as a band, never a single number.</p>
+  <p>On feeders the same attack is catastrophic: spread across three median Austin feeders it is about 6.7 MW each, roughly each feeder's entire peak. That opens breakers, pushes voltage outside 114–126 V, and overloads every transformer with a battery on it. Princeton's BlackIoT study agrees from the other side: frequency attacks need 200–300 compromised devices per MW of demand, line-overload attacks only 4–10. <span class="src">(<a href="https://www.princeton.edu/~pmittal/publications/blackiot-usenix18.pdf">BlackIoT, USENIX 2018</a>)</span></p>
+  <p>Only at whole-fleet scale does it touch frequency: swinging all 205.5 MW moves about 411 MW (15% of the design trip, roughly 30–50 mHz); adding the ~190 MW of utility programs nears 800 MW <span class="tag t-der">DERIVED</span>. So the metric that matters is <strong>blast radius per credential</strong>: how many megawatts one compromised service can command, against a feeder's capacity and 1% of system load.</p>
+
+  <h3>Real failures and attacks anchor every scenario</h3>
+  <div class="tbl wide"><table>
+    <thead><tr><th>Scenario</th><th>Precedent</th></tr></thead>
+    <tbody>
+      <tr><td>Generator trip</td><td>2,750 MW design trip; Odessa, where one maker's inverters misread a phase jump as an outage and tripped across the fleet. The template for a firmware bug shared by a batch.</td></tr>
+      <tr><td>Winter storm</td><td>Uri: 52,277 MW of 107,514 MW generation offline, 20,000 MW load shed at peak, 70.5 hours of shedding. Fleet-specific danger comes on restoration: every battery wants to recharge as heaters restart <span class="tag t-der">DERIVED</span>.</td></tr>
+      <tr><td>Heat wave</td><td>Record 91,134 MW on 22 Jul 2026; 75,733 MW net of wind and solar around 8 pm.</td></tr>
+      <tr><td>Comms loss</td><td>sPower 2019: repeated sub-5-minute control outages over ~10 hours; no generation lost.</td></tr>
+      <tr><td>Hijack</td><td>Ukraine Dec 2015: stolen VPN credentials, breakers opened at three utilities within 30 minutes, ~225,000 customers out, substation firmware wiped.</td></tr>
+      <tr><td>Stealth</td><td>Volt Typhoon: footholds in US energy IT for at least five years.</td></tr>
+      <tr><td>Backdoors</td><td>Undocumented cellular radios found in some Chinese-made inverters and batteries (Reuters via Utility Dive, 2025).</td></tr>
+      <tr><td>Control lost, power kept</td><td>Poland 29 Dec 2025: 30+ wind and solar sites wiped via default passwords; comms lost, production continued. The best case for "offline means idle, backup armed".</td></tr>
+      <tr><td>Member tampering</td><td>No public incident; Base's agreement forbids altering or obstructing the system.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Detection has to rely on physics, not command logs</h3>
+  <p>A backdoor radio or a stolen credential bypasses the fleet's own command log, so detectors compare what devices claim with what physics shows. These are design recommendations, not documented Base practice.</p>
+  <ul>
+    <li><strong>Physics checks:</strong> battery-reported power vs the utility meter's net change; fleet total plus baseline vs the feeder-head measurement; transformer voltage should fall when a battery claims to charge.</li>
+    <li><strong>Drift detection:</strong> stealth attacks stay under alarms (SoC reported 3% high, 80% of an award delivered, 2 s of added lag). CUSUM or EWMA against peers on the same feeder, firmware and install batch beats fixed thresholds.</li>
+    <li><strong>Bounded commands:</strong> signed commands with sequence numbers and expiry; ramp limits on the device; at most one charge/discharge flip every few minutes; a random 0–120 s start delay; control shards capped below feeder hosting limits.</li>
+    <li><strong>Local autonomy:</strong> IEEE 1547 frequency-watt and volt-var reflexes, a hard SoC floor, refuse to charge at low frequency or export at high voltage.</li>
+    <li><strong>Tampering signals:</strong> never exports during events, SoC pinned at 100%, "offline" exactly during dispatch windows, meter sees no export when the battery claims it.</li>
+  </ul>
+</section>
+
+<section id="data">
+  <div class="sec-no">6 · Data</div>
+  <h2>Nearly every input is public, and most need no key</h2>
+  <h3>ERCOT, three ways in</h3>
+  <ul>
+    <li><strong>Dashboard JSON</strong> under <code>https://www.ercot.com/api/1/services/read/dashboards/</code>, tested keyless on 25 Sep 2026: frequency every 10 s (<code>ancillary-services.json</code> keeps 2 h; <code>dc-tie-flows.json</code> the whole day, with inertia); grid condition and PRC every 8–10 s (<code>daily-prc.json</code>); fuel mix and grid-battery charge/discharge every 5 min; hub and load-zone prices every 15 min; hourly load and forecasts; outages; a 12-city weather forecast. Cached 60 s. Undocumented, so ERCOT can rename them.</li>
+    <li><strong>MIS document service</strong>, also keyless: <code>IceDocListJsonWS?reportTypeId=</code> and <code>mirDownload?doclookupId=</code>. SCED prices post ~2 s after each run, 15-minute prices ~2 min after the interval, day-ahead at ~12:40 the day before.</li>
+    <li><strong>ERCOT Public API</strong> (<code>api.ercot.com/api/public-reports</code>): free account, subscription key, and an Azure B2C ID token that lasts one hour with no refresh. 30 requests/min, one key per person (each teammate registers), blocked outside the US. 249 live operations; the GitHub spec lists only 106. <span class="src">(<a href="https://developer.ercot.com/applications/pubapi/user-guide/registration-and-authentication/">ERCOT developer portal</a>)</span></li>
+    <li><code>pip install gridstatus</code> (v0.36.0, BSD-3) wraps the dashboards and MIS with no key.</li>
+  </ul>
+  <div class="key fix">
+    <span class="label">Identifiers that were wrong</span>
+    <ul style="margin-bottom:0">
+      <li>Load zones: LZ_AEN, LZ_CPS, LZ_HOUSTON, LZ_LCRA, LZ_NORTH, LZ_RAYBN, LZ_SOUTH, LZ_WEST. AEN, CPS, LCRA and RAYBN are the municipal and co-op zones.</li>
+      <li>Weather zones differ from load zones (Austin is presumably SOUTH_C <span class="tag t-unv">UNVERIFIED</span>).</li>
+      <li>NP3-233-CD is hourly outage capacity, not reserve prices. NP3-911-ER is the two-day reserve report, not ORDC.</li>
+      <li>Real-time reserve prices: NP6-331-CD (15-min) and NP6-332-CD (per SCED run). Old ORDC adders: NP6-323-CD, history in NP6-792-ER and NP6-793-ER.</li>
+    </ul>
+  </div>
+
+  <h3>Replays and calibration back to 2010</h3>
+  <ul>
+    <li>Annual keyless archives: real-time and day-ahead prices 2010–2026, ORDC adders from 2014, hourly native load back to 2002, fuel-mix workbooks. The 2021 file shows <strong>$9,794.02/MWh at LZ_AEN</strong> on 15 Feb 2021.</li>
+    <li>Replaying Uri or Sep 2023 needs the pre-RTC+B price model (scarcity in energy prices). Since Dec 2025 scarcity lives in reserve prices, which is why July 2026's record heat produced energy prices of only $378/MWh while Non-Spin reached $325.</li>
+    <li><strong>No public frequency history.</strong> Poll <code>dc-tie-flows.json</code> to build one. ERCOT's weekly <strong>Frequency Measurable Events</strong> workbook (NP12-261-M) lists every event since 2015 with MW lost and the low point.</li>
+    <li>ERCOT's <strong>ADER monthly workbook</strong> gives each aggregation's online intervals, reserve participation, bids and LMP while dispatched: the closest public ground truth for a Base-like partition.</li>
+  </ul>
+
+  <h3>Feeders, physics engines, weather and maps</h3>
+  <ul>
+    <li><strong>NREL SMART-DS Austin</strong>: statistically validated 12.47 kV feeders, substations and transformers on real Austin building locations; OpenDSS, CYME and GeoJSON; 15-minute ResStock home loads 2016–2018 with a separate <code>cooling_kw</code>; CC BY 4.0 on public S3. Region P1U has 96 feeders and 65,529 customers; feeder <code>p1uhs19_1247--p1udt17263</code> has 1,012 customers and a 7.02 MW peak. Caveats: transformer <code>kva=</code> values are already standard 25/50/75 kVA nameplates, and the 27.5 and 37.5 figures in the files are the 110% normal and 150% emergency ratings, so do not de-rate anything; and the sample sits in north Austin, which is really Austin Energy territory (we present it as a stand-in for an Oncor suburb).</li>
+    <li><strong>Speed is not a constraint:</strong> OpenDSSDirect.py solved a 6,817-load substation in 41 ms and a full day at 5-minute steps in 1.1 s; pandapower solved a 1,000-home feeder in 14 ms. OpenDSS showed a 0.907 pu low voltage that a kW-only bucket would miss, so the bucket is fine as the controller's view but not as the referee.</li>
+    <li><strong>Infrastructure:</strong> an OSM Overpass bounding-box query returned 200 Austin-area substations (Austin Energy 70, LCRA 37, PEC 28, Oncor 15). HIFLD Open shut down Aug 2025.</li>
+    <li><strong>Buildings:</strong> Overture Maps (the old Microsoft footprint URL is dead).</li>
+    <li><strong>Weather:</strong> Open-Meteo (Uri low 4.5 °F, Aug 2023 high 106.9 °F; free tier non-commercial, 10,000 calls/day), NWS (needs a User-Agent), NOAA NCEI Austin-Bergstrom.</li>
+    <li><strong>Solar:</strong> NREL is now the National Laboratory of the Rockies; PVWatts answers at <code>developer.nlr.gov</code>. A 7 kW south-facing Austin array yields 10,441 kWh a year.</li>
+    <li><strong>Outages:</strong> ORNL EAGLE-I county data every 15 minutes, 2014–2025, CC BY 4.0 (2021 file is 1.1 GB).</li>
+    <li><strong>Pecan Street</strong> is out of reach in 48 hours (academic verification, non-commercial).</li>
+    <li><strong>Map:</strong> MapLibre GL JS + deck.gl + OpenFreeMap tiles, no key, commercial use allowed.</li>
+    <li><strong>Licensing:</strong> ERCOT allows raw data in compilations, charts and analyses, but not its logo; don't re-download the same report more than three times in 12 months via the API. OSM and Overture are ODbL; SMART-DS and EAGLE-I CC BY 4.0.</li>
+  </ul>
+</section>
+
+<section id="build">
+  <div class="sec-no">7 · Build</div>
+  <h2>What this means for our build</h2>
+  <p>The market sees one resource per load zone. Physics sees thousands of 20 kW loads, each on a specific transformer. The most credible thing our simulator can produce is a number nobody publishes: <strong>how many batteries a real-looking Austin feeder can host before the first violation, under naive versus feeder-aware dispatch</strong>, and how many megawatts of market commitment survive when pieces fail.</p>
+
+  <h3>Track fit</h3>
+  <ul>
+    <li><strong>Orchestration (primary).</strong> Coordinating many independent things and holding up when pieces fail is exactly Base's operating problem, and the feeder gap gives the "problem" and "why" lines (30 points) a justification Base itself has written down.</li>
+    <li><strong>Open Grid Data (second).</strong> The simulator runs on live and historical ERCOT feeds, ADER workbooks and frequency-event data, and can surface a data insight, e.g. how often real load-zone price drops would have triggered simultaneous charging on a feeder.</li>
+    <li><strong>Most Commercializable</strong> is the alternative second track if we lead with dollars; the value metrics below can carry that argument inside Orchestration either way.</li>
+    <li><strong>Label the grid honestly:</strong> SMART-DS north-Austin feeders are either an Austin Energy-dispatched sub-fleet priced at LZ_AEN, or a stand-in for an Oncor suburb on Base's ERCOT path. Say which.</li>
+  </ul>
+
+  <h3>Corrections and conflicts: the value to use</h3>
+  <div class="tbl wide"><table>
+    <thead><tr><th>Topic</th><th>Assumed or conflicting</th><th>Use this</th></tr></thead>
+    <tbody>
+      <tr><td>Fleet size</td><td>~17,000 batteries</td><td>~17,000 homes; 23,000+ batteries; 205.5 MW self-operated; 500+ MWh</td></tr>
+      <tr><td>Home counts</td><td>15k / 17k / 20k+ / 30k+</td><td>17,000 battery homes; 30,000+ includes energy-only</td></tr>
+      <tr><td>Austin price node</td><td>LZ_AUSTIN</td><td>LZ_AEN; zero ADER MW there (1 Jun 2026)</td></tr>
+      <tr><td>Austin Energy territory</td><td>Closed to Base</td><td>40 MW tolling deal since Jul 2026; Austin Energy dispatches</td></tr>
+      <tr><td>Suburban feeders</td><td>PEC/LCRA co-op style</td><td>PEC isn't Base territory; use Oncor suburbs (Round Rock, Pflugerville, Hutto) or Austin Energy</td></tr>
+      <tr><td>Battery power</td><td>10 kW placeholder</td><td>11.4 kW legacy; 20 kW Core</td></tr>
+      <tr><td>Legacy usable energy</td><td>25 kWh</td><td>22.5 kWh if the Growatt inference holds</td></tr>
+      <tr><td>1,000-battery attack</td><td>Threatens ERCOT frequency</td><td>~40 MW, ≈3–17 mHz (within normal wander): a feeder, transformer and market-integrity threat</td></tr>
+      <tr><td>Comms-loss behaviour</td><td>Idle (engineer)</td><td>UNVERIFIED; model power = 0, backup armed, stale at 180 s</td></tr>
+      <tr><td>ADER share</td><td>Base: 103 of 145 MW</td><td>ERCOT: 248.7 MW approved (Jun), 292.9 MW qualified (Aug)</td></tr>
+      <tr><td>2026 peak demand</td><td>91,308 MW (Grid Status)</td><td>91,134 MW (ERCOT official)</td></tr>
+      <tr><td>Grid-scale storage</td><td>17 GW end-2025 vs 14.96 GW Q1 2026</td><td>Cite both; the difference is definitional</td></tr>
+      <tr><td>Load-shed stages</td><td>Five-stage 2025 notice</td><td>59.3 / 58.9 / 58.5 Hz at 5 / 15 / 25%</td></tr>
+      <tr><td>IEEE 1547 droop</td><td>4% in one paper</td><td>5% with a 0.036 Hz deadband</td></tr>
+      <tr><td>Scarcity pricing</td><td>ORDC adder on energy</td><td>Removed 5 Dec 2025; reserve demand curves; RT cap $2,000/MWh</td></tr>
+      <tr><td>Dead endpoints</td><td>developer.nrel.gov, HIFLD Open, MS footprints</td><td>developer.nlr.gov; OSM Overpass / HSDL; Overture</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Simulator parameters</h3>
+  <div class="tbl wide"><table>
+    <thead><tr><th>Parameter</th><th>Value</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Device classes</td><td>Legacy-25 (25 kWh, ±11.4 kW); Legacy-50; Core-39.2 (±20 kW); Core-78.4</td><td><span class="tag t-src">SOURCED</span></td></tr>
+      <tr><td>Usable energy</td><td>Legacy 22.5 kWh; Core ~37 kWh</td><td><span class="tag t-asm">ASSUMPTION</span></td></tr>
+      <tr><td>Round-trip efficiency</td><td>88% legacy; 89% Core</td><td><span class="tag t-asm">ASSUMPTION</span></td></tr>
+      <tr><td>Standby draw</td><td>55–105 W</td><td><span class="tag t-der">DERIVED</span></td></tr>
+      <tr><td>SoC floor</td><td>20% grid-connected; utilities may dispatch ≤80%</td><td><span class="tag t-src">SOURCED</span></td></tr>
+      <tr><td>Storm hold</td><td>90–100% charge, 12–48 h ahead; no export</td><td><span class="tag t-asm">ASSUMPTION</span></td></tr>
+      <tr><td>Islanding</td><td>0.5 s legacy, 50 ms Core; start load ≤11 / &lt;20 kW; 3 retries</td><td><span class="tag t-src">SOURCED</span></td></tr>
+      <tr><td>Reconnect after outage</td><td>Automatic, ~300 s</td><td><span class="tag t-asm">ASSUMPTION</span></td></tr>
+      <tr><td>Comms</td><td>Wi-Fi + 4G; stale after 180 s; on loss power = 0, backup armed</td><td><span class="tag t-unv">PARTLY UNVERIFIED</span></td></tr>
+      <tr><td>Telemetry</td><td>Device 1–5 s; aggregate to ERCOT every 2 s</td><td><span class="tag t-src">MIXED</span></td></tr>
+      <tr><td>Market dispatch</td><td>Base point every 5 min per load-zone partition; 15-min settlement</td><td><span class="tag t-src">SOURCED</span></td></tr>
+      <tr><td>Tracking tolerance</td><td>max(2 MW, 15%); Base achieved 3.3% mean deviation</td><td><span class="tag t-src">SOURCED</span></td></tr>
+      <tr><td>Energy behind reserves</td><td>RRS 0.5 h, ECRS 1 h, Non-Spin 4 h per MW</td><td><span class="tag t-src">SOURCED</span></td></tr>
+      <tr><td>Cycling</td><td>≤500 cycles/yr; events 1–2 h</td><td><span class="tag t-src">SOURCED</span></td></tr>
+      <tr><td>Batteries per home</td><td>~1.35</td><td><span class="tag t-der">DERIVED</span></td></tr>
+      <tr><td>Feeder</td><td>12.47 kV; ~660–1,000 customers; 6–7 MW peak</td><td><span class="tag t-src">SMART-DS</span></td></tr>
+      <tr><td>Transformers</td><td>25 / 50 / 75 kVA nameplate as shipped (about 25% / 38% / 30% of units); limits at 110% normal and 150% emergency; ~2.5 homes each</td><td><span class="tag t-src">SMART-DS</span></td></tr>
+      <tr><td>Voltage band</td><td>0.95–1.05 pu (114–126 V)</td><td><span class="tag t-src">SOURCED</span></td></tr>
+      <tr><td>System frequency</td><td>Inertia 100–300 GW·s; design trip 2,750 MW; shed 59.3 / 58.9 / 58.5 Hz; FFR at 59.85 Hz within 0.25 s</td><td><span class="tag t-src">SOURCED</span></td></tr>
+      <tr><td>Frequency sensitivity</td><td>0.075–0.12 mHz per MW</td><td><span class="tag t-der">DERIVED</span></td></tr>
+      <tr><td>Principals</td><td>Base Markets (ADER, zone price); Austin Energy (peak shaving, LZ_AEN); member (backup floor)</td><td><span class="tag t-src">SOURCED</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Data stack</h3>
+  <div class="tbl wide"><table>
+    <thead><tr><th>Layer</th><th>Source</th><th>Access</th><th>Watch out</th></tr></thead>
+    <tbody>
+      <tr><td>Live grid state</td><td>ERCOT dashboard JSON</td><td>No key</td><td>Undocumented; 60 s cache</td></tr>
+      <tr><td>Official live reports</td><td>MIS: NP6-788-CD, NP6-905-CD, NP6-331/332-CD</td><td>No key</td><td>5–7 day retention</td></tr>
+      <tr><td>Filtered history</td><td>ERCOT Public API</td><td>Free key + 1 h token</td><td>30 req/min; one key per person; US only</td></tr>
+      <tr><td>Replays</td><td>MIS archives (NP6-785-ER, NP4-180-ER, NP4-181-ER, NP6-792-ER); native load</td><td>No key</td><td>Pre-extract event windows to CSV</td></tr>
+      <tr><td>Frequency calibration</td><td>NP12-261-M; poll <code>dc-tie-flows.json</code></td><td>No key</td><td>No public history series</td></tr>
+      <tr><td>Aggregated-battery truth</td><td>ADER monthly report + limits tracker</td><td>No key</td><td>Names masked</td></tr>
+      <tr><td>Python wrapper</td><td>gridstatus 0.36.0</td><td>No key for <code>Ercot()</code></td><td>Some enums untested</td></tr>
+      <tr><td>Feeders</td><td>SMART-DS AUS P1U, OpenDSS + GeoJSON</td><td>No key; CC BY 4.0</td><td>Use kva as-is (no de-rating); Austin Energy area</td></tr>
+      <tr><td>Power flow</td><td>OpenDSSDirect.py 0.9.4 (or pandapower 3.5.5)</td><td>pip</td><td>Per-home updates add cost</td></tr>
+      <tr><td>Home load</td><td>SMART-DS load parquet (ResStock)</td><td>No key</td><td>2016–2018 weather; rescale for events</td></tr>
+      <tr><td>Weather</td><td>Open-Meteo; NWS; NCEI KAUS</td><td>No key</td><td>Open-Meteo free tier is non-commercial</td></tr>
+      <tr><td>Solar</td><td>SMART-DS profiles; PVWatts; pvlib</td><td>Key for PVWatts</td><td>Old NREL host is dead</td></tr>
+      <tr><td>Outages</td><td>EAGLE-I 2021 CSV</td><td>No key; CC BY 4.0</td><td>1.1 GB; county level</td></tr>
+      <tr><td>Infrastructure</td><td>OSM Overpass bbox pull</td><td>No key; ODbL</td><td>Area queries fail; cache once</td></tr>
+      <tr><td>Map</td><td>MapLibre + deck.gl + OpenFreeMap</td><td>No key</td><td>Attribution; avoid Mapbox tokens</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Scenario shortlist</h3>
+  <div class="tbl wide"><table>
+    <thead><tr><th>Scenario</th><th>Real anchor</th><th>What the orchestrator must do</th><th>Proof metric</th></tr></thead>
+    <tbody>
+      <tr><td>Charging rebound on a stressed feeder</td><td>Base's −45.8 MW Houston charge block; SMART-DS feeder at nameplate; zone price replay</td><td>Headroom per transformer and feeder; staggered, randomized charging; shift to feeders with room</td><td>Loading and voltage vs penetration, naive vs feeder-aware; MW of market position given up</td></tr>
+      <tr><td>Generator trip</td><td>2,750 MW design trip; Odessa 59.7 Hz; events workbook</td><td>Local response at 59.85 Hz without the cloud; SCED re-dispatch; hold the floor</td><td>Frequency low point and fall rate with vs without fleet</td></tr>
+      <tr><td>Feeder or substation outage, then restoration</td><td>EAGLE-I county outages</td><td>Island homes; cover the base point from healthy feeders; stagger recharge</td><td>Members with power; restoration peak vs no stagger; tracking</td></tr>
+      <tr><td>Heat-wave evening</td><td>22 Jul 2026: 91,134 MW peak; Base's Houston ramp</td><td>Charge midday, discharge 7–9 pm, shave 4CP, respect transformers</td><td>Tracking error vs 3.3%; $ per battery; feeder loading</td></tr>
+      <tr><td>Winter storm</td><td>Uri: $9,794/MWh at LZ_AEN; 4.5 °F; rotating outages</td><td>Storm hold; support energized feeders; backup on shed ones; stagger recharge</td><td>Unserved kWh; members with power; MW reducing shed</td></tr>
+      <tr><td>Comms loss or flapping</td><td>sPower 2019; Poland 2025</td><td>Stale at 180 s; power = 0; cut commitment; re-dispatch same-feeder units</td><td>MW committed vs delivered; time to rebalance; % stale</td></tr>
+      <tr><td>Mass hijack of 1,000 batteries</td><td>Ukraine 2015; BlackIoT</td><td>Device ramp limits and random delay; MW cap per shard; physics mismatch → quarantine</td><td>Blast radius; time to detect and mitigate; ~3–17 mHz system-wide</td></tr>
+      <tr><td>Stealthy degradation</td><td>Volt Typhoon</td><td>Peer drift detection; meter-vs-claim audits; small random test dispatches</td><td>Days to detect; shortfall avoided at next event</td></tr>
+      <tr><td>Member tampering</td><td>Base agreement</td><td>Meter verification; trust score; exclude from commitments</td><td>Units flagged; false-positive rate</td></tr>
+      <tr><td>Conflicting principals</td><td>CoServ / Austin Energy rights, ADER base points, 20% floor</td><td>Arbitration with the member reserve as a hard limit</td><td>Conflicts resolved; reserve violations (target 0)</td></tr>
+      <tr><td>Firmware cohort bug</td><td>Odessa inverter settings</td><td>Staged rollout; anomalies grouped by firmware or batch; rollback</td><td>Blast radius; time to rollback</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Demo metrics</h3>
+  <div class="tbl wide"><table>
+    <thead><tr><th>Lens</th><th>Metric</th><th>Benchmark</th></tr></thead>
+    <tbody>
+      <tr><td>Grid</td><td>Frequency low point, fall rate, time below 59.4 Hz</td><td>Above 59.3 Hz; Odessa 59.7; Uri 263 s of a 540 s budget</td></tr>
+      <tr><td>Grid</td><td>Feeder and transformer loading %; ageing factor 2^((θ−98)/6)</td><td>≤100%</td></tr>
+      <tr><td>Grid</td><td>% of homes within 114–126 V</td><td>100%</td></tr>
+      <tr><td>Market</td><td>MW delivered vs commanded per 5 min</td><td>Within max(2 MW, 15%); Base 3.3%</td></tr>
+      <tr><td>Market</td><td>Fleet availability; % stale</td><td>Base claims 96%</td></tr>
+      <tr><td>Member</td><td>Members with power; unserved kWh; % above 20% SoC</td><td>100% of reserve kept</td></tr>
+      <tr><td>Business</td><td>$ per battery per day</td><td>~$1.58 Core, ~$0.90 legacy (DERIVED)</td></tr>
+      <tr><td>Security</td><td>Time to detect, time to mitigate, blast radius per credential, false positives</td><td>Seconds for a mass attack; far below 1% of system load</td></tr>
+      <tr><td>Headline</td><td>Batteries added before first violation, naive vs feeder-aware</td><td>e.g. 56 Cores on an 11 MW feeder at 90% (DERIVED)</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Questions to ask Base engineers on site</h3>
+  <ol class="steps">
+    <li>When a unit loses connectivity, does it hold its last set point, ramp to zero after a timeout, or run a local schedule? After how long?</li>
+    <li>Do you enforce feeder or transformer limits in dispatch today? What do the TDSPs give you: feeder IDs, transformer mapping, hosting limits?</li>
+    <li>How is a partition's base point split across devices: by headroom, by SoC, with random delay?</li>
+    <li>What do the ~61% of self-operated MW outside ADER do?</li>
+    <li>Which load zones do Oncor Austin-suburb members settle in? Do Austin Energy tolling batteries ever take ERCOT dispatch?</li>
+    <li>When Austin Energy or CoServ and the Markets desk want opposite things, who wins and how?</li>
+    <li>What are the storm-mode charge target and lead time, the reconnect delay, and the recharge staggering after restoration?</li>
+    <li>What are the Core's usable kWh, round-trip efficiency and surge rating?</li>
+    <li>How did the fleet perform during Winter Storm Fern (Jan 2026) and on 22 Jul 2026?</li>
+    <li>How do you detect tampering, or telemetry that disagrees with the meter?</li>
+    <li>What explains the greater-than-one flow change per MW at the 138 kV buses?</li>
+    <li>Do TDSPs upgrade service transformers when a Core is installed?</li>
+  </ol>
+</section>
+
+  </article>
+</div>
+
+<footer class="foot">
+  <p>Compiled from five research passes on 25 Sep 2026 (company, product and system, ERCOT data, public datasets and tools, grid physics and attacks). Every figure traces to a source in the full report; figures marked UNVERIFIED, DERIVED or ASSUMPTION should be checked before they go on a slide.</p>
+</footer>

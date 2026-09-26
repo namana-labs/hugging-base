@@ -1,0 +1,184 @@
+URL http://127.0.0.1:56230/ui/?view=p1&branch=naive&t=22:30
+FLAGS {"status":"ready","webgl":"ok","errors":"0","fixture":"0","offsite":"0"}
+----
+Hugging Basefeeder-aware battery fleet
+P1 · where to charge
+P2 · where the next battery goes
+More
+NREL SMART-DS 2018 AUS P1U feeder REAL
+Oncor-suburb stand-in settled at LZ_NORTH (placeholder) ASSUMPTION
+P1 · where to charge
+2026-08-23 · 22:30 · step 390 of 720 · naive
+no batteries
+naive
+ASSUMPTION
+feeder-aware
+aware + failures
+ERCOT dispatches one number per zone and does not check feeders (REAL). The naive branch splits that number with no feeder check, all at once at the onset (ASSUMPTION: Base's real split is not public; §12 Q5). ASSUMPTION
+WORST SERVICE TRANSFORMER NOW
+201.2%SIM
+A · emergency (>150%)
+transformers now: over nameplate 12 · above 110% 4 · emergency 3 · protection open 0 SIM
+batteries now: charging 96 · discharging 0 · idle 0 SIM
+STREET A–D AND T-240 · HEADROOM NOW
+A · 25 kVA · 2 homes, 2 batteries
+201.2%SIM
+home 8.8 kW · batteries +40.0 kW SIM · over nameplate by 25.3 kVADERIVED
+evening max 201.2% at 22:30 · 177 min above 110% · 93 min above 150% SIM · fuse rule opens at 200% for 10 min ASSUMPTION
+B · 25 kVA · 2 homes, 2 batteries
+188.6%SIM
+home 6.0 kW · batteries +40.0 kW SIM · over nameplate by 22.1 kVADERIVED
+evening max 195.4% at 22:00 · 167 min above 110% · 93 min above 150% SIM · fuse rule opens at 200% for 10 min ASSUMPTION
+C · 25 kVA · 2 homes, 2 batteries
+180.0%SIM
+home 4.0 kW · batteries +40.0 kW SIM · over nameplate by 20.0 kVADERIVED
+evening max 181.3% at 22:45 · 167 min above 110% · 93 min above 150% SIM · fuse rule opens at 200% for 10 min ASSUMPTION
+D · 50 kVA · 3 homes, 3 batteries
+136.2%SIM
+home 6.7 kW · batteries +60.0 kW SIM · over nameplate by 18.1 kVADERIVED
+evening max 139.6% at 22:00 · 93 min above 110% SIM · fuse rule opens at 200% for 10 min ASSUMPTION
+T-240 · 25 kVA · no battery
+27.8%SIM
+home 6.3 kW · batteries 0.0 kW SIM · room 18.5 kWDERIVED
+evening max 119.5% at 16:45 · 8 min above 110% SIM · fuse rule opens at 200% for 10 min ASSUMPTION
+home load battery charging battery discharging (relief) · ticks: 100% nameplate, 110% normal rating, 150% emergency REAL, 200% fuse rule ASSUMPTION
+SCALE LADDER
+The same 40 kW (2 x 20 kW batteries charging at once on A) at three scales DERIVED
+A: one 25 kVA service transformer
+160%DERIVED
+40 kW is 160% of A's 25 kVA nameplate REAL
+this feeder: the head cable
+0.5%DERIVED
+40 kW is 0.5% of this feeder's 7,991.5 kVA head-cable rating DERIVED
+ERCOT: system demand
+0.000049%DERIVED
+40 kW is 0.000049% of ERCOT's 81,612 MW peak demand (2026-09-25 16:40 CT) REAL
+0.00001%
+0.001%
+0.1%
+10%
+100%
+Bar length on a log scale (display only).
+ORCHESTRATOR TICKER SIM
+22:00 D-26 onset $55.42: all 96 batteries charge at full power at once (no feeder check, ASSUMPTION)
+21:00 all 96 batteries discharge at full power (market plan; no feeder check, ASSUMPTION)
+19:45 all 96 batteries discharge at full power (market plan; no feeder check, ASSUMPTION)
+PEAK RELIEF
+A at 16:45: 122.1%SIM without batteries → 97.8%SIM feeder-aware
+Minutes over nameplate
+none 17 min → aware 0 min SIM
+Batteries discharged, peak
+6.9 kWSIM · 1.2 kWhSIM
+Driver: one home's 15-minute spike: Home 0212, SMART-DS profile res_kw_38274_pu at 22.7 kWSIM, also used at Home 0409 on T-240, Home 0504 on T-103. The same shape elsewhere is not independent evidence.
+over nameplate for about 15 minutes (amber; not a failure): one home's 15-minute spike
+NOT RELIEVED HERE → P2
+T-240: home load only, no battery: peak 119.5% at 16:45 (SIM) (peak 119.5%SIM at 16:45); driver Home 0409 (res_kw_38274_pu, shared with Home 0212 on A, Home 0504 on T-103). Where the next battery goes →
+GRID CHECKS · THIS BRANCH
+Voltage stays in range at unity pf SIM: lowest home 0.9707 puSIM = 116.5 VSIM (Home 0111, 22:00)
+Feeder head max 80.4%SIM of 370 ADERIVED (297 ASIM at 17:00)
+THIS EVENING · THIS BRANCH
+11SIM normal-tier events and 3SIM transformers in emergency this evening
+Worst service transformer
+201.2%SIM A at 22:30
+Battery-caused normal-tier events
+11SIM
+Battery-caused emergency events
+3SIM
+Normal-tier events (>110% for >= 30 min)
+11SIM
+Transformers in emergency (>150%)
+3SIM
+Battery-caused minutes over nameplate
+1,317 minSIM
+Home-load-only transformers over nameplate
+2SIM
+Protection operated (fuse rule, ASSUMPTION)
+0SIM
+Homes dark
+0SIM
+Homes lit by their own battery
+0SIM
+20% reserve breaches
+0SIM
+Fleet charged by 04:00
+100%SIM
+Energy value (gross, not Base's P&L)
+$893.83DERIVED
+MONEY
+Energy value this evening (gross energy value, not Base's P&L)
+no batteries
+$0.00DERIVED
+naive ◂
+$893.83DERIVED
+feeder-aware
+$916.56DERIVED
+aware + failures
+$917.77DERIVED
+Cost of awareness (naive minus aware)
+-$22.73DERIVED
+Negative: feeder-aware earned more; prices keep falling after the onset.
+System-capacity value (fleet kW at the price peak × $3.12REAL (market benchmark) to $8.50DERIVED (UNVERIFIED) per kW-month)
+Fleet at the price peak (naive)
+1,920.0 kWSIM
+Per month, low to high
+$5,990.40DERIVED to $16,320.00DERIVED
+A system-peak value, not a payment for local relief.
+Local relief
+Relief energy on A
+1.19 kWhSIM
+Upper-bound opportunity cost
+$0.64DERIVED
+Priced?
+noASSUMPTION
+Local transformer relief and upgrade deferral: an opportunity for Base and the wires company, unpriced (no sourced price in our material, in Oncor territory or elsewhere); never revenue here. ASSUMPTION
+Who pays today, and for what
+CoServ (100 MW, 80% dispatch): peak shaving and arbitrage REAL
+GVEC (50 MW): ERCOT summer 4CP and arbitrage REAL
+Austin Energy (40 MW, it dispatches): system peak demand and wholesale prices REAL
+El Paso Electric (10 MW, outside ERCOT): local capacity constraints: the only local-constraint programme found REAL
+Base 'distribution grid support' offering: targeted circuits; no public price REAL
+Transformer replacement cost
+not sourced ASSUMPTION
+Avoided harm SIM
+	normal-tier events	emergency tfs	protection
+no batteries	0	0	0
+naive	11	3	0
+feeder-aware	0	0	0
+aware + failures	0	0	0
+WHAT THE CONTROLLER SEES
+total transformer load, 60 s lag ASSUMPTION
+SOURCES
+ERCOT RTM SPP LZ_NORTH 15-min REAL
+NREL SMART-DS 2018 AUS P1U, same calendar date; 15->1 min linear (DERIVED) SIM
+OpenDSSDirect.py 0.9.4 AC power flow, every step of every branch SIM
+ERCOT dispatches one number per zone and does not check feeders (REAL). The naive branch splits that number with no feeder check, all at once at the onset (ASSUMPTION: Base's real split is not public; §12 Q5). ASSUMPTION
+ERCOT system demand, 5 min, 2026-09-25 (four-home-simulation/data/demand_2026-09-25.csv; the scale ladder's ERCOT rung) REAL
+Whole feeder
+Street A–D
+Northbank T-240
+Transformer zone (homes and cans) · OpenDSS SIM
+within nameplate
+over nameplate (>100%, amber; not a violation)
+above 110%, counting (< 30 min)
+normal rating exceeded (>110% for >= 30 min)
+emergency (>150%)
+protection open (fuse rule, ASSUMPTION)
+Homes
+dark (protection opened)
+lit by its own battery
+Batteries (column = state of charge; ring = 20% reserve)
+charging discharging idle stale / expired (!)
+Cans: glass = 100% of nameplate; fill = loading; ring 110%; red cap 150%. Room = kW to nameplate (charge room; export room while the can back-feeds) DERIVED
+Buildings © OpenStreetMap contributors, ODbL 1.0 (985DERIVED of 1,010 homes matched; the rest are 12 m boxes ASSUMPTION) · Feeder: NREL SMART-DS 2018 AUS P1U, CC BY 4.0 · Prices: ERCOT RTM LZ_NORTH
+▶
+0.5×
+1×
+2×
+4×
+8×
+22:30
+$40.07/MWhREAL
+16:45 A peaks at 122.1% with no batteri…SIM
+19:45 market discharge, 15 min (perfect… ×4DERIVED
+20:15 market discharge, 13 min (perfect…DERIVED
+21:00 price peak $566.42/MWhREAL

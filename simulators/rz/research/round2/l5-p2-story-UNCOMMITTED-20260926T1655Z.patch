@@ -1,0 +1,180 @@
+diff --git a/docs/demo-script.md b/docs/demo-script.md
+index d215ecd..72b8457 100644
+--- a/docs/demo-script.md
++++ b/docs/demo-script.md
+@@ -40,7 +40,7 @@ Base URL: `http://127.0.0.1:8765/ui/`
+ | 3:00–3:30 | **Where the next battery goes** (`p2-controls`) | `?view=p2&combo=aware-core-d26-g0&n=5&beat=p2-controls` | The "Next battery goes here" card: #1, the house and a battery, two meters (without → with the battery, month peak) and the ✓ OpenDSS pill; five new cabinets placed in the scene. | The CEO's question. A month on real prices; candidates ranked with vs without a battery. Point at the two meters: its transformer peaks above its normal rating without the battery and stays within its rating with it. Hover a meter for the %. "Why this home" opens the full sentence. |
+ | 3:30–3:55 | **The flip** (`p2-flip`) | `?view=p2&combo=naive-core-d26-g0&beat=p2-flip` | The one-line flip under the card; "The flip in numbers" open: the top-ten overlap, Spearman, the untied overlap, the biggest movers. | Read the one-line flip as written: where the other policy ranks this page's first choice. Say "How you charge decides where the next battery goes" **only if the section shows that headline**; otherwise read the measured overlap. |
+ | 3:55–4:20 | **Useful capacity and dark homes** (`p2-capacity`) | `?view=p2&combo=aware-core-d26-g0&n=10&beat=p2-capacity` | "How many batteries fit?" open: the naive line (warn) and the feeder-aware line (check), each with its OpenDSS result; the curves with whole-number ticks. | The question is the same for both: how many fit before the grid is harmed? Naive: the feeder cable passes its rating early (per-phase estimate), and the screening count is **refuted** by OpenDSS: read the battery-caused events and the cable % it measured. **Never say "naive fits 383".** Feeder-aware: every eligible home, OpenDSS-checked, with the lowest home voltage at the ANSI edge. Protection: "may operate (ASSUMPTION rule)"; read the dark homes as the caption states them. |
+-| 4:20–4:45 | **Money, labelled** (`money`) | `?view=more&beat=money` | "Money tonight": sold (violet) and bought back (teal) bars per scenario, net on the right. "Real Texas evenings": each real evening with its price shape, money per battery, naive's worst transformer (red meter) and feeder-aware's check. The money calendar below. | Batteries earn by selling at the evening peak and buying back after the fall. Read tonight's values and "feeder-aware earned … more than naive". Then the evenings: the money is lumpy, a few spiky evenings carry the year, and those are the evenings a fleet charging at once overloads the street. Feeder-aware kept the money on every evening with no battery overload. Click one evening (for example 22 Jul) to show the day switcher on P1, then come back. The monthly storage benchmark sits in its own card: never add it to tonight's money. Local relief is an unpriced opportunity. |
++| 4:20–4:45 | **Money, labelled** (`money`) | `?view=more&beat=money` | "Money tonight": sold (violet) and bought back (teal) bars per scenario, net on the right. "Real Texas evenings": each real evening with its price shape, money per battery, naive's worst transformer (red meter) and feeder-aware's check. The money calendar below. | Batteries earn by selling at the evening peak and buying back after the fall. Read tonight's values and "feeder-aware earned … more than naive". Then the evenings: the money is lumpy, a few spiky evenings carry the year, and the fall after each spike is when a fleet charging at once overloads the street. Read the card's lines as written (feeder-aware against naive, evening by evening). Click one evening (for example 22 Jul) to show the day switcher on P1, then come back. The monthly storage benchmark sits in its own card: never add it to tonight's money. Local relief is an unpriced opportunity. |
+ | 4:45–5:00 | **How Base plugs it in tomorrow** (`plug-in`) | `?view=more&beat=plug-in` | The plug-in and performance cards. | The siting file beside the install queue; `allocate()` behind the zone base point; the performance numbers as measured on a shared machine: ms per OpenDSS **solve** and per full **step**, µs per `allocate()` call. |
+ 
+ ## Words to use, and to avoid
+diff --git a/docs/how-base-plugs-in.md b/docs/how-base-plugs-in.md
+index 60a02d4..453cbad 100644
+--- a/docs/how-base-plugs-in.md
++++ b/docs/how-base-plugs-in.md
+@@ -35,7 +35,7 @@ Base's zone dispatch ──► allocate(zone target, per-transformer headroom) 
+ | The wires company | fewer transformer overloads; deferred upgrades | unpriced (ASSUMPTION) |
+ | Base | arbitrage kept (the "cost of awareness" is shown, even if negative); system-peak programme revenue where a utility offers it | DERIVED |
+ 
+-**How the money actually arrives (More tab, "Real Texas evenings").** A battery earns by selling in the evening's priciest intervals and buying back after the price falls (`money.split`: sold, bought, net, per battery; DERIVED from REAL LZ_NORTH prices × SIM battery kW; gross, not Base's P&L). Replayed on real ERCOT evenings, the money is lumpy: a few spiky evenings carry most of the year (`p1/days/calendar.json` headline: the share earned on the ten best evenings, and the evenings where one cycle would lose money). Those spiky evenings end in the price collapse where a fleet charging all at once overloads the street. On every simulated evening feeder-aware keeps almost all of the money and causes no battery overload; the page shows both numbers side by side, per evening, from `p1/days/index.json`.
++**How the money actually arrives (More tab, "Real Texas evenings").** A battery earns by selling in the evening's priciest intervals and buying back after the price falls (`money.split`: sold, bought, net, per battery; DERIVED from REAL LZ_NORTH prices × SIM battery kW; gross, not Base's P&L). Replayed on real ERCOT evenings, the money is lumpy: a few spiky evenings carry most of the year (`p1/days/calendar.json` headline: the share earned on the ten best evenings, and the evenings where one cycle would lose money). The price fall after each spike is exactly when a fleet charging all at once overloads the street. The page compares naive and feeder-aware on each simulated evening, money and battery-caused overloads side by side, from `p1/days/index.json` (on the four evenings built on 26 Sep, feeder-aware earned more than naive every time with no battery-caused overload; the page recomputes this from the data, never from this sentence).
+ 
+ **The premise, corrected.** An earlier direction named CoServ, GVEC and Austin Energy as payers for local transformer relief. Our sources say otherwise (`docs/research-report.md:59, 215–224`, REAL):
+ 
+diff --git a/ui/panels/more.js b/ui/panels/more.js
+index 83c6bca..c5e9b71 100644
+--- a/ui/panels/more.js
++++ b/ui/panels/more.js
+@@ -712,13 +712,36 @@ export async function beatBarHTML(ctx, { compact = false } = {}) {
+     ${body}</div>`;
+ }
+ 
++/** Closed <details> keep their body out of the live DOM until opened (Chrome lays out a closed body, so hidden tags
++ *  and numbers counted as "above the fold" and were reachable by screen readers). The HTML string a panel builds still
++ *  holds every body (node tests read it); in the browser the body is moved aside and put back on the first open.
++ *  bodySel names the body element inside each details (its first match). */
++export function lazyDetails(root, detailsSel, bodySel) {
++  if (!root || typeof root.querySelectorAll !== 'function') return 0;
++  let n = 0;
++  for (const d of root.querySelectorAll(detailsSel)) {
++    if (d.open || d.dataset.lazy) continue;
++    const body = d.querySelector(bodySel);
++    if (!body || !body.innerHTML) continue;
++    const html = body.innerHTML;
++    body.innerHTML = '';
++    d.dataset.lazy = '1';
++    d.addEventListener('toggle', () => { if (d.open && !body.innerHTML) body.innerHTML = html; });
++    n += 1;
++  }
++  return n;
++}
++
+ /** For the shell or the P1 panel: put the compact caption bar at the top of the panel when ?beat= is set. */
+ export async function mountBeatBar(ctx, panelEl) {
+   if (!ctx.link.beat) return;
+   const el = panelEl || (typeof document !== 'undefined' && document.getElementById('panel'));
+   if (!el || el.querySelector('.beat-bar')) return;
+   const html = await beatBarHTML(ctx, { compact: ctx.link.view === 'p1' });
+-  if (html) el.insertAdjacentHTML('afterbegin', html);
++  if (html) {
++    el.insertAdjacentHTML('afterbegin', html);
++    lazyDetails(el, '.beat-bar details.beat-more', '.beat-cap');
++  }
+ }
+ 
+ // ---------------------------------------------------------------------------------------------------------------
+@@ -805,7 +828,7 @@ function daysCard(ctx, S) {
+     <div class="day-head"><span></span><span>price, 16:00 to 04:00</span><span>per battery, feeder-aware</span><span>naive</span><span>aware</span></div>
+     <div class="day-rows">${rows}</div>
+     ${lines.length ? `<div class="day-lines">${lines.map((l) => `<div>${l}</div>`).join('')}</div>` : ''}
+-    <p class="hb-sub">Why it matters for Base: the money comes from a few spiky evenings, and those are the evenings a whole fleet charging at once would push this street's transformers past their ratings. Feeder-aware keeps almost all of that money and adds a claim Base can take to the wires company: its fleet did not overload the street. Click an evening to replay it.</p>
++    <p class="hb-sub">Why it matters for Base: the money comes from the evening price spike and the fall after it, and that fall is when a whole fleet charging at once overloads this street's transformers. The lines above compare the two ways of charging on each real evening; where feeder-aware shows no battery-caused overload, Base keeps the money and gains a claim it can take to the wires company. Click an evening to replay it.</p>
+     ${cal}</div>`;
+ }
+ 
+@@ -1081,6 +1104,7 @@ export async function mount(el, ctx) {
+       ${await chaosCard(ctx)}
+     </div>
+     ${await emsCards(ctx)}</div>`;
++  lazyDetails(el, 'details.beat-more', '.beat-cap');
+   // the money calendar's simulated evenings open on P1 (the same link as the evening rows)
+   if (typeof el.querySelectorAll === 'function') {
+     for (const b of el.querySelectorAll('.more-days .hb-cal-cell.sim[data-date]')) {
+diff --git a/ui/panels/p2.js b/ui/panels/p2.js
+index 7549f51..e7646cd 100644
+--- a/ui/panels/p2.js
++++ b/ui/panels/p2.js
+@@ -8,7 +8,7 @@
+ import { chartHTML, modeIndex, band } from '../lib/charts.js';
+ import { svg } from '../lib/icons.js';
+ import {
+-  beatBarHTML, sharedNames, flipVerdict, FLIP_HEADLINE_MAX_OVERLAP, isScreening, numHTML, numText, SCREEN_CHIP, unscreenedChips,
++  beatBarHTML, sharedNames, flipVerdict, FLIP_HEADLINE_MAX_OVERLAP, isScreening, numHTML, numText, SCREEN_CHIP, unscreenedChips, lazyDetails,
+ } from './more.js';
+ 
+ // ---- round 2 (UX_SPEC_R2 7.2): a few front cards, everything else in collapsible sections, plain words first ----
+@@ -386,8 +386,8 @@ function candidateCard(ctx, st) {
+       <div class="hb-sub">${h.battery ? 'This home already has a battery.' : 'Not in this combo\'s top 50.'}</div>
+       <div class="p2-meters">${meters}</div>
+       ${viol ? `<div class="p2-warnline">${svg('warn', { size: 16 })} Adds a violation here: where NOT to put it</div>` : ''}
+-      <details class="p2-why"><summary>Why ${svg('chevron', { size: 13, cls: 'sec-chev' })}</summary>
+-        <div class="hb-sub">Its transformer's month peak without a new battery: ${numHTML(fmt, peak, P)}.</div>${more}${dr}</details></div>`;
++      <details class="p2-why"><summary>Why ${svg('chevron', { size: 13, cls: 'sec-chev' })}</summary><div class="p2-why-body">
++        <div class="hb-sub">Its transformer's month peak without a new battery: ${numHTML(fmt, peak, P)}.</div>${more}${dr}</div></details></div>`;
+   }
+   const t = topology.transformers[e.tf];
+   const kva = { v: t.kva, label: 'REAL', cite: 'SMART-DS Transformers.dss' };
+@@ -405,7 +405,7 @@ function candidateCard(ctx, st) {
+     <h3 class="p2-next-who">#${esc(e.rank)} ${esc(homeLabel(topology, e.home))} · on ${svg(mount, { size: 16 })} ${esc(tfName(topology, e.tf))} · ${numHTML(fmt, kva, { unit: ' kVA' })}</h3>
+     <div class="p2-meters">${peakMeter(fmt, before, 'without the battery')}<span class="p2-arrow">${svg('chevron', { size: 18 })}</span>${peakMeter(fmt, after, 'with the battery')}</div>
+     ${viol ? `<div class="p2-warnline">${svg('warn', { size: 16 })} Adds a violation here: where NOT to put it</div>` : ''}
+-    <details class="p2-why"><summary>Why this home ${svg('chevron', { size: 13, cls: 'sec-chev' })}</summary>${candidateDetails(ctx, st, e)}</details>
++    <details class="p2-why"><summary>Why this home ${svg('chevron', { size: 13, cls: 'sec-chev' })}</summary><div class="p2-why-body">${candidateDetails(ctx, st, e)}</div></details>
+   </div>`;
+ }
+ 
+@@ -813,7 +813,8 @@ export function p2Sections(ctx, st) {
+   const capTeaser = u ? `${fh ? `naive: cable over at ${numHTML(fmt, fh)}` : 'naive'} · aware ${u.aware ? numHTML(fmt, u.aware) : 'n/a'}${cp && cp.awareOk ? ' ✓' : ''}` : '';
+   const ins = st.index.insight;
+   const mt = ins && Array.isArray(ins.tfPeakHour) ? modeIndex(ins.tfPeakHour) : null, mp = ins ? modeIndex(ins.priceMaxHour) : null;
+-  const insTeaser = mt !== null && mp !== null ? `load ${String(mt).padStart(2, '0')}:00 ${fmt.chip('SIM')} · price ${String(mp).padStart(2, '0')}:00 ${fmt.chip('REAL')}` : '';
++  // teasers stay words where the number is one click away (UX_SPEC_R2 2.5: fewer tags above the fold)
++  const insTeaser = mt !== null && mp !== null ? (mt !== mp ? 'at different hours' : 'at the same hour') : '';
+   const hrd = headReading(st.index, st.combo);
+   const fleetTeaser = hrd ? `cable ${numHTML(fmt, hrd.x, P)}${hrd.own ? '' : ' (Core D-26)'}` : '';
+   const cl = st.index.cliffs;
+@@ -823,12 +824,12 @@ export function p2Sections(ctx, st) {
+     { id: 'p1', title: 'From P1: still at risk', icon: 'warn', teaser: handTeaser, body: handoffBlock(ctx, st) },
+     { id: 'flip', title: 'The flip in numbers', icon: 'turns', teaser: st.index.flip && st.index.flip.top10Overlap ? `${numHTML(fmt, st.index.flip.top10Overlap)} of ten shared${inIndexScope(st.index, st.combo) ? '' : ' (Core D-26)'}` : '', body: flipBlock(ctx, st), beat: 'p2-flip' },
+     { id: 'cands', title: 'All candidates', icon: 'list', teaser: 'the top fifteen', body: rankingTable(ctx, st) },
+-    { id: 'greedy', title: 'Place up to ten batteries', icon: 'cabinet', teaser: `placing ${numHTML(fmt, { v: st.n, label: 'ASSUMPTION', cite: 'the slider: how many batteries to add' })}`, body: greedyBlock(ctx, st) },
++    { id: 'greedy', title: 'Place up to ten batteries', icon: 'cabinet', teaser: 'use the slider above', body: greedyBlock(ctx, st) },
+     { id: 'capacity', title: 'How many batteries fit?', icon: 'padmount', teaser: capTeaser, body: capacityBlock(ctx, st), beat: 'p2-capacity' },
+     ...(prot ? [{ id: 'protect', title: 'Where lights could go out', icon: 'fuse', teaser: fmt.chip('ASSUMPTION', 'the fuse rule, round-1 world-sim'), body: prot }] : []),
+     { id: 'insight', title: 'When transformers peak vs when prices peak', icon: 'clock', teaser: insTeaser, body: insightBlock(ctx, st), beat: 'insight' },
+     { id: 'fleet', title: 'The batteries already here', icon: 'battery', teaser: fleetTeaser, body: fleetBlock(ctx, st) },
+-    { id: 'prices', title: 'Real August prices and cliffs', icon: 'price', teaser: cl && cl.count ? `${numHTML(fmt, cl.count)} cliffs` : '', body: marketBlock(ctx, st) },
++    { id: 'prices', title: 'Real August prices and cliffs', icon: 'price', teaser: cl && cl.count ? 'ERCOT LZ_NORTH' : '', body: marketBlock(ctx, st) },
+     { id: 'check', title: 'How we check', icon: 'check', teaser: r && r.runs ? `OpenDSS: ${esc(r.runs)} month runs` : 'screening only',
+       body: `${refereeBlock(ctx, st)}<div class="hb-sub">The next-battery score is not a Base product: Base schedules installs by demand; this adds the grid lens. Screening numbers (≈) come from a per-transformer surrogate calibrated against OpenDSS; cards carry OpenDSS numbers (✓) where the referee has run. Growth ${fmt.chip('ASSUMPTION', 'EVs and heat pumps')}, the fleet placement ${fmt.chip('ASSUMPTION', 'seed 17263, the prototype placement')} and the curtailment cap ${fmt.chip('ASSUMPTION')} are named constants.</div>` },
+   ];
+@@ -919,6 +920,9 @@ export async function mount(el, ctx) {
+   if (typeof el.querySelectorAll === 'function') {
+     for (const d of el.querySelectorAll('details.p2-sec')) d.addEventListener('toggle', () => writeOpen(d.dataset.sec, d.open));
+   }
++  // closed sections and "Why this home" keep their bodies out of the live DOM until opened (lazyDetails)
++  lazyDetails(el, 'details.p2-sec', '.hb-sec-body');
++  lazyDetails(el, 'details.p2-why', '.p2-why-body');
+   const range = el.querySelector('.p2-n');
+   if (range) {
+     range.addEventListener('input', () => { el.querySelector('.p2-nout').textContent = range.value; });
+diff --git a/ui/test/p2.test.js b/ui/test/p2.test.js
+index 978901e..bec7689 100644
+--- a/ui/test/p2.test.js
++++ b/ui/test/p2.test.js
+@@ -832,3 +832,22 @@ test('R2 More: the real-evenings facts read p1/days/index.json, labelled; absent
+   // no index: the facts are "not built", never a guess
+   assert.equal(evalFact('daysCount', { topology }), null);
+ });
++
++test('R2 lazyDetails: a closed section body leaves the live DOM and comes back on first open; an open one stays', async () => {
++  const { lazyDetails } = await import('../panels/more.js');
++  const mk = (open) => {
++    const body = { innerHTML: '<span class="num">1</span>' };
++    const d = { open, dataset: {}, handlers: [], querySelector: () => body, addEventListener(t, f) { this.handlers.push(f); } };
++    return { d, body };
++  };
++  const a = mk(false), b = mk(true);
++  const root = { querySelectorAll: () => [a.d, b.d] };
++  assert.equal(lazyDetails(root, 'details', '.x'), 1);
++  assert.equal(a.body.innerHTML, '');
++  assert.equal(b.body.innerHTML, '<span class="num">1</span>');
++  a.d.open = true;
++  a.d.handlers.forEach((f) => f());
++  assert.equal(a.body.innerHTML, '<span class="num">1</span>');
++  assert.equal(lazyDetails(root, 'details', '.x'), 0, 'idempotent');
++  assert.equal(lazyDetails({ innerHTML: '' }, 'details', '.x'), 0, 'no DOM (node stub): nothing to do');
++});

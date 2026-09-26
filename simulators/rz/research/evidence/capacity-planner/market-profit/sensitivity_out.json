@@ -1,0 +1,32 @@
+{
+ "floor0_rte85": {
+  "net_usd": 849.13,
+  "energy_usd": 1039.25,
+  "cycles_equiv_37kwh": 428.2
+ },
+ "floor0_rte89": {
+  "net_usd": 877.74,
+  "energy_usd": 1081.08,
+  "cycles_equiv_37kwh": 458.0
+ },
+ "floor20_rte85": {
+  "net_usd": 746.05,
+  "energy_usd": 908.55,
+  "cycles_equiv_37kwh": 366.0
+ },
+ "floor20_rte89": {
+  "net_usd": 771.54,
+  "energy_usd": 946.42,
+  "cycles_equiv_37kwh": 393.9
+ },
+ "floor50_rte85": {
+  "net_usd": 551.07,
+  "energy_usd": 666.23,
+  "cycles_equiv_37kwh": 259.4
+ },
+ "floor50_rte89": {
+  "net_usd": 571.4,
+  "energy_usd": 696.52,
+  "cycles_equiv_37kwh": 281.8
+ }
+}

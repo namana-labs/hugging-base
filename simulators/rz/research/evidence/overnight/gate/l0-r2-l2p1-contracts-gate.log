@@ -1,0 +1,29 @@
+CHECK root=/Users/rzalagbada/hb-overnight/wt/gate head=d454f7f lane=l0-foundation full=0 py=/Users/rzalagbada/hb-overnight/.venv/bin/python logs=/Users/rzalagbada/hb-overnight/tmp/check-gate
+== 1 unit
+STEP unit: PASS (Ran 132 tests)
+== 2 node
+STEP node: PASS (# pass 94 # fail 0 )
+== 3 keep (7.1)
+keep: grid-stories py ok (Ran 8 tests) ; grid-stories node ok (# pass 3 # fail 0 ) ; four-home ok (Ran 17 tests)
+STEP keep: PASS (prototype 8 + 3, four-home 17)
+== 4 contract
+contract total 52 files, 16.31 MB (budget 25.0 MB, 4.0 MB per file); 31689 labelled numbers
+CONTRACTS: PASS (52 files, 16.31 MB, 31689 labelled numbers)
+STEP contract: PASS ((52 files, 16.31 MB, 31689 labelled numbers))
+== 5 verify
+VERIFY labels: PASS (49 files, 31689 labelled numbers)
+VERIFY p1: PASS (1 expectations refuted, see NOTES.md: rotation)
+VERIFY p2: PASS (1 expectations refuted, see NOTES.md)
+STEP verify: PASS (labels p1 p2)
+== 6 paths
+PATHS: PASS (1 changed paths, all inside lane l0-foundation; base 189495c)
+STEP paths: PASS (lane l0-foundation)
+== 7 smoke
+SMOKE root=/Users/rzalagbada/hb-overnight/wt/gate port=63835 mode=--lane links=3 shots=/Users/rzalagbada/hb-overnight/tmp/shots-gate
+SMOKE view=p1&branch=aware&t=22:30 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 7514 ms | 768 KB | 1621 colours
+SMOKE view=p2&combo=aware-core-d26-g0 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4318 ms | 735 KB | 1595 colours
+SMOKE view=more ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 5232 ms | 619 KB | 626 colours
+SMOKE: 3/3 ok
+STEP smoke: PASS (SMOKE: 3/3 ok)
+CHECK took 46 s
+ALL CHECKS: PASS

@@ -1,0 +1,15 @@
+retrieved_utc=2026-09-26T04:06:34Z url=https://www.ercot.com/files/docs/2026/01/29/February-1-2026-Nodal-Operating-Guide.pdf
+HTTP/2 200 
+etag: "247029-6499259c19c63"
+last-modified: Fri, 30 Jan 2026 03:13:00 GMT
+content-type: application/pdf
+content-length: 2388009
+cache-control: max-age=60, public
+expires: Sat, 26 Sep 2026 04:07:33 GMT
+date: Sat, 26 Sep 2026 04:06:33 GMT
+strict-transport-security: max-age=31536000
+x-cdn: Imperva
+access-control-allow-origin: https://mis.ercot.com
+content-security-policy: frame-ancestors 'self' https://*.ercot.com:*
+x-iinfo: 6-1195291-1192574 2VNN RT(1790395594292 40) q(0 0 0 -1) r(1 1) U20
+

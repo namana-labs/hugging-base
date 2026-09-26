@@ -1,0 +1,14 @@
+retrieved_utc=2026-09-26T04:30:02.674Z done_utc=2026-09-26T04:30:02.794Z url=https://www.ercot.com/api/1/services/read/dashboards/supply-demand.json status=200
+Etag: "89d2e0d3"
+Content-Type: application/json
+Content-Length: 79749
+Cache-Control: max-age=60, public, must-revalidate
+Expires: Sat, 26 Sep 2026 04:31:02 GMT
+Date: Sat, 26 Sep 2026 04:30:02 GMT
+Set-Cookie: visid_incap_1217363=<redacted>
+Set-Cookie: incap_ses_912_1217363=<redacted>
+Strict-Transport-Security: max-age=31536000
+X-CDN: Imperva
+Access-Control-Allow-Origin: https://mis.ercot.com
+content-security-policy: frame-ancestors 'self' https://*.ercot.com:*
+X-Iinfo: 51-68045803-0 0CNN RT(1790397002753 33) q(0 -1 -1 -1) r(0 -1)

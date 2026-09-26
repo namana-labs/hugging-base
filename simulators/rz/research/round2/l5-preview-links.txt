@@ -1,0 +1,4 @@
+more view=more&beat=money
+p1 view=p1&branch=naive&t=22:30&cam=street&beat=rebound-naive
+p1 view=p1&branch=aware&t=22:30&cam=street&beat=rebound-aware
+p1 view=p1&branch=naive&t=16:00&cam=street&beat=problem

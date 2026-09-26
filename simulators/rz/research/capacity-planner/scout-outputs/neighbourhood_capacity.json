@@ -1,0 +1,44 @@
+{
+ "100": {
+  "tfs_p50": 7.0,
+  "homes_p50": 19.0,
+  "homes_p10_p90": [
+   9.0,
+   28.0
+  ],
+  "naiveCores_1perHome_p50": 7.0,
+  "awareCores_1perHome_p50": 19.0,
+  "naiveCores_unbounded_p50": 7.0,
+  "awareCores_unbounded_p50": 26.0,
+  "naiveShareOfHomes_p50": 0.3684210526315789,
+  "awareShareOfHomes_p50": 1.0
+ },
+ "200": {
+  "tfs_p50": 25.0,
+  "homes_p50": 63.0,
+  "homes_p10_p90": [
+   30.800000000000004,
+   98.0
+  ],
+  "naiveCores_1perHome_p50": 23.0,
+  "awareCores_1perHome_p50": 63.0,
+  "naiveCores_unbounded_p50": 24.0,
+  "awareCores_unbounded_p50": 84.0,
+  "naiveShareOfHomes_p50": 0.37662337662337664,
+  "awareShareOfHomes_p50": 1.0
+ },
+ "300": {
+  "tfs_p50": 46.0,
+  "homes_p50": 120.0,
+  "homes_p10_p90": [
+   55.0,
+   202.2
+  ],
+  "naiveCores_1perHome_p50": 45.0,
+  "awareCores_1perHome_p50": 120.0,
+  "naiveCores_unbounded_p50": 45.0,
+  "awareCores_unbounded_p50": 165.0,
+  "naiveShareOfHomes_p50": 0.37410071942446044,
+  "awareShareOfHomes_p50": 1.0
+ }
+}

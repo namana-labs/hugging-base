@@ -1,0 +1,17 @@
+{
+ "what": "STORY-INVENTORY timing probe, 26 Sep 2026 ~13:05-13:15 CT, clone ~/hb-overnight/tmp/story-inventory-r2 @ rz/r2-integrate 9a461e9, nice -n 10, no lock (each command < 20 s CPU). One run = one full P1 evening (720 x 60 s, OpenDSS every step).",
+ "label": "DERIVED (measured on RZ's shared Mac; 1-minute load average 18-27 during the runs); outcomes SIM (OpenDSS), fuse rule ASSUMPTION, money DERIVED",
+ "runs": [
+  {"day": "2026-07-22", "run": "aware", "cpuS": 3.5, "gzBytes": 341927, "batteryCausedNormal": 0, "batteryCausedEmergency": 0, "maxLoadingPct": 98.0, "chargedPctBy0400": 100.0, "energyValueUSD": 415.64},
+  {"day": "2026-07-22", "run": "aware + F1+F2+F3 (Tc 23:15)", "cpuS": 3.4, "gzBytes": 341087, "batteryCausedNormal": 0, "batteryCausedEmergency": 0, "batteryCausedAmberMin": 0, "maxLoadingPct": 98.0, "chargedPctBy0400": 99.2, "energyValueUSD": 417.92, "events": ["C runs hot: Home 0427 plugs in a Level 2 EV, +7.2 kW for 60 min", "controller stalls 8 min", "Home 0593 (behind D) goes silent after its 23:30 command (+20.0 kW)"]},
+  {"day": "2026-07-22", "run": "aware + F1 only", "cpuS": 3.4, "gzBytes": 342035, "batteryCausedNormal": 0, "maxLoadingPct": 98.0, "chargedPctBy0400": 99.2, "energyValueUSD": 416.97},
+  {"day": "2026-08-14", "run": "aware", "cpuS": 3.5, "gzBytes": 343020, "batteryCausedNormal": 0, "maxLoadingPct": 97.6, "chargedPctBy0400": 100.0, "energyValueUSD": -20.41},
+  {"day": "2026-08-14", "run": "aware + F1+F2+F3 (Tc 19:00)", "cpuS": 3.8, "gzBytes": 342040, "batteryCausedNormal": 0, "batteryCausedEmergency": 0, "batteryCausedAmberMin": 0, "maxLoadingPct": 97.5, "chargedPctBy0400": 99.2, "energyValueUSD": -19.51, "events": ["C runs hot (EV)", "controller stalls 8 min", "Home 0934 (behind D) goes silent after its 19:15 command (+20.0 kW)"]},
+  {"day": "2026-08-14", "run": "aware + F1 only", "cpuS": 4.1, "gzBytes": 342834, "batteryCausedNormal": 0, "maxLoadingPct": 98.2, "chargedPctBy0400": 99.2, "energyValueUSD": -19.63},
+  {"day": "2026-08-26", "run": "aware + F1+F2+F3 with the 23 Aug picker", "result": "AssertionError: no battery on A-D is charging at the comms-loss step (sim/p1_build.py _pick_silent)"},
+  {"day": "2026-08-26", "run": "aware + F1+F2+F3, fallback picker = largest charge command on the feeder (Tc 23:15)", "cpuS": 3.4, "gzBytes": 348066, "batteryCausedNormal": 0, "batteryCausedEmergency": 0, "batteryCausedAmberMin": 0, "maxLoadingPct": 98.1, "chargedPctBy0400": 99.2, "energyValueUSD": 1318.99},
+  {"day": "2026-08-23", "run": "aware + F2 only (EV on C)", "cpuS": 3.5, "gzBytes": 346063, "normalEvents": 0, "batteryCausedNormal": 0, "protectionOperated": 0, "maxLoadingPct": 119.5, "maxTf": 240, "chargedPctBy0400": 100.0, "energyValueUSD": 916.54},
+  {"day": "2026-08-23", "run": "aware + F3 only (stall)", "cpuS": 3.4, "gzBytes": 345930, "normalEvents": 0, "batteryCausedNormal": 0, "protectionOperated": 0, "maxLoadingPct": 119.5, "chargedPctBy0400": 100.0, "energyValueUSD": 917.03},
+  {"day": "2026-08-23", "run": "naive + F2 (EV on C at 22:35)", "cpuS": 3.3, "gzBytes": 312967, "normalEvents": 11, "batteryCausedNormal": 11, "batteryCausedEmergency": 3, "batteryCausedAmberMin": 1268, "protectionOperated": 1, "maxLoadingPct": 211.0, "maxTf": 246, "maxT": "22:44", "chargedPctBy0400": 98.4, "energyValueUSD": 894.98}
+ ]
+}

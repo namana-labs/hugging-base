@@ -1,0 +1,38 @@
+rtid=24898 http=200 bytes=707005 t=0.652938
+rtid=13091 http=200 bytes=7797 t=0.420259
+rtid=13060 http=200 bytes=7797 t=0.149693
+rtid=12331 http=200 bytes=27571 t=0.101456
+rtid=12329 http=200 bytes=27850 t=0.151908
+rtid=13061 http=200 bytes=7812 t=0.636256
+2026-09-26T16:03:08Z
+doc=1276779821 name=damlzhbspp_2026 http=200 bytes=1467443 t=1.085677
+doc=1177667469 name=damlzhbspp_2025 http=200 bytes=2050483 t=1.240766
+doc=1276778839 name=damasmcpc_2026 http=200 bytes=63491 t=0.609673
+doc=1177658395 name=damasmcpc_2025 http=200 bytes=84926 t=0.185172
+doc=1279247422 name=rtmcpc_np6331_latest http=200 bytes=361 t=0.102042
+doc=1278881686 name=dammcpc_np4188_od20260926 http=200 bytes=841 t=0.594311
+ader_page http=200 bytes=112495
+4cp_page http=200 bytes=53055
+NP9-83-M page http=200 bytes=63460
+rtid=13037 http=200 bytes=1837
+doc=1164129560 4cp_2025 http=200 bytes=30175
+osti1172643 http=200 bytes=883913 type=application/pdf
+tesla_pw_warranty_us.pdf http=403 bytes=505 type=text/html url=https://energylibrary.tesla.com/docs/Public/EnergyStorage/Powerwall/General/Warranty/en-us/Powerwall-Warranty-EN.pdf
+enphase_5p_warranty.pdf http=200 bytes=299674 type=application/pdf url=https://enphase.com/download/iq-battery-5p-limited-warranty-en
+nrel_atb_resbatt_2024.html http=000 bytes=0 type= url=https://atb.nrel.gov/electricity/2024/residential_battery_storage
+pvmag_bnef_2025.html http=200 bytes=226813 type=text/html; charset=UTF-8 url=https://www.pv-magazine.com/2025/12/09/global-lithium-ion-battery-pack-prices-fall-to-108-kwh-says-bnef/
+essnews_bnef_2025.html http=200 bytes=227762 type=text/html; charset=UTF-8 url=https://www.ess-news.com/2025/12/09/bnef-lithium-ion-battery-pack-prices-fall-to-108-kwh-stationary-storage-becomes-lowest-price-segment/
+nrg_4cp_remarks_2025.pdf http=200 bytes=233761 type=application/pdf url=https://www.nrg.com/assets/documents/energy-policy/ercot-transmission-costs-and-rate-design-remarks-on-feb-25-2025.pdf
+modo_bess_make_money.html http=200 bytes=783887 type=text/html; charset=utf-8 url=https://modoenergy.com/research/en/how-does-battery-energy-storage-make-money
+modo_capture_rates.html http=200 bytes=669773 type=text/html; charset=utf-8 url=https://modoenergy.com/research/en/ercot-capture-rates-benchmarking-optimizer-performance-jupiter-power-hunt-energy-network-smt
+modo_feb2026.html http=200 bytes=663010 type=text/html; charset=utf-8 url=https://modoenergy.com/research/en/february-2026-ercot-bess-benchmark-rtcb-revenues-batteries-performance
+base_help_cycles.html http=200 bytes=90752 type=text/html url=https://help.basepowercompany.com/en/articles/10281217
+base_utilities.html http=200 bytes=156700 type=text/html url=https://www.basepowercompany.com/utilities
+coa_rca_471637.bin http=200 bytes=105985 type=application/pdf;charset=UTF-8 url=https://services.austintexas.gov/edims/document.cfm?id=471637
+klgates_4cp_2026.html http=200 bytes=56360 type=text/html; charset=utf-8 url=https://www.klgates.com/Request-for-Comments-on-Texas-PUCT-Draft-Report-Regarding-Transmission-Cost-Recovery-in-the-ERCOT-Region-3-30-2026
+notboring_base_ch2.html http=200 bytes=685872 type=text/html; charset=utf-8 url=https://www.notboring.co/p/base-power-company-chapter-2
+base_blog_ader.html http=200 bytes=315260 type=text/html url=https://www.basepowercompany.com/blog/aggregated-ders-and-the-capacity-crunch
+tesla_pw_warranty_us.pdf via WebFetch (curl got 403) bytes=216164 url=https://energylibrary.tesla.com/docs/Public/EnergyStorage/Powerwall/General/Warranty/en-us/Powerwall-Warranty-EN.pdf
+atb http=000 bytes=0 url=https://atb.nrel.gov/electricity/2024/residential_battery_storage
+atb http=200 bytes=58589 url=https://atb.nlr.gov/electricity/2024/residential_battery_storage
+fetched 2026-09-26 ~16:00-16:30Z (curl, no key, no account)

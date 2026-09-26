@@ -1,0 +1,35 @@
+CHECK root=/Users/rzalagbada/hb-overnight/wt/l4-scene-p1 head=5222f59 lane=l4-scene-p1 full=0 py=/Users/rzalagbada/hb-overnight/.venv/bin/python logs=/Users/rzalagbada/hb-overnight/tmp/check-l4-scene-p1
+== 1 unit
+STEP unit: PASS (Ran 56 tests)
+== 2 node
+STEP node: PASS (# pass 32 # fail 0 )
+== 3 keep (7.1)
+keep: grid-stories py ok (Ran 8 tests) ; grid-stories node ok (# pass 3 # fail 0 ) ; four-home ok (Ran 17 tests)
+STEP keep: PASS (prototype 8 + 3, four-home 17)
+== 4 contract
+contract total 24 files, 4.37 MB (budget 25.0 MB, 4.0 MB per file); 10178 labelled numbers
+CONTRACTS: PASS (24 files, 4.37 MB, 10178 labelled numbers)
+STEP contract: PASS ((24 files, 4.37 MB, 10178 labelled numbers))
+== 5 verify
+VERIFY labels: PASS (24 files, 10178 labelled numbers)
+VERIFY p1: SKIP (no ui/data/p1/meta.json yet)
+VERIFY p2: SKIP (no ui/data/p2/index.json yet)
+STEP verify: PASS (labels p1 p2)
+== 6 paths
+PATHS: PASS (10 changed paths, all inside lane l4-scene-p1; base ddf223f)
+STEP paths: PASS (lane l4-scene-p1)
+== 7 smoke
+SMOKE root=/Users/rzalagbada/hb-overnight/wt/l4-scene-p1 port=50755 mode=--lane links=9 shots=/Users/rzalagbada/hb-overnight/tmp/shots-l4-scene-p1
+SMOKE view=p1&branch=none&t=16:45&cam=street ok | status=ready webgl=ok errors=0 fixture=1 offsite=0 | 8202 ms | 592 KB | 1645 colours
+SMOKE view=p1&branch=aware&t=16:45 ok | status=ready webgl=ok errors=0 fixture=1 offsite=0 | 6044 ms | 769 KB | 1670 colours
+SMOKE view=p1&branch=naive&t=22:30 ok | status=ready webgl=ok errors=0 fixture=1 offsite=0 | 5103 ms | 773 KB | 1688 colours
+SMOKE view=p1&branch=aware&t=22:30 ok | status=ready webgl=ok errors=0 fixture=1 offsite=0 | 5115 ms | 768 KB | 1657 colours
+SMOKE view=p1&branch=aware_faults&t=22:16 ok | status=ready webgl=ok errors=0 fixture=1 offsite=0 | 5855 ms | 761 KB | 1697 colours
+SMOKE view=p1&branch=naive&t=20:00&cam=feeder ok | status=ready webgl=ok errors=0 fixture=1 offsite=0 | 5875 ms | 777 KB | 1669 colours
+SMOKE view=p1&branch=aware&t=22:30&nowebgl=1 ok | status=ready webgl=fallback errors=0 fixture=1 offsite=0 | 1458 ms | 389 KB | 803 colours
+SMOKE view=p2&combo=aware-core-d26-g0 ok | status=ready webgl=ok errors=0 fixture=1 offsite=0 | 4997 ms | 627 KB | 1336 colours
+SMOKE view=more ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 5023 ms | 522 KB | 869 colours
+SMOKE: 9/9 ok
+STEP smoke: PASS (SMOKE: 9/9 ok)
+CHECK took 52 s
+ALL CHECKS: PASS

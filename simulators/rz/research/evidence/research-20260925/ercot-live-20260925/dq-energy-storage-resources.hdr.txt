@@ -1,0 +1,14 @@
+retrieved_utc=2026-09-26T04:30:11.237Z done_utc=2026-09-26T04:30:11.350Z url=https://www.ercot.com/api/1/services/read/dashboards/energy-storage-resources.json status=200
+Etag: "2e33d976"
+Content-Type: application/json
+Content-Length: 106833
+Cache-Control: max-age=60, public, must-revalidate
+Expires: Sat, 26 Sep 2026 04:31:11 GMT
+Date: Sat, 26 Sep 2026 04:30:11 GMT
+Set-Cookie: visid_incap_1217363=<redacted>
+Set-Cookie: incap_ses_912_1217363=<redacted>
+Strict-Transport-Security: max-age=31536000
+X-CDN: Imperva
+Access-Control-Allow-Origin: https://mis.ercot.com
+content-security-policy: frame-ancestors 'self' https://*.ercot.com:*
+X-Iinfo: 50-64859249-0 0CNN RT(1790397011311 26) q(0 -1 -1 -1) r(0 -1)

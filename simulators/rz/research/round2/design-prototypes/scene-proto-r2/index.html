@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>R2 scene prototype</title>
+<style>
+  :root { --bg:#E9EDE7; --paper:#F7F9F5; --ink:#101613; --muted:#55625A; --rule:#CAD3CA; --accent:#0B6B6F; }
+  html,body { margin:0; height:100%; background:var(--bg); font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif; overflow:hidden; }
+  #scene { position:absolute; inset:0; }
+  #stat { position:fixed; left:10px; bottom:10px; z-index:5; font:12px/1.35 Menlo, monospace; background:rgba(247,249,245,.9); padding:4px 8px; border-radius:6px; }
+  #legend { position:fixed; left:12px; top:12px; z-index:5; background:rgba(247,249,245,.94); border:1px solid var(--rule); border-radius:10px; padding:8px 10px; font-size:12.5px; color:var(--ink); }
+  #legend .row { display:flex; align-items:center; gap:7px; margin:3px 0; }
+  #legend .ic { flex:none; }
+  #legend .sub { color:var(--muted); font-size:11px; }
+  .deck-tooltip { font-size:12.5px !important; }
+</style>
+<script src="ui/vendor/deck-9.4.0.min.js"></script>
+</head>
+<body data-status="loading" data-webgl="pending" data-errors="0" data-fixture="0" data-offsite="0">
+<div id="scene"></div><div id="legend"></div><div id="stat"></div>
+<script type="module">
+import { svg, buildAtlas, batteryId, meterId, TIER_RGB, drawIcon } from './icons.js';
+import { cameraPreset } from './ui/lib/scene-model.js';
+const T0 = performance.now();
+const q = new URLSearchParams(location.search);
+const branch = q.get('branch') || 'naive', tq = q.get('t') || '22:30', cam = q.get('cam') || 'street', two = q.get('two') === '1';
+const J = (p) => fetch(p).then((r) => r.json());
+const [topo, fp, meta, doc, mnt] = await Promise.all([J('ui/data/topology.json'), J('ui/data/footprints.json'), J('ui/data/p1/meta.json'), J(`ui/data/p1/${branch}.json`), J('mount.json')]);
+const T1 = performance.now();
+const [hh, mm] = tq.split(':').map(Number);
+const k = Math.max(0, Math.min(meta.steps - 1, (((hh * 60 + mm) - 16 * 60) + 1440) % 1440));
+const tier = Array.from(doc.tier[k], Number), pct = doc.loading[k].map((x) => x / 10);
+const soc = doc.soc[k].map((x) => x / 1000), state = doc.state[k], batKW = doc.batKW[k].map((x) => x / 10);
+
+// ---- local metres ----
+const M = 6371008.8 * Math.PI / 180;
+const toM = (p, o) => [(p[0] - o[0]) * M * Math.cos(o[1] * Math.PI / 180), (p[1] - o[1]) * M];
+const toLL = (m, o, z = 0) => [o[0] + m[0] / (M * Math.cos(o[1] * Math.PI / 180)), o[1] + m[1] / M, z];
+const hash = (s) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h >>> 0; };
+function hull(pts) {
+  const p = pts.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lo = [], up = [];
+  for (const x of p) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], x) <= 0) lo.pop(); lo.push(x); }
+  for (const x of p.reverse()) { while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], x) <= 0) up.pop(); up.push(x); }
+  return lo.slice(0, -1).concat(up.slice(0, -1));
+}
+/** min-area oriented box: {c:[x,y], u:[ux,uy] (long axis), L, W} */
+function obb(pts) {
+  const h = hull(pts); let best = null;
+  for (let i = 0; i < h.length; i++) {
+    const a = h[i], b = h[(i + 1) % h.length], ang = Math.atan2(b[1] - a[1], b[0] - a[0]), c = Math.cos(ang), s = Math.sin(ang);
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (const p of h) { const x = p[0] * c + p[1] * s, y = -p[0] * s + p[1] * c; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+    const ar = (x1 - x0) * (y1 - y0);
+    if (!best || ar < best.ar) best = { ar, c, s, x0, x1, y0, y1 };
+  }
+  let { c, s, x0, x1, y0, y1 } = best;
+  let u = [c, s], L = x1 - x0, W = y1 - y0;
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, C = [cx * c - cy * s, cx * s + cy * c];
+  if (W > L) { u = [-s, c]; [L, W] = [W, L]; }
+  return { c: C, u, L, W };
+}
+const WALL = [[226, 214, 190], [205, 186, 160], [214, 208, 192], [181, 116, 92], [188, 196, 176], [176, 188, 196], [232, 226, 212]];
+const ROOF = [[74, 76, 80], [104, 88, 74], [96, 104, 114], [120, 112, 102], [86, 80, 76], [132, 126, 118]];   // neutrals only: red/amber/green belong to the tiers
+const SUN = (() => { const v = [-0.45, -0.55, 0.7]; const n = Math.hypot(...v); return v.map((x) => x / n); })();
+const shade = (col, n) => { const f = 0.62 + 0.5 * Math.max(0, n[0] * SUN[0] + n[1] * SUN[1] + n[2] * SUN[2]); return [Math.min(255, col[0] * f) | 0, Math.min(255, col[1] * f) | 0, Math.min(255, col[2] * f) | 0, 255]; };
+function tri(a, b, c) { const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]]; let n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]; const l = Math.hypot(...n) || 1; n = n.map((x) => x / l); if (n[2] < 0) n = n.map((x) => -x); return n; }
+/** Hip roof over the real footprint: every eave vertex joins its clamped projection on the ridge (the OBB's long axis). */
+function roofFaces(ring, o, wallH, home) {
+  const P = ring.map((p) => toM(p, o));
+  if (P.length > 3 && Math.hypot(P[0][0] - P[P.length - 1][0], P[0][1] - P[P.length - 1][1]) < 0.01) P.pop();
+  const b = obb(P), h = Math.max(0, (b.L - b.W) / 2), rise = Math.min(3.2, 0.42 * b.W / 2);
+  const R = P.map((p) => { const t = Math.max(-h, Math.min(h, (p[0] - b.c[0]) * b.u[0] + (p[1] - b.c[1]) * b.u[1])); return [b.c[0] + b.u[0] * t, b.c[1] + b.u[1] * t]; });
+  const base = ROOF[hash(home.id + 'r') % ROOF.length], out = [];
+  for (let i = 0; i < P.length; i++) {
+    const j = (i + 1) % P.length;
+    const a = [...P[i], wallH], bb = [...P[j], wallH], rj = [...R[j], wallH + rise], ri = [...R[i], wallH + rise];
+    for (const t of [[a, bb, rj], [a, rj, ri]]) {
+      const e1 = [t[1][0] - t[0][0], t[1][1] - t[0][1]], e2 = [t[2][0] - t[0][0], t[2][1] - t[0][1]];
+      if (Math.abs(e1[0] * e2[1] - e1[1] * e2[0]) < 1e-3) continue;
+      const n = tri(...t); out.push({ home: home.i, tf: home.tf, poly: t.map((m) => toLL(m, o, m[2])), color: shade(base, n), n });
+    }
+  }
+  return { faces: out, rise, obb: b };
+}
+function box(centerM, u, len, wid, o, z = 0) {
+  const v = [-u[1], u[0]], hl = len / 2, hw = wid / 2;
+  return [[1, 1], [-1, 1], [-1, -1], [1, -1]].map(([a, bq]) => toLL([centerM[0] + u[0] * hl * a + v[0] * hw * bq, centerM[1] + u[1] * hl * a + v[1] * hw * bq], o, z));
+}
+// ---- static scene ----
+const tfs = topo.transformers, homes = topo.homes, fleet = topo.fleet || [], mount = mnt.mount;
+const fleetIdx = new Map(fleet.map((hi, j) => [hi, j]));
+const walls = [], roofs = [], cabinets = [], caps = [], batIcons = [], drops = [];
+const sq = (ll) => { const d = 6 / M, e = 6 / (M * Math.cos(ll[1] * Math.PI / 180)); return [[ll[0] - e, ll[1] - d], [ll[0] + e, ll[1] - d], [ll[0] + e, ll[1] + d], [ll[0] - e, ll[1] + d]]; };
+homes.forEach((h, i) => {
+  const ring = fp.homes[h.id] && fp.homes[h.id].length >= 3 ? fp.homes[h.id] : sq(h.lonlat);
+  const o = ring.reduce((s, p) => [s[0] + p[0] / ring.length, s[1] + p[1] / ring.length], [0, 0]);
+  const two = hash(h.id) % 10 >= 7, wallH = two ? 6.0 : 3.3;
+  const r = roofFaces(ring, o, wallH, { id: h.id, i, tf: h.tf });
+  roofs.push(...r.faces);
+  const code = tier[h.tf];
+  walls.push({ i, polygon: ring, height: wallH, color: WALL[hash(h.id) % WALL.length] });
+  // service drop: transformer -> the footprint point nearest to it (overhead from a pole, on the ground from a pad)
+  const P = ring.map((p) => toM(p, o)), tfm = toM(tfs[h.tf].lonlat, o);
+  let best = null;
+  for (let a = 0; a < P.length; a++) {
+    const A = P[a], B = P[(a + 1) % P.length], dx = B[0] - A[0], dy = B[1] - A[1], L2 = dx * dx + dy * dy || 1;
+    const t = Math.max(0, Math.min(1, ((tfm[0] - A[0]) * dx + (tfm[1] - A[1]) * dy) / L2)), X = [A[0] + dx * t, A[1] + dy * t];
+    const d = Math.hypot(X[0] - tfm[0], X[1] - tfm[1]);
+    if (!best || d < best.d) best = { d, X, u: [dx / Math.sqrt(L2), dy / Math.sqrt(L2)] };
+  }
+  const pole = mount[h.tf] === 'pole';
+  drops.push({ tf: h.tf, path: [[...tfs[h.tf].lonlat, pole ? 7.2 : 0.4], toLL(best.X, o, pole ? wallH - 0.4 : 0.2)], code });
+  if (fleetIdx.has(i) && branch !== 'none') {
+    const j = fleetIdx.get(i);
+    const out = [best.X[0], best.X[1]], n = Math.hypot(out[0], out[1]) || 1;
+    // step 1.3 m out from the wall, beside the meter (towards the transformer), then 3 m along the wall
+    const cM = [best.X[0] + out[0] / n * 1.3 + best.u[0] * 3, best.X[1] + out[1] / n * 1.3 + best.u[1] * 3];
+    cabinets.push({ j, home: i, polygon: box(cM, best.u, 2.2, 1.1, o), height: 2.4 });
+    caps.push({ j, polygon: box(cM, best.u, 2.3, 1.2, o, 2.4), height: 0.3, state: state[j] });
+    batIcons.push({ j, home: i, position: toLL(cM, o, 2.9), icon: batteryId(state[j], soc[j]), state: state[j], soc: soc[j], kw: batKW[j] });
+  }
+});
+const ctx = (fp.others || []).filter((r) => r && r.length >= 3).map((polygon, n) => ({ polygon, height: 3.3 }));
+const ctxRoofs = [];
+if (q.get('ctxroof') === '1') ctx.forEach((c, n) => { const o = c.polygon.reduce((s, p) => [s[0] + p[0] / c.polygon.length, s[1] + p[1] / c.polygon.length], [0, 0]); for (const f of roofFaces(c.polygon, o, 3.3, { id: 'c' + n, i: -1, tf: -1 }).faces) { f.color = [f.color[0] * 0.5 + 110, f.color[1] * 0.5 + 112, f.color[2] * 0.5 + 108, 255]; ctxRoofs.push(f); } });
+const pads = [], plinths = [], poles = [], cans = [], halos = [], meters = [], labels = [];
+const focusKey = new Map((topo.focus || []).map((f) => [f.tf, f.key]));
+for (const b of topo.bridge || []) focusKey.set(b.tf, 'T-240');
+let worst = 0; pct.forEach((p, i) => { if (p > pct[worst]) worst = i; });
+tfs.forEach((t, i) => {
+  const o = t.lonlat, code = tier[i];
+  if (mount[i] === 'pole') {
+    poles.push({ i, position: [o[0], o[1], 0] });
+    cans.push({ i, position: toLL([1.0, 0], o, 6.8) });
+  } else {
+    plinths.push({ i, polygon: box([0, 0], [1, 0], 4.0, 3.4, o), height: 0.25 });
+    pads.push({ i, polygon: box([0, 0], [1, 0], 3.6, 3.0, o, 0.25), height: 2.4 });
+  }
+  if (code >= 1) halos.push({ i, position: o, code });
+  const named = focusKey.has(i);
+  meters.push({ i, position: [o[0], o[1], mount[i] === 'pole' ? 11 : 3.2], icon: meterId(code, pct[i]), named, code, pct: pct[i] });
+  if (named) labels.push({ i, position: [o[0], o[1], mount[i] === 'pole' ? 11 : 3.2], text: focusKey.get(i), code });
+});
+const worstLabel = [{ position: meters[worst].position, text: `worst now ${pct[worst].toFixed(1)}%`, code: tier[worst] }];
+const T2 = performance.now();
+
+// ---- legend (DOM, the same icons) ----
+document.getElementById('legend').innerHTML = `
+  <div class="row">${svg('house', { size: 20 })}<span>home <span class="sub">(real OSM footprint)</span></span></div>
+  <div class="row"><span style="color:#44664a">${svg('padmount', { size: 20 })}</span><span>transformer, pad-mount</span></div>
+  <div class="row"><span style="color:#5f6a70">${svg('polemount', { size: 20 })}</span><span>transformer, on a pole</span></div>
+  <div class="row">${svg('meter', { size: 22, pct: 70, tier: 0 })}${svg('meter', { size: 22, pct: 130, tier: 3 })}<span>its load: the box is its limit;<br>spilling over the lid = overloaded</span></div>
+  <div class="row"><span style="color:#0B6B6F">${svg('cabinet', { size: 20 })}</span><span>home battery, beside the house</span></div>
+  <div class="row">${svg('battery', { size: 22, level: 0.8, state: 'C' })}${svg('battery', { size: 22, level: 0.5, state: 'D' })}${svg('battery', { size: 22, level: 0.3, state: 'I' })}<span>charge level: charging · giving · idle</span></div>
+  <div class="sub">objects not to scale · hover anything</div>`;
+
+// ---- tooltips ----
+const TN = ['within its limit', 'over its nameplate (amber, not yet a problem)', 'above 110%, counting', 'past its normal rating (>110% for 30 min)', 'emergency (>150%)', 'fuse opened'];
+const SN = { C: 'charging', D: 'giving power back', I: 'idle', S: 'silent (no reply for 3 min)', X: 'expired: idle, backup armed', B: 'powering its own home' };
+const key = (i) => focusKey.get(i) || `T-${i}`;
+function tip({ object, layer }) {
+  if (!object || !layer) return null;
+  const id = layer.id;
+  let html = '';
+  if (id === 'walls' || id === 'roofs') {
+    const h = homes[object.i ?? object.home];
+    html = `<b>${svg('house', { size: 16 })} ${h.label}</b><br>on transformer ${key(h.tf)} (${TN[tier[h.tf]]})${fleetIdx.has(h.i ?? object.i ?? object.home) ? '<br>has a home battery' : ''}`;
+  } else if (id === 'pads' || id === 'cans' || id === 'poles' || id === 'meters' || id === 'plinths') {
+    const i = object.i, t = tfs[i];
+    html = `<b>Transformer ${key(i)}</b> · ${t.kva} kVA, ${mount[i] === 'pole' ? 'on a pole' : 'pad-mount'}<br>${svg('meter', { size: 18, pct: pct[i], tier: tier[i] })} now at <b>${pct[i].toFixed(1)}%</b> of its limit: ${TN[tier[i]]}<br>serves ${t.homes.length} homes`;
+  } else if (id === 'cabinets' || id === 'battery-icons' || id === 'caps') {
+    const j = object.j, hi = fleet[j];
+    html = `<b>Home battery at ${homes[hi].label}</b><br>${svg('battery', { size: 20, level: soc[j], state: state[j] })} ${Math.round(soc[j] * 100)}% charged · ${SN[state[j]]} ${batKW[j] ? (batKW[j] > 0 ? '+' : '') + batKW[j].toFixed(1) + ' kW' : ''}`;
+  }
+  return html ? { html, style: { background: '#F7F9F5', color: '#101613', border: '1px solid #CAD3CA', borderRadius: '8px', padding: '6px 9px', maxWidth: '300px', lineHeight: '1.4' } } : null;
+}
+
+// ---- deck ----
+const atlas = buildAtlas(64);
+const view = { ...cameraPreset(topo, cam) };
+const trgb = (c, a = 255) => [...TIER_RGB[c], a];
+const roofColor = (d) => { const c = tier[d.tf]; if (!c) return d.color; const t = TIER_RGB[c], s = shade([255, 255, 255], d.n); return [t[0] * s[0] / 255 * 0.8 + d.color[0] * 0.2, t[1] * s[1] / 255 * 0.8 + d.color[1] * 0.2, t[2] * s[2] / 255 * 0.8 + d.color[2] * 0.2, 255]; };
+let first = 0;
+function layers(zoom) {
+  const near = zoom >= 16.2;
+  return [
+    new deck.PolygonLayer({ id: 'context', data: ctx, extruded: true, stroked: false, getPolygon: (d) => d.polygon, getElevation: (d) => d.height, getFillColor: [214, 216, 210, 255] }),
+    new deck.SolidPolygonLayer({ id: 'ctx-roofs', data: ctxRoofs, _full3d: true, extruded: false, material: false, getPolygon: (d) => d.poly, getFillColor: (d) => d.color }),
+    new deck.PathLayer({ id: 'lines', data: topo.edges, getPath: (e) => [[e[0], e[1]], [e[2], e[3]]], getColor: [85, 98, 90, 110], widthUnits: 'pixels', getWidth: 1 }),
+    new deck.ScatterplotLayer({ id: 'halos', data: halos, getPosition: (d) => d.position, getRadius: 7, radiusUnits: 'meters', getFillColor: (d) => trgb(d.code, 80), getLineColor: (d) => trgb(d.code, 230), stroked: true, lineWidthUnits: 'pixels', getLineWidth: 2 }),
+    new deck.PathLayer({ id: 'drops', data: drops, getPath: (d) => d.path, getColor: (d) => (d.code ? trgb(d.code, 235) : [70, 80, 74, 120]), widthUnits: 'pixels', getWidth: (d) => (d.code >= 2 ? 3.5 : d.code ? 2.5 : 1.2) }),
+    new deck.PolygonLayer({ id: 'walls', data: walls, extruded: true, stroked: false, pickable: true, getPolygon: (d) => d.polygon, getElevation: (d) => d.height, getFillColor: (d) => d.color }),
+    new deck.SolidPolygonLayer({ id: 'roofs', data: roofs, _full3d: true, extruded: false, pickable: true, material: false, getPolygon: (d) => d.poly, getFillColor: roofColor, updateTriggers: { getFillColor: doc.tier[k] } }),
+    new deck.PolygonLayer({ id: 'plinths', data: plinths, extruded: true, stroked: false, getPolygon: (d) => d.polygon, getElevation: (d) => d.height, getFillColor: [184, 184, 178, 255] }),
+    new deck.PolygonLayer({ id: 'pads', data: pads, extruded: true, stroked: false, pickable: true, getPolygon: (d) => d.polygon, getElevation: (d) => d.height, getFillColor: [62, 98, 68, 255] }),
+    new deck.ColumnLayer({ id: 'poles', data: poles, radius: 0.3, diskResolution: 8, extruded: true, pickable: true, getPosition: (d) => d.position, getElevation: 10.5, getFillColor: [118, 98, 78, 255] }),
+    new deck.PathLayer({ id: 'arms', data: poles, getPath: (d) => [toLL([-1.6, 0], d.position, 10.1), toLL([1.6, 0], d.position, 10.1)], getColor: [118, 98, 78, 255], widthUnits: 'meters', getWidth: 0.3 }),
+    new deck.ColumnLayer({ id: 'cans', data: cans, radius: 1.0, diskResolution: 16, extruded: true, pickable: true, getPosition: (d) => d.position, getElevation: 2.3, getFillColor: [168, 176, 180, 255] }),
+    new deck.PolygonLayer({ id: 'cabinets', data: cabinets, extruded: true, stroked: false, pickable: true, getPolygon: (d) => d.polygon, getElevation: (d) => d.height, getFillColor: [240, 242, 238, 255] }),
+    new deck.PolygonLayer({ id: 'caps', data: caps, extruded: true, stroked: false, pickable: true, getPolygon: (d) => d.polygon, getElevation: (d) => d.height, getFillColor: [11, 107, 111, 255] }),
+    new deck.IconLayer({ id: 'meters', data: meters.filter((m) => m.named || m.code >= 1), iconAtlas: atlas.canvas, iconMapping: atlas.mapping, pickable: true,
+      getIcon: (d) => d.icon, getPosition: (d) => d.position, getSize: near ? 44 : 30, sizeUnits: 'pixels', billboard: true }),
+    new deck.IconLayer({ id: 'battery-icons', data: batIcons, iconAtlas: atlas.canvas, iconMapping: atlas.mapping, pickable: true,
+      getIcon: (d) => d.icon, getPosition: (d) => d.position, getSize: near ? 34 : 22, sizeUnits: 'pixels', billboard: true }),
+    new deck.TextLayer({ id: 'labels', data: labels, getPosition: (d) => d.position, getText: (d) => d.text, getSize: 16, fontWeight: 800, getColor: [16, 22, 19, 255],
+      background: true, getBackgroundColor: [247, 249, 245, 235], backgroundPadding: [5, 2, 5, 2], getPixelOffset: [26, -30], billboard: true,
+      fontFamily: 'Inter, "Helvetica Neue", Helvetica, Arial, sans-serif' }),
+    new deck.TextLayer({ id: 'worst', data: worstLabel, getPosition: (d) => d.position, getText: (d) => d.text, getSize: 15, fontWeight: 800, getColor: [255, 255, 255, 255],
+      background: true, getBackgroundColor: (d) => trgb(d.code || 0, 245), backgroundPadding: [6, 3, 6, 3], getPixelOffset: [0, -62], billboard: true,
+      fontFamily: 'Inter, "Helvetica Neue", Helvetica, Arial, sans-serif' }),
+  ];
+}
+function done(kind) {
+  const T3 = performance.now();
+  document.getElementById('stat').textContent = `${kind} · ${branch} ${tq} ${cam} · data ${Math.round(T1 - T0)} ms · build ${Math.round(T2 - T1)} ms · first frame ${Math.round(T3 - T2)} ms · roof faces ${roofs.length}+${ctxRoofs.length} · cabinets ${cabinets.length}`;
+  document.body.dataset.status = 'ready';
+}
+if (!two) {
+  let zb = view.zoom >= 16.2;
+  const d = new deck.Deck({ parent: document.getElementById('scene'), views: [new deck.MapView({ repeat: false })], initialViewState: view, controller: true,
+    layers: layers(view.zoom), getTooltip: tip, pickingRadius: 3,
+    onViewStateChange: ({ viewState }) => { const b = viewState.zoom >= 16.2; if (b !== zb) { zb = b; d.setProps({ layers: layers(viewState.zoom) }); } },
+    onAfterRender: () => { if (!first++) { document.body.dataset.webgl = 'ok'; done('webgl'); } } });
+  window.__deck = d;
+} else {
+  // 2D fallback: the same faces and icons, top down
+  const cv = document.createElement('canvas'); document.getElementById('scene').appendChild(cv);
+  const dpr = window.devicePixelRatio || 1; cv.width = innerWidth * dpr; cv.height = innerHeight * dpr; cv.style.width = '100%'; cv.style.height = '100%';
+  const g = cv.getContext('2d'), v = { ...view }; if (cam === 'feeder') { v.latitude += 0.0012; v.zoom -= 0.35; } else v.latitude += 0.00022;
+  const mx = (lon, z) => (lon + 180) / 360 * 256 * 2 ** z, my = (lat, z) => { const s = Math.sin(lat * Math.PI / 180); return (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * 256 * 2 ** z; };
+  const cx = mx(v.longitude, v.zoom), cy = my(v.latitude, v.zoom), P = (p) => [cv.width / 2 + (mx(p[0], v.zoom) - cx) * dpr, cv.height / 2 + (my(p[1], v.zoom) - cy) * dpr];
+  const rgba = (c) => `rgba(${c[0]},${c[1]},${c[2]},${(c[3] ?? 255) / 255})`;
+  const poly = (ring) => { g.beginPath(); ring.forEach((pt, n) => { const a = P(pt); n ? g.lineTo(a[0], a[1]) : g.moveTo(a[0], a[1]); }); g.closePath(); };
+  g.fillStyle = '#E9EDE7'; g.fillRect(0, 0, cv.width, cv.height);
+  for (const c of ctx) { g.fillStyle = 'rgb(206,210,202)'; poly(c.polygon); g.fill(); }
+  g.lineWidth = 1 * dpr; g.strokeStyle = 'rgba(85,98,90,0.45)'; for (const e of topo.edges) { const a = P([e[0], e[1]]), b = P([e[2], e[3]]); g.beginPath(); g.moveTo(...a); g.lineTo(...b); g.stroke(); }
+  for (const h of halos) { const a = P(h.position); g.fillStyle = rgba(trgb(h.code, 80)); g.strokeStyle = rgba(trgb(h.code, 230)); g.lineWidth = 2 * dpr; g.beginPath(); g.arc(a[0], a[1], 14 * dpr, 0, 7); g.fill(); g.stroke(); }
+  for (const d of drops) { g.strokeStyle = d.code ? rgba(trgb(d.code, 235)) : 'rgba(70,80,74,0.45)'; g.lineWidth = (d.code >= 2 ? 3.5 : d.code ? 2.5 : 1.2) * dpr; const a = P(d.path[0]), b = P(d.path[1]); g.beginPath(); g.moveTo(...a); g.lineTo(...b); g.stroke(); }
+  for (const f of roofs) { const rc = roofColor(f); g.fillStyle = rgba(rc); poly(f.poly); g.fill(); g.strokeStyle = rgba(rc); g.lineWidth = 0.6 * dpr; g.stroke(); }
+  for (const p of plinths) { g.fillStyle = 'rgb(184,184,178)'; poly(p.polygon); g.fill(); }
+  for (const p of pads) { g.fillStyle = 'rgb(62,98,68)'; poly(p.polygon); g.fill(); }
+  for (const p of poles) { const a = P(p.position); g.fillStyle = 'rgb(118,98,78)'; g.beginPath(); g.arc(a[0], a[1], 3 * dpr, 0, 7); g.fill(); }
+  for (const p of cans) { const a = P(p.position); g.fillStyle = 'rgb(150,158,162)'; g.beginPath(); g.arc(a[0], a[1], 4 * dpr, 0, 7); g.fill(); }
+  for (const c of cabinets) { g.fillStyle = 'rgb(240,242,238)'; poly(c.polygon); g.fill(); g.strokeStyle = 'rgb(11,107,111)'; g.lineWidth = 1.5 * dpr; g.stroke(); }
+  const icon = (id, pos, size) => { const m = atlas.mapping[id], a = P(pos); g.drawImage(atlas.canvas, m.x, m.y, m.width, m.height, a[0] - size * dpr / 2, a[1] - size * dpr, size * dpr, size * dpr); };
+  const near = v.zoom >= 16.2;
+  for (const m of meters) if (m.named || m.code >= 1) icon(m.icon, m.position, near ? 44 : 30);
+  for (const b of batIcons) icon(b.icon, b.position, near ? 34 : 22);
+  g.font = `800 ${15 * dpr}px Inter, Helvetica, Arial, sans-serif`;
+  for (const l of labels) { const a = P(l.position); const w = g.measureText(l.text).width; g.fillStyle = 'rgba(247,249,245,0.92)'; g.fillRect(a[0] + 18 * dpr, a[1] - 44 * dpr, w + 10 * dpr, 20 * dpr); g.fillStyle = '#101613'; g.fillText(l.text, a[0] + 23 * dpr, a[1] - 29 * dpr); }
+  for (const l of worstLabel) { const a = P(l.position); const w = g.measureText(l.text).width; g.fillStyle = rgba(trgb(l.code, 245)); g.fillRect(a[0] - w / 2 - 6 * dpr, a[1] - 80 * dpr, w + 12 * dpr, 21 * dpr); g.fillStyle = '#fff'; g.fillText(l.text, a[0] - w / 2, a[1] - 64 * dpr); }
+  document.body.dataset.webgl = 'fallback';
+  requestAnimationFrame(() => done('2d'));
+}
+</script>
+</body></html>

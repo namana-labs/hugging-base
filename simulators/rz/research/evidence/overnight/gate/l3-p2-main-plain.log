@@ -1,0 +1,27 @@
+== main 2f5b87d plain, 10:59Z
+CHECK root=/Users/rzalagbada/hb-overnight/hb head=2f5b87d lane=none full=0 py=/Users/rzalagbada/hb-overnight/.venv/bin/python logs=/Users/rzalagbada/hb-overnight/tmp/check-hb
+== 1 unit
+STEP unit: PASS (Ran 102 tests)
+== 2 node
+STEP node: PASS (# pass 10 # fail 0 )
+== 3 keep (7.1)
+keep: grid-stories py ok (Ran 8 tests) ; grid-stories node ok (# pass 3 # fail 0 ) ; four-home ok (Ran 17 tests)
+STEP keep: PASS (prototype 8 + 3, four-home 17)
+== 4 contract
+contract total 46 files, 15.31 MB (budget 25.0 MB, 4.0 MB per file); 30456 labelled numbers
+CONTRACTS: PASS (46 files, 15.31 MB, 30456 labelled numbers)
+STEP contract: PASS ((46 files, 15.31 MB, 30456 labelled numbers))
+== 5 verify
+VERIFY labels: PASS (46 files, 30456 labelled numbers)
+VERIFY p1: PASS (1 expectations refuted, see NOTES.md: rotation)
+VERIFY p2: PASS (0 expectations refuted, see NOTES.md)
+STEP verify: PASS (labels p1 p2)
+== 7 smoke
+SMOKE root=/Users/rzalagbada/hb-overnight/hb port=56028 mode=canary links=3 shots=/Users/rzalagbada/hb-overnight/tmp/shots-hb
+SMOKE view=p1&branch=aware&t=22:30 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4227 ms | 197 KB | 590 colours
+SMOKE view=p2&combo=aware-core-d26-g0 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 2056 ms | 223 KB | 644 colours
+SMOKE view=more ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 2109 ms | 157 KB | 394 colours
+SMOKE: 3/3 ok
+STEP smoke: PASS (SMOKE: 3/3 ok)
+CHECK took 21 s
+ALL CHECKS: PASS

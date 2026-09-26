@@ -1,0 +1,9 @@
+# simulators/rz: local-only files (the venv, logs/screenshots, caches). Nothing here is needed to run the page.
+.venv/
+.tmp/
+__pycache__/
+*.pyc
+.DS_Store
+node_modules/
+data/cache/
+.cache/

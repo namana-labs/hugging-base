@@ -1,0 +1,105 @@
+== build2 start 16:09:15Z head ee53036
+P1 build 2026-08-23 16:00 + 720 x 60 s -> /Users/rzalagbada/hb-overnight/wt/l2-p1/ui/data/p1
+  none: max 122.1% (3.2 s)
+  naive: max 201.2% (6.4 s)
+  aware: max 119.5% (9.7 s)
+  aware_faults (13.0 s)
+  wrote meta.json 48 KB
+  wrote none.json 1827 KB
+  wrote naive.json 1944 KB
+  wrote aware.json 1953 KB
+  wrote aware_faults.json 1952 KB
+P1 build: 2884 OpenDSS solves in 13.0 s (4.5 ms/step incl. controller); Tc 22:00 ; 7.54 MB
+  2026-07-22: naive max 186.3% ; aware battery-caused 0 ; aware $4.33/battery ; 0.94 MB ; 10.7 s
+  2026-08-26: naive max 182.3% ; aware battery-caused 0 ; aware $13.71/battery ; 0.96 MB ; 10.4 s
+  2026-08-14: naive max 214.1% ; aware battery-caused 0 ; aware $-0.21/battery ; 0.93 MB ; 10.3 s
+history: 4 evenings in index.json ; calendar 2026-01-01 to 2026-09-18 (261 evenings, 2 gaps) ; 31.9 s
+ M ui/data/p1/days/2026-07-22/meta.json
+ M ui/data/p1/days/2026-08-14/meta.json
+ M ui/data/p1/days/2026-08-26/meta.json
+ M ui/data/p1/days/index.json
+ M ui/data/p1/meta.json
+== built in 45 s
+P1 2026-08-23 16:00->04:00 | 720 x 60 s | none,naive,aware,aware_faults | OpenDSS solves 2884 | 2.1 ms/solve (engine.json)
+prices REAL LZ_NORTH sha256 0487b9d1... | loads SIM SMART-DS 2018 same date, 15->1 min (DERIVED) | battery pf 1.0 (ASSUMPTION) | controller view: total transformer load, 60 s lag (ASSUMPTION)
+plan DERIVED: discharge 19:45 20:00 21:00 21:15 (+20:15 13 min) | onset 22:00 $55.42 (D-26 binding, 2 x median 37.215)   [INVARIANT]
+labels : every headline metric labelled (155 labelled, 0 bare)   [INVARIANT]
+aware  : battery-caused normal 0 ; battery-caused emergency 0   [INVARIANT]
+         reserve breaches 0 (summary 0) ; charged by 04:00 100.0% (>= 95%)   [INVARIANT]
+         non-increasing seq accepted 0 ; commands acted on after expiry 0 (69120 commands issued, 0 refused)   [INVARIANT]
+         battery-caused minutes >100%: 0   [EXPECT: 0] ok
+faults : comms_lost Tc+15 (22:15) on Home 0222, command +19.0 kW (nonzero) ; stale at +3 ; expired + idle, backup armed, at +5 (<= +5) ; covered 0 s after expiry (<= 60 s)   [INVARIANT]
+         stall Tc+55 8 min: 30 live commands, all expired by +4 (<= +5) ; battery-caused normal 0 / emergency 0   [INVARIANT]
+         hot C Tc+35 (+7.2 kW EV): max 46.8% ; back <= 100% after 0 steps ; C's batteries +0.0 -> +0.0 -> +0.0 kW at Tc+34..+36 (not charging when the EV arrives: the throttle is not exercised)   [EXPECT: back <= 100% within 2 steps] ok
+none   : A peak 122.1% at 16:45 (driver Home 0212 res_kw_38274_pu) ; 240 peak 119.5% at 16:45 ; normal-tier events 0 ; emergency 0   [EXPECT: A > 110, peak in 16:30-17:00] ok
+naive  : normal-tier events 11 ; emergency tfs 3 ; A max 201.2% at 22:30 (above 200% for 9 min; the ASSUMPTION fuse needs 10) ; back-feed max 139.7% on tf 246 at 21:29 ; protection operated: none (ASSUMPTION rule)   [EXPECT: normal >= 1 ; emergency >= 1 ; back-feed > 110 on >= 1 tf] ok
+relief : A at its peak none 122.1% -> aware 97.8% ; minutes > 100% none 17 -> aware 0 ; relief kW 6.92 (largest, at 16:46; 6.17 at 16:45), kWh 1.194 ; driver Home 0212 res_kw_38274_pu (22.7 kW; also Home 0409 tf 240, Home 0504 tf 103)   [EXPECT: aware <= 100%, 0 min] ok
+relief : A's batteries give 6.92 kW at 16:46 (largest relief minute) and 6.17 kW at 16:45 (the peak minute) = aware.json focus.A.batKW 6.9 / 6.2   [INVARIANT]
+bridge : unrelieved (home load only, no battery): tf 240 119.5% at 16:45, driver Home 0409 res_kw_38274_pu -> P2   [report]
+rotation: hand-offs among A-D 99 (5.4.3 definition) ; kWh charged per focus tf 55.1/51.6/48.5/92.1 ; min distinct A-D batteries charging per 10 min 0 (9 batteries, 36 windows from Tc)   [EXPECT: n >= 3 ; each >= 1 kWh ; m >= 3] REFUTED
+grid   : none: min service voltage 0.9865 pu = 118.4 V (Home 0504, 16:45) ; voltage stays in range at unity pf (SIM) ; feeder head max 80.4% of 370 A at 17:00 ; after the onset max 47.9% at 22:00   [report]
+grid   : naive: min service voltage 0.9707 pu = 116.5 V (Home 0111, 22:00) ; voltage stays in range at unity pf (SIM) ; feeder head max 80.4% of 370 A at 17:00 ; after the onset max 73.9% at 22:00   [report]
+grid   : aware: min service voltage 0.9771 pu = 117.3 V (Home 0111, 22:10) ; voltage stays in range at unity pf (SIM) ; feeder head max 80.4% of 370 A at 17:00 ; after the onset max 57.4% at 22:05   [report]
+grid   : aware_faults: min service voltage 0.9771 pu = 117.3 V (Home 0111, 22:10) ; voltage stays in range at unity pf (SIM) ; feeder head max 80.4% of 370 A at 17:00 ; after the onset max 57.4% at 22:05   [report]
+money  : energy value naive $893.83 / aware $916.56 / aware_faults $917.77 (DERIVED) ; cost of awareness $-22.73 (DERIVED, may be negative)   [report]
+scale  : 40 kW (2 batteries on A) = 160% of A's 25 kVA can ; 1.5% of one head-cable conductor (2,663.8 kVA per phase) ; 0.000049% of ERCOT (81,612 MW peak demand, 2026-09-25 16:40 CT) (DERIVED)   [INVARIANT]
+money : naive sold $1,014.74 bought $120.91 net $893.83 ($9.31/battery) ; aware sold $1,001.11 bought $84.55 net $916.56 ($9.55/battery) ; aware_faults sold $1,001.11 bought $83.34 net $917.77 ($9.56/battery) ; cash ends at energyValueUSD (DERIVED)   [INVARIANT]
+money : cash re-derived from the branch files' batKW (0.1 kW): max difference 0.7 cents   [EXPECT: <= 10 cents (rounding of the branch files)] ok
+relief : A over nameplate 17 min (none.json: 17) ; text "over nameplate for 17 minutes (amber; not a failure): Home 0212's load" ; A marker yes   [INVARIANT]
+onset  : at 22:00 naive charges 1,920.0 kW, aware 593.6 kW: 1,326.4 kW deferred (DERIVED) ; aware charged by the deadline 100.0% (SIM)   [INVARIANT]
+story  : "The evening we know best" · Prices peaked at $566.42/MWh at 21:00, then fell to $55.42 at 22:00 (REAL)   [INVARIANT]
+money  : aware + failures note (audit L7): +$1.21 against feeder-aware is not a gain: the silent battery (Home 0222) ends at 29.4% charge, so the fleet charged 27.2 kWh less and bought less power back   [INVARIANT]
+chaos  : 50 runs (CHAOS_RUNS 50, seed 20260823) of 2026-08-23 16:00 + 720 min ; silent 1-10 batteries (rule 1-10) ; stall 1-8 min (rule 1-8) ; hot tf drawn from the 87 fleet transformers (39 distinct) ; events from Tc 22:00 to Tend 03:59   [INVARIANT]
+chaos  : battery-caused normal-tier events 0 ; battery-caused emergency transformers 0 ; runs with any 0/50   [INVARIANT]
+chaos  : reserve breaches 0 ; commands acted on after expiry 0 ; non-increasing seq accepted 0 (all runs)   [INVARIANT]
+chaos  : silent units 257 ; idle with backup armed from their last command's expiry on 257 (+0 expire after the window) ; marked stale 3-3 min after going silent (3 = COMMS_STALE_S, later only when a stall overlaps)   [INVARIANT]
+chaos  : every number labelled or an id/counter ; bare: 0   [INVARIANT]
+chaos  : batteries that never went silent, mean SoC at the deadline: min 99.6% (median 100.0%) over 50 runs   [EXPECT: >= 95% in every run] ok
+chaos  : amber (not a violation), battery-caused transformer-minutes > 100% per run: max 1, runs with any 2/50 ; on the hot tf: max 1 min   [report]
+chaos  : home load alone (not the orchestrator's): normal-tier events 0 ; emergency tfs 0 ; hot tf peak 25.3-124.2% ; protection operated 0 (ASSUMPTION rule)   [report]
+chaos  : cover: runs where the responsive fleet's grants rose within 60 s of the silent units' expiry 47/47 (runs with live charge released and the controller running)   [report]
+determinism: rebuild byte-identical (6 files)   [INVARIANT]
+VERIFY p1: PASS (1 expectations refuted, see NOTES.md: rotation)
+index  2026-08-23: row equals its meta (The evening we know best ; peak $566.42 at 21:00 ; naive max 201.2% on A (tier 4) ; aware $9.55/battery)   [INVARIANT]
+index  2026-07-22: row equals its meta (Texas's record demand ; peak $344.13 at 22:00 ; naive max 186.3% on B (tier 4) ; aware $4.33/battery)   [INVARIANT]
+files  2026-07-22: meta.json + none.json.gz, naive.json.gz, aware.json.gz ; gzip, A.6 shapes, labels ; branches none,naive,aware ; events {}   [INVARIANT]
+plan   2026-07-22: onset 23:15 $59.45 (D-26 binding) ; discharge 22:00 21:45 21:30 22:15 21:15(+13 min)   [INVARIANT]
+aware  2026-07-22: battery-caused normal 0 / emergency 0 ; reserve breaches 0 ; acted after expiry 0 ; non-increasing seq 0 ; charged by the deadline 100.0% (>= 95%) ; max 98.0% (tf 322, home load)   [INVARIANT]
+naive  2026-07-22: max 186.3% (tf 357 at 23:15) ; normal-tier events 8 (8 battery-caused) ; emergency tfs 3 ; protection operated 0 (ASSUMPTION rule; 0 homes dark, reserve used in the outage 0 battery-steps) ; charged 100.0%   [EXPECT: battery-caused normal >= 1] ok
+money 2026-07-22: naive sold $569.61 bought $183.44 net $386.17 ($4.02/battery) ; aware sold $559.59 bought $143.94 net $415.64 ($4.33/battery) ; cash ends at energyValueUSD (DERIVED)   [INVARIANT]
+money 2026-07-22: cash re-derived from the branch files' batKW (0.1 kW): max difference 0.8 cents   [EXPECT: <= 10 cents (rounding of the branch files)] ok
+relief 2026-07-22: A over nameplate 0 min (none.json: 0) ; text "A stays under its nameplate all evening (max 51.8%)" ; A marker no   [INVARIANT]
+onset  2026-07-22: at 23:15 naive charges 1,920.0 kW, aware 746.6 kW: 1,173.4 kW deferred (DERIVED) ; aware charged by the deadline 100.0% (SIM)   [INVARIANT]
+story  2026-07-22: "Texas's record demand" · ERCOT set its all-time demand record this day: 91,134 MW (REAL)   [INVARIANT]
+money  2026-07-22: calendar (prices only, one Core) $4.22 vs sim aware $4.33/battery   [EXPECT: within 5% or $0.10] ok
+index  2026-08-26: row equals its meta (August's priciest evening ; peak $780.72 at 22:15 ; naive max 182.3% on B (tier 4) ; aware $13.71/battery)   [INVARIANT]
+files  2026-08-26: meta.json + none.json.gz, naive.json.gz, aware.json.gz ; gzip, A.6 shapes, labels ; branches none,naive,aware ; events {}   [INVARIANT]
+plan   2026-08-26: onset 23:15 $81.42 (D-26 binding) ; discharge 22:15 22:00 21:15 20:00 21:30(+13 min)   [INVARIANT]
+aware  2026-08-26: battery-caused normal 0 / emergency 0 ; reserve breaches 0 ; acted after expiry 0 ; non-increasing seq 0 ; charged by the deadline 100.0% (>= 95%) ; max 98.1% (tf 322, home load)   [INVARIANT]
+naive  2026-08-26: max 182.3% (tf 357 at 23:15) ; normal-tier events 8 (8 battery-caused) ; emergency tfs 3 ; protection operated 0 (ASSUMPTION rule; 0 homes dark, reserve used in the outage 0 battery-steps) ; charged 100.0%   [EXPECT: battery-caused normal >= 1] ok
+money 2026-08-26: naive sold $1,494.42 bought $218.34 net $1,276.08 ($13.29/battery) ; aware sold $1,471.79 bought $155.89 net $1,315.90 ($13.71/battery) ; cash ends at energyValueUSD (DERIVED)   [INVARIANT]
+money 2026-08-26: cash re-derived from the branch files' batKW (0.1 kW): max difference 0.9 cents   [EXPECT: <= 10 cents (rounding of the branch files)] ok
+relief 2026-08-26: A over nameplate 0 min (none.json: 0) ; text "A stays under its nameplate all evening (max 50.5%)" ; A marker no   [INVARIANT]
+onset  2026-08-26: at 23:15 naive charges 1,920.0 kW, aware 748.4 kW: 1,171.6 kW deferred (DERIVED) ; aware charged by the deadline 100.0% (SIM)   [INVARIANT]
+story  2026-08-26: "August's priciest evening" · The month's highest price: $780.72/MWh at 22:15 (REAL)   [INVARIANT]
+money  2026-08-26: calendar (prices only, one Core) $13.53 vs sim aware $13.71/battery   [EXPECT: within 5% or $0.10] ok
+index  2026-08-14: row equals its meta (A quiet night ; peak $34.23 at 18:45 ; naive max 214.1% on B (tier 4) ; aware $-0.21/battery)   [INVARIANT]
+files  2026-08-14: meta.json + none.json.gz, naive.json.gz, aware.json.gz ; gzip, A.6 shapes, labels ; branches none,naive,aware ; events {}   [INVARIANT]
+plan   2026-08-14: onset 19:00 $28.56 (D-26 non-binding) ; discharge 18:45 18:30 18:15 17:45 17:30(+13 min)   [INVARIANT]
+aware  2026-08-14: battery-caused normal 0 / emergency 0 ; reserve breaches 0 ; acted after expiry 0 ; non-increasing seq 0 ; charged by the deadline 100.0% (>= 95%) ; max 97.6% (tf 91, home load)   [INVARIANT]
+naive  2026-08-14: max 214.1% (tf 357 at 19:00) ; normal-tier events 9 (9 battery-caused) ; emergency tfs 3 ; protection operated 2 (ASSUMPTION rule; 0 homes dark, reserve used in the outage 1948 battery-steps) ; charged 95.8%   [EXPECT: battery-caused normal >= 1] ok
+money 2026-08-14: naive sold $58.24 bought $87.93 net $-29.69 ($-0.31/battery) ; aware sold $57.64 bought $78.05 net $-20.41 ($-0.21/battery) ; cash ends at energyValueUSD (DERIVED)   [INVARIANT]
+money 2026-08-14: cash re-derived from the branch files' batKW (0.1 kW): max difference 0.5 cents   [EXPECT: <= 10 cents (rounding of the branch files)] ok
+relief 2026-08-14: A over nameplate 0 min (none.json: 0) ; text "A stays under its nameplate all evening (max 49.2%)" ; A marker no   [INVARIANT]
+onset  2026-08-14: at 19:00 naive charges 1,920.0 kW, aware 396.5 kW: 1,523.5 kW deferred (DERIVED) ; aware charged by the deadline 100.0% (SIM)   [INVARIANT]
+story  2026-08-14: "A quiet night" · A flat, cheap evening: the highest price was $34.23/MWh (REAL)   [INVARIANT]
+money  2026-08-14: calendar (prices only, one Core) $-0.23 vs sim aware $-0.21/battery   [EXPECT: within 5% or $0.10] ok
+index  : 4 evenings (2026-08-23, 2026-07-22, 2026-08-26, 2026-08-14) = every built day in sim.history.DAYS, in order   [INVARIANT]
+calendar: 2026-01-01 to 2026-09-18 (261 evenings, 2 gaps: 2026-03-07, 2026-03-08) ; sim = the built days ; 2026 net per Core $284.68 (DERIVED) ; 85 losing evenings ; 10 best = 55%   [INVARIANT]
+determinism: rebuild failed (exit 1): ine 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/var/folders/cs/9wl9bwt92wd4t_1nqx0g98qw0000gn/T/p1-days-rebuild-jidkscp2/naive.json.gz'   [INVARIANT: FAIL]
+VERIFY p1: FAIL (days: determinism-days)
+== done in 261 s 16:13:36Z
+exit 0

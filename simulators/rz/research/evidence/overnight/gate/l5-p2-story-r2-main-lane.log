@@ -1,0 +1,58 @@
+CHECK root=/Users/rzalagbada/hb-overnight/hb head=d89ad3e lane=l5-p2-story full=0 py=/Users/rzalagbada/hb-overnight/.venv/bin/python logs=/Users/rzalagbada/hb-overnight/tmp/check-hb
+== 1 unit
+STEP unit: PASS (Ran 111 tests)
+== 2 node
+STEP node: PASS (# pass 86 # fail 0 )
+== 3 keep (7.1)
+keep: grid-stories py ok (Ran 8 tests) ; grid-stories node ok (# pass 3 # fail 0 ) ; four-home ok (Ran 17 tests)
+STEP keep: PASS (prototype 8 + 3, four-home 17)
+== 4 contract
+contract total 51 files, 16.13 MB (budget 25.0 MB, 4.0 MB per file); 30467 labelled numbers
+CONTRACTS: PASS (51 files, 16.13 MB, 30467 labelled numbers)
+STEP contract: PASS ((51 files, 16.13 MB, 30467 labelled numbers))
+== 5 verify
+VERIFY labels: PASS (48 files, 30467 labelled numbers)
+VERIFY p1: PASS (1 expectations refuted, see NOTES.md: rotation)
+VERIFY p2: PASS (0 expectations refuted, see NOTES.md)
+STEP verify: PASS (labels p1 p2)
+== 6 paths
+PATHS: PASS (0 changed paths, all inside lane l5-p2-story; base d89ad3e)
+STEP paths: PASS (lane l5-p2-story)
+== 7 smoke
+SMOKE root=/Users/rzalagbada/hb-overnight/hb port=49345 mode=--lane links=32 shots=/Users/rzalagbada/Desktop/projects/base-power-hackathon/overnight/evidence/gate/l5-r2-main-shots
+SMOKE view=p1&branch=aware&t=22:30 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 7610 ms | 783 KB | 1702 colours
+SMOKE view=p2&combo=aware-core-d26-g0 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4155 ms | 752 KB | 1623 colours
+SMOKE view=p2&combo=aware-core-d26-g20 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3910 ms | 739 KB | 1603 colours
+SMOKE view=p2&combo=aware-core-cheapest-g0 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3916 ms | 747 KB | 1616 colours
+SMOKE view=p2&combo=aware-core-cheapest-g20 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4004 ms | 741 KB | 1609 colours
+SMOKE view=p2&combo=aware-legacy-d26-g0 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3875 ms | 746 KB | 1624 colours
+SMOKE view=p2&combo=aware-legacy-d26-g20 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3782 ms | 741 KB | 1609 colours
+SMOKE view=p2&combo=aware-legacy-cheapest-g0 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3907 ms | 746 KB | 1616 colours
+SMOKE view=p2&combo=aware-legacy-cheapest-g20 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3890 ms | 742 KB | 1615 colours
+SMOKE view=p2&combo=naive-core-d26-g0 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3876 ms | 760 KB | 1705 colours
+SMOKE view=p2&combo=naive-core-d26-g20 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3871 ms | 751 KB | 1708 colours
+SMOKE view=p2&combo=naive-core-cheapest-g0 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3895 ms | 760 KB | 1682 colours
+SMOKE view=p2&combo=naive-core-cheapest-g20 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3885 ms | 750 KB | 1700 colours
+SMOKE view=p2&combo=naive-legacy-d26-g0 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3875 ms | 760 KB | 1702 colours
+SMOKE view=p2&combo=naive-legacy-d26-g20 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3868 ms | 748 KB | 1694 colours
+SMOKE view=p2&combo=naive-legacy-cheapest-g0 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3860 ms | 760 KB | 1681 colours
+SMOKE view=p2&combo=naive-legacy-cheapest-g20 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3939 ms | 747 KB | 1678 colours
+SMOKE view=p2&combo=naive-core-d26-g0&home=p1ulv24700 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4007 ms | 677 KB | 1508 colours
+SMOKE view=p2&combo=aware-core-d26-g0&n=5 ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3928 ms | 753 KB | 1621 colours
+SMOKE view=more ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 5335 ms | 653 KB | 707 colours
+SMOKE view=p1&branch=naive&t=16:00&cam=street&beat=problem ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 7606 ms | 649 KB | 2153 colours
+SMOKE view=p1&branch=aware&t=16:45&cam=street&beat=peak-relief ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 7390 ms | 650 KB | 2122 colours
+SMOKE view=p2&combo=aware-core-d26-g0&beat=insight ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4952 ms | 685 KB | 1554 colours
+SMOKE view=p1&branch=naive&t=20:00&cam=street&beat=backfeed ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 6576 ms | 647 KB | 2278 colours
+SMOKE view=p1&branch=naive&t=22:30&cam=street&beat=rebound-naive ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 6242 ms | 666 KB | 2621 colours
+SMOKE view=p1&branch=aware&t=22:30&cam=street&beat=rebound-aware ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 6753 ms | 650 KB | 2135 colours
+SMOKE view=p1&branch=aware_faults&t=22:16&cam=street&beat=faults ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 7336 ms | 646 KB | 2116 colours
+SMOKE view=p2&combo=aware-core-d26-g0&n=5&beat=p2-controls ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3950 ms | 759 KB | 1692 colours
+SMOKE view=p2&combo=naive-core-d26-g0&beat=p2-flip ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4053 ms | 794 KB | 1712 colours
+SMOKE view=p2&combo=aware-core-d26-g0&n=10&beat=p2-capacity ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 3867 ms | 745 KB | 1587 colours
+SMOKE view=more&beat=money ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4927 ms | 657 KB | 842 colours
+SMOKE view=more&beat=plug-in ok | status=ready webgl=ok errors=0 fixture=0 offsite=0 | 4964 ms | 649 KB | 788 colours
+SMOKE: 32/32 ok
+STEP smoke: PASS (SMOKE: 32/32 ok)
+CHECK took 167 s
+ALL CHECKS: PASS

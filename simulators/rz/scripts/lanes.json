@@ -1,0 +1,65 @@
+{
+  "_doc": "simulators/rz: every glob below is relative to this folder, and any path outside it fails every lane. Path ownership per lane (build prompt 5.1 and 6). scripts/check_paths.py --lane <id> fails a branch that touches a path outside its lane's 'owns'. 'stubs' (l0-foundation only) may be ADDED by the lead once, then belong to the lane named in docs/contracts.md. 'smoke' = the deeplinks.txt groups smoke_ui.sh --lane runs (plus canary). Globs: * stays inside one directory, ** crosses directories, {a,b} alternates.",
+  "l0-foundation": {
+    "owns": [
+      "CLAUDE.md", "README.md", "requirements.txt", ".gitignore", "docs/README.md",
+      "scripts/{setup.sh,serve.sh,build_all.sh,smoke_ui.sh,smoke_cdp.mjs,check_all.sh,check_paths.py,lanes.json,deeplinks.txt}",
+      "sim/{__init__,constants,feeder,caps,tiers,prices,topology,contracts,fixtures,verify}.py",
+      "sim/tests/__init__.py",
+      "sim/tests/test_{constants,feeder,caps,tiers,prices,topology,contracts,fixtures,verify}.py",
+      "ui/{index.html,app.js}", "ui/lib/{format,data,tip,days}.js", "ui/css/base.css", "ui/vendor/**",
+      "ui/data/fixtures/**", "ui/data/topology.json", "ui/test/core.test.js",
+      "data/smartds/**", "data/fleet.json", "data/ercot/**",
+      "docs/contracts.md", "docs/overnight/**"
+    ],
+    "stubs": [
+      "ui/panels/{p1,p2,more}.js", "ui/lib/{scene-model,scene3d,fallback2d,charts,icons}.js", "ui/css/{p1,p2}.css"
+    ],
+    "smoke": []
+  },
+  "l1-loads": {
+    "owns": [
+      "scripts/fetch_profiles.py", "data/profiles/**",
+      "sim/{loads,surrogate,calibrate}.py",
+      "sim/tests/test_{loads,surrogate,calibrate}*.py",
+      "sim/__init__.py", "sim/tests/__init__.py"
+    ],
+    "smoke": []
+  },
+  "l2-p1": {
+    "owns": [
+      "sim/{devices,orchestrator,p1_build,money,bench,verify_p1,chaos,history}.py",
+      "sim/tests/test_{devices,orchestrator,p1_build,money,bench,verify_p1,chaos,history}*.py",
+      "ui/data/p1/**", "ui/data/engine.json", "data/profiles/days/**"
+    ],
+    "smoke": ["p1"]
+  },
+  "l3-p2": {
+    "owns": [
+      "sim/{siting,p2_build,referee,verify_p2}.py",
+      "sim/tests/test_{siting,p2_build,referee,verify_p2}*.py",
+      "ui/data/p2/**", "data/out/**"
+    ],
+    "smoke": ["p2"]
+  },
+  "l4-scene-p1": {
+    "owns": [
+      "scripts/fetch_footprints.py", "data/footprints/**", "ui/data/footprints.json",
+      "ui/lib/{scene-model,scene3d,fallback2d,icons}.js", "ui/panels/p1.js", "ui/css/p1.css",
+      "ui/test/{scene-model,p1}.test.js"
+    ],
+    "smoke": ["p1"]
+  },
+  "l5-p2-story": {
+    "owns": [
+      "ui/panels/{p2,more}.js", "ui/lib/charts.js", "ui/css/p2.css", "ui/data/beats.json", "ui/data/ems/**",
+      "ui/test/{p2,charts}.test.js",
+      "docs/{demo-script,how-base-plugs-in,data-sources,run-the-demo}.md"
+    ],
+    "smoke": ["p2", "more", "beat"]
+  },
+  "report": {
+    "owns": ["docs/overnight/**"],
+    "smoke": []
+  }
+}

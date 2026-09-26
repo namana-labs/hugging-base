@@ -1,0 +1,25 @@
+$ git log --first-parent --format='%h %s' 4bcca51..origin/main -- demos four-home-simulation | grep 'from [^ ]*/overnight/'
+lines: 0
+$ git log --format='%h %an %s' 4bcca51..origin/main -- demos four-home-simulation (any commit)
+$ git diff --stat 4bcca51 origin/main -- demos four-home-simulation docs/headroom headroom-gridspine-dossier.html docs/design.md docs/plan.md docs/ui-brief.md docs/reconciliation.md docs/research-report.md
+(end diff)
+$ git diff --stat 4bcca51 origin/main -- .gitignore CLAUDE.md README.md docs/README.md
+ .gitignore     |  2 ++
+ CLAUDE.md      |  2 ++
+ README.md      | 10 ++++++++++
+ docs/README.md |  2 ++
+ 4 files changed, 16 insertions(+)
+$ ls docs/overnight
+docs/overnight:
+REPORT.md
+shots
+
+docs/overnight/shots:
+view_more.jpg
+view_p1_branch_aware_t_22_30_cam_street_beat_rebound_aware.jpg
+view_p1_branch_naive_t_16_00_cam_street_beat_problem.jpg
+view_p2_combo_naive_core_d26_g0_home_p1ulv24700.jpg
+364K	docs/overnight/shots/view_more.jpg
+296K	docs/overnight/shots/view_p1_branch_aware_t_22_30_cam_street_beat_rebound_aware.jpg
+296K	docs/overnight/shots/view_p1_branch_naive_t_16_00_cam_street_beat_problem.jpg
+268K	docs/overnight/shots/view_p2_combo_naive_core_d26_g0_home_p1ulv24700.jpg

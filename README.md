@@ -1,5 +1,8 @@
 # Hugging Base
 
+> **Team hub (26 Sep): who does what, and which doc each person reads: [`handoff/README.md`](handoff/README.md).** RZ's latest app, with round 2 merged, runs from [`simulators/rz/`](simulators/rz/README.md). The root `sim/ ui/ scripts/ data/` is a frozen copy kept for `mpalacios/`. Amy's presentation work lives in [`presentation/`](presentation/START-HERE.md).
+
+
 A feeder-aware battery-fleet simulator for the Base Power × AITX hackathon. The project explores grid failures, local dispatch decisions, and where to build the next home battery.
 
 The main app is promoted from the playable prototype in [`demos/grid-stories/`](demos/grid-stories/README.md), which has its own UI, simulator, data, dependencies, tests, and hosting configuration.

@@ -1,0 +1,1241 @@
+<title>Hugging Base Atlas</title>
+<meta name="description" content="Interactive walkthrough of Hugging Base: every page, where its data comes from, and what it means for Base Power.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
+<style>
+:root{
+  --bg:#E9EDE7; --paper:#F7F9F5; --ink:#101613; --muted:#55625A; --faint:#86938B; --rule:#CAD3CA; --rule-2:#DDE3DB;
+  --accent:#0B6B6F; --accent-soft:#D3E8E4;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+  --warn:#fab219; --serious:#ec835a; --crit:#d03b3b; --good:#0ca30c;
+  --display:"Big Shoulders Display","Oswald","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0A0F0D; --paper:#111815; --ink:#E4EBE6; --muted:#9BA8A0; --faint:#6F7C75; --rule:#26312C; --rule-2:#1B2521;
+    --accent:#5CC4BE; --accent-soft:#12302E;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0A0F0D; --paper:#111815; --ink:#E4EBE6; --muted:#9BA8A0; --faint:#6F7C75; --rule:#26312C; --rule-2:#1B2521;
+  --accent:#5CC4BE; --accent-soft:#12302E;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15.5px;line-height:1.55;padding-inline:16px;padding-block:0 72px}
+a{color:var(--accent);text-underline-offset:2px}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+code,.mono{font-family:var(--mono);font-size:.86em}
+code{background:var(--rule-2);padding:1px 5px;border-radius:3px;overflow-wrap:anywhere}
+h1,h2,h3,h4{text-wrap:balance}
+p{max-width:66ch;margin:0 0 12px}
+
+/* ---------- frame ---------- */
+.wrap{max-width:1320px;margin:0 auto;display:grid;grid-template-columns:168px minmax(0,1fr);gap:40px}
+.rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 18px);align-self:start;padding-top:28px;max-height:calc(100vh - 36px);overflow-y:auto}
+.rail .rt{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:0 0 10px}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.rail a{display:grid;grid-template-columns:26px 1fr;gap:4px;padding:5px 6px;border-radius:3px;color:var(--muted);text-decoration:none;font-size:13px;line-height:1.3}
+.rail a span{font-family:var(--mono);font-size:11px;color:var(--faint);padding-top:1px}
+.rail a:hover{color:var(--ink);background:var(--rule-2)}
+.rail a.on{color:var(--ink);background:var(--paper);box-shadow:inset 2px 0 0 var(--accent)}
+.rail a.on span{color:var(--accent)}
+main{min-width:0}
+@media (max-width:980px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:0}
+  .rail{position:static;max-height:none;padding-top:16px}
+  .rail ol{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;gap:4px;padding-bottom:6px}
+  .rail a{display:flex;white-space:nowrap;border:1px solid var(--rule);gap:6px}
+}
+
+/* ---------- sheets ---------- */
+.sheet{padding-block:56px 64px;border-bottom:1px solid var(--rule);scroll-margin-top:12px}
+.sheet:last-of-type{border-bottom:0}
+.sh-head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:22px;align-items:end;margin-bottom:26px}
+.sh-no{font-family:var(--display);font-weight:900;font-size:clamp(64px,9vw,112px);line-height:.8;color:transparent;-webkit-text-stroke:1.5px var(--ink);letter-spacing:-.01em}
+.sh-meta{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);display:flex;flex-wrap:wrap;gap:4px 14px;margin-bottom:6px}
+.sh-meta b{color:var(--accent);font-weight:500}
+.sh-title{font-family:var(--display);font-weight:800;font-size:clamp(30px,4.4vw,52px);line-height:.98;margin:0;text-transform:uppercase;letter-spacing:.005em}
+.sh-lede{font-size:17px;color:var(--muted);margin:10px 0 0;max-width:62ch}
+.status{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid currentColor}
+.st-built{color:var(--accent)}
+.st-next{color:var(--s2)}
+.st-plan{color:var(--muted);border-style:dashed}
+
+/* page layout: screen + notes */
+.page{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(280px,1fr);gap:30px;align-items:start}
+@media (max-width:1100px){.page{grid-template-columns:minmax(0,1fr)}}
+.notes{display:flex;flex-direction:column;gap:18px}
+.callouts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;counter-reset:c}
+.callouts li{display:grid;grid-template-columns:26px 1fr;gap:10px;padding:9px 10px;border-radius:4px;cursor:default;font-size:14px;line-height:1.45}
+.callouts li:hover,.callouts li.hot{background:var(--paper)}
+.callouts li b.pin{margin-top:1px}
+.callouts li strong{display:block;font-size:14.5px}
+.pin{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--paper);font-family:var(--mono);font-size:11px;font-weight:600;flex:none}
+.flow{border:1px solid var(--rule);border-radius:4px;background:var(--paper);font-size:13px}
+.flow div{display:grid;grid-template-columns:86px 1fr;gap:10px;padding:8px 12px;border-top:1px solid var(--rule-2)}
+.flow div:first-child{border-top:0}
+.flow dt{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);padding-top:2px}
+.flow dd{margin:0}
+.base-use{border-left:3px solid var(--accent);padding:10px 14px;background:var(--accent-soft);border-radius:0 4px 4px 0;font-size:14px}
+.base-use .k{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+.note-small{font-size:12.5px;color:var(--faint);margin:0}
+
+/* ---------- screen (the app) : deliberately one dark visual world ---------- */
+.screen{--sc-bg:#0d1412;--sc-panel:#131d1a;--sc-panel2:#18241f;--sc-line:#233430;--sc-ink:#e6ece8;--sc-muted:#93a49c;--sc-dim:#5f716a;--sc-edge:#3a5a52;--sc-even:#d95926;--sc-aware:#3987e5;--sc-accent:#5cc4be;
+  background:var(--sc-bg);color:var(--sc-ink);border-radius:10px;overflow:hidden;box-shadow:0 1px 0 rgba(0,0,0,.04),0 18px 40px -22px rgba(10,20,16,.55);border:1px solid #0a100e;font-size:13px;line-height:1.45;color-scheme:dark}
+.sc-bar{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#0a100e;border-bottom:1px solid var(--sc-line);font-family:var(--mono);font-size:11px;color:var(--sc-muted);flex-wrap:wrap}
+.sc-dots{display:flex;gap:5px}.sc-dots i{width:9px;height:9px;border-radius:50%;background:#26332f;display:block}
+.sc-brand{color:var(--sc-ink);font-weight:600;letter-spacing:.02em}
+.sc-route{color:var(--sc-accent)}
+.sc-badge{margin-left:auto;border:1px solid var(--sc-line);border-radius:99px;padding:1px 8px;font-size:10px;letter-spacing:.06em}
+.sc-body{padding:14px;display:flex;flex-direction:column;gap:12px}
+.sc-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:640px){.sc-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.sc-stat{background:var(--sc-panel);border:1px solid var(--sc-line);border-radius:6px;padding:8px 10px;position:relative}
+.sc-stat span{display:block;font-size:10.5px;color:var(--sc-muted);letter-spacing:.02em}
+.sc-stat b{display:block;font-family:var(--mono);font-size:19px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.25}
+.sc-stat b small{font-size:11px;color:var(--sc-muted);margin-left:2px}
+.sc-stat em{display:block;font-style:normal;font-size:10.5px;color:var(--sc-dim)}
+.sc-stat.bad{border-color:#5a2723}.sc-stat.bad b{color:#ff8a7a}
+.sc-stat.ok b{color:#8fe0b0}
+.sc-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:12px}
+@media (max-width:640px){.sc-grid{grid-template-columns:minmax(0,1fr)}}
+.sc-card{background:var(--sc-panel);border:1px solid var(--sc-line);border-radius:6px;padding:10px 12px;position:relative}
+.sc-h{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--sc-muted);margin:0 0 8px;display:flex;align-items:center;gap:6px}
+.seg{display:inline-flex;border:1px solid var(--sc-line);border-radius:6px;overflow:hidden;flex-wrap:wrap}
+.seg button{background:transparent;border:0;padding:5px 10px;font-size:12px;color:var(--sc-muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--sc-panel2);color:var(--sc-ink);box-shadow:inset 0 -2px 0 var(--sc-accent)}
+.seg button:hover{color:var(--sc-ink)}
+.mapbox{position:relative;background:radial-gradient(ellipse at 50% 20%,#132019 0%,#0d1412 70%);border:1px solid var(--sc-line);border-radius:6px;overflow:hidden}
+.mapbox svg{display:block;width:100%;height:auto}
+.feeder use.edges{stroke:var(--sc-edge);stroke-width:2.4;fill:none;stroke-linecap:round}
+.feeder .weak{stroke:#e8a33a;stroke-width:6;stroke-dasharray:14 10;opacity:.85}
+.feeder .sub{fill:var(--sc-ink);stroke:#0d1412;stroke-width:4}
+.feeder .homes circle{fill:#3c524b}
+.feeder .tfs circle{stroke:#0d1412;stroke-width:2.5}
+.feeder .bats rect{fill:none;stroke:#e6ece8;stroke-width:3}
+.feeder .tfs circle:hover{stroke:#fff;stroke-width:4}
+.map-legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--sc-muted);margin-top:8px}
+.map-legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.map-legend i.sq{border-radius:1px;background:transparent;border:2px solid #e6ece8;width:10px;height:10px}
+.map-legend i.dash{border-radius:0;height:3px;width:16px;background:repeating-linear-gradient(90deg,#e8a33a 0 5px,transparent 5px 8px);vertical-align:3px}
+.map-cap{position:absolute;left:8px;bottom:8px;font-family:var(--mono);font-size:10px;color:var(--sc-muted);background:rgba(13,20,18,.8);padding:3px 7px;border-radius:3px;border:1px solid var(--sc-line)}
+.map-top{position:absolute;left:8px;top:8px;display:flex;gap:6px;flex-wrap:wrap}
+.tag-sc{font-family:var(--mono);font-size:10px;background:rgba(13,20,18,.85);border:1px solid var(--sc-line);border-radius:3px;padding:2px 7px;color:var(--sc-ink)}
+.tip{position:absolute;pointer-events:none;background:#0a100e;border:1px solid #3a4d47;border-radius:5px;padding:6px 9px;font-size:11.5px;color:var(--sc-ink);white-space:nowrap;z-index:5;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.tip b{font-family:var(--mono);font-weight:500}
+.tip[hidden]{display:none}
+.hl-pin{outline:2px solid #5cc4be;outline-offset:3px;border-radius:6px}
+.scpin{position:absolute;top:-8px;left:-8px;z-index:4}
+.scpin.r{left:auto;right:-8px}
+
+/* transport */
+.transport{display:flex;align-items:center;gap:10px;background:var(--sc-panel);border:1px solid var(--sc-line);border-radius:6px;padding:8px 10px;position:relative}
+.play{width:32px;height:32px;border-radius:50%;border:1px solid var(--sc-line);background:var(--sc-panel2);color:var(--sc-ink);cursor:pointer;flex:none}
+.clock{font-family:var(--mono);font-size:18px;min-width:52px;font-variant-numeric:tabular-nums}
+.transport input[type=range]{flex:1;accent-color:#5cc4be;min-width:80px}
+.ticks{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9.5px;color:var(--sc-dim);padding:0 42px 0 94px}
+@media (max-width:640px){.ticks{display:none}}
+
+/* rebound twin */
+.twin{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.pane-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.pane-h b{font-size:13px}
+.swatch{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.tiers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin-top:6px}
+.tiers div{background:var(--sc-panel2);border-radius:4px;padding:5px 6px;text-align:left}
+.tiers div span{display:block;font-size:9.5px;color:var(--sc-muted);line-height:1.2}
+.tiers div b{font-family:var(--mono);font-size:16px;font-weight:500}
+.tiers .t1 b{color:#fab219}.tiers .t2 b{color:#ec835a}.tiers .t3 b{color:#ff7a70}
+.tiers .zero b{color:var(--sc-dim)}
+.mline{display:flex;justify-content:space-between;font-size:11px;color:var(--sc-muted);margin-top:6px;gap:6px;flex-wrap:wrap}
+.mline b{font-family:var(--mono);color:var(--sc-ink);font-weight:500}
+.bar{height:6px;background:#1f2c28;border-radius:3px;overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;border-radius:3px}
+.market{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center}
+.cells{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:3px}
+.cells i{height:18px;border-radius:2px;background:#1f2c28;display:grid;place-items:center;font-style:normal;font-size:10px;color:#0d1412}
+.cells i.ok{background:#2f8f5b}.cells i.now{outline:2px solid #e6ece8}
+.cells i.fut{opacity:.35}
+
+/* ---------- hero ---------- */
+.hero{padding-block:40px 56px;border-bottom:1px solid var(--rule)}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:40px;align-items:start}
+@media (max-width:980px){.hero-grid{grid-template-columns:minmax(0,1fr)}}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);display:flex;flex-wrap:wrap;gap:4px 14px}
+.hero h1{font-family:var(--display);font-weight:900;text-transform:uppercase;font-size:clamp(40px,5.6vw,84px);overflow-wrap:anywhere;line-height:.86;margin:18px 0 18px;letter-spacing:-.005em}
+.hero h1 .l2{display:block;color:transparent;-webkit-text-stroke:2px var(--ink)}
+.hero h1 .l2 em{font-style:normal;color:var(--crit);-webkit-text-stroke:0}
+.hero .lede{font-size:18px;color:var(--muted);max-width:56ch}
+.bignum{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;border:1px solid var(--rule);border-radius:6px;margin-top:22px;background:var(--paper);overflow:hidden}
+.bignum>div{padding:14px 16px}
+.bignum>div+div{border-left:1px solid var(--rule)}
+@media (max-width:560px){.bignum{grid-template-columns:minmax(0,1fr)}.bignum>div+div{border-left:0;border-top:1px solid var(--rule)}}
+.bignum .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.bignum .v{font-family:var(--display);font-weight:800;font-size:48px;line-height:1;margin:6px 0 4px;font-variant-numeric:tabular-nums}
+.bignum .v small{font-size:22px;color:var(--muted);margin-left:4px}
+.bignum .s{font-size:13px;color:var(--muted)}
+.okmark{color:var(--good);font-weight:600}
+.tierrow{display:flex;gap:14px;flex-wrap:wrap;margin-top:4px}
+.tierrow span{font-family:var(--mono);font-size:13px;display:inline-flex;align-items:center;gap:6px}
+.tierrow i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.titleblock{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--ink);margin-top:22px;font-family:var(--mono);font-size:11px;background:var(--paper)}
+.titleblock div{padding:7px 9px;border-right:1px solid var(--ink);border-bottom:1px solid var(--ink)}
+.titleblock div:nth-child(3n){border-right:0}
+.titleblock div:nth-last-child(-n+3){border-bottom:0}
+.titleblock span{display:block;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+@media (max-width:560px){.titleblock{grid-template-columns:repeat(2,minmax(0,1fr))}.titleblock div{border-right:1px solid var(--ink)!important;border-bottom:1px solid var(--ink)!important}}
+.hero-screen .seg{margin-bottom:10px}
+.provline{font-size:12px;color:var(--faint);margin-top:12px;max-width:none}
+
+/* ---------- loop diagram ---------- */
+.loop-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:6px;background:var(--paper)}
+.loop-wrap svg{display:block;min-width:860px;width:100%;height:auto;color:var(--ink)}
+.lp-node rect{fill:var(--paper);stroke:var(--rule);stroke-width:1.2}
+.lp-node text{font-family:var(--body);font-size:12.5px;fill:var(--ink)}
+.lp-node .sub{font-family:var(--mono);font-size:9.5px;fill:var(--faint)}
+.lp-node{cursor:pointer}
+.lp-node:hover rect{stroke:var(--accent)}
+.lp-node.sel rect{stroke:var(--accent);stroke-width:2.2;fill:var(--accent-soft)}
+.lp-edge{fill:none;stroke:var(--faint);stroke-width:1.3;opacity:.7}
+.lp-edge.next{stroke-dasharray:6 4}
+.lp-edge.plan{stroke-dasharray:1.5 4;stroke-linecap:round}
+.lp-dim .lp-node:not(.on){opacity:.22}
+.lp-dim .lp-edge:not(.on){opacity:.08}
+.lp-edge.on{stroke:var(--accent);opacity:1;stroke-width:2}
+.lp-colh{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;fill:var(--faint);text-transform:uppercase}
+.lp-card{margin-top:14px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media (max-width:760px){.lp-card{grid-template-columns:minmax(0,1fr)}}
+.detail{border:1px solid var(--rule);border-radius:6px;background:var(--paper);padding:14px 16px;min-height:120px}
+.detail h4{margin:0 0 4px;font-size:16px}
+.detail .p{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-top:8px}
+.legend-row{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px;color:var(--muted);align-items:center;margin-top:10px}
+.legend-row svg{vertical-align:middle}
+
+/* ---------- charts (page themed) ---------- */
+.chart{border:1px solid var(--rule);border-radius:6px;background:var(--paper);padding:14px 14px 10px;position:relative}
+.chart h4{margin:0 0 2px;font-size:15px}
+.chart .cs{font-size:12.5px;color:var(--muted);margin:0 0 8px}
+.chart svg{display:block;width:100%;height:auto;color:var(--ink);overflow:visible}
+.axis text{font-family:var(--mono);font-size:10px;fill:var(--faint)}
+.axis line{stroke:var(--rule);stroke-width:1}
+.gridl{stroke:var(--rule-2);stroke-width:1}
+.charts3{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.charts3 .wide{grid-column:1/-1}
+@media (max-width:860px){.charts3{grid-template-columns:minmax(0,1fr)}}
+.ctip{position:absolute;pointer-events:none;background:var(--ink);color:var(--paper);border-radius:4px;padding:6px 9px;font-size:11.5px;white-space:nowrap;z-index:5;font-family:var(--mono)}
+.ctip[hidden]{display:none}
+.chart-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:6px}
+.chart-legend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:3px}
+.zone-seg{display:inline-flex;border:1px solid var(--rule);border-radius:4px;overflow:hidden;margin:0 0 8px}
+.zone-seg button{background:transparent;border:0;padding:3px 9px;font-size:12px;color:var(--muted);cursor:pointer;font-family:var(--mono)}
+.zone-seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--ink)}
+.caveat{font-size:12px;color:var(--faint);margin:6px 0 0}
+
+/* ---------- failover diagram ---------- */
+.fo svg{display:block;width:100%;height:auto}
+.fo .node rect{fill:#18241f;stroke:#2e433d;stroke-width:1.5}
+.fo .node text{font-family:var(--mono);font-size:12px;fill:#e6ece8}
+.fo .node .s{font-size:10px;fill:#93a49c}
+.fo .dead rect{stroke:#d03b3b;stroke-dasharray:5 4;fill:#231514}
+.fo .zombie rect{stroke:#fab219;stroke-dasharray:3 3}
+.fo .bat rect{fill:#131d1a;stroke:#3a5a52}
+.fo .bat.rej rect{stroke:#d03b3b;stroke-width:2.5}
+.fo .bat.idle rect{stroke:#5f716a;stroke-dasharray:4 3}
+.fo .msg{stroke:#5cc4be;stroke-width:2;fill:none}
+.fo .msg.bad{stroke:#d03b3b;stroke-dasharray:5 4}
+.fo .msg.off{opacity:.12}
+.fo .lease{stroke:#8fa199;stroke-width:1.2;stroke-dasharray:3 3;fill:none}
+.steps{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.steps button{background:var(--sc-panel2);border:1px solid var(--sc-line);color:var(--sc-muted);border-radius:4px;padding:5px 10px;font-size:12px;cursor:pointer}
+.steps button[aria-pressed="true"]{color:var(--sc-ink);border-color:#5cc4be}
+.fo-cap{min-height:64px;font-size:13.5px;margin-top:10px;color:var(--sc-ink)}
+.fo-cap b{color:#5cc4be;font-family:var(--mono);font-weight:500;margin-right:6px}
+
+/* ---------- siting ---------- */
+.lam{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--sc-muted)}
+.lam input{flex:1;accent-color:#5cc4be}
+.lam output{font-family:var(--mono);color:var(--sc-ink);min-width:32px;text-align:right}
+.rank{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:3px;max-height:330px;overflow-y:auto}
+.rank li{display:grid;grid-template-columns:24px 1fr 56px;gap:8px;align-items:center;padding:5px 6px;border-radius:4px;cursor:pointer;font-size:12px}
+.rank li:hover{background:var(--sc-panel2)}
+.rank li[aria-selected="true"]{background:#1d2f2a;box-shadow:inset 2px 0 0 #5cc4be}
+.rank li .n{font-family:var(--mono);color:var(--sc-muted)}
+.rank li .sc{font-family:var(--mono);text-align:right}
+.vr{display:flex;height:6px;border-radius:3px;overflow:hidden;background:#1f2c28;margin-top:3px}
+.vr i{display:block;height:100%}
+.kv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px}
+.kv div{background:var(--sc-panel2);border-radius:4px;padding:6px 8px}
+.kv span{display:block;font-size:10px;color:var(--sc-muted)}
+.kv b{font-family:var(--mono);font-size:14px;font-weight:500}
+
+/* covert */
+.det-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:640px){.det-row{grid-template-columns:minmax(0,1fr)}}
+
+/* studio */
+.prompt{background:#0a100e;border:1px solid var(--sc-line);border-radius:6px;padding:12px 14px;font-size:15px;color:var(--sc-ink)}
+.prompt .caret{display:inline-block;width:8px;height:17px;background:#5cc4be;vertical-align:-3px;margin-left:2px;animation:blink 1.1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.pipe{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+@media (max-width:640px){.pipe{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pipe div{background:var(--sc-panel);border:1px solid var(--sc-line);border-radius:6px;padding:8px 10px;font-size:12px}
+.pipe div span{display:block;font-family:var(--mono);font-size:10px;color:var(--sc-muted);margin-bottom:2px}
+.pipe div.done{border-color:#2f6b5f}
+.pipe div.warnb{border-color:#7a5a1c}
+pre.json{margin:0;background:#0a100e;border:1px solid var(--sc-line);border-radius:6px;padding:10px 12px;font-family:var(--mono);font-size:11.5px;line-height:1.5;color:#c8d6cf;overflow-x:auto}
+pre.json .k{color:#8fc9e8}pre.json .s{color:#a8dcb0}pre.json .n{color:#f3c177}
+.clamp{border:1px solid #7a5a1c;background:#241c0c;border-radius:6px;padding:8px 10px;font-size:12px;color:#f3d49a}
+.libs{display:flex;flex-wrap:wrap;gap:6px}
+.libs span{border:1px solid var(--sc-line);border-radius:99px;padding:3px 10px;font-size:11.5px;color:var(--sc-muted)}
+
+/* uses */
+.uses{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:980px){.uses{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:620px){.uses{grid-template-columns:minmax(0,1fr)}}
+.use{background:var(--paper);border:1px solid var(--rule);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.use .who{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.use h4{margin:0;font-size:17px;line-height:1.25}
+.use .num{font-family:var(--display);font-weight:800;font-size:34px;line-height:1;margin-top:4px}
+.use .num small{font-family:var(--body);font-weight:500;font-size:13px;color:var(--muted);margin-left:6px}
+.use p{font-size:13.5px;color:var(--muted);margin:0}
+.use a{font-size:13px;margin-top:auto}
+
+/* status + storyline */
+.cols2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}
+@media (max-width:860px){.cols2{grid-template-columns:minmax(0,1fr)}}
+.story{list-style:none;margin:0;padding:0;border-left:2px solid var(--rule);display:flex;flex-direction:column}
+.story li{position:relative;padding:0 0 16px 18px}
+.story li::before{content:"";position:absolute;left:-6px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--paper);border:2px solid var(--accent)}
+.story .t{font-family:var(--mono);font-size:12px;color:var(--accent)}
+.story b{display:block;font-size:15px}
+.story span.d{font-size:13.5px;color:var(--muted)}
+.tbl{overflow-x:auto;border:1px solid var(--rule);border-radius:6px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--rule-2);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:500;background:var(--rule-2)}
+.truth{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0;border:1px solid var(--rule);border-radius:6px;overflow:hidden;background:var(--paper);margin-top:24px}
+.truth>div{padding:14px 16px}
+.truth>div+div{border-left:1px solid var(--rule)}
+@media (max-width:700px){.truth{grid-template-columns:minmax(0,1fr)}.truth>div+div{border-left:0;border-top:1px solid var(--rule)}}
+.truth h4{margin:0 0 8px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.truth ul{margin:0;padding-left:18px;font-size:13.5px}
+.truth li{margin-bottom:4px}
+.foot{max-width:1320px;margin:0 auto;padding-top:22px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--faint)}
+.foot p{max-width:none}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><path id="hb-edges" d=""/></defs></svg>
+
+<div class="wrap">
+<nav class="rail" aria-label="Sheets">
+  <p class="rt">Sheets</p>
+  <ol id="railList">
+    <li><a href="#s00"><span>00</span>The thesis</a></li>
+    <li><a href="#s01"><span>01</span>Where data goes</a></li>
+    <li><a href="#s02"><span>02</span>Feeder board</a></li>
+    <li><a href="#s03"><span>03</span>Charging rebound</a></li>
+    <li><a href="#s04"><span>04</span>Heat-wave evening</a></li>
+    <li><a href="#s05"><span>05</span>Next battery</a></li>
+    <li><a href="#s06"><span>06</span>Covert channel</a></li>
+    <li><a href="#s07"><span>07</span>When pieces fail</a></li>
+    <li><a href="#s08"><span>08</span>Open grid data</a></li>
+    <li><a href="#s09"><span>09</span>Scenario studio</a></li>
+    <li><a href="#s10"><span>10</span>What Base gets</a></li>
+    <li><a href="#s11"><span>11</span>Demo and status</a></li>
+  </ol>
+</nav>
+<main>
+
+<!-- ======================= 00 HERO ======================= -->
+<section class="hero sheet" id="s00">
+  <div class="hero-grid">
+    <div>
+      <div class="eyebrow"><span>Hugging Base</span><span>Base Power × AITX hackathon</span><span>Austin · 26 Sep 2026</span></div>
+      <h1>ERCOT sees one number.<span class="l2">The street sees <em>379</em> transformers.</span></h1>
+      <p class="lede">ERCOT dispatches Base's fleet as one number per load zone and does not enforce neighbourhood limits. Hugging Base simulates the feeder underneath that number, so Base can see what each dispatch, each new battery and each failure does on the street.</p>
+      <div class="bignum">
+        <div>
+          <div class="k">What the market sees · 19:45</div>
+          <div class="v" id="heroMarket">1,632<small>kW</small></div>
+          <div class="s">Charge request met in full. <span class="okmark">✓ Inside ERCOT tolerance</span></div>
+        </div>
+        <div>
+          <div class="k">What the street sees · same moment</div>
+          <div class="v" id="heroStreet">29<small>transformers over nameplate</small></div>
+          <div class="tierrow"><span><i style="background:var(--serious)"></i><b id="hero110">20</b> past 110%</span><span><i style="background:var(--crit)"></i><b id="hero150">4</b> past 150% emergency</span></div>
+        </div>
+      </div>
+      <div class="titleblock" aria-label="Project title block">
+        <div><span>Project</span>Hugging Base</div>
+        <div><span>Feeder</span>p1uhs19_1247--p1udt17263</div>
+        <div><span>Voltage</span>12.47 kV primary</div>
+        <div><span>Framing</span>Oncor-suburb stand-in</div>
+        <div><span>Price zone</span>LZ_NORTH (placeholder)</div>
+        <div><span>Referee</span>OpenDSS AC power flow</div>
+      </div>
+      <p class="provline">All feeder numbers on this page come from the team prototype: OpenDSS AC solves of NREL's SMART-DS synthetic feeder, placed on real north-Austin building coordinates. Prices and load in that replay are scripted (ASSUMPTION). The ERCOT charts on sheet 08 are real public data.</p>
+    </div>
+    <div class="hero-screen">
+      <div class="screen">
+        <div class="sc-bar"><span class="sc-dots"><i></i><i></i><i></i></span><span class="sc-brand">Hugging Base</span><span class="sc-route">/feeder · 19:45</span><span class="sc-badge">EVEN-SPLIT CHARGING</span></div>
+        <div class="sc-body">
+          <div class="seg" role="group" aria-label="View">
+            <button type="button" id="heroViewMarket" aria-pressed="false">Market view</button>
+            <button type="button" id="heroViewStreet" aria-pressed="true">Street view</button>
+          </div>
+          <div class="mapbox" id="heroMap"><div class="map-cap">1,010 homes · 379 transformers · 96 batteries</div></div>
+          <div class="map-legend" id="heroLegend"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= 01 LOOP ======================= -->
+<section class="sheet" id="s01">
+  <div class="sh-head"><div class="sh-no">01</div><div>
+    <div class="sh-meta"><span>Sheet 01 of 11</span><span>System</span><b>Click any box</b></div>
+    <h2 class="sh-title">Where every number comes from</h2>
+    <p class="sh-lede">Python computes, files sit in between, and the browser only plays what was computed. Click a box to trace what feeds it and what it feeds.</p>
+  </div></div>
+  <div class="loop-wrap"><svg id="loop" viewBox="0 0 1000 600" role="img" aria-label="Data flow: public sources feed Python simulator modules, which write replay files, which each app page reads."></svg></div>
+  <div class="legend-row">
+    <span><svg width="34" height="8"><line x1="0" y1="4" x2="34" y2="4" stroke="currentColor" stroke-width="1.5"/></svg>Built (on main)</span>
+    <span><svg width="34" height="8"><line x1="0" y1="4" x2="34" y2="4" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 4"/></svg>Next (agreed in reconciliation)</span>
+    <span><svg width="34" height="8"><line x1="0" y1="4" x2="34" y2="4" stroke="currentColor" stroke-width="1.5" stroke-dasharray="1.5 4" stroke-linecap="round"/></svg>Stretch</span>
+  </div>
+  <div class="lp-card">
+    <div class="detail" id="loopDetail" aria-live="polite"><h4>Replay is the spine</h4><p style="margin:0;font-size:14px;color:var(--muted)">Nothing on stage computes live. Every page plays files the simulator wrote ahead of time, so the demo cannot crash on a slow solve or a dropped connection. Select a box to see its role, its format and where it lives in the repo.</p></div>
+    <div class="detail"><h4>Three rules every box follows</h4>
+      <ul style="margin:6px 0 0;padding-left:18px;font-size:14px">
+        <li><b>OpenDSS decides every violation.</b> The controller's kW estimate never judges itself.</li>
+        <li><b>No language model produces a setpoint, base point or rank.</b> Models only draft scenarios and explain numbers.</li>
+        <li><b>The 20% member reserve is a hard limit</b> in every strategy, never traded for market position.</li>
+      </ul></div>
+  </div>
+</section>
+
+<!-- ======================= 02 FEEDER BOARD ======================= -->
+<section class="sheet" id="s02">
+  <div class="sh-head"><div class="sh-no">02</div><div>
+    <div class="sh-meta"><span>Sheet 02 of 11</span><span>Page · /feeder</span><span class="status st-built">● Built</span></div>
+    <h2 class="sh-title">Feeder board</h2>
+    <p class="sh-lede">The home screen. One real-looking Austin feeder, every transformer and home solved at each 5-minute step.</p>
+  </div></div>
+  <div class="page">
+    <div class="screen">
+      <div class="sc-bar"><span class="sc-dots"><i></i><i></i><i></i></span><span class="sc-brand">Hugging Base</span><span class="sc-route">/feeder</span><span class="sc-badge">REPLAY · 5-MIN OPENDSS STEPS</span></div>
+      <div class="sc-body">
+        <div class="sc-stats" data-pin="1" style="position:relative"><b class="pin scpin">1</b>
+          <div class="sc-stat"><span>Feeder demand</span><b id="bdMW">—<small>MW</small></b><em>OpenDSS power flow</em></div>
+          <div class="sc-stat"><span>Highest transformer</span><b id="bdMax">—<small>%</small></b><em>of nameplate kVA</em></div>
+          <div class="sc-stat"><span>Lowest home voltage</span><b id="bdMinV">—<small>pu</small></b><em>0.95–1.05 pu band</em></div>
+          <div class="sc-stat"><span>Fleet</span><b>96<small>Cores</small></b><em>24 in the Cedar cluster</em></div>
+        </div>
+        <div class="sc-grid">
+          <div class="mapbox" id="boardMap" data-pin="2"><b class="pin scpin" style="top:6px;left:6px">2</b><div class="map-cap">Oncor-suburb stand-in · LZ_NORTH (placeholder)</div></div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div class="sc-card" data-pin="3"><b class="pin scpin r">3</b><p class="sc-h">Layer</p>
+              <div class="seg" role="group" aria-label="Map layer" id="bdLayers">
+                <button type="button" data-l="loading" aria-pressed="true">Loading</button>
+                <button type="button" data-l="voltage" aria-pressed="false">Voltage</button>
+                <button type="button" data-l="fleet" aria-pressed="false">Fleet</button>
+                <button type="button" data-l="kva" aria-pressed="false">Size</button>
+              </div>
+              <div class="map-legend" id="bdLegend"></div>
+            </div>
+            <div class="sc-card" id="bdSel"><p class="sc-h">Hover a transformer</p><div style="color:var(--sc-muted);font-size:12px">Each dot is a service transformer. Its colour is its loading as a share of its nameplate kVA.</div></div>
+            <div class="sc-card" data-pin="4"><b class="pin scpin r">4</b><p class="sc-h">Stress built in, disclosed</p>
+              <div style="font-size:12px;color:var(--sc-muted)"><span style="color:#e8a33a">▬ ▬</span> One primary line is lengthened 3× electrically so the far end sags first. Geography is unchanged. 24 of the 96 Cores sit in one dense cluster.</div></div>
+            <div class="sc-card" data-pin="5"><b class="pin scpin r">5</b><p class="sc-h">Transformer mix</p><div id="bdKva" style="font-family:var(--mono);font-size:12px"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="notes">
+      <ol class="callouts" data-for="s02">
+        <li data-c="1"><b class="pin">1</b><div><strong>Stats come from the solve</strong>Every figure is an OpenDSS AC power flow of the whole feeder at the shown step, not an estimate.</div></li>
+        <li data-c="2"><b class="pin">2</b><div><strong>A real-looking Austin feeder</strong>NREL SMART-DS synthetic 12.47 kV feeder on real north-Austin building coordinates: 1,010 homes, 379 service transformers, 2,531 line segments. Presented as an Oncor-suburb stand-in.</div></div>
+        <li data-c="3"><b class="pin">3</b><div><strong>Same geometry, four questions</strong>How loaded is each transformer, how low is each home's voltage, where is the fleet, and how big is each transformer.</div></li>
+        <li data-c="4"><b class="pin">4</b><div><strong>Stress is added on purpose, and said out loud</strong>One weak line and one dense cluster give the scenarios somewhere to break. Both are listed in <code>model.json</code>.</div></li>
+        <li data-c="5"><b class="pin">5</b><div><strong>Small transformers break first</strong>138 of 379 are 25 kVA. One Core charging at full power is 80% of one of those.</div></li>
+      </ol>
+      <dl class="flow">
+        <div><dt>Data in</dt><dd><code>topology.json</code> from SMART-DS <code>Lines</code>, <code>Transformers</code>, <code>Loads</code>, <code>Buscoords</code></dd></div>
+        <div><dt>Computed</dt><dd><code>sim/feeder.py</code> in OpenDSSDirect.py 0.9.4</dd></div>
+        <div><dt>Shows</dt><dd>Per-transformer loading, per-home voltage, feeder MW</dd></div>
+      </dl>
+      <div class="base-use"><span class="k">Why Base cares</span>ERCOT never tells Base which transformer a member sits on. This board is the view that is missing from dispatch today.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= 03 REBOUND ======================= -->
+<section class="sheet" id="s03">
+  <div class="sh-head"><div class="sh-no">03</div><div>
+    <div class="sh-meta"><span>Sheet 03 of 11</span><span>Page · /stories/charging-rebound</span><span class="status st-built">● Built</span><b>The headline</b></div>
+    <h2 class="sh-title">Charging rebound</h2>
+    <p class="sh-lede">A price drop tells every battery to charge. Two dispatch strategies, the same feeder, the same moment. Scrub the hour.</p>
+  </div></div>
+  <div class="page">
+    <div class="screen">
+      <div class="sc-bar"><span class="sc-dots"><i></i><i></i><i></i></span><span class="sc-brand">Hugging Base</span><span class="sc-route">/stories/charging-rebound</span><span class="sc-badge">SCRIPTED PRICES · SOLVED PHYSICS</span></div>
+      <div class="sc-body">
+        <div class="transport" data-pin="1"><b class="pin scpin">1</b>
+          <button class="play" id="rbPlay" type="button" aria-label="Play the hour">▶</button>
+          <div class="clock" id="rbClock">19:45</div>
+          <input type="range" id="rbStep" min="0" max="12" value="3" aria-label="Replay time">
+          <div style="font-size:11px;color:var(--sc-muted);min-width:118px;text-align:right" id="rbPrice">$12/MWh</div>
+        </div>
+        <div class="twin">
+          <div class="sc-card" data-pin="2"><b class="pin scpin">2</b>
+            <div class="pane-h"><b><span class="swatch" style="background:var(--sc-even)"></span>Even split</b><span style="font-size:11px;color:var(--sc-muted)">every battery, equal share</span></div>
+            <div class="mapbox" id="rbMapA"></div>
+            <div class="tiers" id="rbTiersA"></div>
+            <div class="mline"><span>Lowest home</span><b id="rbVA">—</b></div>
+          </div>
+          <div class="sc-card" data-pin="3"><b class="pin scpin r">3</b>
+            <div class="pane-h"><b><span class="swatch" style="background:var(--sc-aware)"></span>Feeder-aware</b><span style="font-size:11px;color:var(--sc-muted)">charge where there is room</span></div>
+            <div class="mapbox" id="rbMapB"></div>
+            <div class="tiers" id="rbTiersB"></div>
+            <div class="mline"><span>Lowest home</span><b id="rbVB">—</b></div>
+          </div>
+        </div>
+        <div class="sc-card" data-pin="4"><b class="pin scpin">4</b><p class="sc-h">Charge delivered vs requested</p>
+          <div class="mline" style="margin-top:0"><span><span class="swatch" style="background:var(--sc-even)"></span>Even split</span><b id="rbDA">—</b></div><div class="bar"><i id="rbBarA" style="background:var(--sc-even)"></i></div>
+          <div class="mline"><span><span class="swatch" style="background:var(--sc-aware)"></span>Feeder-aware</span><b id="rbDB">—</b></div><div class="bar"><i id="rbBarB" style="background:var(--sc-aware)"></i></div>
+        </div>
+        <div class="sc-card" data-pin="5"><b class="pin scpin">5</b><p class="sc-h">What ERCOT sees: tracking inside tolerance, per 5-minute step</p>
+          <div class="market"><span style="font-size:11px;color:var(--sc-muted)">Even split</span><div class="cells" id="rbCellsA"></div>
+          <span style="font-size:11px;color:var(--sc-muted)">Feeder-aware</span><div class="cells" id="rbCellsB"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="notes">
+      <ol class="callouts" data-for="s03">
+        <li data-c="1"><b class="pin">1</b><div><strong>One market instruction</strong>At 19:45 a scripted price drop ($85 → $12/MWh) asks the 96-battery fleet to charge 1,632 kW.</div></li>
+        <li data-c="2"><b class="pin">2</b><div><strong>Even split: the market is happy, the street is not</strong>29 transformers go over nameplate. 18–20 stay past their 110% normal rating for the whole 45 minutes, 4 pass the 150% emergency rating, and the weakest home falls to 0.939 pu.</div></li>
+        <li data-c="3"><b class="pin">3</b><div><strong>Feeder-aware: charge where there is room</strong>Charging follows transformer headroom, nearest the substation first, then scales until OpenDSS says it fits. Zero transformers over nameplate; lowest home 0.965 pu.</div></li>
+        <li data-c="4"><b class="pin">4</b><div><strong>The price of staying safe</strong>1,408–1,422 kW delivered instead of 1,632: about 13% of the market position given up.</div></li>
+        <li data-c="5"><b class="pin">5</b><div><strong>ERCOT cannot tell them apart</strong>Both runs pass ERCOT's tolerance, the greater of 2 MW or 15%, at every step. Only the feeder view shows the difference.</div></li>
+      </ol>
+      <dl class="flow">
+        <div><dt>Data in</dt><dd><code>replays.json</code> → <code>rebound.naive</code>, <code>rebound.aware</code>: 13 steps of loading, voltage, battery power</dd></div>
+        <div><dt>Computed</dt><dd><code>splitter.py</code> picks setpoints, <code>feeder.py</code> judges, <code>market.py</code> scores tracking</dd></div>
+        <div><dt>Next</dt><dd>Replace the scripted price with real LZ_NORTH 15-minute prices</dd></div>
+      </dl>
+      <div class="base-use"><span class="k">Why Base cares</span>The Markets desk can commit what the feeders can actually deliver. In Base's own record-day trace, the Houston partition swung its charging from −15.9 to −45.8 MW in 10–15 minutes.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= 04 HEAT WAVE ======================= -->
+<section class="sheet" id="s04">
+  <div class="sh-head"><div class="sh-no">04</div><div>
+    <div class="sh-meta"><span>Sheet 04 of 11</span><span>Page · /stories/heat-wave</span><span class="status st-built">● Built</span><b>The honest one</b></div>
+    <h2 class="sh-title">Heat-wave evening</h2>
+    <p class="sh-lede">The fleet discharges into the hottest hour. Here the simple even split was fine, and the page shows that rather than forcing a win.</p>
+  </div></div>
+  <div class="page">
+    <div class="screen">
+      <div class="sc-bar"><span class="sc-dots"><i></i><i></i><i></i></span><span class="sc-brand">Hugging Base</span><span class="sc-route">/stories/heat-wave</span><span class="sc-badge">18:30–19:30</span></div>
+      <div class="sc-body">
+        <div class="sc-card" data-pin="1"><b class="pin scpin">1</b><p class="sc-h">Discharge delivered (kW) vs request</p><div id="hwChartA"></div></div>
+        <div class="sc-grid">
+          <div class="sc-card" data-pin="2"><b class="pin scpin">2</b><p class="sc-h">Lowest battery charge</p><div id="hwChartB"></div></div>
+          <div class="sc-card" data-pin="3"><b class="pin scpin r">3</b><p class="sc-h">Result at 19:30</p><div id="hwTable" style="font-size:12px"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="notes">
+      <ol class="callouts" data-for="s04">
+        <li data-c="1"><b class="pin">1</b><div><strong>Support on the hottest evening</strong>The fleet ramps discharge from 480 to 941 kW. The even split meets every request; the feeder-aware controller holds back 17–83 kW.</div></li>
+        <li data-c="2"><b class="pin">2</b><div><strong>The reserve holds in both</strong>No battery drops below the 20% backup floor. The feeder-aware run draws its far-end batteries down to 21%, close to the line.</div></li>
+        <li data-c="3"><b class="pin">3</b><div><strong>We keep the computed result</strong>On a discharge evening, even split had no violations. The simple distance-first controller is not an optimal power flow, and the page says so.</div></li>
+      </ol>
+      <div class="base-use"><span class="k">Why Base cares</span>A controller is a policy choice with trade-offs, and this is where Base's own dispatch could be plugged in and compared on the same feeder.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= 05 SITING ======================= -->
+<section class="sheet" id="s05">
+  <div class="sh-head"><div class="sh-no">05</div><div>
+    <div class="sh-meta"><span>Sheet 05 of 11</span><span>Page · /next-battery</span><span class="status st-built">● Built</span><b>Base's first question</b></div>
+    <h2 class="sh-title">Where the next battery goes</h2>
+    <p class="sh-lede">Every uninstalled home, tested with real physics. Drag risk aversion and watch the ranking change.</p>
+  </div></div>
+  <div class="page">
+    <div class="screen">
+      <div class="sc-bar"><span class="sc-dots"><i></i><i></i><i></i></span><span class="sc-brand">Hugging Base</span><span class="sc-route">/next-battery</span><span class="sc-badge">911 CANDIDATES · 3 STRESS SNAPSHOTS</span></div>
+      <div class="sc-body">
+        <div class="sc-grid">
+          <div class="mapbox" id="stMap" data-pin="1"><b class="pin scpin" style="top:6px;left:6px">1</b><div class="map-cap">Brighter = higher rank · ring = selected</div></div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div class="sc-card" data-pin="3"><b class="pin scpin r">3</b><p class="sc-h">Score = value − λ × risk</p>
+              <div class="lam"><label for="stLam">Risk aversion λ</label><input type="range" id="stLam" min="0" max="3" step="0.1" value="1"><output id="stLamOut">1.0</output></div>
+              <ul class="rank" id="stRank" role="listbox" aria-label="Top candidates"></ul>
+            </div>
+            <div class="sc-card" id="stDetail" data-pin="2"><b class="pin scpin r">2</b></div>
+          </div>
+        </div>
+        <div class="sc-card" data-pin="4"><b class="pin scpin">4</b><p class="sc-h">Hosting sweep (bounded)</p>
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;font-size:12px">
+            <div><span class="swatch" style="background:var(--sc-even)"></span>Even split: <b style="font-family:var(--mono)">0</b> batteries added before the first violation. The existing fleet already breaks limits.</div>
+            <div><span class="swatch" style="background:var(--sc-aware)"></span>Feeder-aware: accepted all <b style="font-family:var(--mono)">911</b> by curtailing to <b style="font-family:var(--mono)">4,297 kW</b>. That is why "useful capacity" is the next metric.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="notes">
+      <ol class="callouts" data-for="s05">
+        <li data-c="1"><b class="pin">1</b><div><strong>911 candidate homes</strong>1,007 homes can take the split-phase Core; 96 already have one.</div></li>
+        <li data-c="2"><b class="pin">2</b><div><strong>Counterfactual physics per home</strong>Add a 20 kW Core at the home and re-solve OpenDSS in three stress snapshots: heat-wave discharge, rebound charge, covert channel.</div></li>
+        <li data-c="3"><b class="pin">3</b><div><strong>A visible trade-off</strong>Value is transformer relief and voltage support at peak. Risk is charge stress, voltage risk and concentration. Weights are shown; λ re-ranks instantly without re-running physics.</div></li>
+        <li data-c="4"><b class="pin">4</b><div><strong>Honest about capacity</strong>The next metric counts batteries added before the first 110% violation or before curtailment passes a set share.</div></li>
+      </ol>
+      <dl class="flow">
+        <div><dt>Data in</dt><dd><code>candidates.json</code>: value, risk, relief, voltage support, headroom per home</dd></div>
+        <div><dt>Computed</dt><dd><code>sim/build_replays.py</code>: 911 × 3 OpenDSS counterfactuals</dd></div>
+        <div><dt>Next</dt><dd>Greedy build order: re-solve after each placement so neighbours' value drops</dd></div>
+      </dl>
+      <div class="base-use"><span class="k">Why Base cares</span>Base employees told us install scheduling weighs member demand and installer availability, not the grid. This is the grid input that sits next to it. It is not something Base sells today.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= 06 COVERT ======================= -->
+<section class="sheet" id="s06">
+  <div class="sh-head"><div class="sh-no">06</div><div>
+    <div class="sh-meta"><span>Sheet 06 of 11</span><span>Page · /stories/covert-channel</span><span class="status st-built">● Built</span><b>Fictional adversary</b></div>
+    <h2 class="sh-title">The market is quiet. The street is talking.</h2>
+    <p class="sh-lede">A fictional intruder nudges 24 batteries by 350 watts. Fleet tracking never flinches. Physics gives it away.</p>
+  </div></div>
+  <div class="page">
+    <div class="screen">
+      <div class="sc-bar"><span class="sc-dots"><i></i><i></i><i></i></span><span class="sc-brand">Hugging Base</span><span class="sc-route">/stories/covert-channel</span><span class="sc-badge">FICTIONAL ADVERSARY · SIMULATED SIGNAL</span></div>
+      <div class="sc-body">
+        <div class="transport">
+          <button class="play" id="cvPlay" type="button" aria-label="Play the hour">▶</button>
+          <div class="clock" id="cvClock">19:30</div>
+          <input type="range" id="cvStep" min="0" max="12" value="6" aria-label="Replay time">
+          <div class="seg" role="group" aria-label="Response" id="cvResp"><button type="button" data-r="observe" aria-pressed="false">Observe</button><button type="button" data-r="quarantine" aria-pressed="true">Auto-quarantine</button></div>
+        </div>
+        <div class="sc-grid">
+          <div class="mapbox" id="cvMap" data-pin="1"><b class="pin scpin" style="top:6px;left:6px">1</b><div class="map-cap">Cedar cluster · 24 compromised Cores</div></div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="sc-card" data-pin="2"><b class="pin scpin r">2</b><p class="sc-h">Market tracking, per step</p><div class="cells" id="cvCells"></div><div class="mline"><span>Delivered / committed</span><b id="cvDeliv">—</b></div></div>
+            <div class="det-row" data-pin="3" style="position:relative"><b class="pin scpin">3</b>
+              <div class="sc-stat"><span>1 kW fixed alarms</span><b id="cvFix">0</b><em>flags raised</em></div>
+              <div class="sc-stat" id="cvFlagBox"><span>Physics detector</span><b id="cvFlags">0<small>/ 96</small></b><em id="cvDet">watching</em></div>
+              <div class="sc-stat"><span>False positives</span><b id="cvFP">0%</b><em>clean fleet</em></div>
+            </div>
+            <div class="sc-card" data-pin="4"><b class="pin scpin r">4</b><p class="sc-h">Response</p><div id="cvResponse" style="font-size:12px;color:var(--sc-muted)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="notes">
+      <ol class="callouts" data-for="s06">
+        <li data-c="1"><b class="pin">1</b><div><strong>A patterned ±350 W signal</strong>From 19:45, 24 compromised batteries in one cluster alternate their power slightly. Every command they received was legitimate.</div></li>
+        <li data-c="2"><b class="pin">2</b><div><strong>The market sees nothing</strong>Aggregate tracking stays inside tolerance at every step, and fixed 1 kW alarms never fire.</div></li>
+        <li data-c="3"><b class="pin">3</b><div><strong>Physics sees it in 15 minutes</strong>Residual size, lag correlation and a voltage check flag all 24 at 20:00, with 0% false positives on the clean fleet.</div></li>
+        <li data-c="4"><b class="pin">4</b><div><strong>Quarantine and re-plan</strong>The cohort leaves future commitments (288 → 216 kW) and the rest of the fleet is re-dispatched. Blast radius of this foothold: 0.48 MW.</div></li>
+      </ol>
+      <p class="note-small">Caveat: the voltage check compares against the legitimate-command solve, which a field detector would not have. The agreed fix is to compare each battery against its peers on the same transformer.</p>
+      <div class="base-use"><span class="k">Why Base cares</span>A stolen credential or a backdoor bypasses the command log. Detection has to come from meters and voltage, and the question becomes how many MW one foothold can move.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= 07 FAILOVER ======================= -->
+<section class="sheet" id="s07">
+  <div class="sh-head"><div class="sh-no">07</div><div>
+    <div class="sh-meta"><span>Sheet 07 of 11</span><span>Page · /stories/pieces-fail</span><span class="status st-next">◐ Next</span><b>The Orchestration track</b></div>
+    <h2 class="sh-title">When pieces fail</h2>
+    <p class="sh-lede">The track scores how the system holds up when parts of it break. Here the part that breaks is our own controller. Step through it.</p>
+  </div></div>
+  <div class="page">
+    <div class="screen">
+      <div class="sc-bar"><span class="sc-dots"><i></i><i></i><i></i></span><span class="sc-brand">Hugging Base</span><span class="sc-route">/stories/pieces-fail</span><span class="sc-badge">RECORDED RUNTIME · PLANNED</span></div>
+      <div class="sc-body fo">
+        <svg id="foSvg" viewBox="0 0 720 330" role="img" aria-label="Coordinator, three orchestrator workers holding leases on shards of batteries, and the command paths between them."></svg>
+        <div class="steps" id="foSteps" role="group" aria-label="Failure steps"></div>
+        <div class="fo-cap" id="foCap" aria-live="polite"></div>
+      </div>
+    </div>
+    <div class="notes">
+      <ol class="callouts" data-for="s07">
+        <li data-c="1"><b class="pin">1</b><div><strong>Every command is fenced</strong>Each carries a controller epoch, a sequence number and a 30-second expiry. The battery enforces them, so a dead or confused controller can do no harm.</div></li>
+        <li data-c="2"><b class="pin">2</b><div><strong>Leases, not luck</strong>Workers hold 3-second leases on groups of transformers. When one dies, the coordinator hands its group to another at a higher epoch.</div></li>
+        <li data-c="3"><b class="pin">3</b><div><strong>Silence is safe</strong>A battery that stops hearing from the cloud goes stale after 180 s and idles with backup armed when its command expires. A neighbour on the same feeder covers.</div></li>
+      </ol>
+      <dl class="flow">
+        <div><dt>Data in</dt><dd>The splitter's plan, run by separate worker processes</dd></div>
+        <div><dt>Computed</dt><dd>Orchestrator runtime (planned); the run is recorded in the replay format</dd></div>
+        <div><dt>Spec</dt><dd>Device acceptance rules, <code>docs/headroom/PRD.md</code> §7.5</dd></div>
+      </dl>
+      <div class="base-use"><span class="k">Why Base cares</span>Base's firmware postings ask for "a fleet that can never go dark". The acceptance rules are a spec BaseOS could test against.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= 08 OPEN GRID DATA ======================= -->
+<section class="sheet" id="s08">
+  <div class="sh-head"><div class="sh-no">08</div><div>
+    <div class="sh-meta"><span>Sheet 08 of 11</span><span>Page · /grid-data</span><span class="status st-next">◐ Next</span><b>Real ERCOT data</b></div>
+    <h2 class="sh-title">What ERCOT's own files show</h2>
+    <p class="sh-lede">Two findings from public ERCOT data that most readers miss. These charts are real, pulled without a key.</p>
+  </div></div>
+  <div class="charts3">
+    <div class="chart wide"><h4>ERCOT's record-demand day, 22 Jul 2026: 15-minute real-time prices</h4><p class="cs">Three load zones move together. The evening spike peaks at $344/MWh at 22:00 in LZ_NORTH; midday energy is cheap.</p><div id="chPrice"></div><div class="chart-legend" id="chPriceLegend"></div><p class="caveat">Source: ERCOT NP6-785-ER real-time settlement point prices. Interval start, Central time.</p></div>
+    <div class="chart"><h4>When is the cheapest 2 hours to recharge?</h4><p class="cs" id="chWinLede">Start hour of each summer day's cheapest 2-hour block, Jun–Aug 2026.</p>
+      <div class="zone-seg" role="group" aria-label="Load zone" id="chWinZones"></div><div id="chWin"></div>
+      <p class="caveat">Perfect foresight, zone level. Worth about $0.40 per Core per day against the naive post-peak recharge.</p></div>
+    <div class="chart"><h4>The Texas grid got stiffer per MW lost</h4><p class="cs">Frequency dip per MW of generation lost, every event since 2015.</p><div id="chFme"></div>
+      <p class="caveat">ERCOT NP12-261-M. The reporting standard changed in 2022 and recent years have few events, so read the trend with care. A 1,000-battery hijack moves frequency about 3–17 mHz: inside normal wander.</p></div>
+  </div>
+  <div class="base-use" style="margin-top:18px"><span class="k">Why Base cares</span>Arbitrage revenue is shrinking. Knowing the recharge window sits on the morning solar ramp, not right after the evening peak, is worth money and also takes stress off feeders at night.</div>
+</section>
+
+<!-- ======================= 09 STUDIO ======================= -->
+<section class="sheet" id="s09">
+  <div class="sh-head"><div class="sh-no">09</div><div>
+    <div class="sh-meta"><span>Sheet 09 of 11</span><span>Page · /studio</span><span class="status st-plan">○ Stretch</span></div>
+    <h2 class="sh-title">Type a scenario, get a story</h2>
+    <p class="sh-lede">The team's first idea in the room. A person types what should go wrong; Claude drafts it; a validator decides whether it can run.</p>
+  </div></div>
+  <div class="page">
+    <div class="screen">
+      <div class="sc-bar"><span class="sc-dots"><i></i><i></i><i></i></span><span class="sc-brand">Hugging Base</span><span class="sc-route">/studio</span><span class="sc-badge">LIBRARY FIRST · VALIDATED</span></div>
+      <div class="sc-body">
+        <div class="prompt" data-pin="1" style="position:relative"><b class="pin scpin">1</b>An AI takes over 1,000 batteries at the evening peak<span class="caret"></span></div>
+        <div class="pipe" data-pin="2" style="position:relative"><b class="pin scpin">2</b>
+          <div class="done"><span>1 · Library</span>No exact match</div>
+          <div class="done"><span>2 · Claude drafts</span>claude-sonnet-5 → ScenarioDraft</div>
+          <div class="warnb"><span>3 · Validator</span>1 clamp applied</div>
+          <div><span>4 · Preview</span>A person presses Run</div>
+        </div>
+        <div class="clamp" data-pin="3" style="position:relative"><b class="pin scpin">3</b>Requested 1,000 devices. This feeder has 96 batteries, and one stolen shard credential commands 24. Clamped to the 24-battery Cedar cluster.</div>
+        <pre class="json" aria-label="Validated scenario">{ <span class="k">"id"</span>: <span class="s">"hijack-cedar-peak"</span>,
+  <span class="k">"window"</span>: { <span class="k">"start_local"</span>: <span class="s">"19:45"</span>, <span class="k">"duration_min"</span>: <span class="n">45</span> },
+  <span class="k">"events"</span>: [{ <span class="k">"kind"</span>: <span class="s">"setpoint_override"</span>,
+    <span class="k">"target"</span>: { <span class="k">"select"</span>: <span class="s">"cohort"</span>, <span class="k">"cohort"</span>: <span class="s">"Cedar"</span>, <span class="k">"count"</span>: <span class="n">24</span> },
+    <span class="k">"params"</span>: { <span class="k">"pattern"</span>: <span class="s">"full_swing"</span> } }],
+  <span class="k">"defenses"</span>: { <span class="k">"device_start_delay_max_s"</span>: <span class="n">120</span>, <span class="k">"auto_quarantine"</span>: <span class="n">true</span> } }</pre>
+        <div class="libs" aria-label="Scenario library"><span>Heat-wave evening</span><span>Charging rebound</span><span>Covert channel</span><span>Worker killed</span><span>Comms loss</span><span>Feeder outage</span></div>
+      </div>
+    </div>
+    <div class="notes">
+      <ol class="callouts" data-for="s09">
+        <li data-c="1"><b class="pin">1</b><div><strong>Plain language in</strong>The scenario from the team's first conversation, typed as-is.</div></li>
+        <li data-c="2"><b class="pin">2</b><div><strong>Library first, model second</strong>Common phrasings hit the built-in library with no network. Otherwise Claude drafts structured JSON, and a cheaper model repairs it at most twice.</div></li>
+        <li data-c="3"><b class="pin">3</b><div><strong>The validator has the final word</strong>Scenarios may only describe causes. Out-of-range numbers are clamped and the clamp is shown. No model ever produces a setpoint, base point or rank.</div></li>
+      </ol>
+      <div class="base-use"><span class="k">Why Base cares</span>Every scenario the team or Base writes becomes a regression test that any dispatch policy can be run against before it ships.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= 10 USES ======================= -->
+<section class="sheet" id="s10">
+  <div class="sh-head"><div class="sh-no">10</div><div>
+    <div class="sh-meta"><span>Sheet 10 of 11</span><span>For Base</span></div>
+    <h2 class="sh-title">What each team at Base gets</h2>
+    <p class="sh-lede">Base is a power company, not a battery company. Each page answers a question a real team there already asks.</p>
+  </div></div>
+  <div class="uses">
+    <div class="use"><span class="who">Deployments &amp; install scheduling</span><h4>Of the homes in the queue, which should go first?</h4><div class="num">911<small>homes ranked by grid value</small></div><p>A grid score beside member demand and installer availability, re-ranked instantly as risk tolerance changes.</p><a href="#s05">Sheet 05 · Next battery</a></div>
+    <div class="use"><span class="who">Markets desk</span><h4>How much of this base point can the feeders take?</h4><div class="num">~13%<small>given up to avoid 29 overloads</small></div><p>Deliverable MW under feeder limits, instead of nameplate MW that ERCOT would happily accept.</p><a href="#s03">Sheet 03 · Charging rebound</a></div>
+    <div class="use"><span class="who">Security &amp; fleet operations</span><h4>Would we notice a quiet compromise?</h4><div class="num">15 min<small>24 of 24 flagged, 0% false alarms</small></div><p>Detection from meters and voltage, and the MW any one foothold can move.</p><a href="#s06">Sheet 06 · Covert channel</a></div>
+    <div class="use"><span class="who">Utility programs &amp; TDSPs</span><h4>Where do batteries defer an upgrade, and where do they force one?</h4><div class="num">138<small>of 379 transformers are 25 kVA</small></div><p>Which transformers break first, and what a 25 → 50 kVA upgrade policy would change.</p><a href="#s02">Sheet 02 · Feeder board</a></div>
+    <div class="use"><span class="who">Firmware &amp; BaseOS</span><h4>What must a battery refuse?</h4><div class="num">0<small>stale commands applied</small></div><p>Epoch, sequence and expiry rules as a test table, so a crashed or partitioned controller cannot drive the fleet.</p><a href="#s07">Sheet 07 · When pieces fail</a></div>
+    <div class="use"><span class="who">Markets research</span><h4>When should the fleet recharge?</h4><div class="num">66 / 92<small>summer days: cheapest window in the morning</small></div><p>Findings from ERCOT's own files, each with its caveat.</p><a href="#s08">Sheet 08 · Open grid data</a></div>
+  </div>
+</section>
+
+<!-- ======================= 11 DEMO + STATUS ======================= -->
+<section class="sheet" id="s11">
+  <div class="sh-head"><div class="sh-no">11</div><div>
+    <div class="sh-meta"><span>Sheet 11 of 11</span><span>The five-minute video</span></div>
+    <h2 class="sh-title">Demo storyline and build status</h2>
+  </div></div>
+  <div class="cols2">
+    <div>
+      <ol class="story">
+        <li><span class="t">0:00</span><b>One number, 379 transformers</b><span class="d">The thesis on the feeder board. Market view, then street view.</span></li>
+        <li><span class="t">0:30</span><b>Charging rebound</b><span class="d">Even split passes ERCOT and overloads 29 transformers. Feeder-aware gives up ~13% and breaks nothing.</span></li>
+        <li><span class="t">1:40</span><b>Where the next battery goes</b><span class="d">Click a home, move λ, show the grid input Base's scheduler lacks.</span></li>
+        <li><span class="t">2:40</span><b>Covert channel</b><span class="d">Market green, street talking, quarantine in 15 minutes.</span></li>
+        <li><span class="t">3:30</span><b>When pieces fail</b><span class="d">Kill a worker, reject its zombie commands, cover a silent battery.</span></li>
+        <li><span class="t">4:10</span><b>ERCOT's own data</b><span class="d">The morning recharge window and the stiffer grid.</span></li>
+        <li><span class="t">4:40</span><b>What Base can use tomorrow</b><span class="d">Six teams, six questions, one feeder model.</span></li>
+      </ol>
+    </div>
+    <div class="tbl"><table>
+      <thead><tr><th>Piece</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Feeder model and OpenDSS referee</td><td><span class="status st-built">● Built</span></td></tr>
+        <tr><td>Even split vs feeder-aware dispatch</td><td><span class="status st-built">● Built</span></td></tr>
+        <tr><td>Heat wave, rebound, covert replays</td><td><span class="status st-built">● Built</span></td></tr>
+        <tr><td>Next-battery counterfactual score</td><td><span class="status st-built">● Built</span></td></tr>
+        <tr><td>Covert detector and quarantine branch</td><td><span class="status st-built">● Built</span></td></tr>
+        <tr><td>Tiered transformer reporting</td><td><span class="status st-next">◐ Next</span></td></tr>
+        <tr><td>Real LZ_NORTH prices in replays</td><td><span class="status st-next">◐ Next</span></td></tr>
+        <tr><td>Comms loss and worker-failure beat</td><td><span class="status st-next">◐ Next</span></td></tr>
+        <tr><td>Open grid data panel</td><td><span class="status st-next">◐ Next</span></td></tr>
+        <tr><td>Peer-based voltage check; useful capacity</td><td><span class="status st-next">◐ Next</span></td></tr>
+        <tr><td>Scenario studio; stolen-key hijack; feeder outage</td><td><span class="status st-plan">○ Stretch</span></td></tr>
+        <tr><td>Real basemap with OSM substations; transmission layer</td><td><span class="status st-plan">○ Stretch</span></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <div class="truth">
+    <div><h4 style="color:var(--accent)">Real</h4><ul>
+      <li>Feeder topology, coordinates and transformer ratings (NREL SMART-DS, CC BY 4.0)</li>
+      <li>AC power flow: every violation judged by OpenDSS</li>
+      <li>ERCOT prices, frequency events and pilot data on sheet 08</li>
+      <li>Base facts: 20 kW Core, 20% reserve, 180 s stale rule, ERCOT tolerance</li>
+    </ul></div>
+    <div><h4 style="color:var(--s2)">Assumed in this replay</h4><ul>
+      <li>Prices and the 19:45 price drop are scripted</li>
+      <li>Home load is scaled nameplate load, not weather-driven</li>
+      <li>Fleet placement: 96 Cores, 24 clustered</li>
+      <li>Core usable energy 37 kWh, 89% round trip; detector noise and the ±350 W signal</li>
+    </ul></div>
+  </div>
+</section>
+
+</main>
+</div>
+<footer class="foot">
+  <p>Hugging Base · Base Power × AITX hackathon, Austin, September 2026. Feeder: NREL SMART-DS v1.0 (2018) AUS P1U, CC BY 4.0. Power flow: OpenDSS via OpenDSSDirect.py. Market data: ERCOT public data; ERCOT does not guarantee the accuracy of this compilation. The adversary is fictional. Full design: <code>docs/reconciliation.md</code> and <code>docs/headroom/PRD.md</code> in the team repo.</p>
+</footer>
+
+<script id="hb-data" type="application/json">__DATA__</script>
+<script>
+(function(){
+"use strict";
+var D=JSON.parse(document.getElementById('hb-data').textContent), G=D.geo;
+var NS='http://www.w3.org/2000/svg';
+function el(tag,attrs,parent){var e=document.createElementNS(NS,tag);if(attrs)for(var k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function $(s,r){return (r||document).querySelector(s);}
+function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
+function fmt(n,d){return Number(n).toLocaleString('en-US',{minimumFractionDigits:d||0,maximumFractionDigits:d||0});}
+function tlabel(m){return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');}
+var cache={};
+function u8(b){if(cache[b])return cache[b];var s=atob(b),a=new Uint8Array(s.length);for(var i=0;i<s.length;i++)a[i]=s.charCodeAt(i);cache[b]=a;return a;}
+function volts(f){var a=u8(f.V),o=new Float32Array(a.length);for(var i=0;i<a.length;i++)o[i]=0.90+a[i]*0.0005;return o;}
+function hex2rgb(h){h=h.replace('#','');return [parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)];}
+function mix(a,b,t){t=Math.max(0,Math.min(1,t));var A=hex2rgb(a),B=hex2rgb(b);return 'rgb('+A.map(function(v,i){return Math.round(v+(B[i]-v)*t);}).join(',')+')';}
+var C={warn:'#fab219',serious:'#ec835a',crit:'#d03b3b',lo:'#23403a',hi:'#78c9b4'};
+function tfColor(p){if(p>150)return C.crit;if(p>110)return C.serious;if(p>100)return C.warn;return mix(C.lo,C.hi,p/100);}
+function tfR(p){return p>150?15:p>110?12:p>100?10:6.5;}
+function vColor(v){if(v<0.95)return C.crit;if(v<0.96)return C.serious;if(v<0.975)return C.warn;return mix('#284a42','#6aa99a',(v-0.975)/0.05);}
+function tierName(p){return p>150?'past 150% emergency rating':p>110?'past 110% normal rating':p>100?'over nameplate':'within nameplate';}
+
+// shared edge geometry
+document.getElementById('hb-edges').setAttribute('d',G.edges);
+
+// ---------- feeder map ----------
+function FeederMap(host,opts){
+  opts=opts||{};
+  var svg=el('svg',{viewBox:'0 0 '+G.w+' '+G.h,class:'feeder',role:'img','aria-label':opts.label||'Feeder map'});
+  el('use',{href:'#hb-edges',class:'edges'},svg);
+  var w=G.weak;el('line',{x1:w[0][0],y1:w[0][1],x2:w[1][0],y2:w[1][1],class:'weak'},svg);
+  var s=G.source;el('rect',{x:s[0]-16,y:s[1]-16,width:32,height:32,rx:3,class:'sub'},svg);
+  var gh=el('g',{class:'homes'},svg);
+  this.homes=G.homes.map(function(h){return el('circle',{cx:h[0],cy:h[1],r:opts.homeR||3.4},gh);});
+  var gt=el('g',{class:'tfs'},svg);
+  this.tfs=G.tf.map(function(t,i){return el('circle',{cx:t[0],cy:t[1],r:6.5,'data-i':i,fill:C.lo},gt);});
+  var gb=el('g',{class:'bats'},svg);this.batIdx=[];
+  var self=this;
+  G.homes.forEach(function(h,i){if(h[3])self.batIdx.push(i);});
+  this.bats=this.batIdx.map(function(i){var h=G.homes[i];return el('rect',{x:h[0]-6,y:h[1]-6,width:12,height:12,rx:1.5},gb);});
+  this.over=el('g',{},svg);
+  this.svg=svg;host.insertBefore(svg,host.firstChild);
+  if(opts.tip){var tip=document.createElement('div');tip.className='tip';tip.hidden=true;host.appendChild(tip);this.tip=tip;
+    svg.addEventListener('mousemove',function(e){var t=e.target;if(t.tagName!=='circle'||t.getAttribute('data-i')==null){tip.hidden=true;return;}
+      var i=+t.getAttribute('data-i');var html=opts.tip(i);if(!html){tip.hidden=true;return;}tip.innerHTML=html;tip.hidden=false;
+      var r=host.getBoundingClientRect();var x=e.clientX-r.left+12,y=e.clientY-r.top+12;if(x>r.width-170)x=e.clientX-r.left-180;tip.style.left=x+'px';tip.style.top=y+'px';});
+    svg.addEventListener('mouseleave',function(){tip.hidden=true;});}
+}
+FeederMap.prototype.paintLoading=function(L){for(var i=0;i<this.tfs.length;i++){var p=L[i];this.tfs[i].setAttribute('fill',tfColor(p));this.tfs[i].setAttribute('r',tfR(p));}};
+FeederMap.prototype.paintFlat=function(c){for(var i=0;i<this.tfs.length;i++){this.tfs[i].setAttribute('fill',c);this.tfs[i].setAttribute('r',6.5);}};
+FeederMap.prototype.homesFlat=function(c,r){for(var i=0;i<this.homes.length;i++){this.homes[i].setAttribute('fill',c);this.homes[i].setAttribute('r',r||3.4);}};
+FeederMap.prototype.showBats=function(on){this.bats.forEach(function(b){b.style.display=on?'':'none';});};
+
+function legend(host,items){host.innerHTML=items.map(function(it){return '<span><i class="'+(it.cls||'')+'" style="'+(it.c?'background:'+it.c:'')+'"></i>'+it.t+'</span>';}).join('');}
+var LOAD_LEGEND=[{c:C.hi,t:'≤100% of nameplate'},{c:C.warn,t:'over nameplate'},{c:C.serious,t:'past 110% normal'},{c:C.crit,t:'past 150% emergency'},{cls:'sq',t:'battery'},{cls:'dash',t:'weak line'}];
+
+var R=D.runs;
+function Lof(f){return u8(f.L);}
+
+// ---------- 00 hero ----------
+(function(){
+  var f=R['rebound.naive'][3];
+  var m=new FeederMap($('#heroMap'),{label:'Feeder at 19:45 under even-split charging',homeR:3,tip:function(i){var p=Lof(f)[i];return '<b>'+fmt(G.tf[i][2])+' kVA</b> transformer · <b>'+p+'%</b><br>'+tierName(p);}});
+  m.homesFlat('#34494300'==='x'?'':'#314640');
+  var L=Lof(f);
+  function street(){m.paintLoading(L);m.showBats(true);legend($('#heroLegend'),LOAD_LEGEND);}
+  function market(){m.paintFlat('#3d5650');m.showBats(true);legend($('#heroLegend'),[{c:'#3d5650',t:'ERCOT sees none of these'},{cls:'sq',t:'battery (one aggregate)'}]);}
+  $('#heroMarket').innerHTML=fmt(f.t)+'<small>kW</small>';
+  $('#heroStreet').innerHTML=f.ov+'<small>transformers over nameplate</small>';
+  $('#hero110').textContent=f.n110;$('#hero150').textContent=f.n150;
+  var bM=$('#heroViewMarket'),bS=$('#heroViewStreet');
+  bM.onclick=function(){bM.setAttribute('aria-pressed','true');bS.setAttribute('aria-pressed','false');market();};
+  bS.onclick=function(){bS.setAttribute('aria-pressed','true');bM.setAttribute('aria-pressed','false');street();};
+  street();
+})();
+
+// ---------- 01 loop diagram ----------
+(function(){
+  var svg=$('#loop');
+  var cols=[{x:18,t:'Sources'},{x:268,t:'Simulator (Python)'},{x:518,t:'Replay files'},{x:768,t:'Pages'}];
+  var W=214,H=40;
+  var N=[
+    ['smartds',0,'NREL SMART-DS feeder','built','12.47 kV synthetic feeder on real north-Austin building coordinates: lines, transformers, loads, bus coordinates in OpenDSS format.','demos/grid-stories/data/smartds/'],
+    ['scripted',0,'Scripted scenario inputs','built','Load multipliers, the 19:45 price drop, starting charge and fleet placement. Every value is labelled ASSUMPTION.','demos/grid-stories/data/scenario-inputs.csv'],
+    ['spp',0,'ERCOT 15-min prices','next','NP6-785-ER real-time settlement point prices for LZ_NORTH, LZ_AEN and LZ_HOUSTON, 2025–26. Replaces the scripted price drop.','evidence extracts → data/'],
+    ['fme',0,'ERCOT frequency events','next','NP12-261-M: every frequency event since 2015 with MW lost and the lowest frequency reached.','evidence extracts → data/'],
+    ['ader',0,'ERCOT ADER workbook','stretch','Monthly aggregated home-battery participation. Calibrates tracking and online intervals.','ercot.com, no key'],
+    ['weather',0,'Weather (NCEI, NWS)','stretch','Rescales home load for heat-wave replays.','public domain'],
+    ['osm',0,'OSM substations','stretch','93 real Austin substations with operator and voltage, pulled for GridSpine Atlas. Map context only.','headroom-gridspine-dossier.html'],
+    ['feeder',1,'feeder.py · OpenDSS','built','Loads the feeder into OpenDSSDirect.py 0.9.4 and solves AC power flow every 5-minute step. Judges every violation.','demos/grid-stories/sim/feeder.py'],
+    ['devices',1,'devices.py · batteries','built','Core: 20 kW, 37 kWh usable (ASSUMPTION), 89% round trip, 20% reserve floor, 0 kW when comms are lost.','demos/grid-stories/sim/devices.py'],
+    ['splitter',1,'splitter.py · dispatch','built','Even split, or feeder-aware: charge by transformer headroom nearest the substation first, discharge far end first, then scale until OpenDSS says it fits.','demos/grid-stories/sim/splitter.py'],
+    ['market',1,'market.py · tracking','built','ERCOT tolerance: the greater of 2 MW or 15% of capability.','demos/grid-stories/sim/market.py'],
+    ['detect',1,'detect.py · detectors','built','Residual size, lag correlation and voltage corroboration per battery.','demos/grid-stories/sim/detect.py'],
+    ['score',1,'Siting counterfactuals','built','Adds a 20 kW Core at each of 911 candidate homes and re-solves in three stress snapshots.','demos/grid-stories/sim/build_replays.py'],
+    ['runtime',1,'Orchestrator runtime','next','Worker processes with 3-second leases, epochs and command expiry. Its run is recorded in the replay format.','planned · reconciliation §7'],
+    ['insights',1,'Grid-data analyses','next','Cheapest recharge window and frequency sensitivity over ERCOT files.','evidence/critique-scratch/'],
+    ['topo',2,'topology.json','built','1,010 homes, 379 transformers, 2,531 line segments, with coordinates and the disclosed shaping.','ui/dist/topology.json · 0.9 MB'],
+    ['replays',2,'replays.json','built','3 scenarios × strategies × 13 steps: per-transformer loading, per-home voltage, battery power and charge, detector state.','ui/dist/replays.json · 2.8 MB'],
+    ['cands',2,'candidates.json','built','911 candidates with value, risk, relief, voltage support and headroom, plus the hosting sweep.','ui/dist/candidates.json · 1.2 MB'],
+    ['model',2,'model.json','built','Engine version, assumptions and provenance labels, shown on every page.','ui/dist/model.json'],
+    ['runlog',2,'Runtime run log','next','The recorded failover run, in replay format, so it plays like any story.','planned'],
+    ['insightsf',2,'insights.json','next','Open Grid Data results, each with its caveat.','planned'],
+    ['p-board',3,'Feeder board','built','Sheet 02.','#s02'],
+    ['p-rebound',3,'Charging rebound','built','Sheet 03, the headline.','#s03'],
+    ['p-heat',3,'Heat-wave evening','built','Sheet 04.','#s04'],
+    ['p-siting',3,'Next battery','built','Sheet 05.','#s05'],
+    ['p-covert',3,'Covert channel','built','Sheet 06.','#s06'],
+    ['p-fail',3,'When pieces fail','next','Sheet 07.','#s07'],
+    ['p-grid',3,'Open grid data','next','Sheet 08.','#s08'],
+    ['p-studio',3,'Scenario studio','stretch','Sheet 09. Writes scenario definitions the simulator runs.','#s09']
+  ];
+  var E=[['smartds','feeder'],['scripted','feeder'],['scripted','splitter'],['spp','splitter'],['spp','insights'],['fme','insights'],['ader','market'],['weather','feeder'],
+    ['feeder','topo'],['feeder','replays'],['devices','replays'],['splitter','replays'],['market','replays'],['detect','replays'],['feeder','cands'],['score','cands'],['splitter','runtime'],['runtime','runlog'],['insights','insightsf'],
+    ['topo','p-board'],['topo','p-rebound'],['topo','p-siting'],['topo','p-covert'],['model','p-board'],['replays','p-rebound'],['replays','p-heat'],['replays','p-covert'],['cands','p-siting'],['runlog','p-fail'],['insightsf','p-grid'],['osm','p-board']];
+  var pos={},count=[0,0,0,0],rank={built:0,next:1,stretch:2};
+  N.forEach(function(n){var c=n[1];pos[n[0]]={x:cols[c].x,y:48+count[c]*62,n:n};count[c]++;});
+  cols.forEach(function(c){var t=el('text',{x:c.x,y:26,class:'lp-colh'},svg);t.textContent=c.t;});
+  var gE=el('g',{},svg),gN=el('g',{},svg),edges=[];
+  E.forEach(function(e){var a=pos[e[0]],b=pos[e[1]];var x1=a.x+W,y1=a.y+H/2,x2=b.x,y2=b.y+H/2;
+    var st=Math.max(rank[a.n[3]],rank[b.n[3]]);
+    var p=el('path',{d:'M'+x1+','+y1+' C'+(x1+24)+','+y1+' '+(x2-24)+','+y2+' '+x2+','+y2,class:'lp-edge'+(st===1?' next':st===2?' plan':'')},gE);
+    edges.push({a:e[0],b:e[1],p:p});});
+  var nodes={};
+  N.forEach(function(n){var P=pos[n[0]];var g=el('g',{class:'lp-node',tabindex:0,role:'button','aria-label':n[2]},gN);
+    el('rect',{x:P.x,y:P.y,width:W,height:H,rx:5},g);
+    var dot=el('circle',{cx:P.x+14,cy:P.y+H/2,r:4.5},g);
+    if(n[3]==='built'){dot.setAttribute('fill','currentColor');dot.style.color='var(--accent)';}
+    else{dot.setAttribute('fill','none');dot.setAttribute('stroke-width','1.6');dot.style.stroke=n[3]==='next'?'var(--s2)':'var(--faint)';if(n[3]==='stretch')dot.setAttribute('stroke-dasharray','2 2');}
+    var t=el('text',{x:P.x+26,y:P.y+17},g);t.textContent=n[2];
+    var s2=el('text',{x:P.x+26,y:P.y+31,class:'sub'},g);s2.textContent=n[3]==='built'?'built':n[3]==='next'?'next':'stretch';
+    nodes[n[0]]=g;
+    function pick(){select(n[0]);}
+    g.addEventListener('click',pick);g.addEventListener('keydown',function(ev){if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();pick();}});});
+  function reach(id,dir,acc){acc=acc||{};edges.forEach(function(e){var from=dir>0?e.a:e.b,to=dir>0?e.b:e.a;if(from===id&&!acc[to]){acc[to]=1;reach(to,dir,acc);}});return acc;}
+  var cur=null;
+  function select(id){
+    if(cur===id){cur=null;svg.classList.remove('lp-dim');Object.keys(nodes).forEach(function(k){nodes[k].classList.remove('on','sel');});edges.forEach(function(e){e.p.classList.remove('on');});return;}
+    cur=id;var up=reach(id,-1),down=reach(id,1),on={};on[id]=1;Object.keys(up).forEach(function(k){on[k]=1;});Object.keys(down).forEach(function(k){on[k]=1;});
+    svg.classList.add('lp-dim');
+    Object.keys(nodes).forEach(function(k){nodes[k].classList.toggle('on',!!on[k]);nodes[k].classList.toggle('sel',k===id);});
+    edges.forEach(function(e){e.p.classList.toggle('on',!!(on[e.a]&&on[e.b]));});
+    var n=pos[id].n,st={built:'<span class="status st-built">● Built</span>',next:'<span class="status st-next">◐ Next</span>',stretch:'<span class="status st-plan">○ Stretch</span>'}[n[3]];
+    var feeds=Object.keys(down).filter(function(k){return pos[k].n[1]===3;}).map(function(k){return pos[k].n[2];});
+    $('#loopDetail').innerHTML='<h4>'+n[2]+' '+st+'</h4><p style="margin:6px 0 0;font-size:14px">'+n[4]+'</p>'+(feeds.length?'<p style="margin:8px 0 0;font-size:13px;color:var(--muted)">Reaches: '+feeds.join(', ')+'</p>':'')+'<div class="p">'+(n[5].charAt(0)==='#'?'<a href="'+n[5]+'">Go to '+n[5].replace('#s','sheet ')+'</a>':n[5])+'</div>';
+  }
+})();
+
+// ---------- 02 board ----------
+(function(){
+  var f=R['rebound.naive'][0],L=Lof(f),V=volts(f);
+  var counts={};G.homes.forEach(function(h){counts[h[2]]=(counts[h[2]]||0)+1;});
+  var m=new FeederMap($('#boardMap'),{label:'Feeder board',tip:function(i){return '<b>'+fmt(G.tf[i][2])+' kVA</b> · '+(counts[i]||0)+' homes<br>loading <b>'+L[i]+'%</b>';}});
+  $('#bdMW').innerHTML=fmt(f.mw,2)+'<small>MW</small>';$('#bdMax').innerHTML=fmt(f.maxL,0)+'<small>%</small>';$('#bdMinV').innerHTML=fmt(f.minV,3)+'<small>pu</small>';
+  var kva={};G.tf.forEach(function(t){kva[t[2]]=(kva[t[2]]||0)+1;});
+  $('#bdKva').innerHTML=Object.keys(kva).map(Number).sort(function(a,b){return a-b;}).map(function(k){var n=kva[k];return '<div style="display:grid;grid-template-columns:62px 1fr 34px;gap:8px;align-items:center;margin:3px 0"><span>'+k+' kVA</span><span class="bar" style="margin:0"><i style="width:'+(n/158*100)+'%;background:#5cc4be"></i></span><span style="text-align:right">'+n+'</span></div>';}).join('');
+  var sizeC={10:'#2b4a43',25:'#ec835a',50:'#5cc4be',75:'#3987e5',150:'#e6ece8'};
+  function layer(l){
+    $$('#bdLayers button').forEach(function(b){b.setAttribute('aria-pressed',String(b.getAttribute('data-l')===l));});
+    if(l==='loading'){m.paintLoading(L);m.homesFlat('#314640');m.showBats(true);legend($('#bdLegend'),LOAD_LEGEND);}
+    if(l==='voltage'){m.paintFlat('#2a3d38');for(var i=0;i<m.homes.length;i++){m.homes[i].setAttribute('fill',vColor(V[i]));m.homes[i].setAttribute('r',5);}m.showBats(false);legend($('#bdLegend'),[{c:'#6aa99a',t:'≥0.975 pu'},{c:C.warn,t:'0.96–0.975'},{c:C.serious,t:'0.95–0.96'},{c:C.crit,t:'below 0.95 pu'}]);}
+    if(l==='fleet'){m.paintFlat('#2a3d38');for(var j=0;j<m.homes.length;j++){var h=G.homes[j];m.homes[j].setAttribute('fill',h[4]?'#e87ba4':h[3]?'#e6ece8':'#2b3f39');m.homes[j].setAttribute('r',h[3]?5:3);}m.showBats(true);legend($('#bdLegend'),[{cls:'sq',t:'Core battery (96)'},{c:'#e87ba4',t:'Cedar cluster (24)'},{c:'#2b3f39',t:'home without battery'}]);}
+    if(l==='kva'){for(var k=0;k<m.tfs.length;k++){var kv=G.tf[k][2];m.tfs[k].setAttribute('fill',sizeC[kv]||'#5f716a');m.tfs[k].setAttribute('r',kv>=75?9:kv>=50?7.5:6);}m.homesFlat('#314640');m.showBats(false);legend($('#bdLegend'),[{c:sizeC[25],t:'25 kVA'},{c:sizeC[50],t:'50 kVA'},{c:sizeC[75],t:'75 kVA'}]);}
+  }
+  $$('#bdLayers button').forEach(function(b){b.onclick=function(){layer(b.getAttribute('data-l'));};});
+  layer('loading');
+  m.svg.addEventListener('click',function(e){var t=e.target;if(t.getAttribute&&t.getAttribute('data-i')!=null){var i=+t.getAttribute('data-i');$('#bdSel').innerHTML='<p class="sc-h">Selected transformer</p><div class="kv"><div><span>Size</span><b>'+G.tf[i][2]+' kVA</b></div><div><span>Homes</span><b>'+(counts[i]||0)+'</b></div><div><span>Loading</span><b>'+L[i]+'%</b></div></div>';}});
+})();
+
+// ---------- 03 rebound ----------
+(function(){
+  var A=R['rebound.naive'],B=R['rebound.aware'];
+  var mA=new FeederMap($('#rbMapA'),{label:'Even split',homeR:2.6,tip:function(i){var p=Lof(A[state])[i];return '<b>'+G.tf[i][2]+' kVA</b> · <b>'+p+'%</b><br>'+tierName(p);}});
+  var mB=new FeederMap($('#rbMapB'),{label:'Feeder-aware',homeR:2.6,tip:function(i){var p=Lof(B[state])[i];return '<b>'+G.tf[i][2]+' kVA</b> · <b>'+p+'%</b><br>'+tierName(p);}});
+  mA.homesFlat('#2c403a',2.6);mB.homesFlat('#2c403a',2.6);
+  var state=3,timer=null;
+  function tiers(f){function c(cls,v,l){return '<div class="'+cls+(v?'':' zero')+'"><span>'+l+'</span><b>'+v+'</b></div>';}return c('t1',f.ov,'over nameplate')+c('t2',f.n110,'past 110%')+c('t3',f.n150,'past 150%');}
+  function cells(host,runs){host.innerHTML=runs.map(function(f,i){return '<i class="'+(f.ok?'ok':'')+(i===state?' now':'')+(i>state?' fut':'')+'" title="'+tlabel(f.m)+'">'+(f.ok?'✓':'!')+'</i>';}).join('');}
+  function render(){var a=A[state],b=B[state];
+    $('#rbClock').textContent=tlabel(a.m);$('#rbStep').value=state;$('#rbPrice').textContent='$'+a.price+'/MWh (scripted)';
+    mA.paintLoading(Lof(a));mB.paintLoading(Lof(b));
+    $('#rbTiersA').innerHTML=tiers(a);$('#rbTiersB').innerHTML=tiers(b);
+    $('#rbVA').textContent=fmt(a.minV,3)+' pu';$('#rbVB').textContent=fmt(b.minV,3)+' pu';
+    $('#rbVA').style.color=a.minV<0.95?'#ff8a7a':'';$('#rbVB').style.color=b.minV<0.95?'#ff8a7a':'';
+    var tgt=Math.max(1,a.t);$('#rbDA').textContent=fmt(a.d)+' / '+fmt(a.t)+' kW';$('#rbDB').textContent=fmt(b.d)+' / '+fmt(b.t)+' kW';
+    $('#rbBarA').style.width=(a.t?a.d/tgt*100:0)+'%';$('#rbBarB').style.width=(b.t?b.d/tgt*100:0)+'%';
+    cells($('#rbCellsA'),A);cells($('#rbCellsB'),B);}
+  function stop(){clearInterval(timer);timer=null;$('#rbPlay').textContent='▶';$('#rbPlay').setAttribute('aria-label','Play the hour');}
+  $('#rbStep').addEventListener('input',function(e){stop();state=+e.target.value;render();});
+  $('#rbPlay').onclick=function(){if(timer){stop();return;}if(state>=12)state=0;$('#rbPlay').textContent='❚❚';$('#rbPlay').setAttribute('aria-label','Pause');timer=setInterval(function(){state++;render();if(state>=12)stop();},1100);render();};
+  render();
+})();
+
+// ---------- small line chart helper (screen themed) ----------
+function lineChart(host,o){
+  var W=o.w||620,H=o.h||200,m={l:46,r:14,t:10,b:26};
+  var svg=el('svg',{viewBox:'0 0 '+W+' '+H,role:'img','aria-label':o.label});
+  var xs=function(i){return m.l+(W-m.l-m.r)*i/(o.n-1);},ys=function(v){return H-m.b-(H-m.t-m.b)*(v-o.y0)/(o.y1-o.y0);};
+  o.ticks.forEach(function(v){el('line',{x1:m.l,x2:W-m.r,y1:ys(v),y2:ys(v),stroke:'#233430'},svg);var t=el('text',{x:m.l-6,y:ys(v)+3,'text-anchor':'end','font-family':'IBM Plex Mono, monospace','font-size':10,fill:'#8fa199'},svg);t.textContent=o.tfmt(v);});
+  o.xl.forEach(function(p){var t=el('text',{x:xs(p[0]),y:H-8,'text-anchor':'middle','font-family':'IBM Plex Mono, monospace','font-size':10,fill:'#8fa199'},svg);t.textContent=p[1];});
+  if(o.rule!=null){el('line',{x1:m.l,x2:W-m.r,y1:ys(o.rule),y2:ys(o.rule),stroke:'#d03b3b','stroke-dasharray':'5 4','stroke-width':1.5},svg);var rt=el('text',{x:W-m.r,y:ys(o.rule)-5,'text-anchor':'end','font-size':10.5,fill:'#ff8a7a','font-family':'IBM Plex Sans, sans-serif'},svg);rt.textContent=o.ruleLabel;}
+  o.series.forEach(function(s){var d=s.v.map(function(v,i){return (i?'L':'M')+xs(i).toFixed(1)+','+ys(v).toFixed(1);}).join('');el('path',{d:d,fill:'none',stroke:s.c,'stroke-width':s.w||2,'stroke-dasharray':s.dash||'','stroke-linejoin':'round'},svg);
+    var last=s.v.length-1;el('circle',{cx:xs(last),cy:ys(s.v[last]),r:3.5,fill:s.c},svg);
+    if(s.label){var t=el('text',{x:xs(last)-6,y:ys(s.v[last])+(s.dy||-8),'text-anchor':'end','font-size':11,fill:'#e6ece8','font-family':'IBM Plex Sans, sans-serif'},svg);t.textContent=s.label;}});
+  // hover
+  var cross=el('line',{y1:m.t,y2:H-m.b,stroke:'#5f716a','stroke-width':1,opacity:0},svg);
+  var hit=el('rect',{x:m.l,y:m.t,width:W-m.l-m.r,height:H-m.t-m.b,fill:'transparent'},svg);
+  host.style.position='relative';host.appendChild(svg);
+  var tip=document.createElement('div');tip.className='tip';tip.hidden=true;host.appendChild(tip);
+  hit.addEventListener('mousemove',function(e){var r=svg.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W;var i=Math.round((x-m.l)/(W-m.l-m.r)*(o.n-1));i=Math.max(0,Math.min(o.n-1,i));
+    cross.setAttribute('x1',xs(i));cross.setAttribute('x2',xs(i));cross.setAttribute('opacity',1);
+    tip.innerHTML=o.tipTitle(i)+'<br>'+o.series.map(function(s){return '<span style="color:'+s.c+'">■</span> '+s.name+' <b>'+o.vfmt(s.v[i])+'</b>';}).join('<br>');
+    tip.hidden=false;var px=e.clientX-host.getBoundingClientRect().left+12;if(px>host.clientWidth-190)px-=200;tip.style.left=px+'px';tip.style.top='8px';});
+  hit.addEventListener('mouseleave',function(){tip.hidden=true;cross.setAttribute('opacity',0);});
+}
+
+// ---------- 04 heat wave ----------
+(function(){
+  var A=R['heatwave.naive'],B=R['heatwave.aware'];
+  var xl=[[0,tlabel(A[0].m)],[6,tlabel(A[6].m)],[12,tlabel(A[12].m)]];
+  lineChart($('#hwChartA'),{label:'Discharge delivered versus request',n:13,y0:0,y1:1000,ticks:[0,250,500,750,1000],tfmt:function(v){return v;},xl:xl,
+    series:[{name:'Request',v:A.map(function(f){return -f.t;}),c:'#93a49c',dash:'4 4',w:1.5,label:'Request',dy:-10},{name:'Even split',v:A.map(function(f){return -f.d;}),c:'#d95926',label:'',dy:14},{name:'Feeder-aware',v:B.map(function(f){return -f.d;}),c:'#3987e5',label:'Feeder-aware',dy:16}],
+    tipTitle:function(i){return tlabel(A[i].m);},vfmt:function(v){return fmt(v)+' kW';}});
+  lineChart($('#hwChartB'),{w:320,h:190,label:'Lowest battery state of charge',n:13,y0:0,y1:80,ticks:[0,20,40,60,80],tfmt:function(v){return v+'%';},xl:[[0,tlabel(A[0].m)],[12,tlabel(A[12].m)]],rule:20,ruleLabel:'20% backup floor',
+    series:[{name:'Even split',v:A.map(function(f){return f.minSoc*100;}),c:'#d95926',label:'Even',dy:-8},{name:'Feeder-aware',v:B.map(function(f){return f.minSoc*100;}),c:'#3987e5',label:'Aware',dy:14}],
+    tipTitle:function(i){return tlabel(A[i].m);},vfmt:function(v){return fmt(v,1)+'%';}});
+  var a=A[12],b=B[12];
+  function row(l,x,y){return '<div style="display:grid;grid-template-columns:1fr 64px 64px;gap:6px;padding:4px 0;border-top:1px solid #233430"><span style="color:#93a49c">'+l+'</span><b style="font-family:var(--mono);font-weight:500;text-align:right">'+x+'</b><b style="font-family:var(--mono);font-weight:500;text-align:right">'+y+'</b></div>';}
+  $('#hwTable').innerHTML='<div style="display:grid;grid-template-columns:1fr 64px 64px;gap:6px;font-size:10px;color:#93a49c"><span></span><span style="text-align:right;color:#d95926">EVEN</span><span style="text-align:right;color:#3987e5">AWARE</span></div>'+row('Delivered',fmt(-a.d)+' kW',fmt(-b.d)+' kW')+row('Held back',fmt(a.sf)+' kW',fmt(b.sf)+' kW')+row('Top transformer',fmt(a.maxL,0)+'%',fmt(b.maxL,0)+'%')+row('Violations',a.ov+a.vv,b.ov+b.vv)+row('Lowest charge',fmt(a.minSoc*100,0)+'%',fmt(b.minSoc*100,0)+'%');
+})();
+
+// ---------- 05 siting ----------
+(function(){
+  var cands=D.cands; // [homeIdx,value,risk,relief,vsupMpu,headroomKW]
+  var m=new FeederMap($('#stMap'),{label:'Candidate homes ranked',homeR:3,tip:null});
+  m.paintFlat('#223630');m.homesFlat('#23332f',2.6);m.showBats(true);
+  var ring=el('circle',{r:22,fill:'none',stroke:'#e6ece8','stroke-width':4,opacity:0},m.over);
+  var labels=el('g',{},m.over);
+  var lam=1,sel=null,ranked=[];
+  function rank(){ranked=cands.map(function(c){return {c:c,s:c[1]-lam*c[2]};}).sort(function(a,b){return b.s-a.s;});}
+  function paint(){var n=ranked.length;
+    for(var i=0;i<m.homes.length;i++){m.homes[i].setAttribute('fill','#23332f');m.homes[i].setAttribute('r',2.6);}
+    ranked.forEach(function(r,i){var h=m.homes[r.c[0]];var q=1-i/n;h.setAttribute('fill',i<10?'#5cc4be':mix('#253a34','#3f7f73',q*q));h.setAttribute('r',i<10?9:i<100?4.5:3);});
+    while(labels.firstChild)labels.removeChild(labels.firstChild);
+    ranked.slice(0,3).forEach(function(r,i){var h=G.homes[r.c[0]];var t=el('text',{x:h[0]+13,y:h[1]+6,'font-size':30,'font-family':'IBM Plex Mono, monospace',fill:'#e6ece8','font-weight':600},labels);t.textContent=i+1;});}
+  function list(){$('#stRank').innerHTML=ranked.slice(0,10).map(function(r,i){var c=r.c,tot=c[1]+Math.max(0,c[2]);var vw=c[1]/Math.max(1,tot)*100;
+      return '<li role="option" aria-selected="'+(sel===c[0])+'" data-h="'+c[0]+'"><span class="n">'+(i+1)+'</span><span>Home '+String(c[0]+1).padStart(4,'0')+'<span class="vr"><i style="width:'+vw+'%;background:#5cc4be"></i><i style="width:'+(100-vw)+'%;background:#ec835a"></i></span></span><span class="sc">'+fmt(r.s,1)+'</span></li>';}).join('');
+    $$('#stRank li').forEach(function(li){li.onclick=function(){select(+li.getAttribute('data-h'));};});}
+  function select(h){sel=h;var r=null,ri=0;ranked.forEach(function(x,i){if(x.c[0]===h){r=x;ri=i;}});if(!r)return;var c=r.c,H=G.homes[h];
+    ring.setAttribute('cx',H[0]);ring.setAttribute('cy',H[1]);ring.setAttribute('opacity',1);
+    $('#stDetail').innerHTML='<b class="pin scpin r">2</b><p class="sc-h">Home '+String(h+1).padStart(4,'0')+' · rank '+(ri+1)+' of 911 · '+G.districts[G.homeDistrict[h]]+'</p>'+
+      '<div class="kv"><div><span>Value</span><b style="color:#5cc4be">'+fmt(c[1],1)+'</b></div><div><span>Risk</span><b style="color:#ec835a">'+fmt(c[2],1)+'</b></div><div><span>Score</span><b>'+fmt(r.s,1)+'</b></div>'+
+      '<div><span>Peak relief</span><b>'+fmt(c[3],1)+'</b></div><div><span>Voltage support</span><b>'+fmt(c[4],2)+' mpu</b></div><div><span>Charge headroom</span><b>'+fmt(c[5],1)+' kW</b></div></div>'+
+      '<p style="margin:8px 0 0;font-size:11px;color:#93a49c">Each figure is the difference between an OpenDSS solve with a 20 kW Core at this home and one without it.</p>';
+    list();}
+  function update(){rank();paint();list();if(sel==null||!ranked.slice(0,10).some(function(r){return r.c[0]===sel;}))select(ranked[0].c[0]);else select(sel);}
+  $('#stLam').addEventListener('input',function(e){lam=+e.target.value;$('#stLamOut').textContent=lam.toFixed(1);update();});
+  update();
+})();
+
+// ---------- 06 covert ----------
+(function(){
+  var resp='quarantine',state=6,timer=null;
+  function run(){return R[resp==='quarantine'?'covert.aware_quarantine':'covert.aware'];}
+  var m=new FeederMap($('#cvMap'),{label:'Covert channel cohort',homeR:3,tip:null});
+  m.homesFlat('#26382f',2.6);
+  var cohort=[];G.homes.forEach(function(h,i){if(h[4])cohort.push(i);});
+  var marks=el('g',{},m.over);
+  var cm=cohort.map(function(i){var h=G.homes[i];return el('circle',{cx:h[0],cy:h[1],r:13,fill:'none',stroke:'#e87ba4','stroke-width':3.5},marks);});
+  // frame cohort
+  var xs=cohort.map(function(i){return G.homes[i][0];}),ys=cohort.map(function(i){return G.homes[i][1];});
+  el('rect',{x:Math.min.apply(null,xs)-34,y:Math.min.apply(null,ys)-34,width:Math.max.apply(null,xs)-Math.min.apply(null,xs)+68,height:Math.max.apply(null,ys)-Math.min.apply(null,ys)+68,rx:14,fill:'none',stroke:'#e87ba4','stroke-width':2.5,'stroke-dasharray':'10 8'},marks);
+  function render(){var R0=run(),f=R0[state];
+    $('#cvClock').textContent=tlabel(f.m);$('#cvStep').value=state;
+    m.paintLoading(Lof(f));
+    var flagged={};f.flags.forEach(function(i){flagged[i]=1;});
+    cm.forEach(function(c,k){var fl=flagged[cohort[k]];c.setAttribute('stroke',fl?(resp==='quarantine'&&f.q?'#93a49c':'#d03b3b'):(f.m>=1185?'#e87ba4':'#5f716a'));c.setAttribute('r',fl?16:12);});
+    $('#cvCells').innerHTML=R0.map(function(x,i){return '<i class="'+(x.ok?'ok':'')+(i===state?' now':'')+(i>state?' fut':'')+'" title="'+tlabel(x.m)+'">'+(x.ok?'✓':'!')+'</i>';}).join('');
+    $('#cvDeliv').textContent=fmt(f.d)+' / '+fmt(f.t)+' kW';
+    $('#cvFix').textContent=f.fix;
+    $('#cvFlags').innerHTML=f.flags.length+'<small>/ 96</small>';
+    $('#cvFlagBox').classList.toggle('bad',f.flags.length>0);
+    $('#cvDet').textContent=f.flags.length?'first flag '+Math.round(f.det/60)+' min after injection':(f.m>=1185?'signal present, not yet sustained':'no signal yet');
+    $('#cvFP').textContent=fmt(f.fp,0)+'%';
+    var txt;
+    if(!f.flags.length)txt=f.m>=1185?'The signal has started. Tracking is fine and nothing is flagged yet: the detector needs a sustained, correlated pattern.':'Legitimate commands only. The detector watches every battery’s meter residual and local voltage.';
+    else if(resp==='quarantine')txt=f.q?'<b style="color:#e6ece8">'+f.q+' batteries quarantined.</b> They leave future commitments ('+fmt(R0[0].t)+' → '+fmt(f.t)+' kW) and the rest of the fleet is re-dispatched. Backup stays armed for those homes.':'<b style="color:#ff8a7a">24 flagged.</b> Quarantine takes effect on the next 5-minute step.';
+    else txt='<b style="color:#ff8a7a">24 flagged, no action.</b> The pattern keeps running. Switch to auto-quarantine to replay the response branch.';
+    $('#cvResponse').innerHTML=txt+'<div class="mline"><span>Blast radius of this foothold</span><b>'+fmt(f.blast,2)+' MW</b></div>';}
+  function stop(){clearInterval(timer);timer=null;$('#cvPlay').textContent='▶';}
+  $('#cvStep').addEventListener('input',function(e){stop();state=+e.target.value;render();});
+  $('#cvPlay').onclick=function(){if(timer){stop();return;}if(state>=12)state=0;$('#cvPlay').textContent='❚❚';timer=setInterval(function(){state++;render();if(state>=12)stop();},1100);render();};
+  $$('#cvResp button').forEach(function(b){b.onclick=function(){resp=b.getAttribute('data-r');$$('#cvResp button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b));});render();};});
+  render();
+})();
+
+// ---------- 07 failover ----------
+(function(){
+  var svg=$('#foSvg');
+  var coord={x:280,y:12,w:160,h:40},workers=[{x:40,y:112,id:'worker-1'},{x:280,y:112,id:'worker-2'},{x:520,y:112,id:'worker-3'}];
+  function box(x,y,w,h,t,s,cls){var g=el('g',{class:'node '+(cls||'')},svg);el('rect',{x:x,y:y,width:w,height:h,rx:6},g);var a=el('text',{x:x+w/2,y:y+(s?18:h/2+4),'text-anchor':'middle'},g);a.textContent=t;var b=null;if(s){b=el('text',{x:x+w/2,y:y+33,'text-anchor':'middle',class:'s'},g);b.textContent=s;}return {g:g,t:a,s:b};}
+  var C0=box(coord.x,coord.y,coord.w,coord.h,'coordinator','leases · epochs');
+  var leases=workers.map(function(w){return el('path',{d:'M'+(coord.x+coord.w/2)+','+(coord.y+coord.h)+' C'+(coord.x+coord.w/2)+','+(coord.y+coord.h+30)+' '+(w.x+80)+','+(w.y-30)+' '+(w.x+80)+','+w.y,class:'lease'},svg);});
+  var W=workers.map(function(w){return box(w.x,w.y,160,44,w.id,'shard '+(workers.indexOf(w)+1)+' · epoch 8');});
+  var bats=[],msgs=[];
+  workers.forEach(function(w,k){for(var j=0;j<3;j++){var bx=w.x+j*56-6,by=250;var b=box(bx,by,48,38,'▰','',"bat");b.t.setAttribute('y',by+24);bats.push({b:b,k:k});
+    msgs.push({k:k,p:el('path',{d:'M'+(w.x+80)+','+(w.y+44)+' L'+(bx+24)+','+by,class:'msg'},svg)});}});
+  var capA=el('text',{x:360,y:318,'text-anchor':'middle','font-family':'IBM Plex Mono, monospace','font-size':11,fill:'#93a49c'},svg);
+  var S=[
+    ['Normal','Three workers each hold a 3-second lease on a group of transformers, all at epoch 8. Every command carries the epoch, a sequence number and a 30-second expiry.',function(){}],
+    ['kill -9 worker-2','Worker-2 dies. Its lease lapses after 3 seconds. Its batteries keep their last command until it expires, so delivery does not dip.',function(){W[1].g.classList.add('dead');W[1].s.textContent='killed';msgs.forEach(function(m){if(m.k===1)m.p.classList.add('off');});leases[1].style.opacity=.15;}],
+    ['Takeover at epoch 9','The coordinator hands shard 2 to worker-3 at epoch 9. Worker-3 resends every command in full. The battery now accepts only epoch 9 or higher for that shard.',function(){W[1].g.classList.add('dead');W[1].s.textContent='killed';leases[1].style.opacity=.15;W[2].s.textContent='shards 2+3 · epoch 9';msgs.forEach(function(m){if(m.k===1){m.p.setAttribute('d',m.p.getAttribute('d').replace(/^M[\d.]+,[\d.]+/,'M600,156'));}});}],
+    ['Zombie rejected','Worker-2 comes back from a pause and sends an old epoch-8 command. The battery rejects it as STALE_EPOCH. Nothing it says can move power.',function(){W[1].g.classList.add('zombie');W[1].s.textContent='revived · epoch 8';leases[1].style.opacity=.15;W[2].s.textContent='shards 2+3 · epoch 9';msgs.forEach(function(m){if(m.k===1){m.p.classList.add('bad');}});bats.forEach(function(b){if(b.k===1)b.b.g.classList.add('rej');});bats[3].b.t.textContent='✕';}],
+    ['Silent battery','One battery loses its connection. After 180 s it is stale; when its command expires it idles with backup armed. The worker gives its share to a neighbour on the same feeder.',function(){msgs[7].p.classList.add('off');bats[7].b.g.classList.add('idle');bats[7].b.t.textContent='idle';bats[8].b.t.textContent='▰+';}]
+  ];
+  var cur=0;
+  function reset(){W.forEach(function(w,k){w.g.classList.remove('dead','zombie');w.s.textContent='shard '+(k+1)+' · epoch 8';});leases.forEach(function(l){l.style.opacity='';});
+    msgs.forEach(function(m,i){m.p.classList.remove('off','bad');var w=workers[m.k],bx=w.x+(i%3)*56-6;m.p.setAttribute('d','M'+(w.x+80)+','+(w.y+44)+' L'+(bx+24)+',250');});
+    bats.forEach(function(b){b.b.g.classList.remove('rej','idle');b.b.t.textContent='▰';});}
+  function go(i){cur=i;reset();S[i][2]();$('#foCap').innerHTML='<b>'+(i+1)+' / '+S.length+'</b>'+S[i][1];capA.textContent=['normal operation','worker-2 down · batteries hold last command','shard 2 moved to worker-3 at epoch 9','epoch-8 command rejected: STALE_EPOCH','battery silent 180 s · idle, backup armed'][i];
+    $$('#foSteps button').forEach(function(b,k){b.setAttribute('aria-pressed',String(k===i));});}
+  $('#foSteps').innerHTML=S.map(function(s,i){return '<button type="button">'+(i+1)+' · '+s[0]+'</button>';}).join('');
+  $$('#foSteps button').forEach(function(b,i){b.onclick=function(){go(i);};});
+  go(0);
+})();
+
+// ---------- 08 ERCOT charts (page themed) ----------
+function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
+function pageChart(host,o){
+  var W=o.w,H=o.h,m=o.m||{l:48,r:16,t:12,b:28};
+  var svg=el('svg',{viewBox:'0 0 '+W+' '+H,role:'img','aria-label':o.label});host.appendChild(svg);host.style.position='relative';
+  var tip=document.createElement('div');tip.className='ctip';tip.hidden=true;host.parentNode.appendChild(tip);
+  return {svg:svg,m:m,W:W,H:H,tip:tip};
+}
+(function(){
+  var day=D.ercot.day,zones=[['LZ_NORTH','--s1'],['LZ_AEN','--s2'],['LZ_HOUSTON','--s3']];
+  var P=pageChart($('#chPrice'),{w:900,h:260,label:'15-minute real-time prices on 22 July 2026 for three load zones'});
+  var svg=P.svg,m=P.m,W=P.W,H=P.H;
+  var xs=function(i){return m.l+(W-m.l-m.r)*i/95;},ys=function(v){return H-m.b-(H-m.t-m.b)*v/360;};
+  var ax=el('g',{class:'axis'},svg);
+  [0,100,200,300].forEach(function(v){el('line',{x1:m.l,x2:W-m.r,y1:ys(v),y2:ys(v),class:'gridl'},ax);var t=el('text',{x:m.l-6,y:ys(v)+3,'text-anchor':'end'},ax);t.textContent='$'+v;});
+  [0,24,48,72,95].forEach(function(i){var t=el('text',{x:xs(i),y:H-8,'text-anchor':'middle'},ax);t.textContent=i===95?'23:45':String(i/4).padStart(2,'0')+':00';});
+  // cheapest 2h window on this day (LZ_NORTH)
+  var v=day.LZ_NORTH,best=0,bs=1e9;for(var s=0;s<=88;s++){var sum=0;for(var k=0;k<8;k++)sum+=v[s+k];if(sum<bs){bs=sum;best=s;}}
+  el('rect',{x:xs(best),y:m.t,width:xs(best+8)-xs(best),height:H-m.t-m.b,fill:'currentColor',opacity:.06},svg);
+  var bt=el('text',{x:xs(best)+4,y:m.t+12,'font-size':11,fill:'currentColor','font-family':'IBM Plex Sans, sans-serif'},svg);bt.textContent='cheapest 2 h: '+String(Math.floor(best/4)).padStart(2,'0')+':'+String(best%4*15).padStart(2,'0');
+  var paths=zones.map(function(z,zi){var d=day[z[0]].map(function(p,i){return (i?'L':'M')+xs(i).toFixed(1)+','+ys(p).toFixed(1);}).join('');return el('path',{d:d,fill:'none','stroke-width':zi===0?2.4:1.6,opacity:zi===0?1:.8},svg);});
+  var peakI=0;v.forEach(function(p,i){if(p>v[peakI])peakI=i;});
+  var pk=el('circle',{cx:xs(peakI),cy:ys(v[peakI]),r:4.5},svg);
+  var pt=el('text',{x:xs(peakI)-8,y:ys(v[peakI])+4,'text-anchor':'end','font-size':12,fill:'currentColor','font-family':'IBM Plex Mono, monospace'},svg);pt.textContent='$'+v[peakI].toFixed(2)+' · 22:00';
+  var cross=el('line',{y1:m.t,y2:H-m.b,stroke:'currentColor',opacity:0},svg);
+  var hit=el('rect',{x:m.l,y:m.t,width:W-m.l-m.r,height:H-m.t-m.b,fill:'transparent'},svg);
+  function colors(){zones.forEach(function(z,i){paths[i].setAttribute('stroke',cssVar(z[1]));});pk.setAttribute('fill',cssVar('--s1'));}
+  colors();
+  $('#chPriceLegend').innerHTML=zones.map(function(z){return '<span><i style="background:var('+z[1]+')"></i>'+z[0]+'</span>';}).join('');
+  hit.addEventListener('mousemove',function(e){var r=svg.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W;var i=Math.max(0,Math.min(95,Math.round((x-m.l)/(W-m.l-m.r)*95)));
+    cross.setAttribute('x1',xs(i));cross.setAttribute('x2',xs(i));cross.setAttribute('opacity',.35);
+    P.tip.innerHTML=String(Math.floor(i/4)).padStart(2,'0')+':'+String(i%4*15).padStart(2,'0')+'<br>'+zones.map(function(z){return z[0]+' $'+day[z[0]][i].toFixed(2);}).join('<br>');
+    P.tip.hidden=false;var hr=P.tip.parentNode.getBoundingClientRect();var px=e.clientX-hr.left+14;if(px>hr.width-170)px-=190;P.tip.style.left=px+'px';P.tip.style.top='54px';});
+  hit.addEventListener('mouseleave',function(){P.tip.hidden=true;cross.setAttribute('opacity',0);});
+  window.__hbColors=(window.__hbColors||[]);window.__hbColors.push(colors);
+})();
+(function(){
+  var W=440,H=230,m={l:34,r:10,t:14,b:28};
+  var host=$('#chWin');var P=pageChart(host,{w:W,h:H,label:'Histogram of the start hour of each summer day’s cheapest two-hour recharge window'});var svg=P.svg;
+  var zone='LZ_NORTH',bars=[],lab;
+  var bw=(W-m.l-m.r)/24,ys=function(v){return H-m.b-(H-m.t-m.b)*v/24;};
+  var ax=el('g',{class:'axis'},svg);[0,10,20].forEach(function(v){el('line',{x1:m.l,x2:W-m.r,y1:ys(v),y2:ys(v),class:'gridl'},ax);var t=el('text',{x:m.l-5,y:ys(v)+3,'text-anchor':'end'},ax);t.textContent=v;});
+  [0,6,12,18,23].forEach(function(h){var t=el('text',{x:m.l+bw*h+bw/2,y:H-9,'text-anchor':'middle'},ax);t.textContent=String(h).padStart(2,'0');});
+  el('rect',{x:m.l+bw*7,y:m.t,width:bw*4,height:H-m.t-m.b,fill:'currentColor',opacity:.05},svg);
+  for(var h=0;h<24;h++){bars.push(el('rect',{x:m.l+bw*h+1,width:bw-2,rx:2},svg));}
+  lab=el('text',{x:m.l+bw*11+6,y:m.t+14,'font-size':12,fill:'currentColor','font-family':'IBM Plex Sans, sans-serif'},svg);
+  function draw(){var d=D.ercot.cheapWindow[zone],c=d.counts;
+    bars.forEach(function(b,h){var v=c[h];b.setAttribute('y',ys(v));b.setAttribute('height',Math.max(0,ys(0)-ys(v)));b.setAttribute('fill',h>=7&&h<=10?cssVar('--accent'):cssVar('--faint'));b.setAttribute('opacity',h>=7&&h<=10?1:.55);b.onmousemove=function(e){P.tip.innerHTML=String(h).padStart(2,'0')+':00–'+String(h).padStart(2,'0')+':59 start<br>'+v+' of '+d.days+' days';P.tip.hidden=false;var hr=P.tip.parentNode.getBoundingClientRect();P.tip.style.left=(e.clientX-hr.left+12)+'px';P.tip.style.top=(e.clientY-hr.top-40)+'px';};b.onmouseleave=function(){P.tip.hidden=true;};});
+    lab.textContent=d.morning+' of '+d.days+' days start 07:00–10:59';
+    $$('#chWinZones button').forEach(function(b){b.setAttribute('aria-pressed',String(b.textContent===zone));});}
+  $('#chWinZones').innerHTML=['LZ_NORTH','LZ_AEN','LZ_HOUSTON'].map(function(z){return '<button type="button">'+z+'</button>';}).join('');
+  $$('#chWinZones button').forEach(function(b){b.onclick=function(){zone=b.textContent;draw();};});
+  draw();window.__hbColors=(window.__hbColors||[]);window.__hbColors.push(draw);
+})();
+(function(){
+  var W=440,H=230,m={l:44,r:12,t:14,b:28};
+  var P=pageChart($('#chFme'),{w:W,h:H,label:'Frequency dip per MW lost by year, 2015 to 2026'});var svg=P.svg;
+  var y0=2015,y1=2026,xs=function(y){return m.l+(W-m.l-m.r)*(y-y0+.5)/(y1-y0+1);},ys=function(v){return H-m.b-(H-m.t-m.b)*v/0.40;};
+  var ax=el('g',{class:'axis'},svg);[0,0.1,0.2,0.3,0.4].forEach(function(v){el('line',{x1:m.l,x2:W-m.r,y1:ys(v),y2:ys(v),class:'gridl'},ax);var t=el('text',{x:m.l-5,y:ys(v)+3,'text-anchor':'end'},ax);t.textContent=v.toFixed(1);});
+  [2015,2018,2021,2024,2026].forEach(function(y){var t=el('text',{x:xs(y),y:H-9,'text-anchor':'middle'},ax);t.textContent=y;});
+  var yl=el('text',{x:m.l,y:m.t-2,'font-size':10,fill:'currentColor',opacity:.6,'font-family':'IBM Plex Mono, monospace'},svg);yl.textContent='mHz per MW lost';
+  el('line',{x1:xs(2021.5),x2:xs(2021.5),y1:m.t,y2:H-m.b,stroke:'currentColor','stroke-dasharray':'3 4',opacity:.4},svg);
+  var sl=el('text',{x:xs(2021.5)+4,y:m.t+24,'font-size':10.5,fill:'currentColor',opacity:.7,'font-family':'IBM Plex Sans, sans-serif'},svg);sl.textContent='standard changed';
+  var seed=7;function rnd(){seed=(seed*16807)%2147483647;return seed/2147483647;}
+  var dots=D.fme.events.map(function(e){return el('circle',{cx:xs(e[0])+(rnd()-.5)*20,cy:ys(Math.min(e[2],0.4)),r:3.2,'fill-opacity':.45},svg);});
+  var meds=D.fme.byYear.map(function(r){return el('line',{x1:xs(r[0])-12,x2:xs(r[0])+12,y1:ys(r[2]),y2:ys(r[2]),'stroke-width':3,'stroke-linecap':'round'},svg);});
+  var a=D.fme.byYear[0],b=D.fme.byYear[D.fme.byYear.length-1];
+  var t1=el('text',{x:xs(2015)+14,y:ys(0.212)-8,'font-size':11.5,fill:'currentColor','font-family':'IBM Plex Mono, monospace'},svg);t1.textContent='0.212';
+  var t2=el('text',{x:xs(2026)-4,y:ys(0.081)-10,'text-anchor':'end','font-size':11.5,fill:'currentColor','font-family':'IBM Plex Mono, monospace'},svg);t2.textContent='0.081';
+  D.fme.events.forEach(function(e,i){dots[i].onmousemove=function(ev){P.tip.innerHTML=e[0]+' · '+fmt(e[1])+' MW lost<br>'+e[2].toFixed(3)+' mHz/MW';P.tip.hidden=false;var hr=P.tip.parentNode.getBoundingClientRect();P.tip.style.left=(ev.clientX-hr.left+12)+'px';P.tip.style.top=(ev.clientY-hr.top-40)+'px';};dots[i].onmouseleave=function(){P.tip.hidden=true;};});
+  function colors(){var c=cssVar('--s1'),k=cssVar('--ink');dots.forEach(function(d){d.setAttribute('fill',c);});meds.forEach(function(l){l.setAttribute('stroke',k);});}
+  colors();window.__hbColors=(window.__hbColors||[]);window.__hbColors.push(colors);
+})();
+// repaint page charts when theme changes
+new MutationObserver(function(){(window.__hbColors||[]).forEach(function(f){f();});}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+try{window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){(window.__hbColors||[]).forEach(function(f){f();});});}catch(e){}
+
+// ---------- callout <-> screen highlighting ----------
+$$('.callouts').forEach(function(list){var sec=list.closest('.sheet');
+  $$('li',list).forEach(function(li){var c=li.getAttribute('data-c');
+    li.addEventListener('mouseenter',function(){$$('[data-pin="'+c+'"]',sec).forEach(function(e){e.classList.add('hl-pin');});});
+    li.addEventListener('mouseleave',function(){$$('[data-pin="'+c+'"]',sec).forEach(function(e){e.classList.remove('hl-pin');});});});});
+
+// ---------- rail scroll spy ----------
+var links=$$('#railList a');
+if('IntersectionObserver' in window){var io=new IntersectionObserver(function(ents){ents.forEach(function(en){if(en.isIntersecting){links.forEach(function(a){a.classList.toggle('on',a.getAttribute('href')==='#'+en.target.id);});}});},{rootMargin:'-35% 0px -60% 0px'});
+  $$('.sheet').forEach(function(s){io.observe(s);});}
+})();
+</script>

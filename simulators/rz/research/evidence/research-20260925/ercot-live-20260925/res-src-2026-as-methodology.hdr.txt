@@ -1,0 +1,17 @@
+HTTP/2 200 
+etag: "19c2d1-63edbb8dd7790"
+last-modified: Mon, 15 Sep 2025 19:08:00 GMT
+content-type: application/pdf
+content-length: 1688273
+cache-control: max-age=60, public
+expires: Sat, 26 Sep 2026 04:08:27 GMT
+set-cookie: dtCookie=<redacted>; Path=/; Domain=.ercot.com
+date: Sat, 26 Sep 2026 04:07:27 GMT
+set-cookie: visid_incap_1217363=<redacted>; expires=Sat, 25 Sep 2027 06:54:02 GMT; HttpOnly; path=/; Domain=.ercot.com; Secure; SameSite=None
+set-cookie: incap_ses_912_1217363=<redacted>; path=/; Domain=.ercot.com; Secure; SameSite=None
+strict-transport-security: max-age=31536000
+x-cdn: Imperva
+access-control-allow-origin: https://mis.ercot.com
+content-security-policy: frame-ancestors 'self' https://*.ercot.com:*
+x-iinfo: 47-51083301-51083095 2VNN RT(1790395648156 23) q(0 0 0 -1) r(0 0) U20
+

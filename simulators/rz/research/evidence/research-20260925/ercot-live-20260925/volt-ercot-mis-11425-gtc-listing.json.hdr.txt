@@ -1,0 +1,19 @@
+HTTP/2 200 
+date: Sat, 26 Sep 2026 04:21:46 GMT
+server: Apache
+x-xss-protection: 1; mode=block
+x-frame-options: SAMEORIGIN
+strict-transport-security: max-age=31536000; includeSubdomains; preload
+x-frame-options: ALLOW-FROM ercot.com
+content-security-policy: frame-ancestors 'self' https://*.ercot.com:*;
+access-control-allow-methods: POST, GET
+server-timing: dtSInfo;desc="0", dtRpid;desc="458663928"
+set-cookie: dtCookie=<redacted>; Path=/; Domain=.ercot.com
+set-cookie: visid_incap_1217363=<redacted>; expires=Sat, 25 Sep 2027 07:33:02 GMT; HttpOnly; path=/; Domain=.ercot.com; Secure; SameSite=None
+set-cookie: incap_ses_912_1217363=<redacted>; path=/; Domain=.ercot.com; Secure; SameSite=None
+x-cdn: Imperva
+access-control-allow-origin: https://mis.ercot.com
+x-iinfo: 39-30158145-30156022 2NNN RT(1790396506842 21) q(0 0 0 -1) r(2 2) U18
+
+url=https://www.ercot.com/misapp/servlets/IceDocListJsonWS?reportTypeId=11425
+retrievedUtc=2026-09-26T04:21:46Z

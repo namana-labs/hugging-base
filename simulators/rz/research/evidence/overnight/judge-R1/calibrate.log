@@ -1,0 +1,18 @@
+profiles kW 254/254, kvar 254/254 (sha256 manifest in data/profiles/SOURCE.md) | slice 3000 x 15 min      [INVARIANT: ok]
+conformance: Loads and FixtureLoads match the 5.3 Python API (Loads ok; FixtureLoads ok)      [INVARIANT: ok]
+feeder: sim.feeder.Feeder (lane L0)      [report]
+unity pf: 20 kW of battery on A (Home 0212) with homes at 0 reads 81.4% (not 92.7%)      [INVARIANT: 80 +/- 3 ok]
+A   tr(r:p1udt9411-p1udt9411lv)   2026-08-23 no batteries: OpenDSS peak 122.1% at 16:45 | driver Home 0212 res_kw_38274_pu   [EXPECT: >110% and peak in 16:30-17:00: ok OpenDSS peak 122.1% at 16:45 | driver Home 0212 res_kw_38274_pu]
+240 tr(r:p1udt15649-p1udt15649lv) same day: OpenDSS peak 119.5% at 16:45 | driver Home 0409 res_kw_38274_pu (same profile as A)        [report]
+census Aug, OpenDSS, no batteries: >100% 5 ; >110% 2 ; >110% for >=30 min 1   (surrogate tonight: 4, 2, 0)   [report]
+  census tf 150 (25 kVA): peak 122.1% at 08-23 16:45 ; h>100 2.50 ; longest >110 run 30 min [08-19 09:30, 08-23 16:45, 08-25 21:45, 08-25 22:00] ; driver Home 0212 res_kw_38274_pu (shared with Home 0409, Home 0504)   [report]
+  census tf 240 (25 kVA): peak 119.5% at 08-23 16:45 ; h>100 1.25 ; longest >110 run 15 min [08-23 16:45] ; driver Home 0409 res_kw_38274_pu (shared with Home 0212, Home 0504)   [report]
+  census tf 358 (25 kVA): peak 103.2% at 08-27 18:15 ; h>100 0.50 ; longest >110 run 0 min [] ; driver Home 0869 res_kw_3576_pu   [report]
+  census tf 142 (25 kVA): peak 102.6% at 08-15 16:00 ; h>100 0.50 ; longest >110 run 0 min [] ; driver Home 0195 res_kw_29237_pu   [report]
+  census tf 92 (25 kVA): peak 101.9% at 08-16 16:15 ; h>100 0.25 ; longest >110 run 0 min [] ; driver Home 0112 res_kw_38841_pu (shared with Home 0040)   [report]
+surrogate vs OpenDSS, 300 frames incl. naive charge, naive discharge, none: max 0.91 pts ; p99 0.26 pts ; tf-frames >= 80% (n=2962): max 0.54, p99 0.22      [EXPECT: p99 <= 5.0: ok p99 0.26]
+  (held out: fitted on 240 separate frames, 379/379 tfs fitted | physics prior alone: max 4.02, p99 1.16 | no losses: max 9.00, p99 2.04)      [report]
+step: set 2021 loads + 96 batteries + solve + readout: 4.3 ms (load avg 10; census 2976 steps in 12.1 s)      [report]
+wrote data/profiles/surrogate.json and the SOURCE.md calibration section (surrogate_trusted true)      [report]
+(run 16 s)
+CALIBRATE: PASS (0 expectations refuted, see NOTES.md)

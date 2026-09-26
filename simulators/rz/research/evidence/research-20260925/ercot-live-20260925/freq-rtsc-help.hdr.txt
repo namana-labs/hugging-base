@@ -1,0 +1,29 @@
+retrieved_utc=2026-09-26T04:05:03Z url=https://www.ercot.com/help/popup/rtSysCondHelp
+HTTP/2 200 
+date: Sat, 26 Sep 2026 04:05:04 GMT
+server: Apache
+x-xss-protection: 1; mode=block
+x-frame-options: SAMEORIGIN
+strict-transport-security: max-age=31536000; includeSubdomains; preload
+cache-control: no-cache, no-store, max-age=0, must-revalidate
+pragma: no-cache
+expires: 0
+strict-transport-security: max-age=31536000 ; includeSubDomains
+x-xss-protection: 1; mode=block
+x-frame-options: ALLOW-FROM ercot.com
+x-content-type-options: nosniff
+referrer-policy: no-referrer
+content-security-policy-report-only: default-src * data: mediastream: blob: filesystem: about: ws: wss: 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline'
+x-permitted-cross-domain-policies: none
+vary: Origin,Access-Control-Request-Method,Access-Control-Request-Headers
+x-powered-by: CrafterCMS
+content-type: text/html;charset=UTF-8
+content-language: en-US
+x-oneagent-js-injection: true
+x-ruxit-js-agent: true
+content-security-policy: frame-ancestors 'self' https://*.ercot.com:*;
+server-timing: dtSInfo;desc="0", dtRpid;desc="1567570422"
+x-cdn: Imperva
+access-control-allow-origin: https://mis.ercot.com
+x-iinfo: 53-69223665-69189145 2NNN RT(1790395504047 31) q(0 0 0 -1) r(0 0) U18
+

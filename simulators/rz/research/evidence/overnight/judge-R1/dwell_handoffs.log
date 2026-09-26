@@ -1,0 +1,3 @@
+dwell1 {"handoffs": 323, "firstChargeStep": {"A": 389, "B": 409, "C": 420, "D": 360}, "kwhABCD": {"A": 55.1, "B": 51.9, "C": 49.1, "D": 92.1}, "maxLoading": 119.5, "tierGE3": 0, "chargedMeanPerMille": 999.8958333333334, "socMin": 203}
+dwell5_committed {"handoffs": 99, "firstChargeStep": {"A": 390, "B": 415, "C": 425, "D": 360}, "kwhABCD": {"A": 55.1, "B": 51.6, "C": 48.5, "D": 92.1}, "maxLoading": 119.5, "tierGE3": 0, "chargedMeanPerMille": 999.65625, "socMin": 203}
+dwell15 {"handoffs": 31, "firstChargeStep": {"A": 390, "B": 435, "C": 450, "D": 360}, "kwhABCD": {"A": 55.1, "B": 51.9, "C": 49.1, "D": 92.1}, "maxLoading": 119.5, "tierGE3": 0, "chargedMeanPerMille": 999.5416666666666, "socMin": 203}

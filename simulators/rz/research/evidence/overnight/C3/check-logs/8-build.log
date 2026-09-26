@@ -1,0 +1,65 @@
+topology.json: {'homes': 1010, 'transformers': 379, 'edges': 2531, 'fleet': 96, 'eligible': 1007} -> ui/data/topology.json (320 KB)
+BUILD topology: OK (0 s)
+fixtures: 22 files, 3.44 MB -> ui/data/fixtures
+BUILD fixtures: OK (1 s)
+P1 build 2026-08-23 16:00 + 720 x 60 s -> /Users/rzalagbada/hb-overnight/c3/ui/data/p1
+  none: max 122.1% (3.0 s)
+  naive: max 201.2% (6.0 s)
+  aware: max 119.5% (9.0 s)
+  aware_faults (12.1 s)
+  wrote meta.json 31 KB
+  wrote none.json 1827 KB
+  wrote naive.json 1944 KB
+  wrote aware.json 1949 KB
+  wrote aware_faults.json 1949 KB
+P1 build: 2884 OpenDSS solves in 12.1 s (4.2 ms/step incl. controller); Tc 22:00 ; 7.52 MB
+BUILD p1: OK (12 s)
+p2 naive-core-d26-g0: 0.3 s; #1 Home 0126
+p2 naive-core-d26-g20: 0.3 s; #1 Home 0126
+p2 naive-core-cheapest-g0: 0.3 s; #1 Home 0312
+p2 naive-core-cheapest-g20: 0.3 s; #1 Home 0541
+p2 naive-legacy-d26-g0: 0.3 s; #1 Home 0531
+p2 naive-legacy-d26-g20: 0.3 s; #1 Home 0195
+p2 naive-legacy-cheapest-g0: 0.3 s; #1 Home 0531
+p2 naive-legacy-cheapest-g20: 0.3 s; #1 Home 0195
+p2 aware-core-d26-g0: 0.9 s; #1 Home 0409
+p2 aware-core-d26-g20: 0.9 s; #1 Home 0195
+p2 aware-core-cheapest-g0: 0.9 s; #1 Home 0409
+p2 aware-core-cheapest-g20: 0.9 s; #1 Home 0195
+p2 aware-legacy-d26-g0: 0.8 s; #1 Home 0409
+p2 aware-legacy-d26-g20: 0.8 s; #1 Home 0195
+p2 aware-legacy-cheapest-g0: 0.8 s; #1 Home 0409
+p2 aware-legacy-cheapest-g20: 0.8 s; #1 Home 0195
+useful capacity: naive 383 / aware 1007
+p2 build: 19.8 s
+BUILD p2: OK (20 s)
+referee baseline aware-core-d26-g0: 2976 steps, 4.1 ms/step; shortlist err max 0.27 pts; normal events 0 (battery-caused 0); placed 0; head max 97.1% of 370 A at 2026-08-08 18:15 (per-phase estimate 97.7% there; estimate - OpenDSS +0.43 to +2.42 pts; balanced total read low by up to 3.7 pts)
+referee baseline naive-core-d26-g0: 2976 steps, 4.0 ms/step; shortlist err max 0.27 pts; normal events 308 (battery-caused 308); placed 0; head max 99.5% of 370 A at 2026-08-08 18:15 (per-phase estimate 100.1% there; estimate - OpenDSS +0.43 to +2.50 pts; balanced total read low by up to 3.72 pts)
+referee top5     aware-core-d26-g0: 2976 steps, 4.1 ms/step; shortlist err max 0.43 pts; normal events 0 (battery-caused 0); placed 5; head max 97.8% of 370 A at 2026-08-08 18:15 (per-phase estimate 98.4% there; estimate - OpenDSS +0.42 to +2.69 pts; balanced total read low by up to 3.45 pts)
+referee top5     naive-core-d26-g0: 2976 steps, 4.0 ms/step; shortlist err max 0.69 pts; normal events 308 (battery-caused 308); placed 5; head max 101.8% of 370 A at 2026-08-08 18:15 (per-phase estimate 102.3% there; estimate - OpenDSS +0.39 to +2.70 pts; balanced total read low by up to 4.77 pts)
+referee baseline aware-core-d26-g20: 2976 steps, 4.1 ms/step; shortlist err max 0.42 pts; normal events 5 (battery-caused 0); placed 0; head max 111.2% of 370 A at 2026-08-08 18:15 (per-phase estimate 111.7% there; estimate - OpenDSS +0.43 to +2.22 pts; balanced total read low by up to 4.12 pts)
+referee baseline naive-core-d26-g20: 2976 steps, 4.1 ms/step; shortlist err max 0.42 pts; normal events 374 (battery-caused 366); placed 0; head max 114.7% of 370 A at 2026-08-08 18:15 (per-phase estimate 115.0% there; estimate - OpenDSS +0.29 to +2.25 pts; balanced total read low by up to 4.32 pts)
+referee: 6 runs x 2976 | shortlist [104, 290, 95, 285, 201, 240, 142, 92] | error max 0.69 pts, p99 0.25 pts; all tfs max 1.25, p99 0.17; tier agreement 100.0% | 4.1 ms/step | 76 s
+referee capacity naive: 383 Cores from an empty feeder, 2976 steps, 12 s: battery-caused normal 3 (all 4), battery-caused emergency intervals 0, protection on 0 tfs, max tf 138.0% (tf 369, 2026-08-03 20:15); head max 176.5% of 370 A at 2026-08-08 18:15 (per-phase estimate 174.5% there, max 174.5%; balanced total 166.5%); min home voltage 0.9318 pu (Home 0076, 2026-08-21 19:00), homes < 0.95 pu 5; surrogate err all tfs max 2.87 p99 0.38 pts
+referee capacity aware: 1007 Cores from an empty feeder, 2976 steps, 13 s: battery-caused normal 0 (all 0), battery-caused emergency intervals 0, protection on 0 tfs, max tf 99.2% (tf 369, 2026-08-23 05:00); head max 95.9% of 370 A at 2026-08-29 01:30 (per-phase estimate 95.0% there, max 95.0%; balanced total 95.0%); min home voltage 0.9498 pu (Home 0369, 2026-08-28 20:00), homes < 0.95 pu 1; surrogate err all tfs max 2.72 p99 0.54 pts
+referee: wrote data/out/referee-2026-08.json; re-merging into ui/data/p2 (sim.p2_build)
+p2 naive-core-d26-g0: 0.3 s; #1 Home 0126
+p2 naive-core-d26-g20: 0.3 s; #1 Home 0126
+p2 naive-core-cheapest-g0: 0.3 s; #1 Home 0312
+p2 naive-core-cheapest-g20: 0.3 s; #1 Home 0541
+p2 naive-legacy-d26-g0: 0.3 s; #1 Home 0531
+p2 naive-legacy-d26-g20: 0.3 s; #1 Home 0195
+p2 naive-legacy-cheapest-g0: 0.3 s; #1 Home 0531
+p2 naive-legacy-cheapest-g20: 0.3 s; #1 Home 0195
+p2 aware-core-d26-g0: 0.9 s; #1 Home 0409
+p2 aware-core-d26-g20: 0.9 s; #1 Home 0195
+p2 aware-core-cheapest-g0: 0.9 s; #1 Home 0409
+p2 aware-core-cheapest-g20: 0.9 s; #1 Home 0195
+p2 aware-legacy-d26-g0: 0.8 s; #1 Home 0409
+p2 aware-legacy-d26-g20: 0.8 s; #1 Home 0195
+p2 aware-legacy-cheapest-g0: 0.8 s; #1 Home 0409
+p2 aware-legacy-cheapest-g20: 0.8 s; #1 Home 0195
+useful capacity: naive 383 / aware 1007
+p2 build: 19.4 s
+BUILD referee: OK (131 s)
+BUILD: PASS

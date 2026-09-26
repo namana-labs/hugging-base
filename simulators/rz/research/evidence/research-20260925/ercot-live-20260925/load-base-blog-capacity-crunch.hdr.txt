@@ -1,0 +1,14 @@
+HTTP/2 200 
+date: Sat, 26 Sep 2026 04:20:41 GMT
+content-type: text/html
+cf-cache-status: HIT
+cache-control: public, max-age=0, must-revalidate
+nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+link: <https://www.basepowercompany.com/blog/aggregated-ders-and-the-capacity-crunch.md>; rel="alternate"; type="text/markdown"
+vary: Accept, Accept-Encoding
+x-bpc-release-stage: public
+x-robots-tag: index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1
+report-to: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=Ft2ugn1dINu6zfn5Uotn8S2bRwbiYRQxMf5sLbxAOxXHPUkmcKRv7vNbklo0Fp4zOAiqg7Ld%2BJfwmivJCbNKoDC29v6rycgSn3UEuA1KfNIiW%2BOvFfbouMXYfbggrbziHHxz%2BkKw0WVNtg%3D%3D"}]}
+server: cloudflare
+cf-ray: a40f7a3e4e5747fd-DFW
+

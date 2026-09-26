@@ -1,0 +1,19 @@
+P1 build 2026-08-23 16:00 + 720 x 60 s -> /Users/rzalagbada/hb-overnight/tmp/l2-fix0-d15
+  none: max 122.1% (3.1 s)
+  naive: max 201.2% (6.1 s)
+  aware: max 119.5% (9.3 s)
+  aware_faults (12.5 s)
+  wrote meta.json 31 KB
+  wrote none.json 1827 KB
+  wrote naive.json 1944 KB
+  wrote aware.json 1936 KB
+  wrote aware_faults.json 1934 KB
+P1 build: 2884 OpenDSS solves in 12.5 s (4.3 ms/step incl. controller); Tc 22:00 ; 7.49 MB
+exit 0
+meta.json {'value': 15, 'label': 'ASSUMPTION', 'cite': 'override: judge check (--dwell 15); the committed build uses 5 (build prompt 5.4.3 step 5)'}
+none.json {'value': 15, 'label': 'ASSUMPTION', 'cite': 'override: judge check (--dwell 15); the committed build uses 5 (build prompt 5.4.3 step 5)'}
+naive.json {'value': 15, 'label': 'ASSUMPTION', 'cite': 'override: judge check (--dwell 15); the committed build uses 5 (build prompt 5.4.3 step 5)'}
+aware.json {'value': 15, 'label': 'ASSUMPTION', 'cite': 'override: judge check (--dwell 15); the committed build uses 5 (build prompt 5.4.3 step 5)'}
+aware_faults.json {'value': 15, 'label': 'ASSUMPTION', 'cite': 'override: judge check (--dwell 15); the committed build uses 5 (build prompt 5.4.3 step 5)'}
+dwell 5 (committed) hand-offs among A-D 99
+dwell 15 hand-offs among A-D 31
