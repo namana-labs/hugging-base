@@ -18,6 +18,7 @@ Labels: the shapes are SMART-DS 2018 (SIM); the 2018 -> 2026 calendar-date pairi
 minute interpolation is DERIVED. Knot k sits at the START of interval k (k x 15 min local; convention UNVERIFIED).
 """
 import datetime as _dt
+import re
 import json
 from functools import lru_cache
 from pathlib import Path
@@ -189,3 +190,75 @@ class Loads:
         return {'home': self.home_ids[h], 'label': self.home_labels[h], 'profile': profiles[0] if len(profiles) == 1 else profiles,
                 'kwAtPeak': {'v': round(float(kw[h]), 2), 'label': 'SIM'},
                 'sharedWith': [{'home': self.home_ids[s], 'label': self.home_labels[s], 'tf': int(self.home_tf[s])} for s in shared]}
+
+
+# -- the 5.3 conformance check (used by sim/tests/test_loads.py and sim.calibrate) ----------------------------------
+API_SHAPES = {'loads': 2021, 'homes': 1010, 'tfs': 379, 'steps': 3000}
+
+
+def api_conformance(obj):
+    """Problems (empty list = conforms) with `obj` against the 5.3 Loads API: names, return shapes and dtypes."""
+    probs = []
+    n = API_SHAPES
+
+    def arr(x, shape, what):
+        if not isinstance(x, np.ndarray):
+            probs.append(f'{what}: {type(x).__name__}, not ndarray')
+        elif x.shape != shape:
+            probs.append(f'{what}: shape {x.shape} != {shape}')
+        elif x.dtype != np.float64:
+            probs.append(f'{what}: dtype {x.dtype} != float64')
+        elif not np.all(np.isfinite(x)):
+            probs.append(f'{what}: non-finite values')
+
+    for attr, want in (('steps', n['steps']), ('step_minutes', 15), ('t0', '2026-08-01T00:00')):
+        got = getattr(obj, attr, None)
+        if got != want:
+            probs.append(f'.{attr} = {got!r} != {want!r}')
+    try:
+        r = obj.at_step(100)
+        if not (isinstance(r, tuple) and len(r) == 2):
+            probs.append('at_step: not a (kw, kvar) tuple')
+        else:
+            arr(r[0], (n['loads'],), 'at_step kw')
+            arr(r[1], (n['loads'],), 'at_step kvar')
+        for m in (16 * 60 + 45, 16 * 60 + 52, 1440 + 180):
+            r = obj.at_minute('2026-08-23', m)
+            arr(r[0], (n['loads'],), f'at_minute({m}) kw')
+            arr(r[1], (n['loads'],), f'at_minute({m}) kvar')
+        k = 22 * 96 + 67
+        a_kw, _ = obj.at_step(k)
+        m_kw, _ = obj.at_minute('2026-08-23', 16 * 60 + 45)
+        if not np.allclose(a_kw, m_kw):
+            probs.append('at_minute on a knot != at_step')
+        P, Q = obj.tf_pq(0, 4)
+        arr(P, (4, n['tfs']), 'tf_pq P')
+        arr(Q, (4, n['tfs']), 'tf_pq Q')
+        P, Q = obj.tf_pq(n['steps'] - 24, 24)
+        arr(P, (24, n['tfs']), 'tf_pq P (last 24)')
+        arr(obj.home_kw(10, 3), (3, n['homes']), 'home_kw')
+        name = obj.profile_of(0)
+        if not (isinstance(name, str) and re.match(r'^(res|com)_kw_\d+_pu$', name)):
+            probs.append(f'profile_of(0) = {name!r}')
+    except Exception as e:  # noqa: BLE001 - any exception is a conformance problem
+        probs.append(f'{type(e).__name__}: {e}')
+    return probs
+
+
+def conformance_report():
+    """(ok, text) for Loads and sim.fixtures.FixtureLoads (lane L0) against the 5.3 API."""
+    parts, ok = [], True
+    p = api_conformance(Loads())
+    parts.append('Loads ok' if not p else f'Loads FAIL {p[:3]}')
+    ok &= not p
+    try:
+        from .fixtures import FixtureLoads  # lane L0
+    except ImportError as e:
+        parts.append(f'FixtureLoads NOT AVAILABLE ({e}; sim.fixtures lands with lane L0)')
+        ok = False
+    else:
+        p = api_conformance(FixtureLoads())
+        parts.append('FixtureLoads ok' if not p else f'FixtureLoads FAIL {p[:3]}')
+        ok &= not p
+    text = ('Loads and FixtureLoads match the 5.3 Python API' if ok else 'mismatch') + ' (' + '; '.join(parts) + ')'
+    return ok, text
