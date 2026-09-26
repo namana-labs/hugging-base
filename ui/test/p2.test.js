@@ -442,3 +442,224 @@ test('outside the top 50: the naive standing of feeder-aware #1 comes from flip.
   }
   assert.deepEqual(standingOutside(idx, -5, -5, 'naive'), { rank: null, bridge: null });
 });
+
+// ------------------------------------------------------------------------------------ fix round 1 (judge R1)
+// F3: surrogate-only numbers carry the "screening" chip (build prompt 5.6.11, 3.4); refereed ones show OpenDSS's.
+// These mount the real P2 panel in node (a stub element; the data module reads the committed files) and fail when
+// any number whose cite says "not OpenDSS-checked" renders without the chip.
+import * as dataMod from '../lib/data.js';
+import { unscreenedChips, isScreening, SCREEN_CHIP, numHTML, engineUnit, reliefPeak, shareDigits } from '../panels/more.js';
+
+const DATA_DIR = path.join(UI, 'data') + path.sep;
+dataMod._configure({
+  base: DATA_DIR,
+  fetchFn: async (p) => (fs.existsSync(p)
+    ? { ok: true, status: 200, json: async () => JSON.parse(fs.readFileSync(p, 'utf8')) }
+    : { ok: false, status: 404, json: async () => null }),
+});
+
+async function mountP2(query) {
+  const { mount } = await import('../panels/p2.js');
+  const link = parseLink(query);
+  const el = { classList: { add() {} }, innerHTML: '', querySelector: () => null };
+  const models = [];
+  const ctx = {
+    topology, footprints: null, link, data: dataMod, fmt, sceneModel, theme: 'light',
+    scene: { update: (m) => models.push(m), camera() {}, onPick() {} },
+    href: (patch) => dataMod.linkQuery({ ...link, beat: null, ...patch }),
+    go() {}, reportError: (e) => { throw e; },
+  };
+  await mount(el, ctx);
+  return { html: el.innerHTML, model: models[models.length - 1] };
+}
+
+test('F3: the unscreened-chip check catches a surrogate number rendered without the chip (the admit half)', () => {
+  const x = { v: 145.6, label: 'SIM', cite: 'surrogate screen (sim.surrogate, calibrated vs OpenDSS); not OpenDSS-checked' };
+  assert.equal(unscreenedChips(fmt.fmtHTML(x, { unit: '%', digits: 1 })).length, 1, 'bare fmtHTML must be caught');
+  assert.deepEqual(unscreenedChips(numHTML(fmt, x, { unit: '%', digits: 1 })), []);
+  assert.ok(numHTML(fmt, x).includes(SCREEN_CHIP));
+  assert.equal(isScreening({ v: 96.9, label: 'SIM', cite: 'OpenDSS (sim.referee): before = baseline month' }), false);
+  assert.ok(!numHTML(fmt, { v: 96.9, label: 'SIM', cite: 'OpenDSS (sim.referee)' }).includes('screening'));
+});
+
+test('F3: every P2 link renders no "not OpenDSS-checked" number without the screening chip', async () => {
+  const ids = index.combos;
+  const real = realJSON('p2/index.json');
+  const links = [
+    ...ids.map((id) => `?view=p2&combo=${id}`),
+    '?view=p2&combo=naive-core-d26-g0&home=p1ulv24700',
+    '?view=p2&combo=aware-core-d26-g0&n=5',
+    ...beats.filter((b) => b.link.startsWith('view=p2')).map((b) => `?${b.link}&beat=${b.id}`),
+  ];
+  let n = 0;
+  for (const q of links) {
+    const { html } = await mountP2(q);
+    const bad = unscreenedChips(html);
+    assert.deepEqual(bad, [], `${q}: screening numbers without the chip:\n${bad.join('\n')}`);
+    n += (html.match(/p2-badge screen sm/g) || []).length;
+  }
+  if (real) assert.ok(n > 0, 'the real data has screening numbers, so some chips must render');
+});
+
+test('F3, REAL data: the naive "where NOT to put it" card, the flip #1 line and the handoff card', { skip: !realJSON('p2/index.json') && 'no real P2 data' }, async () => {
+  const idx = realJSON('p2/index.json');
+  const br = idx.bridge.find((b) => b.tf === 240) || idx.bridge[0];
+  const P = { unit: '%', digits: 1 };
+  // the naive bridge card (home not in the naive top 50): each surrogate number followed by the chip
+  const home = topology.homes[br.naive.home].id;
+  const { html: card } = await mountP2(`?view=p2&combo=naive-core-d26-g0&home=${home}`);
+  for (const k of ['peakWithoutPct', 'peakWithPct', 'h100Without', 'h100With']) {
+    if (!isScreening(br.naive[k])) continue;
+    const o = k.startsWith('h100') ? { unit: ' h', digits: 2 } : P;
+    assert.ok(card.includes(fmt.fmtHTML(br.naive[k], o) + SCREEN_CHIP), `naive bridge ${k} without the chip`);
+  }
+  // the default combo: the handoff shows OpenDSS's month peaks where the referee ran the candidate
+  const aw = realJSON('p2/aware-core-d26-g0.json');
+  const e = aw.ranking.find((x) => x.home === br.aware.home);
+  const { html: def } = await mountP2('?view=p2&combo=aware-core-d26-g0');
+  const hand = def.slice(def.indexOf('class="p2-handoff"'), def.indexOf('</section>', def.indexOf('class="p2-handoff"')));
+  assert.ok(hand.length > 0, 'handoff card rendered');
+  if (e && e.opendss && e.opendss.after && e.screening !== true) {
+    assert.ok(hand.includes('OpenDSS month run'), hand);
+    assert.ok(hand.includes(fmt.fmtHTML(e.opendss.before.peakPct, P)), `handoff lacks OpenDSS before ${e.opendss.before.peakPct.v}`);
+    assert.ok(hand.includes(fmt.fmtHTML(e.opendss.after.peakPct, P)), `handoff lacks OpenDSS after ${e.opendss.after.peakPct.v}`);
+    // the candidate card's metrics: OpenDSS's peak first, the surrogate beside it as screening
+    const met = def.slice(def.indexOf('class="p2-metrics"'));
+    assert.ok(met.includes(`${fmt.fmtHTML(e.opendss.after.peakPct, P)} OpenDSS · ${fmt.fmtHTML(e.peakWithPct, P)}${isScreening(e.peakWithPct) ? SCREEN_CHIP : ''}`), 'metrics peak row');
+  }
+  // the flip card's line for feeder-aware #1 under naive dispatch
+  const flip = def.slice(def.indexOf('class="p2-flip"'));
+  if (isScreening(br.naive.peakWithPct)) assert.ok(flip.includes(fmt.fmtHTML(br.naive.peakWithPct, P) + SCREEN_CHIP), 'flip #1 line');
+});
+
+test('F3: beat captions (P1 and P2 bars, the More list) chip every screening number', { skip: !(realJSON('p1/meta.json') && realJSON('p2/index.json')) && 'real data not built' }, () => {
+  const S = {
+    topology, p1meta: realJSON('p1/meta.json'), p2index: realJSON('p2/index.json'), engine: realJSON('engine.json'),
+    'p1:naive': realJSON('p1/naive.json'), 'p1:aware': realJSON('p1/aware.json'), 'p1:aware_faults': realJSON('p1/aware_faults.json'),
+    'p2:aware-core-d26-g0': realJSON('p2/aware-core-d26-g0.json'), 'p2:naive-core-d26-g0': realJSON('p2/naive-core-d26-g0.json'),
+  };
+  for (const b of beats) assert.deepEqual(unscreenedChips(resolveCaption(b.caption, S, fmt, { html: true })), [], b.id);
+});
+
+// F8: the handoff is part of the transformer's own label, never a second label at the same spot.
+test('F8: the P1 handoff merges into the T-240 label (no overlapping second label)', () => {
+  const doc = fx('p2/aware-core-d26-g0.json');
+  const ctx = { topology, footprints: null, sceneModel, theme: 'light' };
+  const tf = (topology.bridge && topology.bridge[0] && topology.bridge[0].tf) || 240;
+  const m = p2SceneModel(ctx, { doc, n: 1, p1meta: { unrelieved: [{ tf }] } });
+  const t = topology.transformers[tf];
+  const at = m.labels.filter((l) => !l.pin && l.position[0] === t.lonlat[0] && l.position[1] === t.lonlat[1]);
+  assert.equal(at.length, 1, 'one label at the transformer');
+  assert.ok(at[0].handoff && /P1: unrelieved/.test(at[0].text) && /P1: unrelieved/.test(at[0].short), JSON.stringify(at[0]));
+  assert.ok(/T-240/.test(at[0].text));
+});
+
+// F4: the problem beat carries the scale ladder, templated from p1/meta.json scaleLadder.
+test('F4: the problem caption templates every scale-ladder rung from the data, with labels', () => {
+  const b = beats.find((x) => x.id === 'problem');
+  assert.ok(b.caption.includes('{{scaleLadder}}') && b.caption.includes('{{scaleLadderKW}}'));
+  const meta = realJSON('p1/meta.json');
+  if (!meta || !meta.scaleLadder) return;
+  const txt = resolveCaption(b.caption, { topology, p1meta: meta }, fmt, { html: false });
+  assert.ok(!/not built yet/.test(txt), txt);
+  for (const r of meta.scaleLadder.rungs) {
+    const s = fmt.fmt(r.sharePct, { unit: '%', digits: shareDigits(r.sharePct.v) });
+    assert.ok(txt.includes(s), `rung ${r.scale}: ${s} missing from ${txt}`);
+    assert.ok(!/^0\.0+% /.test(s), `rung ${r.scale} prints as zero: ${s}`);
+    assert.ok(txt.includes(`${fmt.fmtValue(r.base, { digits: Number.isInteger(r.base.v) ? 0 : 1 })} ${r.base.unit} ${r.base.label}`), `rung ${r.scale} base`);
+  }
+  assert.equal(shareDigits(4.9e-5), 6);
+  assert.equal(shareDigits(0.501), 2);
+  assert.equal(shareDigits(160), 0);
+});
+
+// F7: "discharge up to X kW (HH:MM)", both read from the feeder-aware branch the gauge draws.
+test('F7: the relief caption gives the largest relief discharge and its minute, as the aware branch measured', () => {
+  const b = beats.find((x) => x.id === 'peak-relief');
+  assert.ok(b.caption.includes('up to {{reliefKWPeak}}'));
+  assert.ok(!/discharge \{\{reliefKW\}\}/.test(b.caption), 'the peak kW without its time must not be read as the kW at the relief step');
+  const meta = realJSON('p1/meta.json'), aw = realJSON('p1/aware.json');
+  if (!meta || !aw) return;
+  const p = reliefPeak(meta, aw, topology);
+  assert.ok(p, 'A discharges at the relief step');
+  const kw = aw.focus[p.key].batKW;
+  for (let k = p.from; k <= p.to; k++) assert.ok(kw[k] >= kw[p.step]);
+  if (meta.relief.reliefKW) assert.equal(p.kw.toFixed(1), meta.relief.reliefKW.v.toFixed(1), 'the aware series and meta.relief.reliefKW agree');
+  const txt = resolveCaption(b.caption, { topology, p1meta: meta, 'p1:aware': aw }, fmt, { html: false });
+  const [h, m] = meta.start.split(':').map(Number);
+  const t = h * 60 + m + p.step * meta.stepSeconds / 60;
+  const hhmm = `${String(Math.floor(t / 60) % 24).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
+  assert.ok(txt.includes(`up to ${p.kw.toFixed(1)} kW SIM (${hhmm} SIM)`), txt);
+});
+
+// F9: the performance card prints each number's unit.
+test('F9: engine.json rows carry their unit ("µs per call" for allocate)', () => {
+  assert.deepEqual(engineUnit('allocate · 96', { v: 66.6, label: 'SIM', cite: 'microseconds per stateless allocate() call, 96 batteries' }), { name: 'allocate(), 96 batteries', unit: ' µs per call' });
+  assert.equal(engineUnit('allocate · 100000', { v: 65011.7, label: 'SIM', cite: 'microseconds per stateless allocate() call' }).name, 'allocate(), 100,000 batteries');
+  assert.equal(engineUnit('opendss · msPerSolve', { v: 2.1, label: 'SIM', cite: 'median ms per OpenDSS solve' }).unit, ' ms');
+  assert.equal(engineUnit('p1 · buildSeconds', { v: 12.7, label: 'SIM', cite: 'last full sim.p1_build' }).unit, ' s');
+  assert.equal(engineUnit('p1 · solves', { v: 2884, label: 'SIM', cite: 'OpenDSS solves in that build' }).unit, '');
+  const eng = realJSON('engine.json');
+  if (eng && eng.allocate) for (const [k, v] of Object.entries(eng.allocate)) if (/^\d+$/.test(k)) assert.equal(engineUnit(`allocate · ${k}`, v).unit, ' µs per call', k);
+});
+
+// ------------------------------------------------------------------------------------ P3: the ERCOT console (5.7.3)
+import crypto from 'node:crypto';
+import { emsModel, mount as mountMore } from '../panels/more.js';
+
+const emsManifest = realJSON('ems/index.json');
+test('P3 ERCOT console: the snapshot is byte-identical to what its manifest lists (sha256)', { skip: !emsManifest && 'no ems snapshot' }, () => {
+  assert.ok(emsManifest.files.length >= 1);
+  for (const f of emsManifest.files) {
+    const buf = fs.readFileSync(path.join(UI, 'data', 'ems', f.name));
+    assert.equal(crypto.createHash('sha256').update(buf).digest('hex'), f.sha256, f.name);
+    assert.equal(buf.length, f.bytes, f.name);
+    const listed = emsManifest.siteEms.find((x) => x.name === f.name);
+    assert.ok(listed && listed.sha256 === f.sha256, `${f.name} is not the site/ems file the manifest hashed`);
+  }
+});
+
+test('P3 ERCOT console: four REAL-system cards whose numbers equal the snapshot (computed independently here)', { skip: !emsManifest && 'no ems snapshot' }, () => {
+  const synth = realJSON('ems/synth-console.json'), freq = realJSON('ems/freq-series.json');
+  const m = emsModel(synth, freq, emsManifest);
+  assert.deepEqual(m.cards.map((c) => c.key), ['frequency', 'prc', 'netload', 'congestion']);
+  const r = synth.real5;
+  const num = (a) => a.filter((x) => typeof x === 'number');
+  const stat = (key, name) => m.cards.find((c) => c.key === key).stats.find((s) => s.name === name);
+  // every part is prose or a labelled value; prose carries no digits of its own
+  for (const c of m.cards) {
+    assert.ok(['REAL', 'SIM', 'DERIVED', 'ASSUMPTION'].includes(c.label), c.key);
+    for (const s of c.stats) {
+      assert.ok(!/\d/.test(s.name), `${c.key}: digit in a stat name: ${s.name}`);
+      for (const x of s.parts || []) if (typeof x !== 'string') assert.ok(fmt.isLabelled(x), `${c.key}/${s.name}: ${JSON.stringify(x)}`);
+    }
+    for (const x of c.thread || []) if (typeof x !== 'string') assert.ok(fmt.isLabelled(x), `${c.key} thread: ${JSON.stringify(x)}`);
+  }
+  assert.equal(stat('frequency', 'lowest ten-second sample').parts[0].v, freq.stats.frequency.min_hz);
+  assert.equal(stat('prc', 'lowest PRC').parts[0].v, Math.min(...num(r.prcMinMW)));
+  assert.equal(stat('prc', 'lowest PRC').parts[0].label, r.fields.prcMinMW.status);
+  assert.equal(stat('netload', 'net-load peak (demand − wind − solar)').parts[0].v, Math.max(...num(r.netLoadMW)));
+  assert.equal(Math.abs(stat('netload', 'steepest quarter-hour ramp').parts[0].v), Math.max(...num(r.ramp15MWperMin).map(Math.abs)));
+  assert.equal(stat('congestion', 'most binding constraints in one bin').parts[0].v, Math.max(...num(r.scedBinding)));
+  assert.equal(stat('congestion', 'highest LZ_NORTH real-time price').parts[0].v, Math.max(...num(r.lzNorthUSD)));
+  // the time printed is the bin of that extreme
+  const i = r.prcMinMW.indexOf(Math.min(...num(r.prcMinMW)));
+  assert.equal(stat('prc', 'lowest PRC').parts[1].v, r.t[i]);
+  assert.match(m.caveat, /not live/);
+  assert.equal(emsModel(null, null, null), null);
+});
+
+test('P3: the More view renders the console and the rest of More, with every screening number chipped', async () => {
+  const link = parseLink('?view=more');
+  const el = { classList: { add() {} }, innerHTML: '', querySelector: () => null };
+  const ctx = { topology, footprints: null, link, data: dataMod, fmt, sceneModel, theme: 'light', scene: { update() {} },
+    href: (patch) => dataMod.linkQuery({ ...link, ...patch }), go() {}, reportError: (e) => { throw e; } };
+  await mountMore(el, ctx);
+  assert.match(el.innerHTML, /Performance/);
+  assert.match(el.innerHTML, /µs per call/);
+  assert.deepEqual(unscreenedChips(el.innerHTML), []);
+  if (emsManifest) {
+    assert.match(el.innerHTML, /ERCOT console/);
+    assert.equal((el.innerHTML.match(/data-ems="/g) || []).length, 4);
+  }
+});

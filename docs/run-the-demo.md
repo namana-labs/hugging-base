@@ -19,7 +19,7 @@ Open **http://127.0.0.1:8765/ui/**. Stop the server with Ctrl-C.
 |---|---|---|
 | **P1 · where to charge** | `?view=p1&branch=none\|naive\|aware\|aware_faults&t=HH:MM&cam=feeder\|street\|t240` | One evening (23 Aug 2026, 16:00 to 04:00, one-minute steps, OpenDSS every step) under four branches: no batteries, naive, feeder-aware, and feeder-aware with three failures. |
 | **P2 · where the next battery goes** | `?view=p2&combo=<policy>-<class>-<rule>-g<growth>&home=<home id>&n=1..10` | A month-long what-if (August 2026) ranking candidate homes with vs without a battery, under naive vs feeder-aware dispatch. |
-| **More** | `?view=more` | The five-minute beat list, money, how Base plugs it in, performance, and everything that already worked (the prototype stories, four-home). |
+| **More** | `?view=more` | The five-minute beat list, money, how Base plugs it in, performance (with units), everything that already worked (the prototype stories, four-home), and at the bottom the ERCOT console: frequency, reserves, net load and congestion for one recorded system day (25 Sep 2026, REAL, not live). |
 
 Add `&beat=<id>` to any link to apply a beat from `ui/data/beats.json`: the page jumps to that beat's view and clock and shows its caption, with a "next beat" link. The video script is `docs/demo-script.md`.
 
@@ -27,6 +27,7 @@ Combos: `policy` = `aware` or `naive`; `class` = `core` or `legacy`; `rule` = `d
 
 ## Reading the screen
 
+- **A dashed "screening" chip** marks a number from the per-transformer surrogate that OpenDSS did not re-check; where OpenDSS did (the shortlist), its number is shown first.
 - **Every number carries a label chip:** REAL (ERCOT prices, SMART-DS topology and ratings, OSM footprints, sourced programme facts), SIM (our simulation's output), DERIVED (arithmetic on REAL or SIM, such as dollars), ASSUMPTION (a named constant we chose). Hover a chip for its source.
 - **A yellow FIXTURE banner** means a view is showing synthetic stand-in data because the real file has not been built. Never record a take with the banner showing.
 - **"(not built yet)"** in a caption means the data that caption reads does not exist yet. It never falls back to a guess.

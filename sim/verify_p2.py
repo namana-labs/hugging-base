@@ -60,7 +60,7 @@ def main(argv):
     if rebuild:
         before = snapshot()
         from . import referee
-        print("rebuild: sim.referee (16 combos + useful capacity + 6 OpenDSS months + re-merge) ...")
+        print("rebuild: sim.referee (16 combos + useful capacity + 6 + 2 OpenDSS months + re-merge) ...")
         referee.run(out=lambda s: None)
     idx = load("index.json")
     combos = {c: load(f"{c}.json") for c in idx["combos"]}
@@ -139,7 +139,7 @@ def main(argv):
 
     # fleet counterfactual, insight -------------------------------------------------------------------------------
     t = idx["fleetCounterfactualTotals"]
-    print(f"fleet head estimate (DERIVED, lossless, % of 370 A): none {v(t['none']['headPct'])} / naive {v(t['naive']['headPct'])} / "
+    print(f"fleet head estimate (DERIVED, per phase, % of 370 A): none {v(t['none']['headPct'])} / naive {v(t['naive']['headPct'])} / "
           f"aware {v(t['aware']['headPct'])}   [report]")
     print(f"fleet counterfactual (hours >100%, all tfs): none {v(t['none']['h100'])} / naive {v(t['naive']['h100'])} / "
           f"aware {v(t['aware']['h100'])} (SIM) ; normal events {v(t['none']['normalEvents'])} / {v(t['naive']['normalEvents'])} / "
@@ -185,7 +185,7 @@ def main(argv):
     chk.exp(n2 > n1, f"useful capacity from empty feeder: naive {n1} / aware {n2} (cap {v(uc['cap']):.0%})", "n2 > n1")
     fh = uc["feederHead"]
     print(f"         naive stop: {uc['naive']['stop']} ; aware (feeder-head cap) stop: {uc['aware']['stop']} ; aware with "
-          f"transformer caps only: {v(uc['awareTransformerOnly'])} ; feeder-head estimate (DERIVED, lossless, reads low): "
+          f"transformer caps only: {v(uc['awareTransformerOnly'])} ; per-phase feeder-head estimate (DERIVED; OpenDSS check below): "
           f"empty feeder {v(fh['aware']['pctEmpty'])}%, without a head cap it passes 100% at placement naive "
           f"{v(fh['naive']['overAt'])} / aware {v(fh['aware']['overAt'])}   [report]")
 
@@ -206,6 +206,37 @@ def main(argv):
                 f"{v(r['tierAgreementPct'])}% (all 379 tfs: max {v(r['errorAllPts']['max'])}, p99 {v(r['errorAllPts']['p99'])}) ; "
                 f"OpenDSS battery-caused normal, baseline: " +
                 ", ".join(f"{k} {v(x)}" for k, x in r.get("baselineCausedNormal", {}).items()), "p99 <= 5")
+
+    # the feeder head and the useful-capacity builds, in OpenDSS ------------------------------------------------------
+    heads = r.get("head") or {}
+    if heads:
+        print("referee head: OpenDSS max phase vs P2's per-phase estimate (DERIVED): " + " ; ".join(
+            f"{run.split()[0]} {run.split()[1].split('-')[0]}{'-g20' if run.endswith('g20') else ''} {v(h['maxPct'])}% "
+            f"(est {v(h['estMaxPct'])}%, est - OpenDSS {-v(h['underReadMaxPts']):+.2f} to {v(h['overReadMaxPts']):+.2f} pts; balanced total {v(h['balancedMaxPct'])}%)"
+            for run, h in heads.items()) + "   [report]")
+    cap = ref.get("capacity") or {}
+    ucd = uc.get("opendss") or {}
+    fresh_cap = (cap.get("sha256") is not None and cap.get("sha256") == idx.get("referee_capacity_sha256")
+                 and all(p in ucd for p in ("naive", "aware")) and ucd["naive"]["n"] == n1 and ucd["aware"]["n"] == n2)
+    chk.inv(fresh_cap, "capacity-check", f"useful capacity OpenDSS check: naive {ucd.get('naive', {}).get('n')} / aware "
+            f"{ucd.get('aware', {}).get('n')} Cores from an empty feeder, one OpenDSS month each | builds "
+            f"{'match' if fresh_cap else 'STALE or missing'}")
+    if fresh_cap:
+        def line(pol):
+            c = ucd[pol]
+            return (f"battery-caused normal {v(c['causedNormal'])} (all {v(c['normalEvents'])}), battery-caused emergency "
+                    f"intervals {v(c['causedEmergencyN'])}, protection {v(c['protectionTfs'])} tfs, max tf {v(c['maxPct'])}%; "
+                    f"head max {v(c['headMaxPct'])}% of 370 A at {c['headMaxPct']['t']} ({c['headMaxPct']['stepsOver100']} steps > 100%; "
+                    f"per-phase estimate max {v(c['headEstMaxPct'])}%, OpenDSS - estimate <= {v(c['headUnderReadPts']):+.2f} pts; balanced total "
+                    f"{v(c['headBalancedMaxPct'])}%); min home voltage {v(c['vMinPu'])} pu = {c['vMinPu']['volts']} V "
+                    f"({c['vMinPu']['home']}, {c['vMinPu']['t']}), homes < 0.95 pu {v(c['homesBelow095'])}; surrogate err "
+                    f"max {v(c['errorAllPts']['max'])} p99 {v(c['errorAllPts']['p99'])} pts")
+        a = ucd["aware"]
+        chk.exp(v(a["causedNormal"]) == 0 and v(a["causedEmergencyN"]) == 0 and v(a["headMaxPct"]) <= 100.0,
+                f"         aware {n2}: " + line("aware"), "0 battery-caused normal and emergency ; head <= 100%")
+        nv = ucd["naive"]
+        chk.exp(v(nv["causedNormal"]) == 0, f"         naive {n1}: " + line("naive"),
+                "0 battery-caused normal (the screen's stop rule); head reported")
 
     # determinism -----------------------------------------------------------------------------------------------------
     if rebuild:

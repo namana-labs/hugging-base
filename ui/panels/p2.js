@@ -6,10 +6,13 @@
 //
 // Pure helpers are exported for ui/test/p2.test.js (no DOM at import time).
 import { chartHTML, modeIndex } from '../lib/charts.js';
-import { beatBarHTML, sharedNames, flipVerdict, FLIP_HEADLINE_MAX_OVERLAP } from './more.js';
+import {
+  beatBarHTML, sharedNames, flipVerdict, FLIP_HEADLINE_MAX_OVERLAP, isScreening, numHTML, numText, SCREEN_CHIP, unscreenedChips,
+} from './more.js';
 
-// The flip display rule lives in more.js (the beat captions use it too); re-exported here for the panel's tests.
-export { flipVerdict, FLIP_HEADLINE_MAX_OVERLAP };
+// The flip display rule and the screening chip live in more.js (the beat captions use them too); re-exported here
+// for the panel's tests.
+export { flipVerdict, FLIP_HEADLINE_MAX_OVERLAP, isScreening, SCREEN_CHIP, unscreenedChips };
 
 export const POLICIES = [['aware', 'feeder-aware'], ['naive', 'naive']];
 export const CLASSES = [['core', 'Core'], ['legacy', 'Legacy']];
@@ -29,11 +32,13 @@ export const counterpart = (id) => {
   return c ? comboId({ ...c, policy: c.policy === 'aware' ? 'naive' : 'aware' }) : null;
 };
 
-/** A labelled bulk value: bulk arrays carry their label once in the envelope's `series`. */
+/** A labelled bulk value: bulk arrays carry their label once in the envelope's `series`. A series computed by the
+ *  surrogate (`by: "surrogate"`) is screening: its values carry a "not OpenDSS-checked" cite, so they get the chip. */
 export function bulk(doc, key, v, cite) {
   const s = doc && doc.series && doc.series[key];
   const label = s && s.label ? s.label : 'SIM';
-  return cite ? { v, label, cite } : { v, label };
+  const c = cite || (s && s.by === 'surrogate' ? 'surrogate screen (sim.surrogate, calibrated vs OpenDSS); not OpenDSS-checked' : null);
+  return c ? { v, label, cite: c } : { v, label };
 }
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -168,8 +173,8 @@ export function counterfactualParts({ entry, doc, index, topology, combo }) {
   return parts;
 }
 
-function partText(p, fmt) { return typeof p === 'string' ? p : fmt.fmt(p, { unit: p.unit, digits: p.digits, money: p.money }); }
-function partHTML(p, fmt) { return typeof p === 'string' ? esc(p) : fmt.fmtHTML(p, { unit: p.unit, digits: p.digits, money: p.money }); }
+function partText(p, fmt) { return typeof p === 'string' ? p : numText(fmt, p, { unit: p.unit, digits: p.digits, money: p.money }); }
+function partHTML(p, fmt) { return typeof p === 'string' ? esc(p) : numHTML(fmt, p, { unit: p.unit, digits: p.digits, money: p.money }); }
 export const counterfactualText = (args, fmt) => counterfactualParts(args).map((p) => partText(p, fmt)).join('');
 export const counterfactualHTML = (args, fmt) => counterfactualParts(args).map((p) => partHTML(p, fmt)).join('');
 
@@ -178,6 +183,13 @@ export const counterfactualHTML = (args, fmt) => counterfactualParts(args).map((
 export function peakWithShown(e) {
   if (checkedByOpenDSS(e) && e.opendss.after && e.opendss.after.peakPct) return e.opendss.after.peakPct;
   return e.peakWithPct || null;
+}
+
+/** The OpenDSS month peaks {before, after} of a refereed ranking entry, or null (then only screening numbers exist). */
+export function odssPeaks(e) {
+  if (!checkedByOpenDSS(e)) return null;
+  const b = e.opendss.before && e.opendss.before.peakPct, a = e.opendss.after && e.opendss.after.peakPct;
+  return b && a ? { before: b, after: a } : null;
 }
 
 /** Labelled metrics of an object as [key, labelled] pairs (skips anything not labelled). */
@@ -195,6 +207,9 @@ const METRIC_NAMES = {
   curtailKWh: ['curtailed', { unit: ' kWh', digits: 0 }],
   protectionWith: ['protection operates (ASSUMPTION rule)', {}],
 };
+
+/** Candidate metrics computed on the surrogate loading whatever their cite says (5.6.5: kWh shaved above nameplate). */
+const SURROGATE_METRICS = new Set(['reliefKWh']);
 
 const OPENDSS_NAMES = {
   peakPct: ['peak', { unit: '%', digits: 1 }],
@@ -224,7 +239,8 @@ function strips(entry, doc, topology, fmt) {
   const out = [];
   out.push(`<div class="p2-strips"><div>${chartHTML('heat', { values: s.without, label: lab, caption: 'Without the battery: hourly max loading, by day and hour', captionTop: true, title: 'without' })}</div>`);
   out.push(`<div>${chartHTML('heat', { values: s.with, label: lab, caption: 'With the battery', captionTop: true, title: 'with' })}</div></div>`);
-  out.push(`<div class="p2-legend"><span class="hs-b0 sw"></span>at or below nameplate <span class="hs-b1 sw"></span>over nameplate <span class="hs-b2 sw"></span>over the normal rating <span class="hs-b4 sw"></span>over the emergency rating (bands, not tier events)</div>`);
+  const scr = doc.series && doc.series.strips && doc.series.strips.by === 'surrogate' ? ` ${SCREEN_CHIP}` : '';
+  out.push(`<div class="p2-legend"><span class="hs-b0 sw"></span>at or below nameplate <span class="hs-b1 sw"></span>over nameplate <span class="hs-b2 sw"></span>over the normal rating <span class="hs-b4 sw"></span>over the emergency rating (bands, not tier events)${scr}</div>`);
   if (s.peakDay && Array.isArray(s.peakDay.without)) {
     const ticks = [0, 24, 48, 72].map((i) => ({ i, text: `${String(i / 4).padStart(2, '0')}:00` }));
     out.push(chartHTML('line', {
@@ -253,28 +269,34 @@ function candidateCard(ctx, st) {
     const so = h.battery ? { rank: null, bridge: null } : standingOutside(index, sel.home, h.tf, pol);
     const polName = pol === 'naive' ? 'naive dispatch (no feeder check)' : 'feeder-aware dispatch';
     let more = '';
-    if (so.rank) more += `<div class="hb-sub">Rank under ${esc(polName)}: ${fmt.fmtHTML(so.rank)} (one entry per transformer).</div>`;
+    if (so.rank) more += `<div class="hb-sub">Rank under ${esc(polName)}: ${numHTML(fmt, so.rank)} (one entry per transformer).</div>`;
     const b = so.bridge;
     if (b && fmt.isLabelled(b.peakWithPct)) {
-      more += `<p class="p2-cf">With a new battery here under ${esc(polName)}: month peak ${b.peakWithoutPct ? fmt.fmtHTML(b.peakWithoutPct, { unit: '%', digits: 1 }) : 'n/a'} without, ${fmt.fmtHTML(b.peakWithPct, { unit: '%', digits: 1 })} with; hours above nameplate ${b.h100Without ? fmt.fmtHTML(b.h100Without, { unit: ' h', digits: 2 }) : 'n/a'} without, ${b.h100With ? fmt.fmtHTML(b.h100With, { unit: ' h', digits: 2 }) : 'n/a'} with.${b.noNewViolation && b.noNewViolation.v === false ? ' It adds a new violation: <b>where NOT to put it</b>.' : ''}</p>`;
+      more += `<p class="p2-cf">With a new battery here under ${esc(polName)}: month peak ${b.peakWithoutPct ? numHTML(fmt, b.peakWithoutPct, { unit: '%', digits: 1 }) : 'n/a'} without, ${numHTML(fmt, b.peakWithPct, { unit: '%', digits: 1 })} with; hours above nameplate ${b.h100Without ? numHTML(fmt, b.h100Without, { unit: ' h', digits: 2 }) : 'n/a'} without, ${b.h100With ? numHTML(fmt, b.h100With, { unit: ' h', digits: 2 }) : 'n/a'} with.${b.noNewViolation && b.noNewViolation.v === false ? ' It adds a new violation: <b>where NOT to put it</b>.' : ''}</p>`;
       const oc = counterpart(combo);
       if (oc) more += `<a class="p2-toggle" href="${ctx.href({ view: 'p2', combo: oc, home: h.id })}">Managed ${pol === 'naive' ? 'feeder-aware' : 'naively'} instead: open its card</a>`;
     }
     const d = (index && Array.isArray(index.bridge) ? index.bridge.find((x) => x.tf === h.tf) : null);
     const dr = d && d.driver && d.driver.profile ? `<div class="hb-sub">Its transformer's stress is one home's load, ${esc(d.driver.label || '')} (SMART-DS profile ${esc(d.driver.profile)}${sharedNames(d.driver.sharedWith).length ? `, the same profile as ${esc(sharedNames(d.driver.sharedWith).join(', '))}: one shape, not independent evidence` : ''}).</div>` : '';
     return `<div class="p2-card" data-card-home="${esc(h.id)}"><h3>${esc(h.label)} · ${esc(tfName(topology, h.tf))}</h3>
-      <div class="hb-sub">${h.battery ? 'This home already has a battery.' : 'Not in this combo\'s top 50.'} Its transformer's month peak without a new battery: ${fmt.fmtHTML(peak, { unit: '%', digits: 1 })}.</div>${more}${dr}</div>`;
+      <div class="hb-sub">${h.battery ? 'This home already has a battery.' : 'Not in this combo\'s top 50.'} Its transformer's month peak without a new battery: ${numHTML(fmt, peak, { unit: '%', digits: 1 })}.</div>${more}${dr}</div>`;
   }
   const t = topology.transformers[e.tf];
   const kva = { v: t.kva, label: 'REAL', cite: 'SMART-DS Transformers.dss' };
   const badge = checkedByOpenDSS(e)
     ? '<span class="p2-badge ok" title="sim.referee: OpenDSS month run">OpenDSS-checked</span>'
     : '<span class="p2-badge screen" title="surrogate only (sim.surrogate); not yet refereed by OpenDSS">screening</span>';
+  // The peak with the battery: OpenDSS's number when the referee ran this candidate, the surrogate kept as screening.
+  // reliefKWh (energy above nameplate shaved) is a loading number from the surrogate month even where its cite does
+  // not say so: it carries the chip too.
+  const metricHTML = (k, v) => (k === 'peakWithPct' && checkedByOpenDSS(e) && e.opendss.after.peakPct
+    ? `${numHTML(fmt, e.opendss.after.peakPct, METRIC_NAMES[k][1])} OpenDSS · ${numHTML(fmt, v, METRIC_NAMES[k][1])}`
+    : numHTML(fmt, v, METRIC_NAMES[k][1]) + (SURROGATE_METRICS.has(k) && !isScreening(v) ? SCREEN_CHIP : ''));
   const metrics = labelledPairs(e, fmt.isLabelled).filter(([k]) => METRIC_NAMES[k])
-    .map(([k, v]) => `<div class="p2-m"><span>${esc(METRIC_NAMES[k][0])}</span><b>${fmt.fmtHTML(v, METRIC_NAMES[k][1])}</b></div>`).join('');
+    .map(([k, v]) => `<div class="p2-m"><span>${esc(METRIC_NAMES[k][0])}</span><b>${metricHTML(k, v)}</b></div>`).join('');
   const odss = checkedByOpenDSS(e) ? `<div class="p2-odss"><b>OpenDSS month run</b>${['before', 'after'].map((w) => {
     const pairs = labelledPairs(e.opendss[w], fmt.isLabelled).filter(([k]) => OPENDSS_NAMES[k]);
-    return pairs.length ? `<div class="p2-m"><span>${w === 'before' ? 'without' : 'with'} the battery</span><b>${pairs.map(([k, v]) => `${esc(OPENDSS_NAMES[k][0])} ${fmt.fmtHTML(v, OPENDSS_NAMES[k][1])}`).join(' · ')}</b></div>` : '';
+    return pairs.length ? `<div class="p2-m"><span>${w === 'before' ? 'without' : 'with'} the battery</span><b>${pairs.map(([k, v]) => `${esc(OPENDSS_NAMES[k][0])} ${numHTML(fmt, v, OPENDSS_NAMES[k][1])}`).join(' · ')}</b></div>` : '';
   }).join('')}</div>` : '';
   const also = (e.alsoOnTf || []).length
     ? `<div class="hb-sub">Same transformer, identical in the screening model: ${e.alsoOnTf.map((i) => esc(homeLabel(topology, i))).join(', ')}. The lowest id is shown.</div>` : '';
@@ -292,14 +314,14 @@ function candidateCard(ctx, st) {
   let oViol = !!(oEntry && oEntry.noNewViolation && oEntry.noNewViolation.v === false);
   if (!oRank && otherCombo) {
     const so = standingOutside(index, e.home, e.tf, oc.policy);
-    if (so.rank) oWhere = `rank ${fmt.fmtHTML(so.rank)} (one entry per transformer)`;
-    if (so.bridge && fmt.isLabelled(so.bridge.peakWithPct)) oWhere += `, month peak with it ${fmt.fmtHTML(so.bridge.peakWithPct, { unit: '%', digits: 1 })}`;
+    if (so.rank) oWhere = `rank ${numHTML(fmt, so.rank)} (one entry per transformer)`;
+    if (so.bridge && fmt.isLabelled(so.bridge.peakWithPct)) oWhere += `, month peak with it ${numHTML(fmt, so.bridge.peakWithPct, { unit: '%', digits: 1 })}`;
     oViol = oViol || !!(so.bridge && so.bridge.noNewViolation && so.bridge.noNewViolation.v === false);
   }
   const toggle = otherCombo
     ? `<a class="p2-toggle" href="${ctx.href({ view: 'p2', combo: otherCombo, home: homeId })}">Managed ${oc.policy === 'naive' ? 'naively' : 'feeder-aware'} instead: ${oWhere}${oViol ? ', adds a violation (where NOT to put it)' : ''}</a>` : '';
   return `<div class="p2-card" data-card-home="${esc(homeId || '')}">
-    <div class="p2-card-h"><h3>#${esc(e.rank)} ${esc(homeLabel(topology, e.home))} · ${esc(tfName(topology, e.tf))} · ${fmt.fmtHTML(kva, { unit: ' kVA' })}</h3>${badge}</div>
+    <div class="p2-card-h"><h3>#${esc(e.rank)} ${esc(homeLabel(topology, e.home))} · ${esc(tfName(topology, e.tf))} · ${numHTML(fmt, kva, { unit: ' kVA' })}</h3>${badge}</div>
     <div class="p2-reason">${esc(e.reason || '')}</div>
     <p class="p2-cf">${counterfactualHTML({ entry: e, doc, index, topology, combo }, fmt)}</p>
     ${neighbour}
@@ -326,7 +348,9 @@ function rankingTable(ctx, st) {
   }).join('');
   const lab = (k, fallback) => {
     const e = (doc.ranking || [])[0];
-    return e && e[k] && e[k].label ? fmt.chip(e[k].label, e[k].cite) : fmt.chip(fallback);
+    // the peak column mixes OpenDSS (●) and screening (○) rows, so its header chip names both; other columns are one kind
+    if (k === 'peakWithPct') return fmt.chip(e && e[k] && e[k].label ? e[k].label : fallback, 'month peak with the battery: OpenDSS month run on ● rows, surrogate screening on ○ rows');
+    return e && e[k] && e[k].label ? fmt.chip(e[k].label, e[k].cite) + (isScreening(e[k]) ? SCREEN_CHIP : '') : fmt.chip(fallback);
   };
   return `<table class="p2-rank"><thead><tr><th>#</th><th>home</th><th>transformer</th><th>peak with, % (● OpenDSS, ○ screening)${lab('peakWithPct', 'SIM')}</th><th>stress avoided, h${lab('stressAvoidedH', 'SIM')}</th><th>August value${lab('revenueUSD', 'DERIVED')}</th><th></th></tr></thead><tbody>${rows}</tbody></table>
     <div class="hb-sub">Rank rule, no weights: adds no new violation; stress hours avoided; peak with the battery, lowest first; value minus curtailment; home id. Rows in red add a violation. ● OpenDSS-checked, ○ screening.</div>`;
@@ -338,7 +362,8 @@ function greedyBlock(ctx, st) {
   if (!g.length) return '';
   const rows = g.map((x) => `<tr><td>${esc(x.k)}</td><td>${esc(homeLabel(topology, x.home))}</td><td>${esc(tfName(topology, x.tf))}</td>
     <td class="n">${x.feeder && x.feeder.normalTfs ? fmt.fmtValue(x.feeder.normalTfs) : 'n/a'}</td><td class="n">${x.feeder && x.feeder.emergencyTfs ? fmt.fmtValue(x.feeder.emergencyTfs) : 'n/a'}</td><td class="n">${x.feeder && x.feeder.h110 ? fmt.fmtValue(x.feeder.h110, { digits: 1 }) : 'n/a'}</td></tr>`).join('');
-  const l0 = g[0].feeder && g[0].feeder.normalTfs ? fmt.chip(g[0].feeder.normalTfs.label, g[0].feeder.normalTfs.cite) : '';
+  const g0 = g[0].feeder && g[0].feeder.normalTfs;
+  const l0 = g0 ? fmt.chip(g0.label, g0.cite) + (isScreening(g0) ? SCREEN_CHIP : '') : '';
   return `<h2>Greedy build: batteries placed one at a time</h2>
     <table class="p2-rank"><thead><tr><th>k</th><th>home</th><th>transformer</th><th>feeder tfs with a normal-tier event${l0}</th><th>emergency tfs${l0}</th><th>h above normal rating${l0}</th></tr></thead><tbody>${rows}</tbody></table>
     <div class="hb-sub">Place #1, re-run its transformer, re-score, repeat (exact in the screening model).</div>`;
@@ -352,15 +377,15 @@ function flipBlock(ctx, st) {
   const ties = st.index.ties && st.index.ties.byId;
   let body = '';
   if (ov) {
-    body += `<div class="p2-flip-big"><span class="hb-big">${fmt.fmtHTML(ov)}</span><span class="hb-sub"> of 10 in both top tens (naive vs feeder-aware${ov.cite && /collapsed|per transformer/i.test(ov.cite) ? ', one entry per transformer' : ''})</span></div>`;
+    body += `<div class="p2-flip-big"><span class="hb-big">${numHTML(fmt, ov)}</span><span class="hb-sub"> of 10 in both top tens (naive vs feeder-aware${ov.cite && /collapsed|per transformer/i.test(ov.cite) ? ', one entry per transformer' : ''})</span></div>`;
     body += v.supports ? `<div class="p2-headline">${esc(v.headline)}</div>`
       : `<div class="p2-headline muted">The two rankings overlap by the number above; the flip is ${ov.v >= 10 ? 'not seen' : 'partial'} in this data.</div>`;
-    body += `<div class="hb-sub">Spearman ${sp ? fmt.fmtHTML(sp, { digits: 2 }) : 'n/a'}${un.top10Overlap ? ` · untied candidates only: overlap ${fmt.fmtHTML(un.top10Overlap)}, Spearman ${un.spearman ? fmt.fmtHTML(un.spearman, { digits: 2 }) : 'n/a'} over ${un.n != null ? fmt.fmtHTML(typeof un.n === 'number' ? { v: un.n, label: un.top10Overlap.label || 'DERIVED' } : un.n) : 'n/a'} candidates` : ''}${ties ? ` · places decided by id: ${fmt.fmtHTML(ties)} of ${esc(st.index.ties.of)}` : ''}</div>`;
+    body += `<div class="hb-sub">Spearman ${sp ? numHTML(fmt, sp, { digits: 2 }) : 'n/a'}${un.top10Overlap ? ` · untied candidates only: overlap ${numHTML(fmt, un.top10Overlap)}, Spearman ${un.spearman ? numHTML(fmt, un.spearman, { digits: 2 }) : 'n/a'} over ${un.n != null ? numHTML(fmt, typeof un.n === 'number' ? { v: un.n, label: un.top10Overlap.label || 'DERIVED' } : un.n) : 'n/a'} candidates` : ''}${ties ? ` · places decided by id: ${numHTML(fmt, ties)} of ${esc(st.index.ties.of)}` : ''}</div>`;
     const dr = st.index.drivers;
-    if (dr && dr.top10DistinctProfiles) body += `<div class="hb-sub">The feeder-aware top 10 is driven by ${fmt.fmtHTML(dr.top10DistinctProfiles)} distinct SMART-DS load profiles${Array.isArray(dr.profiles) && dr.profiles.length ? ` (${esc([...new Set(dr.profiles)].join(', '))})` : ''}: shared shapes are one piece of evidence, not several.</div>`;
+    if (dr && dr.top10DistinctProfiles) body += `<div class="hb-sub">The feeder-aware top 10 is driven by ${numHTML(fmt, dr.top10DistinctProfiles)} distinct SMART-DS load profiles${Array.isArray(dr.profiles) && dr.profiles.length ? ` (${esc([...new Set(dr.profiles)].join(', '))})` : ''}: shared shapes are one piece of evidence, not several.</div>`;
     const mv = Array.isArray(f.movers) ? f.movers.filter((m) => fmt.isLabelled(m.rankNaive) && fmt.isLabelled(m.rankAware)) : [];
     if (mv.length) {
-      body += `<div class="hb-sub"><b>Biggest movers</b> (one entry per transformer): <ul class="p2-fliplist">${mv.slice(0, 5).map((m) => `<li>${esc(m.label || homeLabel(topology, m.home))} on ${esc(tfName(topology, m.tf))}: naive rank ${fmt.fmtHTML(m.rankNaive)} → feeder-aware rank ${fmt.fmtHTML(m.rankAware)}</li>`).join('')}</ul></div>`;
+      body += `<div class="hb-sub"><b>Biggest movers</b> (one entry per transformer): <ul class="p2-fliplist">${mv.slice(0, 5).map((m) => `<li>${esc(m.label || homeLabel(topology, m.home))} on ${esc(tfName(topology, m.tf))}: naive rank ${numHTML(fmt, m.rankNaive)} → feeder-aware rank ${numHTML(fmt, m.rankAware)}</li>`).join('')}</ul></div>`;
     }
     body += `<div class="hb-sub">Headline rule: shown only when the two top tens share at most ${esc(FLIP_HEADLINE_MAX_OVERLAP)} homes (display rule ${fmt.chip('ASSUMPTION', 'ui/panels/p2.js FLIP_HEADLINE_MAX_OVERLAP')}).</div>`;
   }
@@ -374,9 +399,9 @@ function flipBlock(ctx, st) {
       let where = r ? `rank ${esc(r)}` : 'not in the top 50';
       if (!r) {
         const so = standingOutside(st.index, e.home, e.tf, toPolicy);
-        if (so.rank) where = `rank ${fmt.fmtHTML(so.rank)} (one entry per transformer)`;
+        if (so.rank) where = `rank ${numHTML(fmt, so.rank)} (one entry per transformer)`;
         if (so.bridge && fmt.isLabelled(so.bridge.peakWithPct)) {
-          where += `; month peak ${so.bridge.peakWithoutPct ? fmt.fmtHTML(so.bridge.peakWithoutPct, { unit: '%', digits: 1 }) : 'n/a'} without, ${fmt.fmtHTML(so.bridge.peakWithPct, { unit: '%', digits: 1 })} with`;
+          where += `; month peak ${so.bridge.peakWithoutPct ? numHTML(fmt, so.bridge.peakWithoutPct, { unit: '%', digits: 1 }) : 'n/a'} without, ${numHTML(fmt, so.bridge.peakWithPct, { unit: '%', digits: 1 })} with`;
           viol = viol || (so.bridge.noNewViolation && so.bridge.noNewViolation.v === false);
         }
       }
@@ -410,9 +435,9 @@ function capacityBlock(ctx, st) {
       caption: `Feeder-aware: feeder curtailment, % of the energy the new batteries need, as batteries are added${u.cap ? '' : ''}` });
   }
   return `<h2 data-beat="p2-capacity">Useful capacity from an empty feeder</h2>
-    <div class="p2-cap"><div><span class="hb-sub">naive</span><div class="hb-big">${u.naive ? fmt.fmtHTML(u.naive) : 'n/a'}</div>${stop(u.naive)}</div>
-    <div><span class="hb-sub">feeder-aware</span><div class="hb-big">${u.aware ? fmt.fmtHTML(u.aware) : 'n/a'}</div>${stop(u.aware)}</div></div>
-    <div class="hb-sub">Batteries added from an empty feeder until the first battery-caused normal-tier event (naive) or curtailment above the cap${u.cap ? ` of ${fmt.fmtHTML({ ...u.cap, v: u.cap.v * 100 }, { unit: '%', digits: 0 })}` : ''} (feeder-aware), or every eligible home is used.</div>${charts}`;
+    <div class="p2-cap"><div><span class="hb-sub">naive</span><div class="hb-big">${u.naive ? numHTML(fmt, u.naive) : 'n/a'}</div>${stop(u.naive)}</div>
+    <div><span class="hb-sub">feeder-aware</span><div class="hb-big">${u.aware ? numHTML(fmt, u.aware) : 'n/a'}</div>${stop(u.aware)}</div></div>
+    <div class="hb-sub">Batteries added from an empty feeder until the first battery-caused normal-tier event (naive) or curtailment above the cap${u.cap ? ` of ${numHTML(fmt, { ...u.cap, v: u.cap.v * 100 }, { unit: '%', digits: 0 })}` : ''} (feeder-aware), or every eligible home is used.</div>${charts}`;
 }
 
 function insightBlock(ctx, st) {
@@ -423,7 +448,7 @@ function insightBlock(ctx, st) {
   const mt = modeIndex(ins.tfPeakHour), mp = modeIndex(ins.priceMaxHour);
   const nT = ins.tfPeakHour.reduce((s, v) => s + v, 0), nP = (ins.priceMaxHour || []).reduce((s, v) => s + v, 0);
   const txt = mt !== null && mp !== null
-    ? `Transformers most often hit their monthly peak at ${hours[mt]}:00 ${fmt.fmtHTML({ v: ins.tfPeakHour[mt], label: 'SIM' })} of ${fmt.fmtHTML({ v: nT, label: 'SIM' })}; the day's highest price most often falls at ${hours[mp]}:00 ${fmt.fmtHTML({ v: ins.priceMaxHour[mp], label: 'REAL' })} of ${fmt.fmtHTML({ v: nP, label: 'REAL' })} days.${mt !== mp ? ' A market-only dispatcher saves its energy for the price peak and leaves the load peak alone.' : ''}`
+    ? `Transformers most often hit their monthly peak at ${hours[mt]}:00 ${numHTML(fmt, { v: ins.tfPeakHour[mt], label: 'SIM' })} of ${numHTML(fmt, { v: nT, label: 'SIM' })}; the day's highest price most often falls at ${hours[mp]}:00 ${numHTML(fmt, { v: ins.priceMaxHour[mp], label: 'REAL' })} of ${numHTML(fmt, { v: nP, label: 'REAL' })} days.${mt !== mp ? ' A market-only dispatcher saves its energy for the price peak and leaves the load peak alone.' : ''}`
     : 'Not computed yet.';
   return `<h2 data-beat="insight">When transformers peak vs when prices peak</h2><div class="p2-insight">${txt}</div>
     ${chartHTML('bar', { categories: hours, series: [{ name: 'transformers', values: ins.tfPeakHour, cls: 's-with' }], label: 'SIM', xLabelEvery: 3, height: 90, caption: 'Hour of each transformer\'s monthly peak loading (SMART-DS 2018 shapes)', title: 'transformer peak hour' })}
@@ -436,7 +461,7 @@ function fleetBlock(ctx, st) {
   if (!t.none) return '';
   const lab = (st.index.series && st.index.series.fleetCounterfactual && st.index.series.fleetCounterfactual.label) || 'SIM';
   const T = st.index.fleetCounterfactualTotals || {};
-  const cell = (k, key, v, o) => `<td class="n">${fmt.fmtHTML(T[k] && fmt.isLabelled(T[k][key]) ? T[k][key] : { v, label: lab }, o || {})}</td>`;
+  const cell = (k, key, v, o) => `<td class="n">${numHTML(fmt, T[k] && fmt.isLabelled(T[k][key]) ? T[k][key] : { v, label: lab }, o || {})}</td>`;
   const row = (k, name) => (t[k] ? `<tr><td>${esc(name)}</td>${cell(k, 'h100', t[k].h100, { digits: 1 })}${cell(k, 'normalEvents', t[k].normalEvents)}${cell(k, 'emergencyN', t[k].emergencyN)}</tr>` : '');
   return `<h2>The existing fleet: did our batteries cause it?</h2>
     <table class="p2-rank"><thead><tr><th>existing fleet</th><th>h above nameplate, all tfs</th><th>normal-tier events</th><th>emergency intervals</th></tr></thead>
@@ -452,7 +477,7 @@ function marketBlock(ctx, st) {
     out += chartHTML('price', { price: st.index.price, label: pl, caption: `ERCOT RTM LZ_NORTH, ${st.index.month}, 15-minute settlement prices`, title: 'august prices', height: 60 });
   }
   if (cl && cl.count) {
-    out += `<div class="p2-insight">${fmt.fmtHTML(cl.count)} price cliffs in ${esc(cl.period || '')}; ${fmt.fmtHTML(cl.evening)} in the evening, while home load is still high. Each would synchronize a market-only fleet.</div>`;
+    out += `<div class="p2-insight">${numHTML(fmt, cl.count)} price cliffs in ${esc(cl.period || '')}; ${numHTML(fmt, cl.evening)} in the evening, while home load is still high. Each would synchronize a market-only fleet.</div>`;
     if (Array.isArray(cl.events)) out += chartHTML('cliff', { events: cl.events, period: cl.period, label: cl.count.label || 'DERIVED', caption: `Rule: ${cl.rule || ''}. Accent = evening`, title: 'price cliffs' });
   }
   return out;
@@ -468,8 +493,8 @@ function protectionBlock(ctx, st) {
   if (!cs.length && !fl.length) return '';
   const dark = (list) => (list && list.length ? `<b>dark:</b> ${esc(list.map((i) => homeLabel(topology, i)).join(', '))}` : 'no battery-less home behind it (nothing goes dark)');
   const rows = [
-    ...cs.map((c) => `<li>New battery at ${esc(c.label || homeLabel(topology, c.home))} on ${esc(tfName(topology, c.tf))}, managed naively: peak ${fmt.isLabelled(c.peakWithPct) ? fmt.fmtHTML(c.peakWithPct, { unit: '%', digits: 1 }) : 'n/a'} (${esc(c.t || '')}); ${dark(c.homesDark)}.</li>`),
-    ...fl.map((c) => `<li>Existing fleet managed naively, ${esc(tfName(topology, c.tf))}: peak ${fmt.isLabelled(c.peakPct) ? fmt.fmtHTML(c.peakPct, { unit: '%', digits: 1 }) : 'n/a'} (${esc(c.t || '')}); ${dark(c.homesDark)}${(c.homesOnBattery || []).length ? `; on battery: ${esc(c.homesOnBattery.map((i) => homeLabel(topology, i)).join(', '))}` : ''}.</li>`),
+    ...cs.map((c) => `<li>New battery at ${esc(c.label || homeLabel(topology, c.home))} on ${esc(tfName(topology, c.tf))}, managed naively: peak ${fmt.isLabelled(c.peakWithPct) ? numHTML(fmt, c.peakWithPct, { unit: '%', digits: 1 }) : 'n/a'} (${esc(c.t || '')}); ${dark(c.homesDark)}.</li>`),
+    ...fl.map((c) => `<li>Existing fleet managed naively, ${esc(tfName(topology, c.tf))}: peak ${fmt.isLabelled(c.peakPct) ? numHTML(fmt, c.peakPct, { unit: '%', digits: 1 }) : 'n/a'} (${esc(c.t || '')}); ${dark(c.homesDark)}${(c.homesOnBattery || []).length ? `; on battery: ${esc(c.homesOnBattery.map((i) => homeLabel(topology, i)).join(', '))}` : ''}.</li>`),
   ];
   return `<section class="p2-protect"><h2>Where protection may operate ${fmt.chip('ASSUMPTION', (fp && fp.rule) || 'fuse rule, round-1 world-sim')}</h2>
     <ul class="p2-fliplist">${rows.join('')}</ul>
@@ -481,7 +506,7 @@ function refereeBlock(ctx, st) {
   const r = st.index.referee;
   if (!r) return '';
   if (!r.runs) return `<div class="p2-ref screen">OpenDSS referee: not run yet for this build. Every number here is screening (surrogate).</div>`;
-  return `<div class="p2-ref ok">OpenDSS referee: ${esc(r.runs)} month runs · surrogate error p99 ${r.errorPts && r.errorPts.p99 ? fmt.fmtHTML(r.errorPts.p99, { digits: 2, unit: ' pts' }) : 'n/a'} (max ${r.errorPts && r.errorPts.max ? fmt.fmtHTML(r.errorPts.max, { digits: 2, unit: ' pts' }) : 'n/a'}) · tier agreement ${r.tierAgreementPct ? fmt.fmtHTML(r.tierAgreementPct, { digits: 1, unit: '%' }) : 'n/a'}</div>`;
+  return `<div class="p2-ref ok">OpenDSS referee: ${esc(r.runs)} month runs · surrogate error p99 ${r.errorPts && r.errorPts.p99 ? numHTML(fmt, r.errorPts.p99, { digits: 2, unit: ' pts' }) : 'n/a'} (max ${r.errorPts && r.errorPts.max ? numHTML(fmt, r.errorPts.max, { digits: 2, unit: ' pts' }) : 'n/a'}) · tier agreement ${r.tierAgreementPct ? numHTML(fmt, r.tierAgreementPct, { digits: 1, unit: '%' }) : 'n/a'}</div>`;
 }
 
 function handoffBlock(ctx, st) {
@@ -491,13 +516,18 @@ function handoffBlock(ctx, st) {
   const items = un.map((u) => {
     const best = (st.doc.ranking || []).find((e) => e.tf === u.tf);
     const d = u.driver || {};
-    const drv = d.profile ? ` Driver: ${esc(d.label || '')} (SMART-DS profile ${esc(d.profile)}${sharedNames(d.sharedWith).length ? `, the same profile as ${esc(sharedNames(d.sharedWith).join(', '))}` : ''})${d.kwAtPeak ? `, ${fmt.fmtHTML(d.kwAtPeak, { unit: ' kW', digits: 1 })} at the peak` : ''}.` : '';
+    const drv = d.profile ? ` Driver: ${esc(d.label || '')} (SMART-DS profile ${esc(d.profile)}${sharedNames(d.sharedWith).length ? `, the same profile as ${esc(sharedNames(d.sharedWith).join(', '))}` : ''})${d.kwAtPeak ? `, ${numHTML(fmt, d.kwAtPeak, { unit: ' kW', digits: 1 })} at the peak` : ''}.` : '';
     const br = (st.index.bridge || []).find((x) => x.tf === u.tf);
     const pol = parseCombo(st.combo).policy;
     const bp = br && br[pol];
     let link;
     if (bp && fmt.isLabelled(bp.peakWithPct)) {
-      link = ` A new battery here (${esc(bp.label || homeLabel(topology, bp.home))}, rank ${esc(bp.rank)} under this policy): month peak ${bp.peakWithoutPct ? fmt.fmtHTML(bp.peakWithoutPct, { unit: '%', digits: 1 }) : 'n/a'} without, ${fmt.fmtHTML(bp.peakWithPct, { unit: '%', digits: 1 })} with${bp.noNewViolation && bp.noNewViolation.v === false ? '; it adds a violation (where NOT to put it)' : ''}. <a href="${ctx.href({ view: 'p2', combo: st.combo, home: topology.homes[bp.home] ? topology.homes[bp.home].id : null })}">Open its card</a>.`;
+      const P = { unit: '%', digits: 1 };
+      const od = odssPeaks((st.doc.ranking || []).find((e) => e.home === bp.home));
+      const peaks = od
+        ? `OpenDSS month run: month peak ${numHTML(fmt, od.before, P)} without, ${numHTML(fmt, od.after, P)} with (screening model: ${bp.peakWithoutPct ? numHTML(fmt, bp.peakWithoutPct, P) : 'n/a'} without, ${numHTML(fmt, bp.peakWithPct, P)} with)`
+        : `month peak ${bp.peakWithoutPct ? numHTML(fmt, bp.peakWithoutPct, P) : 'n/a'} without, ${numHTML(fmt, bp.peakWithPct, P)} with`;
+      link = ` A new battery here (${esc(bp.label || homeLabel(topology, bp.home))}, rank ${esc(bp.rank)} under this policy): ${peaks}${bp.noNewViolation && bp.noNewViolation.v === false ? '; it adds a violation (where NOT to put it)' : ''}. <a href="${ctx.href({ view: 'p2', combo: st.combo, home: topology.homes[bp.home] ? topology.homes[bp.home].id : null })}">Open its card</a>.`;
     } else {
       link = best ? ` Best candidate here: <a href="${ctx.href({ view: 'p2', combo: st.combo, home: topology.homes[best.home].id })}">#${esc(best.rank)} ${esc(homeLabel(topology, best.home))}</a>.` : ' No candidate on it in this combo\'s top 50.';
     }
@@ -527,10 +557,22 @@ export function p2SceneModel(ctx, st) {
       model.batteries.push({ j: -1, home: p.home, position: [h.lonlat[0] + 0.00012, h.lonlat[1]], height: 30, soc: 0.9, kw: 0, state: 'N', color: [...accent, 255], placed: true });
     }
   }
+  // The P1 -> P2 handoff: merged into the transformer's own label (a separate label at the same spot overlapped it and
+  // read "P1▸ T-240 ved" in judge R1 F8). Only when the transformer has no label of its own is a new one added.
   for (const u of (st.p1meta && st.p1meta.unrelieved) || []) {
     const t = topology.transformers[u.tf];
-    // nudged north of the can so it does not sit on the candidate pins and the transformer's own label
-    if (t) model.labels.push({ key: 'handoff', text: 'P1: unrelieved', position: [t.lonlat[0], t.lonlat[1] + 0.0004], color: ink, handoff: true, tf: u.tf });
+    if (!t) continue;
+    const own = model.labels.find((l) => !l.pin && !l.handoff && Array.isArray(l.position)
+      && l.position[0] === t.lonlat[0] && l.position[1] === t.lonlat[1]);
+    if (own) {
+      own.text = `${own.text} · P1: unrelieved`;
+      own.short = `${own.short || tfName(topology, u.tf)} · P1: unrelieved`;
+      own.handoff = true;
+      own.tf = u.tf;
+    } else {
+      model.labels.push({ key: 'handoff', text: `${tfName(topology, u.tf)} · P1: unrelieved`, short: `${tfName(topology, u.tf)} · P1: unrelieved`,
+        position: [t.lonlat[0], t.lonlat[1], 16], color: ink, handoff: true, tf: u.tf });
+    }
   }
   return model;
 }

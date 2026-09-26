@@ -53,7 +53,7 @@ Written by L0 (the lead) on 26 Sep 2026 for the overnight build. Two halves: **P
 | `footprints.json` | `scripts/fetch_footprints.py` (L4) | `meta{source, fetched, license:"ODbL 1.0, © OpenStreetMap contributors", rule, matched{v,label}, fallback{v,label}}`, `homes{<homeId>: [[lon,lat],…]}`. A missing home draws as a 12 m square (ASSUMPTION `FOOTPRINT_MISSING_M`). `<homeId>` is the home **id** (e.g. `p1ulv11991`). |
 | `p1/meta.json` | `sim.p1_build` (L2) | A.5 |
 | `p1/<branch>.json` | `sim.p1_build` (L2) | A.6; one file per branch (`none`, `naive`, `aware`, `aware_faults`), loaded lazily |
-| `p1/chaos.json` | `sim.chaos` (L2, P3 only) | 50 seeded runs; battery-caused violations only |
+| `p1/chaos.json` | `sim.chaos` (L2, P3 only) | A.6a: 50 seeded runs of the aware evening with failures; battery-caused violations only |
 | `engine.json` | `sim.bench` (L2) | ms per OpenDSS solve, P1 build seconds, `allocate()` µs at 96, 1k, 10k, 100k batteries (synthetic scale test), the load average; all SIM. Layout: `opendss{msPerSolve, msPerStep}`, `p1{buildSeconds, solves}`, `allocate{"96", "1000", "10000", "100000"}` (µs per stateless call), `loadAvg`; every leaf `{v, label:"SIM", cite}`. Timings are not deterministic, so they live here and not in `p1/meta.json` |
 | `p2/index.json` | `sim.p2_build` (L3) | A.7 |
 | `p2/<combo>.json` | `sim.p2_build` (L3) | A.8; combo id `policy-cls-rule-gN` |
@@ -89,6 +89,7 @@ Written by L0 (the lead) on 26 Sep 2026 for the overnight build. Two halves: **P
   - Command audit (seq + expiry, 5.4.3 step 8): `commands` (issued), `seqRejected` (deliveries a device refused for a non-increasing seq), `nonIncreasingAccepted` (must be 0), `actedAfterExpiry` (battery-steps with non-zero kW in state `X`; must be 0).
 - `controllerView{text, label:"ASSUMPTION", cite}` (the `CONTROLLER_VIEW` constant; shown on the P1 panel).
 - `relief{tf, t, step, none, aware, minutesOver100{v, label, cite, none, aware}, reliefKW, reliefKWh, driver, text}` (`text` is the on-screen wording, e.g. "over nameplate for about 15 minutes (amber; not a failure): one home's 15-minute spike").
+  - `reliefKW{v, label:"SIM", cite, t, step, atPeak{v, label:"SIM", cite}}`: `v` is A's largest relief discharge in any minute (kW, outside the market plan), `t`/`step` that minute (`"16:46"`, 46 on 23 Aug); `atPeak.v` is A's discharge at the peak minute `relief.t` (6.17 kW at 16:45). The two minutes differ, so a caption names the one it quotes. `sim.verify p1` re-derives both from `aware.json` `focus.A.batKW` as an [INVARIANT].
 - `money{…}` (5.4.6 lines, each labelled; never prices local relief). Layout:
   - `energyValueUSD{none, naive, aware, aware_faults}` (DERIVED) and `costOfAwareness` (naive − aware, DERIVED, may be negative);
   - `relief{kwh (SIM), opportunityUpperUSD (DERIVED upper bound), priced}` (`priced` is false: no sourced price for local relief);
@@ -123,9 +124,41 @@ Written by L0 (the lead) on 26 Sep 2026 for the overnight build. Two halves: **P
 | `ticker` | `[[step, text]]` | e.g. `"22:14 A room 6.1 kW → Home 0212 +6.1 kW (lowest SoC on A)"` |
 | `reverse` | `[[step, tf]]` int, sparse | steps where transformer `tf` has net P < 0 (back-feed); labelled once in `series.reverse` (SIM, OpenDSS). The verifier re-derives "battery-caused" from it |
 
+### A.6a `p1/chaos.json` (L2, P3 only; build prompt 5.7 item 2)
+
+`CHAOS_RUNS` (50) runs of P1's `aware` evening (the same day, start, 720 × 60 s and OpenDSS every step), each with seeded failures drawn by `numpy.random.default_rng([CHAOS_SEED, run])`: `CHAOS_SILENT` (1-10) silent batteries, live charge first; one hot transformer from the fleet transformers (`CHAOS_HOT_POOL`, +`EV_KW` on one home for `HOT_MINUTES`); one `CHAOS_STALL` (1-8 min) controller stall. Every event starts in `[tc, tend]` of the unfaulted aware run. All of these are ASSUMPTION constants in the envelope; `sources.faults` names the rule. **Only battery-caused violations are counted** (build prompt 7.3's definition, `rule.caused`); home-load-only overloads are counted separately and never charged to the orchestrator.
+
+- `day, start, stepSeconds, steps` (as A.5); `tc{step, t, text}` and `tend{step, t, text}` (first and last minute the unfaulted aware run grants charge); `rule{text, label:"ASSUMPTION", caused}`.
+- Top-level totals over all runs, each `{v, label:"SIM", cite}`: `runsWithBatteryCaused`, `batteryCausedNormal`, `batteryCausedEmergency`, `homeOnlyNormal`, `homeOnlyEmergency`, `maxBatteryCausedAmberMin`, `minChargedPctResponsive`, `silentUnits`, `silentIdleByExpiry`, `silentExpiryAfterWindow`, `reserveBreaches`, `actedAfterExpiry`, `nonIncreasingAccepted`, `protectionOperated`.
+- `histogram{<metric>: {label:"SIM", text, edges[], counts[]}}` for `batteryCaused`, `batteryCausedAmberMin`, `hotBatteryCausedMin`, `hotPeakPct`, `chargedPctResponsive`: `counts[i]` = runs with `edges[i] <= x < edges[i+1]` (numpy's last bin is closed), so `len(counts) = len(edges) - 1` and `sum(counts)` = the number of runs. Labelled once in `series.histogram`.
+- `runs[50]`, each: `run`, `seed[2]` (`[CHAOS_SEED, run]`);
+  - `silent{n, step, t, homes[] (home indices), tfs[] (transformer indices), cmdKW{v:[kW per silent unit], label, cite}, idleByExpiry, expiryAfterWindow, staleAfterMin}` (the last three labelled);
+  - `hot{tf, id, kva, home, step, t, minutes, peakPct, minOver100, batteryCausedMinOver100}` (`kva` and the last three labelled; `peakPct` is OpenDSS while the EV runs);
+  - `stall{step, t, minutes}`;
+  - labelled per-run numbers: `batteryCaused` (normal events + emergency transformers), `batteryCausedNormal`, `batteryCausedEmergency`, `batteryCausedAmberMin`, `homeOnlyNormal`, `homeOnlyEmergency`, `protectionOperated`, `maxLoading{v, label, cite, tf, t}`, `reserveBreaches`, `actedAfterExpiry`, `nonIncreasingAccepted`, `chargedPctBy0400` (whole fleet), `chargedPctResponsive` (the batteries that never went silent);
+  - `cover{releasedKW, expiryStep, regrantedKW, stalledAtExpiry}` (`releasedKW`, `regrantedKW` labelled): the live charge the silent units held, and the change in the responsive fleet's grants within 60 s of their expiry.
+- `runs` bulk values are labelled once in `series.runs`. `sim.verify p1` re-derives the chaos invariants (plan ranges, battery-caused 0, reserve, seq, expiry, labels) from this file; `sim.verify p1 --rebuild` rebuilds and byte-compares it.
+
 ### A.7 `p2/index.json` (L3)
 
 `month, stepMinutes:15, steps:2976, controls{policy, cls, rule, growth}, combos[16] (ids), default:"aware-core-d26-g0", price[2976], cliffs{count, evening, rule, period, events}, fleetCounterfactual{none|naive|aware:{h100[379], normalEvents[379], emergencyN[379]}}, flip{top10Overlap, spearman, untied{top10Overlap, spearman, n}, combos}, ties{byId, of:911}, drivers{top10DistinctProfiles, profiles[]}, insight{tfPeakHour[24], priceMaxHour[24]}, usefulCapacity{naive{v,label,stop}, aware{v,label,stop}, curve{naive[], aware[]}}, referee{runs, errorPts{max,p99}, tierAgreementPct}, bridge[], engine{screenSecondsPerCombo}`.
+
+**OpenDSS checks of the feeder head and of useful capacity** (L3; `sim.referee` writes `data/out/referee-2026-08.json`, and `sim.p2_build` merges it into this file). The feeder head is `l(r:p1udt17263-p1uhs19_1247)`, rated 370 A **per conductor** (`site/ems/flow-spec.md`); its OpenDSS reading is the max-phase current (Part B, `Feeder.solve()["head_amps"]`). P2's own head estimate (`sim.siting`, DERIVED) is **per primary phase**: the summed `|ΣP + jΣQ|` of the transformers on the most loaded phase (SMART-DS `Transformers.dss`) against 370 A × 7.2 kV = 2,663.8 kVA; the three three-phase transformers split 1/3 per phase (ASSUMPTION). `HEAD_CAP` (ASSUMPTION, alpha 0.95) caps that estimate in the aware useful-capacity build only.
+
+- `referee_schedule_sha256` (string): sha256 of the battery schedules the referee judges (the four `*-core-d26-g0|g20` default combos). OpenDSS numbers merge in only when `data/out/referee-2026-08.json`'s `schedule_sha256` equals it; otherwise `referee.runs` is 0 and every card says "screening".
+- `referee_capacity_sha256` (string): sha256 of the two useful-capacity builds (each policy's first `n` homes in greedy order) plus `referee_schedule_sha256`. `usefulCapacity.opendss` is filled only when the referee file's `capacity.sha256` equals it.
+- `referee.head{<run>: {...}}`, one entry per `referee.runList` name (e.g. `"baseline aware-core-d26-g0"`, `"top5 naive-core-d26-g0"`, `"baseline naive-core-d26-g20"`), present when the referee ran. Each field is labelled:
+  - `maxPct{v, label:"SIM", cite, amps, t}`: OpenDSS head current / 370 A, the month's max, with its amps and local time `"YYYY-MM-DD HH:MM"`;
+  - `estMaxPct{v, label:"DERIVED", cite}`: the per-phase estimate's month max;
+  - `underReadMaxPts{v, label:"SIM", cite}`: max over the month of (OpenDSS % − estimate %); positive = the estimate reads low;
+  - `overReadMaxPts{v, label:"SIM", cite}`: max over the month of (estimate % − OpenDSS %); positive = the estimate reads high;
+  - `balancedMaxPct{v, label:"DERIVED", cite}`: the balanced three-phase total `|ΣP + jΣQ|` / 7,991.5 kVA that P2 used before this check (reads low when phases are unequal).
+- `usefulCapacity.opendss`: `{status}` alone (`"not run on these builds (run scripts/build_all.sh referee)"`) when the capacity sha does not match; otherwise `{status:"OpenDSS-checked builds", rule, naive, aware}`, where `rule` is text and each of `naive|aware` is one OpenDSS month of that policy's useful-capacity build from an empty feeder:
+  - `n` (int, the build's battery count = `usefulCapacity.<policy>.v`);
+  - `causedNormal{v, label, cite, tfs[]}` (battery-caused normal-tier events: above 110% for ≥ 30 min while the transformer's batteries charge, or it back-feeds while they discharge; `tfs` = transformer indices), `normalEvents` (all normal-tier events, home load included), `causedEmergencyN` (battery-caused intervals above 150%), `emergencyN` (all intervals above 150%), `protectionTfs{v, label, cite, tfs[]}` (transformers where the fuse rule, ASSUMPTION, would operate);
+  - `maxPct{v, label, cite, tf, t}` (highest transformer loading); `headMaxPct{v, label:"SIM", cite, amps, t, stepsOver100}`; `headEstMaxPct` (DERIVED); `headUnderReadPts` (OpenDSS − estimate, max; positive = the estimate reads low); `headBalancedMaxPct` (DERIVED);
+  - `vMinPu{v, label, cite, volts, home, t}` (minimum home voltage, pu on a 120 V base), `homesBelow095` (homes that leave 0.95 pu at any step), `errorAllPts{max, p99}` (surrogate − OpenDSS, all 379 transformers).
+- When the check ran, `usefulCapacity.naive.cite` and `usefulCapacity.aware.cite` restate what OpenDSS measured on that build (battery-caused events and the head), so a view that shows only `v` and `stop` still carries it in the cite. `sim.verify p2` prints the check as one `[INVARIANT]` line (`builds match`) and one `[EXPECT]` line per policy.
 
 ### A.8 `p2/<combo>.json` (L3)
 

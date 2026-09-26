@@ -13,7 +13,7 @@
       "title": "The problem",
       "label": "REAL",
       "link": "view=p1&branch=naive&t=16:00&cam=street",
-      "caption": "ERCOT dispatches one number per load zone and does not check feeders {{chip:REAL:ERCOT base points are per resource and load zone; no feeder or service-transformer check}}. Our naive branch splits that number with no feeder check, all at once at the onset {{chip:ASSUMPTION:Base's real split is not public (build prompt 12 Q5); never implies Base charges this way today}}. Street A–D: {{streetHomes}} homes on {{streetTfs}} service transformers, every home with a battery, in a fleet of {{fleetSize}}."
+      "caption": "ERCOT dispatches one number per load zone and does not check feeders {{chip:REAL:ERCOT base points are per resource and load zone; no feeder or service-transformer check}}. Our naive branch splits that number with no feeder check, all at once at the onset {{chip:ASSUMPTION:Base's real split is not public (build prompt 12 Q5); never implies Base charges this way today}}. Street A–D: {{streetHomes}} homes on {{streetTfs}} service transformers, every home with a battery, in a fleet of {{fleetSize}}. The scale ladder: A's battery charge at once, {{scaleLadderKW}}, as a share of each scale: {{scaleLadder}}. What overloads one service transformer does not register at the zone."
     },
     {
       "id": "peak-relief",
@@ -21,7 +21,7 @@
       "title": "Afternoon peak: relief at its true size",
       "label": "SIM",
       "link": "view=p1&branch=aware&t=16:45&cam=street",
-      "caption": "At {{reliefT}}, with no batteries, transformer A reaches {{reliefNone}} of nameplate: over nameplate for {{reliefMinutesNone}} (amber; not a failure). The driver is one home's load, {{reliefDriverHome}} (SMART-DS profile {{reliefDriverProfile}}), and the same profile runs at {{reliefDriverShared}}: one shape, not two pieces of evidence. Feeder-aware, A's own batteries discharge {{reliefKW}} and A reads {{reliefAware}}. {{unrelievedTf}} has no battery and stays over nameplate; the next-battery view answers that."
+      "caption": "At {{reliefT}}, with no batteries, transformer A reaches {{reliefNone}} of nameplate: over nameplate for {{reliefMinutesNone}} (amber; not a failure). The driver is one home's load, {{reliefDriverHome}} (SMART-DS profile {{reliefDriverProfile}}), and the same profile runs at {{reliefDriverShared}}: one shape, not two pieces of evidence. Feeder-aware, at {{reliefT}} A reads {{reliefAware}}, and its own batteries discharge up to {{reliefKWPeak}}. {{unrelievedTf}} has no battery and stays over nameplate; the next-battery view answers that."
     },
     {
       "id": "insight",
