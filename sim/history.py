@@ -30,6 +30,7 @@ import math
 import sys
 import time
 from datetime import date, datetime, timedelta
+from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
@@ -253,8 +254,25 @@ def read_meta(d, root=OUT):
     return json.loads((day_dir(d, root) / "meta.json").read_text())
 
 
-def index_row(meta, row):
-    """One A.10 row from a built day's meta (no branch file is read)."""
+@lru_cache(maxsize=1)
+def focus_names():
+    """{transformer index: "A".."D"} from ui/data/topology.json (A.10: naiveMax.tf is a display name on the street)."""
+    topo = json.loads((ROOT / "ui" / "data" / "topology.json").read_text())
+    return {int(f["tf"]): f["key"] for f in topo["focus"]}
+
+
+def naive_doc(d, root=OUT):
+    """The day's naive branch doc (plain for 23 Aug, gzip for a history day): the builder reads it for naiveMax.tier."""
+    base = day_dir(d, root)
+    p = base / "naive.json"
+    if p.exists():
+        return json.loads(p.read_text())
+    return json.loads(gzip.decompress((base / "naive.json.gz").read_bytes()))
+
+
+def index_row(meta, row, naive=None):
+    """One A.10 row from a built day's meta; `naive` (the naive branch doc) adds naiveMax.tier, the tier code at the
+    worst step, so the picker never re-derives a tier from a %. The page never loads a branch file for the picker."""
     s = meta["summary"]
     d = meta["day"]
     ps = _window_prices(meta)
@@ -272,13 +290,22 @@ def index_row(meta, row):
                        for b in ("naive", "aware")},
         "awareMoreUSD": labelled(round(-cost, 2) + 0.0, "DERIVED", "fleet energy value, feeder-aware - naive (tonight); "
                                                                   f"{SPLIT_CITE}"),
-        "naiveMax": labelled(nm["v"], "SIM", "OpenDSS: the worst service transformer, naive", tf=nm["tf"], t=nm["t"]),
+        "naiveMax": labelled(nm["v"], "SIM", "OpenDSS: the worst service transformer, naive",
+                             tf=focus_names().get(int(nm["tf"]), int(nm["tf"])), t=nm["t"],
+                             **({"tier": _tier_at(meta, naive, nm)} if naive is not None else {})),
         "naiveEvents": labelled(s["naive"]["batteryCausedNormal"]["v"], "SIM", "battery-caused normal-tier events, naive"),
         "awareBatteryCaused": labelled(caused, "SIM", "battery-caused normal-tier events + emergency transformers, feeder-aware"),
         "reliefMinutes": labelled(meta["relief"]["minutesOver100"]["none"], "SIM",
                                   "minutes A spends above nameplate with no batteries (0: no relief card that evening)"),
         "sparkline": [p for _, p in ps],
     }
+
+
+def _tier_at(meta, doc, nm):
+    h, m = map(int, meta["start"].split(":"))
+    th, tm = map(int, nm["t"].split(":"))
+    k = ((th * 60 + tm) - (h * 60 + m)) % 1440
+    return int(doc["tier"][k][int(nm["tf"])])
 
 
 def build_index(root=OUT, days=None):
@@ -290,7 +317,7 @@ def build_index(root=OUT, days=None):
         if not p.exists():
             continue
         shas.append(_sha(p))
-        rows.append(index_row(json.loads(p.read_text()), day_row(d)))
+        rows.append(index_row(json.loads(p.read_text()), day_row(d), naive_doc(d, root)))
     doc = envelope("p1.days", "sim.history", inputs=inputs_sha(),
                    constants=export("LOAD_PAIRING", "ERCOT_RECORD_MW", "P1_START", "P1_STEPS"),
                    sources={"price": {"label": "REAL", "text": "ERCOT RTM SPP LZ_NORTH 15-min"},

@@ -610,7 +610,7 @@ def gz_json(p):
 
 
 def main_days(argv):
-    from .history import DAYS, HIST_BRANCHES, index_row, day_row
+    from .history import DAYS, HIST_BRANCHES, index_row, day_row, naive_doc
     days_dir = P1 / "days"
     if not (days_dir / "index.json").exists():
         print("VERIFY p1: SKIP (no ui/data/p1/days/index.json yet)")
@@ -628,9 +628,10 @@ def main_days(argv):
         d = row["date"]
         base = P1 if row["dir"] == "" else P1 / row["dir"]
         meta = json.loads((base / "meta.json").read_text())
-        want_row = index_row(meta, day_row(d))
+        want_row = index_row(meta, day_row(d), naive_doc(d))
         v.inv(want_row == row, "index-row", f"index  {d}: row equals its meta ({row['tag']} ; peak ${row['peak']['v']:,.2f} at "
-              f"{row['peak']['t']} ; naive max {row['naiveMax']['v']}% ; aware ${row['perBattery']['aware']['v']:.2f}/battery)")
+              f"{row['peak']['t']} ; naive max {row['naiveMax']['v']}% on {row['naiveMax']['tf']} (tier "
+              f"{row['naiveMax'].get('tier')}) ; aware ${row['perBattery']['aware']['v']:.2f}/battery)")
         built.append(d)
         if row["dir"] == "":
             continue                                  # 23 Aug: `sim.verify p1` checks its four branches

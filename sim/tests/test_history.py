@@ -194,7 +194,11 @@ class TestQuickDay(unittest.TestCase):
         self.assertEqual(m["summary"]["aware"]["batteryCausedNormal"]["v"], 0)
 
     def test_index_row(self):
-        row = index_row(self.meta, day_row("2026-08-26"))
+        naive = gz(self.dir / "naive.json.gz")
+        row = index_row(self.meta, day_row("2026-08-26"), naive)
+        nm = self.meta["summary"]["naive"]["maxLoading"]
+        self.assertIn(row["naiveMax"]["tier"], range(6))
+        self.assertEqual(row["naiveMax"]["tier"] >= 4, nm["v"] > 150.0)       # the tier at the worst step, from tier[]
         self.assertEqual(row["dir"], "days/2026-08-26")
         self.assertEqual(row["dow"], "Wed")
         self.assertEqual(len(row["sparkline"]), 4)                     # 60 steps = four 15-min intervals
