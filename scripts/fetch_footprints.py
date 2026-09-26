@@ -158,7 +158,7 @@ def build(cache):
     others = [q(ring_of(w)) for j, w in enumerate(ways) if j not in used]
     fetched = (raw.get("osm3s") or {}).get("timestamp_osm_base", "unknown")
 
-    doc = envelope("footprints", "sim.fetch_footprints",
+    doc = envelope("footprints", "scripts.fetch_footprints",
                    inputs=inputs_sha(prices=False, loads=False, topology=True),
                    constants=export("FOOTPRINT_MATCH_M", "FOOTPRINT_MISSING_M"),
                    sources={"footprints": {"label": "REAL", "text": f"OpenStreetMap buildings via Overpass API, "

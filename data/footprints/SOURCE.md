@@ -17,7 +17,7 @@ Overpass answer stays in `~/hb-overnight/cache/osm_buildings.json`.
 | Homes matched | **985 of 1,010** (DERIVED); median centroid distance 11.6 m |
 | Homes without a footprint | 25: p1ulv1948, p1ulv3242, p1ulv8238, p1ulv8249, p1ulv8254, p1ulv8257, p1ulv10107, p1ulv16346, p1ulv16368, p1ulv19047, p1ulv24089, p1ulv25319, p1ulv25959, p1ulv27268, p1ulv29744, p1ulv34261, p1ulv34878, p1ulv36765, p1ulv52461, p1ulv53073, p1ulv53744, p1ulv59199, p1ulv60419, p1ulv61669, p1ulv62293; drawn as a 12 m square (`FOOTPRINT_MISSING_M`, ASSUMPTION) |
 | Unmatched buildings | 1,421, kept in `others` and drawn as neutral context (garages, commercial, homes outside the feeder) |
-| Output | `ui/data/footprints.json`, 653,416 bytes, coordinates rounded to 6 decimals (about 0.1 m) |
+| Output | `ui/data/footprints.json`, 653,420 bytes, coordinates rounded to 6 decimals (about 0.1 m) |
 
 **Framing.** SMART-DS places a synthetic feeder on real Austin geography; the footprint is the real building
 nearest each synthetic home, not a claim that the home's electrical data belongs to that building.
