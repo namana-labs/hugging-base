@@ -1044,6 +1044,7 @@ export async function mount(el, ctx) {
       $('p1-day').innerHTML = `<span class="p1-daychip" data-tip="A real Texas day: ERCOT prices (REAL); home loads are the same calendar date in the 2018 SMART-DS year (ASSUMPTION).">${svg('calendar', { size: 16 })} ${esc(dayLabel(meta.day))} ${fmt.chip(priceLabel, 'ERCOT RTM SPP LZ_NORTH, recorded; the loads are the same calendar date in 2018 (ASSUMPTION)')}</span>`;
     }
     cues = storyCues(meta, doc, branch, topology, fmt);
+    prevLit = null;
     renderSections();
     renderLegend();
     drawStrip();
@@ -1295,9 +1296,11 @@ export async function mount(el, ctx) {
     }).join('') + `<div class="hb-sub">Fuse rule: opens above ${nv(fmt, L(fuse.pct, 'ASSUMPTION'), { unit: '%' })} for ${nv(fmt, L(fuse.min, 'ASSUMPTION'), { unit: ' min' })} ${fmt.chip('ASSUMPTION', fuse.cite)}; 110% and 150% are SMART-DS ratings ${fmt.chip('REAL', 'SMART-DS normhkva / EmergHKVA')}.</div>`;
   }
 
+  let prevLit = null;   // a chain step "pops" once, on the render where it lights (UX_SPEC_R2 2.6), never on every tick
   function renderStory() {
     const chain = CHAINS[branch] || [];
     const done = cues.find((c) => c.id === 'charged');
+    const litNow = new Set(chain.filter(([id]) => { const c = cues.find((x) => x.id === id); return c && k >= c.k; }).map(([id]) => id));
     story.querySelector('#p1-chain').innerHTML = chain.map(([id, icon, words], i) => {
       const c = cues.find((x) => x.id === id);
       const lit = !!c && k >= c.k;
@@ -1305,9 +1308,11 @@ export async function mount(el, ctx) {
       if (id === 'turns' && done && k >= done.k) { w = 'Every transformer stayed within its limit'; ic = 'ok'; tone = 'ok'; }
       const tip = c ? esc(`<b>${esc(c.t)}</b> ${cueText(c, fmt, names, branch)}<br><i>click to jump here</i>`) : '';
       const val = chainValue(c, fmt, names, branch, lit, done && k >= done.k ? done : null);
-      return `${i ? `<span class="ch-arrow">${svg('arrowRight', { size: 14 })}</span>` : ''}<button type="button" class="ch-step ${lit ? 'lit' : 'ghost'} tone-${tone}${c ? '' : ' nofire'}" data-k="${c ? c.k : ''}" ${c ? `data-tip-html="${tip}"` : 'data-tip="did not happen on this day"'}>
+      const pop = lit && prevLit && !prevLit.has(id) ? ' pop' : '';
+      return `${i ? `<span class="ch-arrow">${svg('arrowRight', { size: 14 })}</span>` : ''}<button type="button" class="ch-step ${lit ? 'lit' : 'ghost'}${pop} tone-${tone}${c ? '' : ' nofire'}" data-k="${c ? c.k : ''}" ${c ? `data-tip-html="${tip}"` : 'data-tip="did not happen on this day"'}>
         <span class="ch-ic">${ic === 'meter' ? svg('meter', { size: 20, pct: lit ? 160 : 80, tier: lit ? 4 : 0 }) : svg(ic, { size: 18 })}</span><span class="ch-w">${esc(w)}</span><span class="ch-v">${val}</span></button>`;
     }).join('');
+    prevLit = litNow;
     const a = activeCue(cues, k);
     const line = story.querySelector('#p1-line');
     line.hidden = !showCap || !a;

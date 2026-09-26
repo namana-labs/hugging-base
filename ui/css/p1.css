@@ -54,7 +54,7 @@ body.view-p1 .hb-panel { padding: 12px 14px 24px; }
 .fleet-bat.moving.f-D i { background: repeating-linear-gradient(60deg, var(--fc) 0 10px, color-mix(in srgb, var(--fc) 70%, white) 10px 20px); background-size: 40px 100%; animation: hb-stripes-l 1s linear infinite; }
 @keyframes hb-stripes-r { from { background-position: 0 0; } to { background-position: 40px 0; } }
 @keyframes hb-stripes-l { from { background-position: 40px 0; } to { background-position: 0 0; } }
-@media (prefers-reduced-motion: reduce) { .fleet-bat.moving i { animation: none; } .ch-step.lit { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .fleet-bat.moving i { animation: none; } .ch-step.pop { animation: none !important; } }
 .fleet-bat .fleet-res { position: absolute; left: 20%; top: 2px; bottom: 2px; border-left: 1.5px dashed var(--ink); opacity: .55; }
 .fleet-bat b { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 17px; font-weight: 800; color: var(--ink);
   text-shadow: 0 0 3px var(--paper), 0 0 3px var(--paper), 0 0 2px var(--paper); }
@@ -157,7 +157,7 @@ body[data-notice]:not([data-notice="0"]) .p1-story { top: calc(var(--header-h) +
 .ch-step .ch-v .num { color: var(--ink); font-weight: 700; }
 .ch-step.ghost { opacity: .38; }
 .ch-step.nofire { cursor: default; border-style: dashed; }
-.ch-step.lit { animation: hb-pop .35s ease-out 1; }
+.ch-step.pop { animation: hb-pop .35s ease-out 1; }
 .ch-step.lit.tone-bad { border-color: var(--crit); background: color-mix(in srgb, var(--crit) 12%, var(--paper)); }
 .ch-step.lit.tone-bad .ch-ic { color: var(--crit); }
 .ch-step.lit.tone-ok .ch-ic { color: var(--accent); }
