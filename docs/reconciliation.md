@@ -2,7 +2,7 @@
 
 Drafted 26 Sep 2026. Three designs exist in this repo:
 
-- **Hugging Base** — `docs/design.md` + `docs/plan.md` (branch `claude/base-power-hackathon-brief-8e8288`) and the working prototype in `demos/grid-stories/` (branch `codex/grid-stories`).
+- **Hugging Base** — `docs/design.md`, the working prototype in `demos/grid-stories/`, and `docs/plan.md` (still only on branch `claude/base-power-hackathon-brief-8e8288`).
 - **Headroom PRD v1** — `docs/headroom/PRD.md`, merged from five proposals and two critiques.
 - **GridSpine Atlas v0.2** — Part I–IV of `headroom-gridspine-dossier.html` on `main`.
 

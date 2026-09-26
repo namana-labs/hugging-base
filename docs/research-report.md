@@ -1,6 +1,6 @@
 # Base turns backyard batteries into grid capacity
 
-> **Corrected 26 Sep 2026 after design review:** SMART-DS transformers are already at standard 25/50/75 kVA nameplate (do not de-rate), and the 1,000-battery hijack's frequency effect is a 3–17 mHz band, not 3–5 mHz. See `design/round1/critique-judge.md`.
+> **Corrected 26 Sep 2026 after design review:** SMART-DS transformers are already at standard 25/50/75 kVA nameplate (do not de-rate), and the 1,000-battery hijack's frequency effect is a 3–17 mHz band, not 3–5 mHz. See `headroom/design/round1/critique-judge.md`.
 
 Base Power Company is a three-year-old Austin electricity retailer. It owns, installs and remotely operates large lithium-iron-phosphate batteries at its members' homes and runs them together as one power plant. As of August 2026 it had batteries at about **17,000 homes**: more than **23,000 batteries**, over **500 MWh**, and **205.5 MW** of self-operated nameplate power in ERCOT. It has raised more than $2.5B, most recently at a **$13B valuation**. It makes money as a "gentailer", meaning a retailer that also owns generation-like assets. Its income is retail electricity margin, wholesale arbitrage, ancillary-service payments and fixed capacity fees from utilities such as Austin Energy and CoServ. That is what "a power company, not a battery company" means.
 
