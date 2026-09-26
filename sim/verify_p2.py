@@ -212,7 +212,7 @@ def main(argv):
     if heads:
         print("referee head: OpenDSS max phase vs P2's per-phase estimate (DERIVED): " + " ; ".join(
             f"{run.split()[0]} {run.split()[1].split('-')[0]}{'-g20' if run.endswith('g20') else ''} {v(h['maxPct'])}% "
-            f"(est {v(h['estMaxPct'])}%, -{v(h['underReadMaxPts'])}/+{v(h['overReadMaxPts'])} pts; balanced total {v(h['balancedMaxPct'])}%)"
+            f"(est {v(h['estMaxPct'])}%, est - OpenDSS {-v(h['underReadMaxPts']):+.2f} to {v(h['overReadMaxPts']):+.2f} pts; balanced total {v(h['balancedMaxPct'])}%)"
             for run, h in heads.items()) + "   [report]")
     cap = ref.get("capacity") or {}
     ucd = uc.get("opendss") or {}
@@ -227,7 +227,7 @@ def main(argv):
             return (f"battery-caused normal {v(c['causedNormal'])} (all {v(c['normalEvents'])}), battery-caused emergency "
                     f"intervals {v(c['causedEmergencyN'])}, protection {v(c['protectionTfs'])} tfs, max tf {v(c['maxPct'])}%; "
                     f"head max {v(c['headMaxPct'])}% of 370 A at {c['headMaxPct']['t']} ({c['headMaxPct']['stepsOver100']} steps > 100%; "
-                    f"per-phase estimate max {v(c['headEstMaxPct'])}%, reads low by <= {v(c['headUnderReadPts'])} pts; balanced total "
+                    f"per-phase estimate max {v(c['headEstMaxPct'])}%, OpenDSS - estimate <= {v(c['headUnderReadPts']):+.2f} pts; balanced total "
                     f"{v(c['headBalancedMaxPct'])}%); min home voltage {v(c['vMinPu'])} pu = {c['vMinPu']['volts']} V "
                     f"({c['vMinPu']['home']}, {c['vMinPu']['t']}), homes < 0.95 pu {v(c['homesBelow095'])}; surrogate err "
                     f"max {v(c['errorAllPts']['max'])} p99 {v(c['errorAllPts']['p99'])} pts")

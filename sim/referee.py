@@ -213,7 +213,7 @@ def run(steps=REPORTED, runs=RUNS, write=True, out=print, capacity=True):
         out(f"referee {kind:8s} {combo}: {steps} steps, {ms[-1]:.1f} ms/step; shortlist err max {err_s[-1].max():.2f} pts; "
             f"normal events {int(M['normalEvents'].sum())} (battery-caused {n_caused}); placed {sum(kplaced)}; "
             f"head max {h['maxPct']}% of 370 A at {h['t']} (per-phase estimate {h['estAtMaxPct']}% there; estimate - OpenDSS "
-            f"-{h['underReadMaxPts']}..+{h['overReadMaxPts']} pts; balanced total read low by up to {h['balancedUnderReadMaxPts']} pts)")
+            f"{-h['underReadMaxPts']:+.2f} to {h['overReadMaxPts']:+.2f} pts; balanced total read low by up to {h['balancedUnderReadMaxPts']} pts)")
     es = np.concatenate(err_s)
     ea = np.concatenate(err_all)
     cards = {}
