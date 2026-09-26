@@ -4,6 +4,7 @@ The research, design proposals, critiques and PRD produced on 25–26 Sep 2026, 
 
 | Path | What it is |
 |---|---|
+| `../reconciliation.md` | Where Hugging Base, this PRD and GridSpine Atlas disagree, and what we chose for each. Read this first. |
 | `CONTEXT.md` | The brief every design agent read: event rules, the 100-point rubric, what the team agreed in the room, what a Base engineer told us. |
 | `PRD.md` | Headroom PRD v1, merged from five design proposals and two critiques. §7 defines every interface. Published page: https://claude.ai/artifact/1PKt63sT1Jn8NGStMxfv4p |
 | `design/round1/` | The five proposals (world-sim, orchestrator, adversary-and-observability, data-ingest, ui-scenario-studio) and two critiques (critique-judge, critique-integration). |
