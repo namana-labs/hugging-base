@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hugging Base control room</title>
+<link rel="stylesheet" href="design-system/styles.css">
+<style>
+/* Chapter 1, option 3a (docs/design-handoff/README.md). Values not in the tokens
+   are the handoff's own numbers and are named here once. */
+:root{
+  --home-empty:#bed0c1;          /* battery home when empty (handoff: rgb(190,208,193)) */
+  --home-stroke:#8f8b7f;         /* home without a battery */
+  --plot-field:#f6f3ea; --excess-solar:#e9dfbb; --capacitor:#c9cfc4; --band:#eef2ea;
+  --service-drop:#cdc8ba; --marker:#a9a497; --neutral-tx:#d3cec1; --edge:#8fcf9f;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--font-sans);font-size:var(--fs-body);line-height:1.35;font-variant-numeric:var(--numeric)}
+button{font:inherit;color:inherit;cursor:pointer}
+b,strong{font-weight:var(--w-bold)}
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#frame{width:1600px;height:900px;flex:none;display:flex;flex-direction:column;background:var(--bg);transform-origin:center center}
+.muted{color:var(--muted)}
+.tag{display:inline-block;padding:1px 5px;border:1px solid var(--border-strong);border-radius:var(--radius-tag);font-size:var(--fs-tag);font-weight:var(--w-bold);letter-spacing:var(--tracking-tag);color:var(--muted);white-space:nowrap;vertical-align:middle}
+/* header */
+header{height:60px;flex:none;display:flex;align-items:center;gap:18px;padding:0 24px;border-bottom:1px solid var(--border)}
+.wordmark{font-weight:var(--w-bold);font-size:21px;letter-spacing:var(--tracking-display);color:var(--brand)}
+.vdiv{width:1px;height:24px;background:var(--border)}
+.scenario{font-size:16px}
+.seg{display:flex;gap:2px;padding:3px;border:1px solid var(--border);border-radius:var(--radius-button);font-size:13px}
+.seg button{padding:5px 10px;border:0;border-radius:var(--radius-control);background:transparent;transition:background var(--dur-state) var(--ease-state),color var(--dur-state) var(--ease-state)}
+.seg button[aria-pressed=true]{background:var(--brand-tint);color:var(--brand);font-weight:var(--w-bold)}
+.spacer{flex:1}
+.framing{font-size:13px;color:var(--muted);padding:5px 10px;border:1px solid var(--border);border-radius:var(--radius-control)}
+.ghost{border:1px solid var(--border-strong);background:var(--panel);font-size:14px;font-weight:var(--w-bold);padding:9px 14px;border-radius:var(--radius-button)}
+.ghost:hover{border-color:var(--brand-hover)}
+/* body */
+#body{flex:1;min-height:0;display:grid;grid-template-columns:236px minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+#rail{border-right:1px solid var(--border);padding:22px 14px;display:flex;flex-direction:column;gap:4px}
+.eyebrow{font-size:12px;font-weight:var(--w-bold);letter-spacing:var(--tracking-tag);color:var(--muted);padding:0 10px 10px}
+.chapter{display:flex;gap:12px;padding:10px;border-radius:var(--radius-button)}
+.chapter.active{background:var(--brand-tint)}
+.chapter .num{width:26px;height:26px;flex:none;border-radius:50%;border:1.5px solid var(--border-strong);font-size:13px;font-weight:var(--w-bold);display:flex;align-items:center;justify-content:center}
+.chapter.active .num{background:var(--brand);border-color:var(--brand);color:var(--panel)}
+.chapter .t{font-size:15px}.chapter.active .t{font-weight:var(--w-bold)}
+.chapter .s{font-size:12.5px;color:var(--muted)}
+#main{min-width:0;display:flex;flex-direction:column;gap:14px;padding:18px 22px}
+/* cards */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-card);padding:10px 12px 8px;display:flex;flex-direction:column;gap:6px;min-width:0;min-height:0}
+.card .hd{display:flex;align-items:baseline;gap:6px;white-space:nowrap}
+.card .hd .title{font-size:13.5px;font-weight:var(--w-bold)}
+.card .hd .unit{font-size:11.5px;color:var(--muted)}
+.card .hd .now{margin-left:auto;font-size:11.5px;color:var(--muted)}
+.card .hd .now b{color:var(--ink)}
+.card .ft{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden}
+.card .ft .tag{flex:none}
+.plot{flex:1;min-height:0;position:relative;cursor:pointer}
+.plot svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.plot .cursor{position:absolute;top:0;bottom:0;width:1.5px;margin-left:-.75px;background:var(--brand);left:0;pointer-events:none}
+.plot .lbl{position:absolute;font-size:10px;font-weight:var(--w-bold);color:var(--muted);pointer-events:none}
+/* row 1 */
+#sys{flex:none;height:128px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+/* row 2 */
+#boardrow{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 340px;grid-template-rows:minmax(0,1fr);gap:14px}
+#boardwrap{position:relative;border:1px solid var(--border);border-radius:var(--radius-card);overflow:hidden}
+#board{position:absolute;inset:0;width:100%;height:100%;display:block}
+.float{position:absolute;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-button)}
+#tabs{top:12px;left:12px;display:flex;gap:2px;padding:3px}
+#tabs button{border:0;padding:8px 13px;border-radius:var(--radius-control);font-size:13.5px;background:transparent;color:var(--ink);transition:background var(--dur-state) var(--ease-state)}
+#tabs button[aria-pressed=true]{background:var(--brand);color:var(--panel);font-weight:var(--w-bold)}
+#tabs button:disabled{color:var(--muted);cursor:default}
+#story{top:62px;left:12px;max-width:470px;display:flex;gap:10px;padding:9px 12px;background:rgba(255,253,248,.94);font-size:13px;line-height:1.35}
+#zoom{top:12px;right:12px;display:flex;gap:6px;background:none;border:0}
+#zoom .col{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-button);overflow:hidden}
+#zoom .col button{width:34px;height:32px;border:0;background:transparent;font-size:18px}
+#zoom .col .hr{height:1px;background:var(--border)}
+#zoom .stack{display:flex;flex-direction:column;gap:6px}
+#zoom .stack button,#zoom .stack .n{height:32px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-button);background:var(--panel);font-size:12.5px;display:flex;align-items:center;justify-content:center}
+#zoom .stack .n{font-weight:var(--w-bold)}
+.legend{left:12px;bottom:40px;display:flex;flex-direction:column;gap:6px;padding:10px 12px;font-size:12.5px;min-width:250px}
+.legend[hidden]{display:none}
+.legend .h{font-size:11px;font-weight:var(--w-bold);letter-spacing:var(--tracking-tag);color:var(--muted)}
+.legend .r{display:flex;align-items:center;gap:8px}
+.legend .r b{margin-left:auto}
+.legend .sw{width:11px;height:11px;border-radius:3px;flex:none}
+.legend .r.muted{color:var(--muted)}
+.legend svg{width:13px;height:13px;flex:none}
+#attrib{position:absolute;left:0;right:0;bottom:0;height:28px;display:flex;align-items:center;gap:16px;padding:0 12px;background:rgba(255,253,248,.9);border-top:1px solid var(--border);font-size:11.5px;color:var(--muted)}
+#attrib .k{font-weight:var(--w-bold);color:var(--ink)}
+#attrib .end{margin-left:auto}
+#right{display:grid;grid-template-rows:auto minmax(0,1fr) minmax(0,1fr);gap:10px;min-height:0}
+/* fleet */
+#fleet{padding:10px 14px 9px;gap:7px}
+#flow{margin-left:auto;font-size:12px;font-weight:var(--w-bold);color:var(--brand)}
+.batrow{display:flex;align-items:center}
+.bat{flex:1;height:62px;border:3px solid var(--ink);border-radius:11px;padding:4px}
+.bat .track{position:relative;height:100%;border-radius:6px;overflow:hidden;background:var(--sky-day)}
+#batFill{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--brand)}
+#batStripe{position:absolute;left:0;top:0;bottom:0;width:0;background:repeating-linear-gradient(-60deg,rgba(255,253,248,.16) 0 7px,transparent 7px 16px);background-size:37px 100%}
+#batEdge{position:absolute;top:0;bottom:0;left:0;width:3px;margin-left:-3px;background:var(--edge)}
+#batReserve{position:absolute;top:0;bottom:0;border-left:2px dashed var(--panel)}
+#socPct{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:26px;font-weight:var(--w-bold);color:var(--panel);letter-spacing:var(--tracking-display)}
+.terminal{width:8px;height:24px;background:var(--ink);border-radius:0 4px 4px 0}
+.reslbl{position:relative;height:14px;font-size:11px;color:var(--muted)}
+.reslbl span{position:absolute;top:0;white-space:nowrap}
+/* voltage by bus */
+#vbuswrap{flex:1;min-height:0;position:relative}
+#vbus{position:absolute;inset:0;width:100%;height:100%}
+#vbuswrap .lbl{position:absolute;font-size:10px;font-weight:var(--w-bold)}
+/* reactive */
+.lg{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--ink-2)}
+.lg span{display:flex;align-items:center;gap:5px}
+.lg i{display:inline-block}
+/* transport */
+#transport{flex:none;height:140px;padding:10px 18px;flex-direction:row;align-items:center;gap:18px}
+#play{width:48px;height:48px;flex:none;border-radius:50%;border:0;background:var(--brand);color:var(--panel);font-size:15px}
+#play:hover{background:var(--brand-hover)}
+#restart{height:36px;flex:none;padding:0 12px;border-radius:var(--radius-button);border:1px solid var(--border-strong);background:transparent;font-size:13px}
+.clockblock{flex:none;width:118px;display:flex;flex-direction:column;gap:2px}
+#clock{font-size:var(--fs-clock);font-weight:var(--w-bold);line-height:1}
+#stepLabel{font-size:11.5px;color:var(--muted)}
+#scrub{flex:1;min-width:0;height:130px;position:relative;cursor:pointer}
+#sky{position:absolute;left:0;right:0;top:20px;bottom:18px;border-radius:var(--radius-control);background:linear-gradient(90deg,var(--sky-night) 0%,var(--sky-night) 22%,var(--sky-day) 30%,var(--sky-day) 76%,var(--sky-night) 86%,var(--sky-night) 100%)}
+#scrubsvg{position:absolute;left:0;top:20px;width:100%;height:92px;overflow:visible}
+#scrubov{position:absolute;left:0;right:0;top:20px;height:92px;pointer-events:none}
+#cursorT{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:var(--brand);left:0}
+#headT{position:absolute;width:12px;height:12px;border-radius:50%;background:var(--brand);border:2px solid var(--panel);transform:translate(-50%,-50%);left:0;top:50%}
+.mk{position:absolute;top:0;bottom:18px;border-left:1px dashed var(--marker)}
+.mk span{position:absolute;top:0;left:5px;font-size:11.5px;white-space:nowrap;color:var(--muted)}
+.mk.violation{border-left-color:var(--tier-2)}.mk.violation span{color:var(--ink);font-weight:var(--w-bold)}
+#hours{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+#tlegend{flex:none;display:flex;flex-direction:column;gap:3px;font-size:12px;width:170px}
+#tlegend .r{display:flex;gap:8px;align-items:center}#tlegend .r b{margin-left:auto}
+#tlegend i{display:inline-block;width:14px;flex:none}
+#speedwrap{flex:none;display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+#speed{font-size:12.5px}#speed button{padding:5px 8px}
+#dayline{font-size:11.5px;color:var(--muted)}
+/* sources sheet */
+#sheet{position:absolute;inset:0;background:rgba(16,35,26,.35);display:none;align-items:center;justify-content:center}
+#sheet[open]{display:flex}
+#sheet .panel{width:760px;max-height:760px;overflow:auto;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-float);padding:20px 24px;display:flex;flex-direction:column;gap:12px}
+#sheet h2{margin:0;font-size:var(--fs-title);font-weight:var(--w-bold);letter-spacing:var(--tracking-display)}
+#sheet h3{margin:8px 0 0;font-size:13.5px}
+#sheet table{border-collapse:collapse;font-size:12.5px;width:100%}
+#sheet td{padding:3px 8px 3px 0;border-bottom:1px solid var(--border);vertical-align:top}
+#sheet .bar{display:flex;gap:10px;align-items:center}
+#sheet .status{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div id="stage"><div id="frame">
+<header>
+  <div class="wordmark">Hugging Base</div>
+  <div class="vdiv"></div>
+  <div class="scenario" id="scenario">Heat-wave evening</div>
+  <div class="seg" role="group" aria-label="Dispatch policy"><button data-policy="naive" aria-pressed="true">Even split</button><button data-policy="aware" aria-pressed="false">Feeder-aware</button></div>
+  <div class="spacer"></div>
+  <div class="framing">Oncor-suburb stand-in · LZ_NORTH</div>
+  <button class="ghost" id="sources">Model &amp; sources</button>
+</header>
+<div id="body">
+  <nav id="rail">
+    <div class="eyebrow">CHAPTERS</div>
+    <div class="chapter active"><div class="num">1</div><div><div class="t">Heat-wave evening</div><div class="s">Where the grid is tight</div></div></div>
+    <div class="chapter"><div class="num">2</div><div><div class="t">Charging rebound</div><div class="s">When batteries recharge at once</div></div></div>
+    <div class="chapter"><div class="num">3</div><div><div class="t">Pieces fail</div><div class="s">Comms loss, a dead controller</div></div></div>
+    <div class="chapter"><div class="num">4</div><div><div class="t">Covert channel</div><div class="s">A fictional compromised cohort</div></div></div>
+    <div class="chapter"><div class="num">5</div><div><div class="t">Open grid data</div><div class="s">Two findings from ERCOT archives</div></div></div>
+  </nav>
+  <div id="main">
+    <div id="sys"></div>
+    <div id="boardrow">
+      <div id="boardwrap">
+        <svg id="board" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet">
+          <rect id="field" x="-600" y="-400" width="2200" height="1400"></rect>
+          <defs>
+            <symbol id="ic-house" viewBox="0 0 24 24"><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" fill="none"></path></symbol>
+            <symbol id="ic-zap" viewBox="0 0 24 24"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path></symbol>
+          </defs>
+          <g id="g-svc"></g><g id="g-edges"></g><g id="g-homes"></g><g id="g-txs"></g><g id="g-labels"></g>
+          <circle id="ring" cx="50" cy="330" r="12" fill="none" stroke-width="2" opacity="0"></circle>
+          <g id="g-sub"></g>
+          <rect x="790" y="476" width="196" height="128" rx="6" fill="none" stroke="#bdb8aa" stroke-dasharray="4 4"></rect>
+          <text x="888" y="544" text-anchor="middle" font-size="11" fill="#8b918c" font-family="ui-monospace,Menlo,monospace">basemap inset · later</text>
+        </svg>
+        <div class="float" id="tabs"><button data-layer="loading" aria-pressed="true">Loading</button><button data-layer="voltage" aria-pressed="false">Voltage</button><button disabled title="Chapter 5">Next battery</button><button disabled title="Chapter 4">Detector</button></div>
+        <div class="float" id="story"><b id="storyTime">00:00</b><span id="storyText">—</span></div>
+        <div id="zoom" class="float"><div class="col"><button id="zin" aria-label="Zoom in">+</button><div class="hr"></div><button id="zout" aria-label="Zoom out">−</button></div><div class="stack"><button id="zreset">Reset</button><div class="n">N ↑</div></div></div>
+        <div class="float legend" id="legend-loading">
+          <div class="h">TRANSFORMER LOADING <span style="font-weight:400;letter-spacing:0">(badges)</span></div>
+          <div class="r"><span class="sw" style="background:var(--healthy)"></span>Inside limits<b id="n0">0</b></div>
+          <div class="r"><span class="sw" style="background:var(--tier-1)"></span>Over nameplate (&gt;100%, counted)<b id="n1">0</b></div>
+          <div class="r"><span class="sw" style="background:var(--tier-2)"></span>Above normal (&gt;110%, sustained)<b id="n2">0</b></div>
+          <div class="r"><span class="sw" style="background:var(--tier-3)"></span>Above emergency (&gt;150%)<b id="n3">0</b></div>
+          <div class="r muted"><svg viewBox="0 0 24 24"><use href="#ic-house" fill="var(--brand)" stroke="var(--brand)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"></use></svg>Our battery home (darker = fuller)</div>
+          <div class="r muted"><svg viewBox="0 0 24 24"><use href="#ic-house" fill="var(--panel)" stroke="var(--home-stroke)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"></use></svg>Home without a battery</div>
+        </div>
+        <div class="float legend" id="legend-voltage" hidden>
+          <div class="h">HOME VOLTAGE</div>
+          <div class="r"><span class="sw" style="background:var(--healthy)"></span>Inside 0.95–1.05 pu</div>
+          <div class="r"><span class="sw" style="background:var(--tier-1)"></span>Near the floor (0.95–0.96)</div>
+          <div class="r"><span class="sw" style="background:var(--tier-2)"></span>Below 0.95 pu (sag)</div>
+          <div class="r"><span class="sw" style="background:var(--tier-3)"></span>Above 1.05 pu (rise on export)</div>
+        </div>
+        <div id="attrib"><span class="k">Oncor-suburb stand-in · LZ_NORTH</span><span id="attrib-topo">Topology: hand-built lateral</span><span>District names fictional</span><span class="end">Load scripted <span class="tag">ASSUMPTION</span></span></div>
+      </div>
+      <div id="right">
+        <div class="card" id="fleet">
+          <div class="hd"><span class="title">Fleet charge</span><span class="unit">all our batteries</span><span id="flow">—</span></div>
+          <div class="batrow"><div class="bat"><div class="track"><div id="batFill"></div><div id="batStripe"></div><div id="batEdge"></div><div id="batReserve"></div><span id="socPct">—</span></div></div><div class="terminal"></div></div>
+          <div class="reslbl"><span id="resLbl">↑ 20% member reserve, never used</span></div>
+          <div class="ft"><span id="fleetSize">Fleet size —</span><span class="tag">ASSUMPTION</span> · charge <span class="tag">DERIVED</span></div>
+        </div>
+        <div class="card">
+          <div class="hd"><span class="title">Voltage by bus</span><span class="unit" id="vbusUnit">pu, transformer buses</span><span class="now">lowest <b id="minv">—</b></span></div>
+          <div id="vbuswrap"><svg id="vbus" viewBox="0 0 470 150" preserveAspectRatio="none"></svg><span class="lbl" style="left:4px;top:calc(19% - 13px);color:var(--tier-2)">1.05</span><span class="lbl" style="left:4px;top:81%;color:var(--tier-2)">0.95</span><span class="lbl" id="vbusName" style="left:18%;bottom:2px">Test lateral</span></div>
+          <div class="ft">Ordered along the feeder · band 0.95–1.05 <span class="tag">DERIVED</span></div>
+        </div>
+        <div class="card">
+          <div class="hd"><span class="title">Reactive power</span><span class="unit">kvar at the feeder head</span><span class="now"><span class="tag">ASSUMPTION</span></span></div>
+          <div class="plot" data-scrub><svg viewBox="0 0 1000 100" preserveAspectRatio="none"><rect x="0" y="0" width="1000" height="100" fill="var(--plot-field)"></rect><line id="qzero" x1="0" x2="1000" y1="50" y2="50" stroke="var(--ink)" stroke-opacity=".25" vector-effect="non-scaling-stroke"></line><defs><clipPath id="clipQ"><rect class="clip" x="0" y="-10" width="0" height="120"></rect></clipPath></defs><g clip-path="url(#clipQ)"><path id="pQcap" fill="var(--capacitor)"></path><path id="pQinv" fill="var(--brand)" fill-opacity=".45"></path><path id="pQabs" fill="var(--brand)" fill-opacity=".25"></path><path id="pQdem" fill="none" stroke="var(--ink)" stroke-width="1.5" vector-effect="non-scaling-stroke"></path><path id="pQres" fill="none" stroke="var(--muted)" stroke-width="1.3" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"></path></g></svg><div class="cursor"></div></div>
+          <div class="lg"><span><i style="width:14px;border-top:1.5px solid var(--ink)"></i>Demand <b id="vQ">—</b></span><span><i style="width:10px;height:8px;background:var(--capacitor)"></i>Capacitor bank</span><span><i style="width:10px;height:8px;background:var(--brand);opacity:.45"></i>Our inverters (inject / absorb)</span><span><i style="width:14px;border-top:1.5px dashed var(--muted)"></i>Reserve left <b id="vQres">—</b></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" id="transport">
+      <button id="play" aria-label="Play or pause">❚❚</button>
+      <button id="restart">Restart</button>
+      <div class="clockblock"><span id="clock">00:00</span><span id="stepLabel">Step 1 of 288</span></div>
+      <div id="scrub">
+        <div id="sky"></div>
+        <svg id="scrubsvg" viewBox="0 0 1000 100" preserveAspectRatio="none"><g id="hourTicks"></g><defs><clipPath id="clipT"><rect class="clip" x="0" y="-10" width="0" height="120"></rect></clipPath></defs><g id="ghost" opacity="0"><path id="pSocAreaG" fill="var(--brand)" fill-opacity=".12"></path><path id="pSocG" fill="none" stroke="var(--brand)" stroke-width="2" vector-effect="non-scaling-stroke"></path></g><g clip-path="url(#clipT)"><path id="pExcess" fill="var(--excess-solar)"></path><path id="pSocArea" fill="var(--brand)" fill-opacity=".14"></path><path id="pLoad" fill="none" stroke="var(--ink)" stroke-width="1.4" vector-effect="non-scaling-stroke"></path><path id="pSolar" fill="none" stroke="var(--ink)" stroke-width="1.4" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"></path><path id="pSoc" fill="none" stroke="var(--brand)" stroke-width="2.8" vector-effect="non-scaling-stroke"></path></g><line id="reserveLine" x1="0" x2="1000" y1="78.4" y2="78.4" stroke="var(--brand)" stroke-dasharray="2 3" vector-effect="non-scaling-stroke"></line></svg>
+        <div id="scrubov"><div id="cursorT"></div><div id="headT"></div></div>
+        <div id="markers"></div>
+        <div id="hours"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
+      </div>
+      <div id="tlegend">
+        <div class="r"><i style="height:3px;background:var(--brand)"></i>Fleet charge<b><span id="lgSoc">—</span>%</b></div>
+        <div class="r"><i style="border-top:1.5px solid var(--ink)"></i>Load<b><span id="lgLoad">—</span> kW</b></div>
+        <div class="r"><i style="border-top:1.5px dashed var(--ink)"></i>Solar<b><span id="lgSolar">—</span> kW</b></div>
+        <div class="r"><i style="height:8px;background:var(--excess-solar)"></i>Excess solar</div>
+        <div class="r muted"><i style="border-top:1.5px dotted var(--brand)"></i>Member reserve <span id="lgReserve">20%</span></div>
+      </div>
+      <div id="speedwrap"><div class="seg" id="speed"><button data-speed="0.5">½×</button><button data-speed="1" aria-pressed="true">1×</button><button data-speed="2">2×</button></div><span id="dayline">1 day = 20 s · <span id="day">Day 1</span></span></div>
+    </div>
+  </div>
+</div>
+<div id="sheet"><div class="panel">
+  <div class="bar"><h2>Model &amp; sources</h2><span class="spacer"></span><button class="ghost" id="sheetClose">Close</button></div>
+  <p class="muted" style="margin:0;font-size:13px">Every number on this screen is read from a replay written by the simulator in <code>simulators/connor/sim</code>. OpenDSS judges every violation; a deterministic rule sets every base point. No language model chose a dispatch, a setpoint or a ranking.</p>
+  <h3>Provenance</h3><table id="provTable"></table>
+  <h3>Parameters of this replay</h3><table id="paramTable"></table>
+  <div class="bar"><button class="ghost" id="rerun">Rerun from the simulator</button><a class="ghost" id="panelLink" href="four-node.html?replay=day" style="text-decoration:none">Open the parameter panel</a><span class="status" id="rerunStatus"></span></div>
+  <h3>ERCOT system cards</h3><p class="muted" id="ercotNote" style="margin:0;font-size:12.5px"></p>
+</div></div>
+</div></div>
+<script type="module" src="dashboard.js"></script>
+</body>
+</html>
