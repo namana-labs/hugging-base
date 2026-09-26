@@ -484,11 +484,31 @@ def useful_capacity(ctx, steps=STEPS):
     return out
 
 
-def coupled_run(ctx, homes, steps=STEPS):
-    """One month, aware + head cap, one column per transformer, Cores on `homes`: (curtail fraction, row, sim)."""
+def capacity_sim(ctx, homes, policy="aware", steps=STEPS):
+    """One month from an EMPTY feeder, one column per transformer (column index = transformer index), a Core on each
+    of `homes`, core-d26-g0: (world, sim). aware takes the feeder-head cap (HEAD_CAP); naive is uncapped, so each
+    battery's schedule is its own (the same schedule the greedy's per-transformer worlds gave it)."""
     world = World(list(range(ctx.n_tf)), [int(ctx.home_tf[h]) for h in homes], list(homes), ["core"] * len(homes),
                   [True] * len(homes))
-    sim = simulate(world, ctx.P, ctx.Q, ctx.kva, ctx.coeffs, "aware", "d26", steps=steps, head_kva=HEAD_RATING_KVA)
+    sim = simulate(world, ctx.P, ctx.Q, ctx.kva, ctx.coeffs, policy, "d26", steps=steps,
+                   head_kva=HEAD_RATING_KVA if policy == "aware" else None)
+    return world, sim
+
+
+def capacity_homes(uc):
+    """The two useful-capacity builds sim.referee checks in OpenDSS: each policy's first n homes of its greedy order."""
+    return {"naive": [int(h) for h in uc["naive"]["order"][:uc["naive"]["n"]]],
+            "aware": [int(h) for h in uc["aware"]["order"][:uc["awareHead"]["n"]]]}
+
+
+def capacity_sha(uc, schedule_sha):
+    """sha256 of the capacity builds (their homes) and the combo schedules' sha (the model that schedules them)."""
+    return hashlib.sha256((json.dumps(capacity_homes(uc), sort_keys=True) + schedule_sha).encode()).hexdigest()
+
+
+def coupled_run(ctx, homes, steps=STEPS):
+    """One month, aware + head cap, one column per transformer, Cores on `homes`: (curtail fraction, row)."""
+    _, sim = capacity_sim(ctx, homes, "aware", steps)
     n = min(REPORTED, steps)
     M = month_metrics(sim["pct"], sim["pct_none"], sim["col_kw"], steps=n)
     need = float(sim["need_kwh"].sum())
@@ -553,6 +573,55 @@ def load_referee(sha):
     return doc if doc.get("schedule_sha256") == sha else None
 
 
+CAPACITY_SCREEN = "surrogate screen (sim.surrogate, calibrated vs OpenDSS)"
+
+
+def capacity_cite(c, rating_a):
+    """The useful-capacity cite once sim.referee has run the build in OpenDSS: what OpenDSS measured, in words."""
+    head = c["head"]
+    over = head["maxPct"] > 100.0
+    return (f"{CAPACITY_SCREEN}; this {c['n']}-battery build OpenDSS-checked (sim.referee, every 15-min step of August): "
+            f"{c['causedNormal']['n']} battery-caused normal-tier events, {c['causedEmergencyN']} battery-caused emergency "
+            f"intervals, feeder head max {head['maxPct']}% of {rating_a:.0f} A ({head['t']})"
+            + ("; the head passes its rating" if over else ""))
+
+
+def apply_capacity(index, ref, cap_sha):
+    """Merge sim.referee's OpenDSS check of the two useful-capacity builds into index.usefulCapacity (labelled)."""
+    from .constants import HEAD_RATING_A
+    uc = index["usefulCapacity"]
+    cap = (ref or {}).get("capacity")
+    if not cap or cap.get("sha256") != cap_sha:
+        uc["opendss"] = {"status": "not run on these builds (run scripts/build_all.sh referee)"}
+        return
+    out = {"status": "OpenDSS-checked builds", "rule": cap["rule"]}
+    for pol in ("naive", "aware"):
+        c = cap[pol]
+        cite = f"OpenDSS (sim.referee): the {c['n']}-battery {pol} useful-capacity build from an empty feeder, August 2026"
+        h, vm = c["head"], c["vmin"]
+        out[pol] = {
+            "n": c["n"],
+            "causedNormal": labelled(c["causedNormal"]["n"], "SIM", cite + "; battery-caused normal-tier events (>110% for >= 30 min while its batteries charge or it back-feeds)",
+                                     tfs=c["causedNormal"]["tfs"]),
+            "normalEvents": labelled(c["normalEvents"], "SIM", cite + "; all normal-tier events, home load included"),
+            "causedEmergencyN": labelled(c["causedEmergencyN"], "SIM", cite + "; battery-caused intervals above 150%"),
+            "emergencyN": labelled(c["emergencyN"], "SIM", cite + "; all intervals above 150%"),
+            "protectionTfs": labelled(len(c["protectionTfs"]), "SIM", cite + "; transformers where the fuse rule (ASSUMPTION) would operate",
+                                      tfs=c["protectionTfs"]),
+            "maxPct": labelled(c["maxPct"]["v"], "SIM", cite + "; highest transformer loading", tf=c["maxPct"]["tf"], t=c["maxPct"]["t"]),
+            "headMaxPct": labelled(h["maxPct"], "SIM", cite + f"; feeder-head current / {HEAD_RATING_A:.0f} A (site/ems/flow-spec.md)",
+                                   amps=h["amps"], t=h["t"], stepsOver100=h["stepsOver100"]),
+            "headEstMaxPct": labelled(h["estMaxPct"], "DERIVED", HEAD_CITE),
+            "headUnderReadPts": labelled(h["underReadMaxPts"], "SIM", "OpenDSS head % minus the lossless estimate, largest over the month (positive: the estimate reads low)"),
+            "vMinPu": labelled(vm["pu"], "SIM", cite + "; minimum home voltage (pu, 120 V base)", volts=vm["volts"], home=vm["home"], t=vm["t"]),
+            "homesBelow095": labelled(vm["homesBelow095"], "SIM", cite + "; homes whose voltage leaves 0.95 pu at any step"),
+            "errorAllPts": {"max": labelled(c["errorAllPts"]["max"], "SIM", cite + "; surrogate - OpenDSS, all 379 transformers"),
+                            "p99": labelled(c["errorAllPts"]["p99"], "SIM", cite + "; surrogate - OpenDSS, all 379 transformers")}}
+    uc["opendss"] = out
+    uc["naive"]["cite"] = capacity_cite(cap["naive"], HEAD_RATING_A)
+    uc["aware"]["cite"] = capacity_cite(cap["aware"], HEAD_RATING_A) + "; aware with the feeder-head cap (HEAD_CAP)"
+
+
 def apply_referee(index, combos, ref):
     """Merge sim.referee's OpenDSS numbers into index.referee and the shortlist cards (both default combos)."""
     if ref is None:
@@ -570,6 +639,13 @@ def apply_referee(index, combos, ref):
                         "shortlist": ref["shortlist"], "runList": ref["runList"],
                         "baselineCausedNormal": {k: labelled(v, "SIM", "OpenDSS, existing fleet, battery-caused normal-tier events")
                                                  for k, v in ref["baselineCausedNormal"].items()}}
+    if ref.get("head"):
+        from .constants import HEAD_RATING_A
+        index["referee"]["head"] = {
+            run: {"maxPct": labelled(h["maxPct"], "SIM", f"OpenDSS feeder-head current / {HEAD_RATING_A:.0f} A, run '{run}'", amps=h["amps"], t=h["t"]),
+                  "estMaxPct": labelled(h["estMaxPct"], "DERIVED", HEAD_CITE),
+                  "underReadMaxPts": labelled(h["underReadMaxPts"], "SIM", "OpenDSS head % minus the lossless estimate, largest over the month")}
+            for run, h in ref["head"].items()}
     for combo, cards in ref["cards"].items():
         doc = combos.get(combo)
         if doc is None:
@@ -747,7 +823,11 @@ def build_all(bench=False, write=True, out=print):
     index = build_index(ctx, extras, uc, bench_s)
     sha = schedule_sha({k: extras[k] for k in referee_combos()})
     index["referee_schedule_sha256"] = sha
-    apply_referee(index, combos, load_referee(sha))
+    cap_sha = capacity_sha(uc, sha)
+    index["referee_capacity_sha256"] = cap_sha
+    ref = load_referee(sha)
+    apply_referee(index, combos, ref)
+    apply_capacity(index, ref, cap_sha)
     csvb = csv_bytes(ctx, combos[DEFAULT], extras[DEFAULT])
     if write:
         write_outputs(index, combos, csvb)
