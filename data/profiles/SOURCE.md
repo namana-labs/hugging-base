@@ -16,7 +16,7 @@
 <!-- calibrate:begin -->
 - **surrogate_trusted: true** (held-out p99 <= 5.0 points; build prompt 7.2).
 - Held-out error vs OpenDSS, 300 frames (none, naive charge at +20 kW, naive discharge at -20 kW; seed 20260823), all 379 transformers: max 0.91 pts, p99 0.26 pts (SIM).
-- Same frames with the Transformers.dss physics prior alone: max 1.03, p99 0.27; with no losses: max 9.00, p99 2.04.
+- Same frames with the Transformers.dss physics prior alone: max 4.02, p99 1.16; with no losses: max 9.00, p99 2.04.
 - Fitted per transformer on 240 separate OpenDSS frames (seed 20260801; each battery at an independent level); feeder: sim.feeder.Feeder (lane L0).
 <!-- calibrate:end -->
 
