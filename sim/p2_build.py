@@ -46,7 +46,7 @@ SCREEN = "surrogate screen (sim.surrogate, calibrated vs OpenDSS); not OpenDSS-c
 HEAD_CITE = ("feeder-head estimate: the most loaded primary phase, |sum P + j sum Q| of the transformers on that phase "
              "(SMART-DS Transformers.dss) vs 370 A x 7.2 kV = 2,663.8 kVA per phase (site/ems/flow-spec.md); lossless, "
              "no capacitor; OpenDSS check in sim.referee; overAt = first placement above 100% (null: never)")
-CONSTS = ("HEAD_CAP", "HEAD_RATING_A", "HEAD_RATING_KVA", "AWARE_MARGIN", "CORE_POWER_KW", "CORE_USABLE_KWH", "CORE_RTE", "LEGACY_POWER_KW", "LEGACY_USABLE_KWH",
+CONSTS = ("STAND_IN", "HEAD_CAP", "HEAD_RATING_A", "HEAD_RATING_KVA", "AWARE_MARGIN", "CORE_POWER_KW", "CORE_USABLE_KWH", "CORE_RTE", "LEGACY_POWER_KW", "LEGACY_USABLE_KWH",
           "LEGACY_RTE", "RESERVE_FLOOR", "SOC_BUCKET", "MIN_GRANT_KW", "GROWTH", "CURTAIL_CAP", "P2_SOC0",
           "P2_DISCHARGE_FROM", "P2_CHARGE_END", "P2_CONTROLLER_VIEW", "P2_CAUSED_EPS_PTS", "CURTAIL_VALUE_RULE",
           "TIER_AMBER_PCT", "TIER_NORMAL_PCT", "TIER_NORMAL_MIN", "TIER_EMERGENCY_PCT", "FUSE_PCT", "FUSE_MINUTES",
@@ -181,13 +181,16 @@ def metrics_of(M, col, label="SIM", cite=None):
 
 
 def reason_of(e):
+    """The screening sentence (surrogate numbers, each tagged 'screening'; audit R2 L8). sim.referee appends the
+    OpenDSS month peak to the shortlist cards it re-ran (apply_referee)."""
     if e["newViolation"]:
-        return (f"adds a violation (SIM): with the battery the month peak is {e['peakWith']:.1f}% "
+        return (f"adds a violation (SIM, screening): with the battery the month peak is {e['peakWith']:.1f}% "
                 f"({e['added']:.2f} h more above nameplate); where NOT to put it")
     if e["avoided"] > 0:
-        return (f"relieves {e['avoided']:.2f} h above nameplate (SIM); no new violation; month peak with the battery "
-                f"{e['peakWith']:.1f}% (SIM)")
-    return f"no stress to relieve; no new violation; month peak with the battery {e['peakWith']:.1f}% (SIM, lowest first)"
+        return (f"relieves {e['avoided']:.2f} h above nameplate (SIM, screening); no new violation; month peak with the "
+                f"battery {e['peakWith']:.1f}% (SIM, screening)")
+    return (f"no stress to relieve; no new violation; month peak with the battery {e['peakWith']:.1f}% "
+            f"(SIM, screening; lowest first)")
 
 
 def homes_dark(ctx, tf, with_battery=()):
