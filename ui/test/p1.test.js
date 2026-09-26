@@ -12,6 +12,7 @@ import { roomKW } from '../lib/scene-model.js';
 import {
   worstAt, countsAt, stateCounts, tickerAt, tfEvening, gaugeModel, initialStep, stripMarks, labelledTreeHTML, gridCheckHTML,
   faultText, seriesLabel, optsFor, humanKey, NAIVE_FRAMING, BRANCH_NAMES, SPEEDS, MS_PER_STEP, moneyHTML, isLabelledRecord,
+  spikeDriverAt, driverLineHTML, DRIVER_WINDOW_MIN,
 } from '../panels/p1.js';
 
 const UI = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -179,4 +180,34 @@ test('money card: every line labelled, local relief never priced, capacity band 
   assert.ok(isLabelledRecord(fmt, { text: 'a', label: 'REAL' }));
   assert.ok(!isLabelledRecord(fmt, { v: 1, label: 'REAL' }));
   assert.throws(() => moneyHTML(fmt, { mystery: 5 }, 'aware'), fmt.LabelError);
+});
+
+test('hero driver: a spike shown as the worst transformer names its home and shared SMART-DS profile, only near the spike', () => {
+  assert.equal(DRIVER_WINDOW_MIN, 15);
+  const r = meta.relief;
+  if (!r || !r.driver) return;   // fixtures without a relief: nothing to name
+  const k = Number.isInteger(r.step) ? r.step : fmt.timeToStep(meta, r.t);
+  const info = spikeDriverAt(meta, fmt, r.tf, k);
+  assert.equal(info.kind, 'relief');
+  assert.equal(info.driver.profile, r.driver.profile);
+  // 15 min either side, never further: at the naive rebound the spike is not the cause
+  assert.ok(spikeDriverAt(meta, fmt, r.tf, k + 15));
+  assert.equal(spikeDriverAt(meta, fmt, r.tf, k + 16), null);
+  assert.equal(spikeDriverAt(meta, fmt, r.tf, k - 16), null);
+  const html = driverLineHTML(fmt, info, (h) => (typeof h === 'object' ? h.label : homeLabel(h)));
+  assert.match(html, new RegExp(r.driver.profile));
+  assert.match(html, /15-minute spike/);
+  if (r.driver.sharedWith && r.driver.sharedWith.length) assert.match(html, /not independent evidence/);
+  assert.match(html, /data-label="SIM"|SIM/);   // the kW at the peak carries its chip
+  // an unrelieved transformer (T-240) names its own driver at its peak
+  for (const u of meta.unrelieved || []) {
+    if (!u.driver || !u.peak || !u.peak.t) continue;
+    const ku = fmt.timeToStep(meta, u.peak.t);
+    const iu = spikeDriverAt(meta, fmt, u.tf, ku);
+    assert.equal(iu.kind, 'unrelieved');
+    assert.match(driverLineHTML(fmt, iu, (h) => (typeof h === 'object' ? h.label : homeLabel(h))), /home load only, no battery/);
+  }
+  // a transformer with no driver entry gets nothing
+  assert.equal(spikeDriverAt(meta, fmt, -1, k), null);
+  assert.equal(driverLineHTML(fmt, null, homeLabel), '');
 });

@@ -31,6 +31,39 @@ let nvFmt = null;
 /** A labelled number's value (format.js throws on a bare one), for lines that carry one chip for all their numbers. */
 const nv = (x, opts) => `<span class="num">${esc(nvFmt.fmtValue(x, opts))}</span>`;
 
+/** Minutes either side of a driver's 15-minute interval in which the hero names it (the interval interpolated to 1 min). */
+export const DRIVER_WINDOW_MIN = 15;
+
+/**
+ * The `driver` behind transformer `tf` at step `k`, or null: `meta.relief` (A's spike) or a `meta.unrelieved` entry
+ * (T-240) whose peak is within DRIVER_WINDOW_MIN of k. Used so the hero names one home's spike, and its shared
+ * SMART-DS profile, whenever it shows that spike as the worst service transformer (build prompt 4.2, 5.3).
+ */
+export function spikeDriverAt(meta, fmt, tf, k) {
+  const near = (step) => Number.isInteger(step) && Math.abs(k - step) <= DRIVER_WINDOW_MIN * 60 / (meta.stepSeconds || 60);
+  const r = meta.relief;
+  if (r && r.tf === tf && r.driver) {
+    const step = Number.isInteger(r.step) ? r.step : (r.t ? fmt.timeToStep(meta, r.t) : null);
+    if (near(step)) return { kind: 'relief', tf, t: r.t, driver: r.driver };
+  }
+  for (const u of meta.unrelieved || []) {
+    if (u.tf !== tf || !u.driver) continue;
+    const t = (u.peak && u.peak.t) || null;
+    if (t && near(fmt.timeToStep(meta, t))) return { kind: 'unrelieved', tf, t, driver: u.driver };
+  }
+  return null;
+}
+
+/** One line for the hero: whose spike it is, its SMART-DS profile, and where else the same profile is used. */
+export function driverLineHTML(fmt, info, homeLabel) {
+  if (!info) return '';
+  const d = info.driver;
+  const shared = d.sharedWith && d.sharedWith.length ? `; the same profile is used at ${esc(d.sharedWith.map(homeLabel).join(', '))}, so it is not independent evidence` : '';
+  const kw = d.kwAtPeak && fmt.isLabelled(d.kwAtPeak) ? ` (${fmt.fmtHTML(d.kwAtPeak, { unit: ' kW', digits: 1 })} at ${esc(info.t || '')})` : '';
+  const what = info.kind === 'unrelieved' ? 'home load only, no battery here: ' : '';
+  return `<div class="p1-driver p1-hero-driver">${what}one home's 15-minute spike: ${esc(d.label || homeLabel(d.home))}, SMART-DS profile <code>${esc(d.profile || '')}</code>${kw}${shared}.</div>`;
+}
+
 /** The label of a bulk series in a branch doc (the envelope's `series`), defaulting to SIM. */
 export function seriesLabel(doc, name, dflt = 'SIM') {
   const s = doc && doc.series && doc.series[name];
@@ -508,6 +541,14 @@ export async function mount(el, ctx) {
     $('p1-gauges').innerHTML = html;
   }
 
+  /** Near A's spike, on the feeder-aware branch: the relief at its true size, above the fold (build prompt 4.2, 11). */
+  function heroReliefHTML() {
+    const r = meta.relief;
+    if (!r || branch !== 'aware' || !r.none || !r.aware || !spikeDriverAt(meta, fmt, r.tf, k)) return '';
+    const kw = r.reliefKW ? `; its batteries discharged ${fmt.fmtHTML(r.reliefKW, { unit: ' kW', digits: 1 })}` : '';
+    return `<div class="p1-counts">relief on ${esc(tfName(r.tf))} at ${esc(r.t || '')}: ${fmt.fmtHTML(r.none, { unit: '%', digits: 1 })} with no batteries → ${fmt.fmtHTML(r.aware, { unit: '%', digits: 1 })} feeder-aware${kw} (over nameplate is amber, not a failure)</div>`;
+  }
+
   function renderDynamic() {
     const time = fmt.stepToTime(meta, k);
     $('p1-when').textContent = `${meta.day} · ${time} · step ${k} of ${meta.steps} · ${BRANCH_NAMES[branch] || branch}`;
@@ -519,6 +560,8 @@ export async function mount(el, ctx) {
       <h2>Worst service transformer now</h2>
       <div class="hb-big tier-${w.code}">${fmt.fmtHTML(L(+w.pct.toFixed(1), lab, 'OpenDSS loading, % of nameplate'), { unit: '%', digits: 1 })}</div>
       <div class="hb-sub">${esc(tfName(w.tf))} · ${esc(sceneModel.TIER_NAMES[w.code] || '')}</div>
+      ${w.code >= 1 ? driverLineHTML(fmt, spikeDriverAt(meta, fmt, w.tf, k), homeLabel) : ''}
+      ${heroReliefHTML()}
       <div class="p1-counts">transformers now: over nameplate ${nv(L(c[0] + c[1] + c[2] + c[3], lab))} · above 110% ${nv(L(c[1] + c[2] + c[3], lab))} · emergency ${nv(L(c[3], lab))} · protection open ${nv(L(c[4], lab))} ${fmt.chip(lab, 'tier codes from sim.tiers')}</div>
       ${branch === 'none' ? '<div class="p1-counts">no batteries in this branch</div>' : `<div class="p1-counts">batteries now: charging ${nv(L(sc.C, 'SIM'))} · discharging ${nv(L(sc.D, 'SIM'))} · idle ${nv(L(sc.I, 'SIM'))}${sc.S + sc.X ? ` · stale/expired ${nv(L(sc.S + sc.X, 'SIM'))}` : ''}${sc.B ? ` · islanded ${nv(L(sc.B, 'SIM'))}` : ''} ${fmt.chip('SIM')}</div>`}`;
     renderGauges();
