@@ -13,7 +13,7 @@ import { parseLink, linkQuery, applyBeat, _configure, getWithFixture, getOptiona
   DEFAULT_DATE, SPEEDS, getGz, loadP1MetaFor, loadP1BranchFor, resolveP1Date } from '../lib/data.js';
 import * as icons from '../lib/icons.js';
 import { LABEL_TIPS, tipHTMLFor, chipLabel, speedTip } from '../lib/tip.js';
-import { dayChipHTML, dayRowsHTML, sparklineSVG } from '../lib/days.js';
+import { dayChipHTML, dayRowsHTML, sparklineSVG, calendarStripHTML, netColour } from '../lib/days.js';
 
 const UI = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -230,6 +230,28 @@ test('days: the day chip and the popover rows read index.json only, with labels 
   assert.doesNotMatch(visible, /\d/, visible);
   assert.match(sparklineSVG([1, 2, 3]), /^<svg class="hb-spark"/);
   assert.equal(sparklineSVG([1]), '');
+});
+
+test('days: the money calendar strip (A.9h): a cell per evening, sim days clickable, labels from series', () => {
+  const cal = { from: '2026-07-30', n: 5, net: [1234, -56, null, 0, 90000], sold: [], bought: [], peak: [56642, 3000, null, 2500, 78072],
+    peakT: '2100 1845 - 1900 2215', onset: '2200 2130 - 2200 2300', mode: 'bb-bb', negMin: [0, 15, 0, 0, 0],
+    sim: { '2026-08-23': '', '2026-08-01': 'days/2026-08-01' }, gaps: [{ day: '2026-08-01', reason: 'DST test gap' }],
+    headline: { perBattery2026ytd: { v: 284.68, label: 'DERIVED' }, top10Share2026: { v: 55, label: 'DERIVED' }, losingNights2026: { v: 85, label: 'DERIVED' } },
+    series: { net: { label: 'DERIVED' }, peak: { label: 'REAL' }, negMin: { label: 'REAL' } } };
+  const h = calendarStripHTML(cal, '2026-08-03');
+  assert.equal((h.match(/class="hb-cal-cell[^"]*" data-date=/g) || []).length, 5);
+  assert.equal((h.match(/class="hb-cal-row"/g) || []).length, 2, 'Jul and Aug rows');
+  assert.match(h, /<button type="button" class="hb-cal-cell gap sim" data-date="2026-08-01"/);
+  assert.match(h, /class="hb-cal-cell lose paid" data-date="2026-07-31"/);
+  assert.match(h, /class="hb-cal-cell cur" data-date="2026-08-03"/);
+  assert.ok(h.includes('DST test gap'));
+  assert.ok(h.includes('a smart dispatcher sits out'));
+  assert.ok(h.includes('$284.68') && h.includes('chip-DERIVED'));
+  assert.ok(h.includes('566.42 $/MWh') && h.includes('at 21:00'));
+  assert.deepEqual(netColour(-1, 10), [125, 147, 178]);
+  assert.deepEqual(netColour(10, 10), [184, 134, 11]);
+  assert.equal(netColour(null, 10), null);
+  assert.equal(calendarStripHTML(null), '');
 });
 
 test('data: a beat sets every key it names', () => {
