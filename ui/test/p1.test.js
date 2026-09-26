@@ -11,7 +11,7 @@ import * as fmt from '../lib/format.js';
 import { roomKW } from '../lib/scene-model.js';
 import {
   worstAt, countsAt, stateCounts, tickerAt, tfEvening, gaugeModel, initialStep, stripMarks, labelledTreeHTML, gridCheckHTML,
-  faultText, seriesLabel, optsFor, humanKey, NAIVE_FRAMING, BRANCH_NAMES, SPEEDS, MS_PER_STEP,
+  faultText, seriesLabel, optsFor, humanKey, NAIVE_FRAMING, BRANCH_NAMES, SPEEDS, MS_PER_STEP, moneyHTML, isLabelledRecord,
 } from '../panels/p1.js';
 
 const UI = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -148,4 +148,35 @@ test('grid checks: measured, never asserted: "stays in range" only when no home 
   assert.ok(!/stays in range/.test(sag));
   assert.match(sag, /homes below 0\.95 pu/);
   for (const b of meta.branches) assert.ok(gridCheckHTML(fmt, meta.summary[b], homeLabel).length > 0, b);
+});
+
+test('money card: every line labelled, local relief never priced, capacity band only on fleet kW at the peak', () => {
+  const html = moneyHTML(fmt, meta.money, 'aware');
+  assert.ok(html.length > 0);
+  assert.ok(!/NaN|undefined|\[object Object\]/.test(html));
+  const money = {
+    energyValueUSD: { naive: { v: 893.83, label: 'DERIVED' }, aware: { v: 916.56, label: 'DERIVED' } },
+    costOfAwareness: { v: -22.73, label: 'DERIVED' },
+    systemCapacityPerMonth: { aware: { fleetKW: { v: 1888.8, label: 'SIM' }, low: { v: 5893.19, label: 'DERIVED' }, high: { v: 16055.17, label: 'DERIVED' }, unit: '$/month' } },
+    relief: { kwh: { v: 1.194, label: 'SIM' }, opportunityUpperUSD: { v: 0.64, label: 'DERIVED' }, priced: { v: false, label: 'ASSUMPTION' } },
+    whoPays: [{ who: 'GVEC (50 MW)', for: 'ERCOT summer 4CP and arbitrage', label: 'REAL', cite: 'x' }],
+    localRelief: { text: 'unpriced opportunity', label: 'ASSUMPTION', cite: 'y' },
+    transformerReplacementUSD: { v: null, label: 'ASSUMPTION', cite: 'not sourced' },
+    avoidedHarm: { naive: { normalEvents: { v: 11, label: 'SIM' }, emergencyTfs: { v: 3, label: 'SIM' }, protectionOperated: { v: 0, label: 'SIM' } } },
+    extra: { v: 3, label: 'SIM' },
+  };
+  const h = moneyHTML(fmt, money, 'aware');
+  assert.match(h, /\$916\.56/);
+  assert.match(h, /-\$22\.73/);
+  assert.match(h, /Negative: feeder-aware earned more/);
+  assert.match(h, /\$5,893\.19<\/span>.*to.*\$16,055\.17/s);
+  assert.match(h, /not a payment for local relief/);
+  assert.match(h, /GVEC \(50 MW\): ERCOT summer 4CP and arbitrage<\/span> <span class="chip chip-REAL"/);
+  assert.match(h, /unpriced opportunity/);
+  assert.match(h, /not sourced <span class="chip chip-ASSUMPTION"/);
+  assert.match(h, /<td>11<\/td><td>3<\/td><td>0<\/td>/);
+  assert.match(h, /Extra/);   // unknown keys still render, labelled
+  assert.ok(isLabelledRecord(fmt, { text: 'a', label: 'REAL' }));
+  assert.ok(!isLabelledRecord(fmt, { v: 1, label: 'REAL' }));
+  assert.throws(() => moneyHTML(fmt, { mystery: 5 }, 'aware'), fmt.LabelError);
 });

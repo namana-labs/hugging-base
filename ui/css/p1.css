@@ -63,7 +63,13 @@ body.view-p1 .hb-scene { bottom: var(--transport-h); }
 .p1-claim.bad { background: color-mix(in srgb, var(--crit) 14%, transparent); }
 .p1-row { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; padding: 2px 0; border-bottom: 1px dotted color-mix(in srgb, var(--rule) 70%, transparent); }
 .p1-k { color: var(--muted); }
-.p1-v { text-align: right; }
+.p1-v { text-align: right; min-width: 0; overflow-wrap: anywhere; }
+.p1-money-h { font-weight: 700; font-size: 13px; margin: 10px 0 2px; }
+.p1-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 2px; }
+.p1-table th { font-weight: 400; color: var(--muted); text-align: right; font-size: 11px; }
+.p1-table td { text-align: right; padding: 2px 0; border-bottom: 1px dotted color-mix(in srgb, var(--rule) 70%, transparent); font-variant-numeric: tabular-nums; }
+.p1-table td:first-child, .p1-table th:first-child { text-align: left; }
+.p1-table tr.now td { font-weight: 700; }
 .p1-tree-obj.depth-1, .p1-tree-obj.depth-2 { font-size: 12px; margin-left: 6px; }
 .p1-tree { margin: 2px 0; padding-left: 16px; font-size: 12px; }
 .p1-text { font-size: 12.5px; }

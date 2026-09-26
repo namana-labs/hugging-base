@@ -203,8 +203,10 @@ export function labelledTreeHTML(fmt, x, key = '', depth = 0, inherit = '') {
   }
   if (Array.isArray(x)) {
     if (x.every((v) => typeof v === 'string')) return `<span class="p1-text">${esc(x.join(', '))}</span>`;
+    if (x.every((v) => isLabelledRecord(fmt, v))) return `<ul class="p1-tree">${x.map((v) => `<li>${recordHTML(fmt, v)}</li>`).join('')}</ul>`;
     return `<ul class="p1-tree">${x.map((v) => `<li>${labelledTreeHTML(fmt, v, key, depth + 1, own)}</li>`).join('')}</ul>`;
   }
+  if (isLabelledRecord(fmt, x)) return recordHTML(fmt, x);
   if (fmt.isLabelled ? fmt.isLabelled(x) : ('v' in x && 'label' in x)) {
     const extras = Object.entries(x).filter(([k]) => !['v', 'label', 'cite'].includes(k))
       .map(([k, v]) => `${esc(humanKey(k))} ${labelledTreeHTML(fmt, v, k, depth + 1)}`).join(' · ');
@@ -213,6 +215,85 @@ export function labelledTreeHTML(fmt, x, key = '', depth = 0, inherit = '') {
   const rows = Object.entries(x).map(([k, v]) =>
     `<div class="p1-row"><span class="p1-k">${esc(humanKey(k))}</span><span class="p1-v">${labelledTreeHTML(fmt, v, k, depth + 1, own)}</span></div>`);
   return `<div class="p1-tree-obj depth-${depth}">${rows.join('')}</div>`;
+}
+
+/** A record with a label but no `v`: {text, label, cite} or {who, for, label, cite}: its strings, then one chip. */
+export function isLabelledRecord(fmt, x) {
+  return !!x && typeof x === 'object' && !Array.isArray(x) && !('v' in x) && fmt.LABELS.includes(x.label)
+    && Object.entries(x).every(([k, v]) => k === 'label' || k === 'cite' || typeof v === 'string');
+}
+export function recordHTML(fmt, x) {
+  const parts = Object.entries(x).filter(([k]) => k !== 'label' && k !== 'cite').map(([, v]) => v);
+  return `<span class="p1-text">${esc(parts.join(': '))}</span> ${fmt.chip(x.label, x.cite)}`;
+}
+
+/** The money card (build prompt 5.4.6), each line labelled; unknown keys fall through to the generic tree.
+ *  Local relief is never priced here, and the system-capacity band is applied only to fleet kW at the price peak. */
+export function moneyHTML(fmt, money, branch, branchNames = BRANCH_NAMES, consts = null) {
+  if (!money) return '';
+  const done = new Set();
+  const out = [];
+  const row = (k, v) => `<div class="p1-row"><span class="p1-k">${k}</span><span class="p1-v">${v}</span></div>`;
+  const usd = (x) => fmt.fmtHTML(x, { money: true, digits: 2 });
+  if (money.energyValueUSD && typeof money.energyValueUSD === 'object' && !fmt.isLabelled(money.energyValueUSD)) {
+    done.add('energyValueUSD');
+    out.push(`<div class="p1-money-h">Energy value this evening <span class="hb-sub">(gross energy value, not Base's P&amp;L)</span></div>`);
+    out.push(Object.entries(money.energyValueUSD).map(([b, v]) => row(esc(branchNames[b] || b) + (b === branch ? ' ◂' : ''), usd(v))).join(''));
+  }
+  if (money.costOfAwareness) {
+    done.add('costOfAwareness');
+    const c = money.costOfAwareness;
+    out.push(row('Cost of awareness (naive minus aware)', usd(c)));
+    if (c.v !== null && c.v < 0) out.push('<div class="hb-sub">Negative: feeder-aware earned more; prices keep falling after the onset.</div>');
+  }
+  const cap = money.systemCapacityPerMonth;
+  if (cap && typeof cap === 'object') {
+    done.add('systemCapacityPerMonth');
+    const c = cap[branch] || cap.aware || Object.values(cap)[0];
+    if (c && c.fleetKW && c.low && c.high) {
+      const lo = consts && consts.CAPACITY_BENCHMARK_USD_KW_MONTH, hi = consts && consts.CAPACITY_HIGH_USD_KW_MONTH;
+      const band = lo && hi
+        ? `${usd({ v: lo.value, label: lo.label, cite: lo.cite })} (market benchmark) to ${usd({ v: hi.value, label: hi.label, cite: hi.cite })} (UNVERIFIED) per kW-month`
+        : 'the $3.12 benchmark to $8.50 UNVERIFIED per kW-month';
+      out.push(`<div class="p1-money-h">System-capacity value <span class="hb-sub">(fleet kW at the price peak × ${band})</span></div>`);
+      out.push(row(`Fleet at the price peak (${esc(branchNames[cap[branch] ? branch : 'aware'] || '')})`, fmt.fmtHTML(c.fleetKW, { unit: ' kW', digits: 1 })));
+      out.push(row('Per month, low to high', `${usd(c.low)} to ${usd(c.high)}`));
+      out.push('<div class="hb-sub">A system-peak value, not a payment for local relief.</div>');
+    }
+  }
+  const r = money.relief;
+  if (r && typeof r === 'object' && !fmt.isLabelled(r)) {
+    done.add('relief');
+    out.push('<div class="p1-money-h">Local relief</div>');
+    if (r.kwh) out.push(row('Relief energy on A', fmt.fmtHTML(r.kwh, { unit: ' kWh', digits: 2 })));
+    if (r.opportunityUpperUSD) out.push(row('Upper-bound opportunity cost', usd(r.opportunityUpperUSD)));
+    if (r.priced) out.push(row('Priced?', fmt.fmtHTML(r.priced)));
+  }
+  if (money.localRelief) { done.add('localRelief'); out.push(`<div class="p1-note">${labelledTreeHTML(fmt, money.localRelief, 'localRelief')}</div>`); }
+  if (Array.isArray(money.whoPays)) {
+    done.add('whoPays');
+    out.push('<div class="p1-money-h">Who pays today, and for what</div>');
+    out.push(labelledTreeHTML(fmt, money.whoPays, 'whoPays'));
+  }
+  if (money.transformerReplacementUSD) {
+    done.add('transformerReplacementUSD');
+    const t = money.transformerReplacementUSD;
+    out.push(row('Transformer replacement cost', t.v === null ? `not sourced ${fmt.chip(t.label, t.cite)}` : usd(t)));
+  }
+  const ah = money.avoidedHarm;
+  if (ah && typeof ah === 'object') {
+    done.add('avoidedHarm');
+    const cols = ['normalEvents', 'emergencyTfs', 'protectionOperated'];
+    const heads = ['normal-tier events', 'emergency tfs', 'protection'];
+    const bs = Object.keys(ah);
+    const lab = (bs.length && ah[bs[0]][cols[0]]) ? ah[bs[0]][cols[0]].label : 'SIM';
+    out.push(`<div class="p1-money-h">Avoided harm ${fmt.chip(lab, 'OpenDSS tier events')}</div>
+      <table class="p1-table"><tr><th></th>${heads.map((h) => `<th>${h}</th>`).join('')}</tr>
+      ${bs.map((b) => `<tr${b === branch ? ' class="now"' : ''}><td>${esc(branchNames[b] || b)}</td>${cols.map((c) => `<td>${ah[b][c] ? esc(fmt.fmtValue(ah[b][c])) : ''}</td>`).join('')}</tr>`).join('')}</table>`);
+  }
+  const rest = Object.fromEntries(Object.entries(money).filter(([k]) => !done.has(k)));
+  if (Object.keys(rest).length) out.push(labelledTreeHTML(fmt, rest));
+  return out.join('');
 }
 
 /** The grid-check line of a branch summary (build prompt 7.3): measured, never asserted. */
@@ -389,7 +470,7 @@ export async function mount(el, ctx) {
     }).join('');
     // money + ladder (generic labelled trees: every value carries its label)
     $('p1-money-sec').hidden = !meta.money;
-    if (meta.money) $('p1-money').innerHTML = labelledTreeHTML(fmt, meta.money);
+    if (meta.money) $('p1-money').innerHTML = moneyHTML(fmt, meta.money, branch, BRANCH_NAMES, meta.constants);
     const ladder = meta.scaleLadder || (meta.money && meta.money.scaleLadder) || null;
     $('p1-ladder-sec').hidden = !ladder || !!(meta.money && meta.money.scaleLadder);
     if (ladder && !(meta.money && meta.money.scaleLadder)) $('p1-ladder').innerHTML = labelledTreeHTML(fmt, ladder);
