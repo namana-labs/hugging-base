@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # scripts/build_all.sh (L0): regenerate committed artifacts.
 # Usage: scripts/build_all.sh <target>... [--quick]
-#   targets: topology fixtures (light, no lock) | p1 p2 referee calibrate (heavy: lockf + nice inside) | all
-#   all = topology fixtures p1 p2 referee
+#   targets: topology fixtures (light, no lock) | p1 p2 referee calibrate chaos (heavy: lockf + nice inside) | all
+#   all = topology fixtures p1 p2 referee (chaos is not in all: sim.verify p1 --rebuild already rebuilds and byte-compares p1/chaos.json)
 # Heavy targets take the shared heavy-run lock unless HB_LOCK_HELD=1 (check_all.sh --full holds it once).
 # A target whose module is not on this branch prints "BUILD <t>: SKIP (...)". Gate on the final "BUILD: PASS" line.
 set -u
@@ -19,14 +19,14 @@ for a in "$@"; do
     *) TARGETS+=("$a") ;;
   esac
 done
-[ ${#TARGETS[@]} -eq 0 ] && { echo "usage: scripts/build_all.sh topology|fixtures|p1|p2|referee|calibrate|all [--quick]"; exit 2; }
+[ ${#TARGETS[@]} -eq 0 ] && { echo "usage: scripts/build_all.sh topology|fixtures|p1|p2|referee|calibrate|chaos|all [--quick]"; exit 2; }
 module_of() {
   case "$1" in
     topology) echo sim.topology ;; fixtures) echo sim.fixtures ;; p1) echo sim.p1_build ;; p2) echo sim.p2_build ;;
-    referee) echo sim.referee ;; calibrate) echo sim.calibrate ;; *) echo "" ;;
+    referee) echo sim.referee ;; calibrate) echo sim.calibrate ;; chaos) echo sim.chaos ;; *) echo "" ;;
   esac
 }
-heavy() { case "$1" in p1|p2|referee|calibrate) return 0 ;; *) return 1 ;; esac; }
+heavy() { case "$1" in p1|p2|referee|calibrate|chaos) return 0 ;; *) return 1 ;; esac; }
 FAILS=()
 for t in "${TARGETS[@]}"; do
   mod="$(module_of "$t")"
