@@ -1,6 +1,6 @@
 # UI brief: Hugging Base
 
-One document for whoever sketches the interface. It says what the product is, who watches it and how, what already exists, what every screen must show, and the visual language to use. Written 26 Sep 2026. If something here conflicts with [design.md](design.md), the design doc wins; tell us and we will fix this file.
+One document for whoever sketches the interface. It says what the product is, who watches it and how, what already exists, what every screen must show, and the visual language to use. Written 26 Sep 2026. If something here conflicts with [design.md](design.md), the design doc wins; tell us and we will fix this file. **For visual design (colours, type, spacing, motion, components), [design-handoff/](design-handoff/README.md) is authoritative and supersedes §6–7 below.**
 
 Labels follow the repo convention: **INFERENCE** is a guess from indirect evidence, **ASSUMPTION** is a placeholder, and anything unlabelled is decided.
 
@@ -103,7 +103,7 @@ The only hard data point is Base's `theme-color` meta tag, **#1e4d2b** (RGB 30 7
 
 We are **inspired by** this, not imitating Base: our wordmark is our own, no Base logo appears, and copy never claims to be theirs.
 
-### Proposed tokens (starting point, adjust freely)
+### Proposed tokens (superseded: use `design-handoff/design-system/tokens/`)
 
 | Token | Value | Use |
 |---|---|---|
