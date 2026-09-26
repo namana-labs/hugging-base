@@ -1,0 +1,80 @@
+/* ui/css/base.css (L0): Atlas tokens, the shell layout, chips. Panels add css/p1.css (L4) and css/p2.css (L5). */
+:root {
+  --bg: #E9EDE7; --paper: #F7F9F5; --ink: #101613; --muted: #55625A; --rule: #CAD3CA; --accent: #0B6B6F;
+  --good: #0ca30c; --warn: #fab219; --serious: #ec835a; --crit: #d03b3b; --open: #6b6f6c;
+  --real: #0B6B6F; --sim: #55625A; --derived: #6a4fa3; --assumption: #9a6a00;
+  --header-h: 56px; --panel-w: 440px;
+  --font: "Inter", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+  --mono: "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0A0F0D; --paper: #111815; --ink: #E4EBE6; --muted: #93A198; --rule: #26312B; --accent: #5CC4BE;
+    --real: #5CC4BE; --sim: #93A198; --derived: #b39ae6; --assumption: #e0b24a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0A0F0D; --paper: #111815; --ink: #E4EBE6; --muted: #93A198; --rule: #26312B; --accent: #5CC4BE;
+  --real: #5CC4BE; --sim: #93A198; --derived: #b39ae6; --assumption: #e0b24a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.4; overflow: hidden; }
+a { color: var(--accent); }
+
+.hb-header { position: fixed; top: 0; left: 0; right: 0; height: var(--header-h); display: flex; align-items: center; gap: 20px;
+  padding: 0 20px; background: var(--paper); border-bottom: 1px solid var(--rule); z-index: 20; }
+.hb-brand { font-weight: 700; letter-spacing: .01em; font-size: 18px; white-space: nowrap; }
+.hb-brand small { font-weight: 400; color: var(--muted); font-size: 13px; margin-left: 8px; }
+.hb-tabs { display: flex; gap: 4px; }
+.hb-tabs a { text-decoration: none; color: var(--muted); padding: 7px 12px; border-radius: 6px; font-size: 14px; white-space: nowrap; }
+.hb-tabs a[aria-current="page"] { color: var(--paper); background: var(--accent); }
+.hb-standin { margin-left: auto; color: var(--muted); font-size: 12px; text-align: right; }
+
+.hb-fixture { position: fixed; top: var(--header-h); left: 0; right: 0; z-index: 19; background: var(--warn); color: #101613;
+  font-weight: 700; font-size: 13px; padding: 4px 20px; letter-spacing: .04em; }
+.hb-fixture[hidden] { display: none; }
+
+.hb-scene { position: fixed; top: var(--header-h); left: 0; right: var(--panel-w); bottom: 0; background: var(--bg); }
+.hb-scene canvas { display: block; }
+.hb-panel { position: fixed; top: var(--header-h); right: 0; width: var(--panel-w); bottom: 0; overflow-y: auto; background: var(--paper);
+  border-left: 1px solid var(--rule); padding: 18px 20px 28px; z-index: 10; }
+body.has-fixture .hb-scene, body.has-fixture .hb-panel { top: calc(var(--header-h) + 26px); }
+body.view-more .hb-scene { right: 0; opacity: .55; }
+body.view-more .hb-panel { left: 0; right: 0; width: auto; background: transparent; border: 0; pointer-events: none; }
+body.view-more .hb-panel > * { pointer-events: auto; }
+
+.hb-panel h1 { font-size: 20px; margin: 0 0 4px; }
+.hb-panel h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 18px 0 6px; }
+.hb-big { font-size: 44px; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.hb-sub { color: var(--muted); font-size: 13px; }
+.hb-note { color: var(--muted); font-size: 12px; border-top: 1px solid var(--rule); margin-top: 16px; padding-top: 10px; }
+.hb-seg { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+.hb-seg a { font-size: 13px; padding: 4px 9px; border: 1px solid var(--rule); border-radius: 5px; text-decoration: none; color: var(--ink); }
+.hb-seg a[aria-current="true"] { background: var(--accent); color: var(--paper); border-color: var(--accent); }
+.hb-list { margin: 6px 0; padding-left: 20px; font-size: 14px; }
+.hb-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; padding: 24px; max-width: 1400px; }
+.hb-card { background: var(--paper); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; }
+.hb-card h3 { margin: 0 0 6px; font-size: 16px; }
+
+/* honesty-label chips: every number shown carries one (format.js) */
+.chip { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .05em; padding: 1px 5px; border-radius: 4px; margin-left: 5px;
+  vertical-align: middle; border: 1px solid currentColor; line-height: 1.3; }
+.chip-REAL { color: var(--real); }
+.chip-SIM { color: var(--sim); }
+.chip-DERIVED { color: var(--derived); }
+.chip-ASSUMPTION { color: var(--assumption); }
+.num { font-variant-numeric: tabular-nums; }
+.tier-0 { color: var(--good); } .tier-1 { color: var(--warn); } .tier-2, .tier-3 { color: var(--serious); } .tier-4 { color: var(--crit); } .tier-5 { color: var(--open); }
+
+.hb-error { position: fixed; bottom: 12px; left: 12px; z-index: 30; background: var(--crit); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 13px; max-width: 60vw; }
+.hb-error[hidden] { display: none; }
+
+@media (max-width: 900px) {
+  :root { --panel-w: 100vw; }
+  .hb-scene { right: 0; bottom: 50vh; }
+  .hb-panel { top: 50vh !important; width: 100vw; border-left: 0; border-top: 1px solid var(--rule); }
+  .hb-standin { display: none; }
+  .hb-header { gap: 10px; padding: 0 16px; }
+}

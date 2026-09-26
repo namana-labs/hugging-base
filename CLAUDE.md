@@ -1,5 +1,7 @@
 # Hugging Base
 
+> **Root app (sim/, ui/, data/, scripts/) is being built overnight 26 Sep; ownership in scripts/lanes.json; demos/ is unchanged.**
+
 Hackathon project (Base Power & AITX, Sep 2026). A feeder-aware simulator for a fleet of home batteries: where to add the next battery and what it is worth, which units to recharge given a congestion point, and how to detect a stealthy hijack from physics rather than command logs.
 
 ## Start here
