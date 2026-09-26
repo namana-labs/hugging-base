@@ -1,10 +1,12 @@
 # Base turns backyard batteries into grid capacity
 
+> **Corrected 26 Sep 2026 after design review:** SMART-DS transformers are already at standard 25/50/75 kVA nameplate (do not de-rate), and the 1,000-battery hijack's frequency effect is a 3–17 mHz band, not 3–5 mHz. See `design/round1/critique-judge.md`.
+
 Base Power Company is a three-year-old Austin electricity retailer. It owns, installs and remotely operates large lithium-iron-phosphate batteries at its members' homes and runs them together as one power plant. As of August 2026 it had batteries at about **17,000 homes**: more than **23,000 batteries**, over **500 MWh**, and **205.5 MW** of self-operated nameplate power in ERCOT. It has raised more than $2.5B, most recently at a **$13B valuation**. It makes money as a "gentailer", meaning a retailer that also owns generation-like assets. Its income is retail electricity margin, wholesale arbitrage, ancillary-service payments and fixed capacity fees from utilities such as Austin Energy and CoServ. That is what "a power company, not a battery company" means.
 
 Each unit is either a legacy 25 kWh / 11.4 kW battery or a 39.2 kWh / 20 kW Base Core. It keeps a 20% backup reserve and switches its own home onto battery power within 50–500 ms when the grid fails. It never sends power to the street during an outage. The rest of the time, Base's Markets desk bids the fleet into ERCOT as one aggregated resource per load zone, and ERCOT re-dispatches it every five minutes. Partner utilities dispatch their own sub-fleets.
 
-The most important fact for a hackathon build is this: **ERCOT dispatches and pays Base by load zone and explicitly does not enforce distribution limits.** Nothing in the market protects a feeder or a 25 kVA transformer from batteries that all charge at once. That is the "dynamic charge/discharge interplay" Base's engineer pointed to, and a feeder-aware orchestrator can fill that gap. The physics supports this framing. A hijacked slice of 1,000 batteries swings about 40 MW. That moves ERCOT frequency by a few thousandths of a hertz, but it is more than an entire neighbourhood feeder carries.
+The most important fact for a hackathon build is this: **ERCOT dispatches and pays Base by load zone and explicitly does not enforce distribution limits.** Nothing in the market protects a feeder or a 25 kVA transformer from batteries that all charge at once. That is the "dynamic charge/discharge interplay" Base's engineer pointed to, and a feeder-aware orchestrator can fill that gap. The physics supports this framing. A hijacked slice of 1,000 batteries swings about 40 MW. That moves ERCOT frequency by roughly 3 to 17 thousandths of a hertz, within normal wander, but it is more than an entire neighbourhood feeder carries.
 
 Almost every input is public, and most need no key:
 - ERCOT's dashboard JSON (10-second frequency, 15-minute prices)
@@ -288,7 +290,7 @@ A feeder's net load is the homes' load, plus batteries charging, minus batteries
 
 **Feeder.** Take an 11 MW feeder already at 90% loading. Its 1.1 MW of headroom disappears when **56 Base Cores** (20 kW each) or 97 legacy units (11.4 kW each) start charging at once. Each additional Core adds about 0.18 percentage points of loading.
 
-**Transformer.** The transformer runs out of room much sooner. A single Core charging at full power is about **80% of a 25 kVA transformer's rating on its own**, assuming unity power factor. On a transformer serving 2.5 homes with ordinary evening load, the first or second battery can push it past 100%.
+**Transformer.** The transformer runs out of room much sooner. A single Core charging at full power is about **80% of a 25 kVA transformer's rating on its own**, assuming unity power factor. On a transformer serving 2.5 homes with 4–6 kW of evening load each, one charging Core takes a 25 kVA unit to about 123–144%: past the 110% normal limit but under the 150% emergency rating, so it accelerates ageing rather than blowing a fuse. Only about a quarter of SMART-DS units are 25 kVA (corrected 26 Sep; see design/round1/critique-judge.md).
 
 **How many batteries per feeder.** Penetration today is low. Base projects 1–2% of homes a year in CoServ territory ([pv magazine](https://pv-magazine-usa.com/2026/03/09/base-power-announces-100-mw-residential-storage-program-with-coserv-in-texas/)). On a 1,000-customer feeder that is 10–20 new homes a year. At 1.35 batteries per home, that adds 0.27–0.54 MW of Core charge or discharge per year. Two things make concentration worse:
 - Homebuilder programs such as Lennar's put a battery in nearly every home of a new subdivision.
@@ -306,7 +308,7 @@ This is the correction the team's attack scenario needs most.
 - Odessa moved frequency about 0.3 Hz for 2,555 MW lost, about 0.12 mHz per MW ([NERC](https://www.nerc.com/globalassets/our-work/reports/white-papers/nerc_2022_odessa_disturbance_report-1.pdf)).
 - ERCOT's 2026-08-07 frequency event fell from 60.017 Hz to a low of 59.961 Hz for 757 MW lost, about 0.075 mHz per MW ([ERCOT NP12-261-M](https://www.ercot.com/mp/data-products/data-product-details?id=NP12-261-M)).
 
-At those rates, 40 MW moves Texas frequency by **3–5 mHz** (DERIVED, crude linear estimate). That is inside the governors' deadband, invisible at system level, and 1.5% of the design contingency.
+At those rates, 40 MW moves Texas frequency by roughly **3–17 mHz** (DERIVED; the range depends on load damping and deadband assumptions, corrected 26 Sep from 3–5 mHz). Normal ERCOT wander on 2026-09-25 had σ ≈ 13.7 mHz, so this is lost in the noise, and it is 1.5% of the design contingency.
 
 **Effect on feeders.** Here the same attack is catastrophic. Spread across three median Austin feeders, 1,000 Cores is about 6.7 MW each. That is roughly each feeder's entire 6.9 MW peak, and far above the 0.17–3.3 MW that feeder example could accept from homes. It is enough to open breakers, push voltages outside 114–126 V, and overload every transformer with a battery on it (DERIVED).
 
@@ -417,7 +419,7 @@ For the distribution grid, NREL's **SMART-DS** dataset stands out ([OEDI](https:
 Sub-region P1U alone has 96 feeders serving 65,529 customers. Several feeders have about 1,000 customers; for example, `p1uhs19_1247--p1udt17263` has 1,012 customers and a 7.02 MW peak. A whole substation is about 6 MB ([metrics.csv](https://oedi-data-lake.s3.amazonaws.com/SMART-DS/v1.0/2018/AUS/P1U/scenarios/base_timeseries/metrics.csv)).
 
 Two caveats matter:
-- SMART-DS upsized transformers and lines about 10% to avoid overloads, and it does not include battery dispatch over time. De-rate transformers back to nameplate to expose stress.
+- SMART-DS transformer `kva=` values are already standard 25/50/75 kVA nameplates; the 27.5 and 37.5 figures are the 110% normal and 150% emergency ratings, so do not de-rate (corrected 26 Sep). It does not include battery dispatch over time.
 - Its sample buses sit in north Austin, which in reality is Austin Energy territory ([Buscoords.dss](https://oedi-data-lake.s3.amazonaws.com/SMART-DS/v1.0/2018/AUS/P1U/scenarios/base_timeseries/opendss/p1uhs0_1247/Buscoords.dss)).
 
 Speed is not a constraint. In the researchers' own single-laptop benchmarks:
@@ -475,7 +477,7 @@ Enter **Orchestration** as the primary track and **Open Grid Data (ERCOT)** as t
 | Suburban feeder model | PEC/LCRA-style co-op | PEC is not a Base territory; use Oncor suburbs (Round Rock, Pflugerville, Hutto) or Austin Energy |
 | Battery power | 10 kW placeholder | 11.4 kW legacy (Base also says "11 kW"); 20 kW Core |
 | Legacy usable energy | 25 kWh | 22.5 kWh if the Growatt APX inference holds |
-| 1,000-battery attack | Threatens ERCOT frequency | ~40 MW swing, ≈3–5 mHz (DERIVED): a feeder, transformer and market-integrity threat |
+| 1,000-battery attack | Threatens ERCOT frequency | ~40 MW swing, ≈3–17 mHz (DERIVED, within normal wander): a feeder, transformer and market-integrity threat |
 | Comms-loss behaviour | Idle (engineer) | UNVERIFIED publicly; model power = 0 with backup armed, stale at 180 s |
 | ADER share | Base: 103 of 145 MW (71%) | ERCOT: 248.7 MW approved (2026-06-01); 292.9 MW qualified for energy (Aug 2026). Use ERCOT for totals |
 | 2026 peak demand | 91,308 MW (Grid Status) | 91,134 MW (ERCOT official) |
@@ -508,7 +510,7 @@ Enter **Orchestration** as the primary track and **Open Grid Data (ERCOT)** as t
 | Batteries per home | ~1.35 | DERIVED |
 | Penetration | 1–2% of homes per year; sweep upward to find limits | Baseline sourced |
 | Feeder | 12.47 kV; ~660–1,000 customers; 6–7 MW peak | SMART-DS |
-| Transformers | 25 / 50 / 75 kVA nameplate (de-rate SMART-DS's 27.5 / 55 / 82.5); ~2.5 homes each | SMART-DS |
+| Transformers | 25 / 50 / 75 kVA nameplate as shipped (no de-rating); limits 110% normal, 150% emergency; ~2.5 homes each | SMART-DS |
 | Voltage band | 0.95–1.05 pu (114–126 V) | Sourced |
 | System frequency | Inertia 100–300 GW·s; design trip 2,750 MW; load shedding at 59.3 / 58.9 / 58.5 Hz; Fast Frequency Response at 59.85 Hz within 0.25 s | Sourced |
 | Frequency sensitivity | 0.075–0.12 mHz per MW | DERIVED |
@@ -525,7 +527,7 @@ Enter **Orchestration** as the primary track and **Open Grid Data (ERCOT)** as t
 | Frequency calibration | NP12-261-M events workbook; poll dc-tie-flows.json | No key | No public history series |
 | Aggregated-battery ground truth | ADER monthly report + limits tracker | No key | Scheduling-entity names masked |
 | Python wrapper | gridstatus 0.36.0 | No key for `Ercot()` | Some enum strings untested |
-| Feeders | SMART-DS AUS P1U, OpenDSS + GeoJSON | No key; CC BY 4.0 | Upsized transformers; north Austin is really Austin Energy |
+| Feeders | SMART-DS AUS P1U, OpenDSS + GeoJSON | No key; CC BY 4.0 | Use kva as-is; north Austin is really Austin Energy |
 | Power flow | OpenDSSDirect.py 0.9.4 (or pandapower 3.5.5) | pip | Pushing per-home kW each step adds unmeasured cost |
 | Home load | SMART-DS `load_data` parquet (ResStock) | No key | 2016–2018 weather; rescale for events |
 | Weather | Open-Meteo; NWS; NCEI KAUS | No key | Open-Meteo free tier is non-commercial |
@@ -538,13 +540,13 @@ Enter **Orchestration** as the primary track and **Open Grid Data (ERCOT)** as t
 
 | Scenario | Real anchor and data | What the orchestrator must do | Proof metric |
 |---|---|---|---|
-| Charging rebound on a stressed feeder after a price drop (the Base engineer's question) | Base's −45.8 MW Houston charge block; de-rated SMART-DS feeder; load-zone price replay | Headroom per transformer and feeder; staggered, randomly delayed charging; shift load to feeders with room | Feeder and transformer loading and voltage as penetration grows, naive vs feeder-aware; MW of market position given up |
+| Charging rebound on a stressed feeder after a price drop (the Base engineer's question) | Base's −45.8 MW Houston charge block; SMART-DS feeder at nameplate; load-zone price replay | Headroom per transformer and feeder; staggered, randomly delayed charging; shift load to feeders with room | Feeder and transformer loading and voltage as penetration grows, naive vs feeder-aware; MW of market position given up |
 | Generator trip | 2,750 MW design trip; Odessa 2,555 MW → 59.7 Hz; events workbook | Local frequency response at 59.85 Hz without the cloud; then SCED re-dispatch; hold the charge floor | Lowest frequency and rate of fall, with and without the fleet; response time |
 | Feeder or substation outage, then restoration | EAGLE-I county outages; Base's claim that 99% of outages are local | Island affected homes (no export); cover the partition's base point from healthy feeders; stagger recharge on restore | Members with power; peak MW at restoration vs no stagger; base-point tracking during the outage |
 | Heat-wave evening | 2026-07-22: 91,134 MW peak, 75.7 GW demand net of wind and solar, Base's published Houston ramp | Charge midday, discharge 7–9 pm, shave the 4CP interval, respect transformer limits | Tracking error vs Base's 3.3%; $ per battery; feeder loading |
 | Winter storm | Uri prices ($9,794/MWh at LZ_AEN), Open-Meteo 4.5 °F, EAGLE-I rotating outages | Storm hold to full charge; support energized feeders; backup on shed feeders; staggered recharge alongside heater restart | Unserved kWh; members with power; MW that reduced load shedding |
 | Communications loss or flapping | sPower 2019 (sub-5-min outages over 10 h); Poland 2025 | Stale at 180 s; power = 0 with backup armed; reduce commitment; re-dispatch healthy units on the same feeder | MW committed vs delivered; time to rebalance; % of fleet stale |
-| Mass hijack of 1,000 batteries | Ukraine 2015; BlackIoT | Device-side ramp limits and random delay; MW cap per shard; physics mismatch triggers quarantine | Blast radius (MW, homes); time to detect and mitigate; feeder loading curve; ~3–5 mHz at system level |
+| Mass hijack of 1,000 batteries | Ukraine 2015; BlackIoT | Device-side ramp limits and random delay; MW cap per shard; physics mismatch triggers quarantine | Blast radius (MW, homes); time to detect and mitigate; feeder loading curve; ~3–17 mHz at system level |
 | Stealthy degradation | Volt Typhoon, ≥5 years undetected | Drift detection against peers; meter-vs-claim audits; small randomized test dispatches | Days to detect; MW shortfall avoided at the next event |
 | Member tampering or hoarding | Base agreement obligations | Meter verification; trust score; exclude from commitments | Units flagged; false-positive rate |
 | Conflicting principals | CoServ and Austin Energy dispatch rights, ADER base points, 20% floor | Arbitration policy with the member reserve as a hard constraint | Conflicts resolved; reserve violations (target 0) |
