@@ -25,7 +25,7 @@ from pathlib import Path
 import numpy as np
 
 from . import siting
-from .constants import (export, FOCUS_TFS, BRIDGE_TF, CORE_POWER_KW, GROWTH, CURTAIL_CAP, AWARE_MARGIN)
+from .constants import (export, FOCUS_TFS, BRIDGE_TF, CORE_POWER_KW, GROWTH, CURTAIL_CAP, AWARE_MARGIN, HEAD_RATING_KVA)
 from .contracts import envelope, inputs_sha, labelled, write_json, dumps
 from .prices import find_cliffs
 from .siting import (World, simulate, month_metrics, REPORTED, STEPS, STEP_MIN, MONTH_T0, MONTH_DAYS, TOP_N, GREEDY_N,
@@ -43,7 +43,9 @@ COMBOS = [f"{p}-{c}-{r}-g{g}" for p in POLICIES for c in CLS for r in RULES for 
 DEFAULT = "aware-core-d26-g0"
 FLIP = ("naive-core-d26-g0", "aware-core-d26-g0")
 SCREEN = "surrogate screen (sim.surrogate, calibrated vs OpenDSS); not OpenDSS-checked"
-CONSTS = ("AWARE_MARGIN", "CORE_POWER_KW", "CORE_USABLE_KWH", "CORE_RTE", "LEGACY_POWER_KW", "LEGACY_USABLE_KWH",
+HEAD_CITE = ("feeder-head estimate: lossless sum of every transformer's load vs 370 A x sqrt(3) x 12.47 kV = 7,991.5 kVA "
+             "(site/ems/flow-spec.md); reads low (no losses); overAt = first placement above 100% (null: never)")
+CONSTS = ("HEAD_CAP", "HEAD_RATING_A", "HEAD_RATING_KVA", "AWARE_MARGIN", "CORE_POWER_KW", "CORE_USABLE_KWH", "CORE_RTE", "LEGACY_POWER_KW", "LEGACY_USABLE_KWH",
           "LEGACY_RTE", "RESERVE_FLOOR", "SOC_BUCKET", "MIN_GRANT_KW", "GROWTH", "CURTAIL_CAP", "P2_SOC0",
           "P2_DISCHARGE_FROM", "P2_CHARGE_END", "P2_CONTROLLER_VIEW", "P2_CAUSED_EPS_PTS", "CURTAIL_VALUE_RULE",
           "TIER_AMBER_PCT", "TIER_NORMAL_PCT", "TIER_NORMAL_MIN", "TIER_EMERGENCY_PCT", "FUSE_PCT", "FUSE_MINUTES",
@@ -251,13 +253,24 @@ def feeder_state(M, cols):
             "causedNormalTfs": int((M["causedNormal"][cols] > 0).sum())}
 
 
-def greedy(ctx, sim, col_of, newb, pool, n_steps, stop=None):
+def head_pct(tot_p, tot_q, n):
+    """Feeder-head estimate: max over the reported steps of |sum P + j sum Q| of every transformer's secondary load,
+    in % of HEAD_RATING_KVA (370 A x sqrt(3) x 12.47 kV, DERIVED). Lossless: it ignores transformer and line losses and
+    the voltage, so it reads LOW; OpenDSS is not run on these worlds."""
+    return float(np.max(np.hypot(tot_p[:n], tot_q[:n])) / HEAD_RATING_KVA * 100.0)
+
+
+def greedy(ctx, sim, col_of, newb, pool, n_steps, stop=None, track_head=False, growth=1.0):
     """Place the best next battery, re-score that transformer, repeat (exact in the surrogate: transformers are
     independent). pool[tf] = the homes that may be added on tf, id order. Returns the placement list and the
     feeder state after each."""
     M = sim["M"]
     k = [0] * ctx.n_tf
-    K = [max([kk for (t, kk) in col_of if t == tf] or [0]) for tf in range(ctx.n_tf)]
+    K = [0] * ctx.n_tf
+    for (t, kk) in col_of:
+        K[t] = max(K[t], kk)
+    ctx_P = ctx.P * growth
+    ctx_Q = ctx.Q * growth
     cur = [col_of[(tf, 0)] for tf in range(ctx.n_tf)]
     cache = {}
 
@@ -275,13 +288,23 @@ def greedy(ctx, sim, col_of, newb, pool, n_steps, stop=None):
             heapq.heappush(heap, (e["key"] + (pool[tf][0],), tf))
     out = []
     state0 = feeder_state(M, cur)
+    head = None
+    if track_head:
+        ck = sim["col_kw"]
+        tot_p = ctx_P.sum(axis=1) + ck[:, cur].sum(axis=1)
+        tot_q = ctx_Q.sum(axis=1)
+        state0["headPct"] = head_pct(tot_p, tot_q, sim["n"])
     while heap and len(out) < n_steps:
         key, tf = heapq.heappop(heap)
         e = ev(tf)
         home = pool[tf][k[tf]]
         k[tf] += 1
+        old_col = cur[tf]
         cur[tf] = col_of[(tf, k[tf])]
         st = feeder_state(M, cur)
+        if track_head:
+            tot_p += ck[:, cur[tf]] - ck[:, old_col]
+            st["headPct"] = head_pct(tot_p, tot_q, sim["n"])
         nxt = None
         if k[tf] < K[tf]:
             ne = ev(tf)
@@ -360,11 +383,19 @@ def build_combo(ctx, combo, steps=STEPS):
               "h100": labelled(round(float(M["h100"][base_cols].sum()), 2), "SIM", SCREEN),
               "emergencyN": labelled(int(M["emergencyN"][base_cols].sum()), "SIM", SCREEN),
               "protectionTfs": labelled(int((M["protection"][base_cols] >= 0).sum()), "SIM", "ASSUMPTION rule, 4.5")}
+    nv_rows = [r for r in rows if r[1]["newViolation"]]
+    totals["newViolationTfs"] = labelled(len(nv_rows), "SIM", "transformers where one more battery adds a normal-tier event, an emergency interval or a protection operation")
+    totals["newViolationHomes"] = labelled(sum(len(ctx.cand_on[r[2]]) for r in nv_rows), "SIM", "candidates on those transformers")
+    prot_cases = [{"home": r[3], "tf": r[2], "label": ctx.labels[r[3]], "t": stamp(r[1]["protWith"]),
+                   "peakWithPct": labelled(round(r[1]["peakWith"], 1), "SIM", SCREEN), "homesDark": homes_dark(ctx, r[2])}
+                  for r in rows if r[1]["protWith"] >= 0 and r[1]["protWithout"] < 0]
+    totals["protectionWithTfs"] = labelled(len(prot_cases), "SIM", "protection may operate (ASSUMPTION rule) with one more battery")
     doc = envelope(f"p2.{combo}", "sim.p2_build", inputs=inputs_sha(), constants=export(*CONSTS), sources=SOURCES,
                    series={"baseline": {"label": "SIM", "unit": "peak pct x10, peakT step, h100 hours, counts; existing 96-Core fleet under this combo", "by": "surrogate"},
                            "strips": {"label": "SIM", "unit": "pct x10, hourly max (with = + the listed candidate)", "by": "surrogate"}})
     doc.update({"combo": combo, "policy": pol, "cls": cls_new, "rule": rule, "growth": int(g[1:]),
-                "baseline": baseline, "headline": totals, "ranking": ranking, "greedy": greedy_doc, "strips": strips})
+                "baseline": baseline, "headline": totals, "ranking": ranking, "greedy": greedy_doc, "strips": strips,
+                "protectionCases": prot_cases})
     extra = {"sim": sim, "col_of": col_of, "newb": newb, "world": world, "rows": rows, "home_rank": home_rank,
              "tie_home": tie_home, "greedy": gl, "base_cols": base_cols}
     return doc, extra
@@ -395,7 +426,14 @@ def flip_doc(ctx, xn, xa):
     un_a = sorted(untied, key=lambda h: xa["home_rank"][h])[:10]
     rho = spearman(rn, ra)
     rho_u = spearman([xn["home_rank"][h] for h in untied], [xa["home_rank"][h] for h in untied])
-    return {"top10Overlap": labelled(len(set(top_n) & set(top_a)), "DERIVED", "collapsed rankings (one entry per transformer), naive vs aware"),
+    rank_n = {r[2]: i + 1 for i, r in enumerate(xn["rows"])}
+    rank_a = {r[2]: i + 1 for i, r in enumerate(xa["rows"])}
+    movers = sorted(rank_n, key=lambda tf: (-(rank_n[tf] - rank_a[tf]), tf))[:5]
+    mov = [{"tf": tf, "home": ctx.cand_on[tf][0], "label": ctx.labels[ctx.cand_on[tf][0]],
+            "rankNaive": labelled(rank_n[tf], "DERIVED", "collapsed naive ranking"),
+            "rankAware": labelled(rank_a[tf], "DERIVED", "collapsed aware ranking")} for tf in movers]
+    return {"movers": mov, "entries": labelled(len(rank_n), "DERIVED", "transformers with candidates (collapsed entries)"),
+            "top10Overlap": labelled(len(set(top_n) & set(top_a)), "DERIVED", "collapsed rankings (one entry per transformer), naive vs aware"),
             "spearman": labelled(round(rho, 4), "DERIVED", f"all {len(homes)} candidates, ranks with id tie-breaks"),
             "untied": {"top10Overlap": labelled(len(set(un_n) & set(un_a)), "DERIVED", "candidates no id tie-break placed, in either ranking"),
                        "spearman": labelled(round(rho_u, 4), "DERIVED", "untied candidates only"),
@@ -415,12 +453,13 @@ def useful_capacity(ctx, steps=STEPS):
 
         def stop(x, pol=pol):
             curt = x["curtail"] / x["need"] if x["need"] > 0 else 0.0
-            curve.append([x["k"], x["state"]["causedNormalTfs"], int(round(curt * 1000)), round(x["state"]["h110"], 2)])
+            curve.append([x["k"], x["state"]["causedNormalTfs"], int(round(curt * 1000)), round(x["state"]["h110"], 2),
+                          int(round(x["state"]["headPct"] * 10))])
             if pol == "naive":
                 return x["state"]["causedNormalTfs"] > 0
             return curt > CURTAIL_CAP
 
-        gl, st0 = greedy(ctx, sim, col_of, newb, ctx.elig_on, len(ctx.eligible), stop=stop)
+        gl, st0 = greedy(ctx, sim, col_of, newb, ctx.elig_on, len(ctx.eligible), stop=stop, track_head=True)
         last = gl[-1] if gl else None
         if last is None:
             n_ok, why = 0, "no candidates"
@@ -430,9 +469,63 @@ def useful_capacity(ctx, steps=STEPS):
                    if pol == "naive" else
                    f"placement {last['k']} ({ctx.labels[last['home']]} on tf {last['tf']}) takes feeder curtailment above {CURTAIL_CAP:.0%}")
         else:
-            n_ok, why = last["k"], f"all {len(ctx.eligible)} eligible homes used"
-        out[pol] = {"n": n_ok, "stop": why, "curve": curve}
+            n_ok, why = last["k"], f"all {len(ctx.eligible)} eligible homes used (transformer limits only)"
+        head_over = next((x["k"] for x in gl if x["state"]["headPct"] > 100.0), None)
+        if head_over is not None:
+            why += f"; the feeder-head estimate (DERIVED, lossless) passes 100% at placement {head_over}"
+        head_at = gl[n_ok - 1]["state"]["headPct"] if n_ok > 0 else st0["headPct"]
+        out[pol] = {"n": n_ok, "stop": why, "curve": curve, "headOverAt": head_over, "headPctAtN": head_at,
+                    "headPct0": st0["headPct"], "order": [x["home"] for x in gl]}
+    # aware with the feeder head as a fleet-total cap (4.4): transformers are no longer independent, so each point is
+    # one coupled month run of the first k placements of aware's greedy order; the stop is curtailment above CURTAIL_CAP
+    out["awareHead"] = head_capped_capacity(ctx, out["aware"]["order"], steps)
     return out
+
+
+def coupled_run(ctx, homes, steps=STEPS):
+    """One month, aware + head cap, one column per transformer, Cores on `homes`: (curtail fraction, row, sim)."""
+    world = World(list(range(ctx.n_tf)), [int(ctx.home_tf[h]) for h in homes], list(homes), ["core"] * len(homes),
+                  [True] * len(homes))
+    sim = simulate(world, ctx.P, ctx.Q, ctx.kva, ctx.coeffs, "aware", "d26", steps=steps, head_kva=HEAD_RATING_KVA)
+    n = min(REPORTED, steps)
+    M = month_metrics(sim["pct"], sim["pct_none"], sim["col_kw"], steps=n)
+    need = float(sim["need_kwh"].sum())
+    curt = float(sim["curtail_kwh"].sum()) / need if need > 0 else 0.0
+    hp = head_pct(ctx.P.sum(axis=1) + sim["col_kw"].sum(axis=1), ctx.Q.sum(axis=1), n)
+    row = [len(homes), int((M["causedNormal"] > 0).sum()), int(round(curt * 1000)), round(float(M["h110"].sum()), 2),
+           int(round(hp * 10))]
+    return curt, row
+
+
+def head_capped_capacity(ctx, order, steps=STEPS, grid=50):
+    pts = {}
+
+    def f(k):
+        if k not in pts:
+            pts[k] = coupled_run(ctx, order[:k], steps)
+        return pts[k][0]
+
+    ks = list(range(grid, len(order), grid)) + [len(order)]
+    lo, hi = 0, None
+    for k in ks:
+        if f(k) > CURTAIL_CAP:
+            hi = k
+            break
+        lo = k
+    if hi is None:
+        n, why = len(order), f"all {len(order)} eligible homes used with the feeder-head cap"
+    else:
+        while hi - lo > 1:                     # first k above the cap (curtailment grows with k)
+            mid = (lo + hi) // 2
+            if f(mid) > CURTAIL_CAP:
+                hi = mid
+            else:
+                lo = mid
+        n = lo
+        why = (f"placement {hi} ({ctx.labels[order[hi - 1]]}) takes feeder curtailment to {pts[hi][0]:.1%}, above "
+               f"{CURTAIL_CAP:.0%}, with the feeder-head cap (HEAD_CAP, ASSUMPTION)")
+    curve = [pts[k][1] for k in sorted(pts)]
+    return {"n": n, "stop": why, "curve": curve, "evaluated": len(pts)}
 
 
 def stop_hit(pol, x):
@@ -515,7 +608,9 @@ def build_index(ctx, extras, uc, bench_s):
                      "normalEvents": labelled(int(Mx["normalEvents"][idx].sum()), "SIM", SCREEN),
                      "emergencyN": labelled(int(Mx["emergencyN"][idx].sum()), "SIM", SCREEN),
                      "tfsOver100": labelled(int((Mx["h100"][idx] > 0).sum()), "SIM", SCREEN),
-                     "causedNormal": labelled(int(Mx["causedNormal"][idx].sum()) if which == "pct" else 0, "SIM", "P2 definition")}
+                     "causedNormal": labelled(int(Mx["causedNormal"][idx].sum()) if which == "pct" else 0, "SIM", "P2 definition"),
+                     "headPct": labelled(round(head_pct(ctx.P.sum(axis=1) + (x["sim"]["col_kw"][:, cols].sum(axis=1) if which == "pct" else 0.0),
+                                                        ctx.Q.sum(axis=1), x["sim"]["n"]), 1), "DERIVED", HEAD_CITE)}
         if name == "none":
             none_peakT = Mx["peakT"]
     tf_peak_hour = np.bincount(((np.asarray(none_peakT) % 96) // 4).astype(int), minlength=24).tolist()
@@ -553,7 +648,7 @@ def build_index(ctx, extras, uc, bench_s):
                      series={"price": {"label": "REAL", "unit": "$/MWh"},
                              "fleetCounterfactual": {"label": "SIM", "unit": "hours / counts per transformer", "by": "surrogate"},
                              "insight": {"label": "SIM", "unit": "count per hour: tfPeakHour SIM (379 tfs, no batteries), priceMaxHour REAL (31 days)"},
-                             "curve": {"label": "SIM", "unit": "[k placed, transformers with a battery-caused normal event, feeder curtailment per mille, feeder hours above 110%]"}})
+                             "curve": {"label": "SIM", "unit": "[k placed, transformers with a battery-caused normal event, feeder curtailment per mille, feeder hours above 110%, feeder-head estimate pct x10 (DERIVED)]"}})
     index.update({
         "month": "2026-08", "stepMinutes": STEP_MIN, "steps": REPORTED, "extraSteps": STEPS - REPORTED,
         "controls": {"policy": list(POLICIES), "cls": list(CLS), "rule": list(RULES), "growth": list(GROWTHS)},
@@ -569,9 +664,18 @@ def build_index(ctx, extras, uc, bench_s):
                     "profiles": profs},
         "insight": {"tfPeakHour": tf_peak_hour, "priceMaxHour": pmh},
         "usefulCapacity": {"naive": labelled(uc["naive"]["n"], "SIM", SCREEN, stop=uc["naive"]["stop"]),
-                           "aware": labelled(uc["aware"]["n"], "SIM", SCREEN, stop=uc["aware"]["stop"]),
+                           "aware": labelled(uc["awareHead"]["n"], "SIM", SCREEN + "; aware with the feeder-head cap (HEAD_CAP)",
+                                             stop=uc["awareHead"]["stop"]),
+                           "awareTransformerOnly": labelled(uc["aware"]["n"], "SIM", SCREEN + "; transformer caps only, no head cap",
+                                                            stop=uc["aware"]["stop"]),
+                           "rule": "greedy order from an empty feeder (the 96 fleet homes are candidates like any other; homes on one transformer by id); naive stops at the first battery-caused normal-tier event; aware (feeder-head cap) at feeder curtailment above the cap",
                            "cap": labelled(CURTAIL_CAP, "ASSUMPTION", "CURTAIL_CAP"),
-                           "curve": {"naive": uc["naive"]["curve"], "aware": uc["aware"]["curve"]}},
+                           "feederHead": {pol: {"overAt": labelled(uc[pol]["headOverAt"], "DERIVED", HEAD_CITE),
+                                                "pctAtN": labelled(round(uc[pol]["headPctAtN"], 1), "DERIVED", HEAD_CITE),
+                                                "pctEmpty": labelled(round(uc[pol]["headPct0"], 1), "DERIVED", HEAD_CITE)}
+                                          for pol in POLICIES},
+                           "curve": {"naive": uc["naive"]["curve"], "aware": uc["awareHead"]["curve"],
+                                     "awareTransformerOnly": uc["aware"]["curve"]}},
         "bridge": bridge,
         "engine": {"screenSecondsPerCombo": labelled(bench_s, "SIM", "sim.p2_build --bench wall time per combo (one run of 16), this machine")},
     })

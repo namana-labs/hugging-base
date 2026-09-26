@@ -62,6 +62,8 @@ P2_CONTROLLER_VIEW = const("P2_CONTROLLER_VIEW", "the interval's summed home P a
                            "ASSUMPTION", "P2 screening view; P1 uses 60 s lagged total transformer load (CONTROLLER_VIEW, section 12 Q4)")
 P2_CAUSED_EPS_PTS = const("P2_CAUSED_EPS_PTS", 0.01, "ASSUMPTION",
                           "a battery 'raises' loading when with-battery loading exceeds home-only loading by more than 0.01 points")
+HEAD_CAP = const("HEAD_CAP", "aware useful capacity caps the fleet total at alpha x the feeder head (370 A x sqrt(3) x 12.47 kV)",
+                 "ASSUMPTION", "build prompt 4.4: add the head as one fleet-total cap with the same alpha margin; site/ems/flow-spec.md")
 CURTAIL_VALUE_RULE = const("CURTAIL_VALUE_RULE", "curtailed kWh x the August 2026 median LZ_NORTH price", "ASSUMPTION",
                            "rank key 4 'revenue minus curtailment cost' (build prompt 5.6): re-buying the energy elsewhere in the zone")
 TOP_N = const("P2_RANKING_TOP", 50, "ASSUMPTION", "p2/<combo>.json keeps the top 50 (build prompt 5.3)")
@@ -334,12 +336,17 @@ class World:
         return len(self.col)
 
 
-def simulate(world, P, Q, kva, coeffs, policy, rule, steps=STEPS, soc0=P2_SOC0, alpha=AWARE_MARGIN):
+def simulate(world, P, Q, kva, coeffs, policy, rule, steps=STEPS, soc0=P2_SOC0, alpha=AWARE_MARGIN, head_kva=None):
     """Run the month. P, Q [steps, 379] home load per transformer (growth already applied); kva [379]; coeffs the
     surrogate coefficient dict (topology order). Returns a dict of arrays over the columns / batteries:
       kw [steps, m] battery kW (float32), soc_end [m], col_kw [steps, W], pct [steps, W] (with batteries),
       pct_none [steps, W] (home load only), curtail_kwh [m], need_kwh [m] (grid side, summed over charge windows),
-      revenue [m] ($, energy value over all simulated steps)."""
+      revenue [m] ($, energy value over all simulated steps).
+
+    head_kva (aware only; the world must hold exactly one column per transformer, so the columns sum to the feeder):
+    the feeder head as one fleet-total cap with the same alpha margin (build prompt 4.4; HEAD_CAP, ASSUMPTION):
+    room = sqrt((alpha head_kva)^2 - sum Q^2); fleet charge <= room - sum P, fleet export <= room + sum P, walked in
+    the same grant order (the fleet target of the stateless core)."""
     if policy not in ("naive", "aware"):
         raise ValueError(policy)
     kind, rank, wend, dayi = signal(rule, STEPS)
@@ -355,6 +362,8 @@ def simulate(world, P, Q, kva, coeffs, policy, rule, steps=STEPS, soc0=P2_SOC0, 
     curtail = np.zeros(m)
     need = np.zeros(m)
     revenue = np.zeros(m)
+    soc_min = soc.copy()
+    soc_max = soc.copy()
     eta = np.sqrt(world.rte)
     for t in range(steps):
         kt = int(kind[t])
@@ -366,11 +375,18 @@ def simulate(world, P, Q, kva, coeffs, policy, rule, steps=STEPS, soc0=P2_SOC0, 
         cw = np.minimum(cw, chg_cap)
         if policy == "naive" or m == 0:
             kw = cw - dw
+        elif head_kva is not None:
+            pt, qt = float(Pc[t].sum()), float(Qc[t].sum())
+            room = math.sqrt(max(0.0, (alpha * head_kva) ** 2 - qt * qt))
+            kw = grant(Pc[t], Qc[t], kva_c, world.col, soc, world.home, dis_cap, dw, cw, alpha,
+                       dis_target=room + pt, chg_target=room - pt)
         else:
             kw = grant(Pc[t], Qc[t], kva_c, world.col, soc, world.home, dis_cap, dw, cw, alpha)
         # device bookkeeping (four-home Battery.apply): the reserve always holds, stop at full
         soc = np.where(kw > 0, np.minimum(1.0, soc + kw * eta * DT_H / world.emax),
                        np.maximum(RESERVE_FLOOR, soc + kw * DT_H / (eta * world.emax)))
+        soc_min = np.minimum(soc_min, soc)
+        soc_max = np.maximum(soc_max, soc)
         kw_out[t] = kw
         if m:
             col_kw[t] = np.bincount(world.col, weights=kw, minlength=world.W)
@@ -382,7 +398,7 @@ def simulate(world, P, Q, kva, coeffs, policy, rule, steps=STEPS, soc0=P2_SOC0, 
     pct = surrogate.loading(Pc, Qc, col_kw, c)
     pct_none = surrogate.loading(Pc, Qc, np.zeros_like(col_kw), c)
     return {"kw": kw_out, "soc_end": soc, "col_kw": col_kw, "pct": pct, "pct_none": pct_none,
-            "curtail_kwh": curtail, "need_kwh": need, "revenue": revenue}
+            "curtail_kwh": curtail, "need_kwh": need, "revenue": revenue, "soc_min": soc_min, "soc_max": soc_max}
 
 
 # =================================================================================================================
