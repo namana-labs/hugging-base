@@ -17,16 +17,17 @@ step 9; docs/contracts.md "Parity"). No dwell, no bucket memory, no flip limit, 
      Per battery: lc = min(pmax, (1 - soc) * emax / (sqrt(rte) * dt_h))          charge limit (taper: never past full)
                   ld = min(pmax, max(0, soc - reserve) * emax * sqrt(rte) / dt_h) discharge limit (reserve always)
   1. Relief (every mode; relief overrides the market): for each transformer with R > 0, in index order, its batteries
-     in (-floor(soc / SOC_BUCKET + 1e-9), id) order (highest 2%-SoC bucket first) discharge d = min(ld, R left);
-     a d below MIN_GRANT_KW (0.5) becomes 0.
-  2. mode "discharge": target T = |fleet_target_kw|, total starts at the relief already given. Batteries in the same
-     (-bucket, id) order: g = min(ld - relief_i, E[tf] - exported[tf], T - total); g < 0.5 -> 0; kw -= g.
+     in (-soc, id) order discharge d = min(ld, R left); a d below MIN_GRANT_KW (0.5) becomes 0.
+  2. mode "discharge": target T = |fleet_target_kw|, total starts at the relief already given. Batteries in
+     (-soc, id) order: g = min(ld - relief_i, E[tf] - exported[tf], T - total); g < 0.5 -> 0; kw -= g.
   3. mode "charge": target T = max(0, fleet_target_kw). Batteries not discharging for relief, sorted by
      (floor(soc / SOC_BUCKET + 1e-9), id) ascending; walk once: g = min(lc, H[tf] - granted[tf], T - total), floored at
      0; g < 0.5 -> 0. No equal split: the lowest 2%-SoC bucket is granted first, id breaks ties.
   `id` = `ids[i]` when given, else the battery index i.
 
 THE STATEFUL RULE (P1, state = AllocState): the core plus
+  - bucket memory: relief and discharge go highest 2%-SoC bucket first, (-floor(soc / SOC_BUCKET + 1e-9), id), so
+    relief does not flicker between two batteries every minute;
   - held units (the controller cannot command them this step: late telemetry) keep their last command booked,
     unchanged, on their transformer and in the total, until it expires;
   - dwell: a charge grant is held unchanged for MIN_DWELL_MIN (5) steps and booked before the walk (capped at the
@@ -130,6 +131,14 @@ def allocate(bg_kw, bg_kvar, kva, tf_of_batt, soc, pmax, emax, fleet_target_kw, 
     held = st.held if st is not None else np.zeros(m, dtype=bool)
     blocked = st.blocked if st is not None else np.zeros(m, dtype=bool)
     free = ~held & ~blocked
+    # discharge order: highest SoC first, id breaks ties. The stateful rule adds bucket memory (highest 2%-SoC bucket
+    # first), so relief does not flicker between two batteries every minute; the stateless core (parity) uses raw SoC.
+    if st is None:
+        def dkey(j):
+            return (-soc[j], key_id[j])
+    else:
+        def dkey(j):
+            return (-bucket(soc[j]), key_id[j])
 
     # held units: their last command stays booked, unchanged
     if st is not None:
@@ -155,7 +164,7 @@ def allocate(bg_kw, bg_kvar, kva, tf_of_batt, soc, pmax, emax, fleet_target_kw, 
                 by_tf.setdefault(int(tf[i]), []).append(i)
         for t in relief_tfs:
             need = float(R[t]) - exported[t]
-            for i in sorted(by_tf.get(int(t), []), key=lambda j: (-bucket(soc[j]), key_id[j])):
+            for i in sorted(by_tf.get(int(t), []), key=dkey):
                 if need <= EPS:
                     break
                 if st is not None and not st.can_go(i, -1):
@@ -173,7 +182,7 @@ def allocate(bg_kw, bg_kvar, kva, tf_of_batt, soc, pmax, emax, fleet_target_kw, 
 
     if mode == "discharge":
         T = abs(float(fleet_target_kw))
-        order = sorted((i for i in range(m) if free[i]), key=lambda j: (-bucket(soc[j]), key_id[j]))
+        order = sorted((i for i in range(m) if free[i]), key=dkey)
         for i in order:
             if st is not None and not st.can_go(i, -1):
                 continue
