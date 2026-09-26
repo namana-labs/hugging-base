@@ -7,5 +7,6 @@ Each folder is self-contained: its own dependencies and lockfile, its own `sim/`
 | Folder | Owner | State |
 |---|---|---|
 | [`connor/`](connor/README.md) | Connor | Parametric lateral (`lateral(n)`, four nodes today). Mechanics test passing: charge, comms loss, backup islanding, tiered thermal limits, naive vs feeder-aware splitter. One simulated day (288 steps) with scripted load, solar and price, capacitor bank and IEEE 1547 volt-var; replay carries what the Chapter 1 screen reads. SMART-DS feeder and per-home buses not yet wired in. Two handoff conflicts decided and listed under "Decisions to revisit". Chapter 1 control-room dashboard (`ui/dashboard.html`) built from the design handoff, reading the replay and the ERCOT series. |
+| [`rz/`](rz/README.md) | RZ (+ Michael on the engine) | The main engine and app: feeder-aware controller, OpenDSS referee on the NREL SMART-DS feeder (1,010 customers, 379 transformers, 96 batteries), real ERCOT evenings, where to charge (P1), where the next battery goes (P2), failures and money (P3). Round 2 merged; `./run.sh` to run, `scripts/check_all.sh` passes. A copy of the root app (the root stays frozen because `mpalacios/` imports it). Also RZ's research, the data-truth audit, the story-data analysis and the capacity-planner design. |
 
 To add yours: copy nothing, start a folder, and add a row here.
