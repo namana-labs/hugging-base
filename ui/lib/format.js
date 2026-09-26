@@ -87,3 +87,36 @@ export function timeToStep(meta, hhmm) {
 export function stepToTime(meta, k) {
   return minToHHMM(hhmmToMin(meta.start) + k * (meta.stepSeconds || 60) / 60);
 }
+
+// ---- calendar dates (round 2: &date=, the day chip and the clock). The weekday is COMPUTED, never typed. -------------
+const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function parseISODate(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
+  if (!m) return null;
+  const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+  return d.getUTCFullYear() === +m[1] && d.getUTCMonth() === +m[2] - 1 && d.getUTCDate() === +m[3] ? d : null;
+}
+/** "2026-08-23" -> "Sun 23 Aug 2026" (opts.weekday=false drops the weekday, opts.year=false the year); null if invalid. */
+export function dateLabel(iso, opts = {}) {
+  const d = parseISODate(iso);
+  if (!d) return null;
+  const parts = [];
+  if (opts.weekday !== false) parts.push(DOW[d.getUTCDay()]);
+  parts.push(String(d.getUTCDate()), MON[d.getUTCMonth()]);
+  if (opts.year !== false) parts.push(String(d.getUTCFullYear()));
+  return parts.join(' ');
+}
+/** "2026-08-23" + 1 -> "2026-08-24" (the clock after midnight shows the next day's date). */
+export function addDays(iso, n) {
+  const d = parseISODate(iso);
+  if (!d) return null;
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+/** The calendar date of step k in a window that starts on meta.day at meta.start (it crosses midnight). */
+export function dateAtStep(meta, k) {
+  const s = hhmmToMin(meta.start);
+  if (s === null || !meta.day) return null;
+  return addDays(meta.day, Math.floor((s + k * (meta.stepSeconds || 60) / 60) / 1440));
+}

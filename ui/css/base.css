@@ -1,8 +1,12 @@
 /* ui/css/base.css (L0): Atlas tokens, the shell layout, chips. Panels add css/p1.css (L4) and css/p2.css (L5). */
 :root {
   --bg: #E9EDE7; --paper: #F7F9F5; --ink: #101613; --muted: #55625A; --rule: #CAD3CA; --accent: #0B6B6F;
-  --good: #0ca30c; --warn: #fab219; --serious: #ec835a; --crit: #d03b3b; --open: #6b6f6c;
+  /* tiers: colour means load state only. "Green never means safe": tier 0 is sage (UX_SPEC_R2 2.1), not bright green */
+  --good: #8aa58f; --warn: #fab219; --serious: #ec835a; --crit: #d03b3b; --open: #6b6f6c;
   --real: #0B6B6F; --sim: #55625A; --derived: #6a4fa3; --assumption: #9a6a00;
+  /* batteries: their own colours, never a tier colour */
+  --bat-charge: var(--accent); --bat-sell: #7B5CD6; --bat-idle: #7D8B99; --bat-silent: #8f8f8f;
+  --money: #B8860B; --pad-green: rgb(62, 98, 68); --tag-border: #cfcabd; --tip-bg: #101613; --tip-ink: #F7F9F5;
   --header-h: 56px; --panel-w: 440px;
   --font: "Inter", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
   --mono: "SF Mono", Menlo, Consolas, monospace;
@@ -12,11 +16,15 @@
   :root:not([data-theme="light"]) {
     --bg: #0A0F0D; --paper: #111815; --ink: #E4EBE6; --muted: #93A198; --rule: #26312B; --accent: #5CC4BE;
     --real: #5CC4BE; --sim: #93A198; --derived: #b39ae6; --assumption: #e0b24a; color-scheme: dark;
+    --good: #6f8f76; --bat-sell: #A994F0; --bat-idle: #93A1AE; --money: #E0B24A; --tag-border: #4a554e;
+    --tip-bg: #E4EBE6; --tip-ink: #0A0F0D;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0A0F0D; --paper: #111815; --ink: #E4EBE6; --muted: #93A198; --rule: #26312B; --accent: #5CC4BE;
   --real: #5CC4BE; --sim: #93A198; --derived: #b39ae6; --assumption: #e0b24a; color-scheme: dark;
+  --good: #6f8f76; --bat-sell: #A994F0; --bat-idle: #93A1AE; --money: #E0B24A; --tag-border: #4a554e;
+  --tip-bg: #E4EBE6; --tip-ink: #0A0F0D;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
@@ -58,15 +66,93 @@ body.view-more .hb-panel > * { pointer-events: auto; }
 .hb-card { background: var(--paper); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; }
 .hb-card h3 { margin: 0 0 6px; font-size: 16px; }
 
-/* honesty-label chips: every number shown carries one (format.js) */
-.chip { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .05em; padding: 1px 5px; border-radius: 4px; margin-left: 5px;
-  vertical-align: middle; border: 1px solid currentColor; line-height: 1.3; }
-.chip-REAL { color: var(--real); }
-.chip-SIM { color: var(--sim); }
-.chip-DERIVED { color: var(--derived); }
-.chip-ASSUMPTION { color: var(--assumption); }
+/* provenance tags (UX_SPEC_R2 2.2): fmt.chip() still emits <span class="chip chip-SIM" title="cite">SIM</span>. The word is
+   kept at font-size 0 (it stays in innerText for page-text captures); ::before draws one letter R / S / D / A in a
+   neutral 14 x 14 tag. Not colour-coded (handoff rule); ASSUMPTION gets a dashed border (a shape cue). Hover or focus
+   shows LABEL_TIPS[label] + the cite (tip.js). !important on the geometry: panels size .chip in their own CSS. */
+.chip { display: inline-flex !important; align-items: center; justify-content: center; box-sizing: border-box;
+  width: 14px !important; height: 14px !important; padding: 0 !important; margin-left: 3px; border-radius: 3px;
+  border: 1px solid var(--tag-border); background: transparent; color: var(--muted);
+  font-size: 0 !important; line-height: 0 !important; letter-spacing: 0 !important; vertical-align: -2px; cursor: help; flex: none;
+  white-space: nowrap; overflow: visible; }
+.chip::before { font: 700 9px/1 var(--font); letter-spacing: 0; }
+.chip-REAL::before { content: "R"; }
+.chip-SIM::before { content: "S"; }
+.chip-DERIVED::before { content: "D"; }
+.chip-ASSUMPTION::before { content: "A"; }
+.chip-ASSUMPTION { border-style: dashed; border-color: var(--muted); }
+.chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.hb-tip .chip, .hb-tabs a[aria-current="page"] .chip, .hb-seg a[aria-current="true"] .chip { color: inherit; border-color: currentColor; }
 .num { font-variant-numeric: tabular-nums; }
 .tier-0 { color: var(--good); } .tier-1 { color: var(--warn); } .tier-2, .tier-3 { color: var(--serious); } .tier-4 { color: var(--crit); } .tier-5 { color: var(--open); }
+
+/* icons (ui/lib/icons.js): currentColor strokes, sized by their width/height attributes */
+.ic { flex: none; vertical-align: -0.2em; }
+.ic-battery.s-C { color: var(--bat-charge); } .ic-battery.s-D { color: var(--bat-sell); } .ic-battery.s-I { color: var(--bat-idle); }
+.ic-battery.s-S, .ic-battery.s-X { color: var(--bat-silent); }
+[data-tip], [data-tip-html] { cursor: help; }
+
+/* the tooltip (ui/lib/tip.js) */
+.hb-tip { position: fixed; left: 0; top: 0; z-index: 50; max-width: 320px; pointer-events: none; background: var(--tip-bg); color: var(--tip-ink);
+  font-size: 12.5px; line-height: 1.4; padding: 7px 10px; border-radius: 7px; box-shadow: 0 6px 18px rgba(0,0,0,.28);
+  opacity: 0; transform: translateY(3px); transition: opacity .08s, transform .08s; }
+.hb-tip.on { opacity: 1; transform: none; }
+.hb-tip .tip-h { font-weight: 700; }
+.hb-tip .tip-sub { opacity: .78; font-size: 11.5px; margin-top: 3px; }
+.hb-tip b { font-weight: 700; }
+
+/* collapsible sections: <details class="hb-sec" data-sec="id"><summary>icon, .sec-t, .sec-teaser, .sec-chev</summary>
+   <div class="hb-sec-body">...</div></details>. Closed by default; open state per viewer is the panel's job. */
+.hb-sec { border-top: 1px solid var(--rule); }
+.hb-sec > summary { list-style: none; display: flex; align-items: center; gap: 8px; padding: 9px 2px; cursor: pointer; font-size: 13.5px; font-weight: 600; }
+.hb-sec > summary::-webkit-details-marker { display: none; }
+.hb-sec > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.hb-sec .sec-teaser { margin-left: auto; font-weight: 400; color: var(--muted); font-size: 12.5px; text-align: right; }
+.hb-sec .sec-chev { transition: transform .12s; color: var(--muted); }
+.hb-sec[open] .sec-chev { transform: rotate(90deg); }
+.hb-sec-body { padding: 0 2px 12px; font-size: 13px; }
+
+/* the legend container (icons.legendHTML): bottom-left over the scene, collapsible to a pill */
+.hb-legend { position: absolute; left: 12px; bottom: 12px; z-index: 5; max-width: 300px; background: color-mix(in srgb, var(--paper) 94%, transparent);
+  border: 1px solid var(--rule); border-radius: 10px; font-size: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+.hb-legend > summary { list-style: none; display: flex; align-items: center; gap: 6px; padding: 6px 10px; cursor: pointer; font-weight: 600; color: var(--muted); }
+.hb-legend > summary::-webkit-details-marker { display: none; }
+.hb-legend:not([open]) { border-radius: 999px; }
+.hb-legend-body { padding: 0 10px 8px; display: grid; gap: 3px; }
+.hb-legend-row { display: flex; align-items: center; gap: 7px; }
+.hb-legend-ic { width: 20px; display: inline-flex; justify-content: center; }
+.hb-legend-tags, .hb-legend-foot { color: var(--muted); font-size: 11px; margin-top: 3px; }
+
+/* a visible, non-error notice (e.g. "14 Aug is not simulated; showing Sun 23 Aug 2026"): not counted in data-errors */
+.hb-notice { position: fixed; top: calc(var(--header-h) + 8px); left: calc((100% - var(--panel-w)) / 2); transform: translateX(-50%); z-index: 21; max-width: min(640px, 90vw);
+  background: var(--paper); color: var(--ink); border: 1px solid var(--warn); border-left-width: 4px; border-radius: 8px;
+  padding: 6px 12px; font-size: 13px; box-shadow: 0 4px 14px rgba(0,0,0,.12); display: flex; gap: 8px; align-items: center; }
+.hb-notice[hidden] { display: none; }
+.hb-notice button { margin-left: 6px; border: 0; background: none; color: var(--muted); cursor: pointer; font: inherit; }
+
+/* the day picker (ui/lib/days.js) */
+.hb-daypick { position: relative; display: inline-block; }
+.hb-daychip { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 13px; color: var(--ink); background: var(--paper);
+  border: 1px solid var(--rule); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+.hb-daychip:disabled { cursor: default; opacity: 1; }
+.hb-daychip .hb-day-tag { color: var(--muted); }
+.hb-daypop { position: absolute; top: calc(100% + 6px); left: 0; z-index: 30; width: 420px; max-width: 92vw; background: var(--paper);
+  border: 1px solid var(--rule); border-radius: 10px; box-shadow: 0 10px 28px rgba(0,0,0,.18); padding: 8px; }
+.hb-daypop[hidden] { display: none; }
+.hb-daypop-h { font-size: 12px; color: var(--muted); padding: 2px 6px 6px; }
+.hb-daylist { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.hb-dayrow { width: 100%; display: grid; grid-template-columns: 1fr 64px auto auto auto; align-items: center; gap: 8px; text-align: left;
+  font: inherit; font-size: 12.5px; color: var(--ink); background: none; border: 1px solid transparent; border-radius: 7px; padding: 5px 6px; cursor: pointer; }
+.hb-dayrow:hover, .hb-dayrow:focus-visible { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.hb-dayrow[aria-current="true"] { border-color: var(--accent); }
+.hb-dayrow-d { display: flex; flex-direction: column; }
+.hb-dayrow .hb-day-tag { color: var(--muted); font-size: 11.5px; }
+.hb-dayrow-spark { color: var(--real); display: inline-flex; }
+.hb-day-money, .hb-day-aware, .hb-day-naive { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+.hb-day-money { color: var(--money); } .hb-day-money .num, .hb-day-aware .num { color: var(--ink); }
+.hb-daypick .chip { color: var(--muted); border-color: var(--tag-border); }
+.hb-daypick .chip-ASSUMPTION { border-color: var(--muted); }
+.hb-day-aware { color: var(--muted); }
 
 .hb-error { position: fixed; bottom: 12px; left: 12px; z-index: 30; background: var(--crit); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 13px; max-width: 60vw; }
 .hb-error[hidden] { display: none; }
@@ -76,5 +162,10 @@ body.view-more .hb-panel > * { pointer-events: auto; }
   .hb-scene { right: 0; bottom: 50vh; }
   .hb-panel { top: 50vh !important; width: 100vw; border-left: 0; border-top: 1px solid var(--rule); }
   .hb-standin { display: none; }
+  .hb-notice { left: 50%; }
   .hb-header { gap: 10px; padding: 0 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hb-tip, .hb-sec .sec-chev { transition: none; }
 }

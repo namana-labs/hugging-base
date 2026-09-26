@@ -39,7 +39,9 @@ def export(*names):
 FEEDER_NAME = const("FEEDER_NAME", "NREL SMART-DS 2018 AUS P1U p1uhs19_1247--p1udt17263", "REAL",
                     "data/smartds (byte copy of demos/grid-stories/data/smartds @4bcca51), CC BY 4.0")
 STAND_IN = const("STAND_IN", "Oncor-suburb stand-in settled at LZ_NORTH (placeholder)", "ASSUMPTION",
-                 "CLAUDE.md non-negotiables; the real P1U buses sit in Austin Energy territory")
+                 "CLAUDE.md non-negotiables; the real P1U buses sit in Pedernales Electric Cooperative territory "
+                 "(PUCT service-area map, 2023, 'information purposes only'): 988 of 1,010 homes, 369 of 379 transformers, "
+                 "93 of 96 fleet homes, A-D and T-240 (overnight/TEAMMATES_REVIEW.md #5)")
 SOURCE_PU = const("SOURCE_PU", 1.03, "REAL", "SMART-DS Master.dss source pu")
 FEEDER_KV = const("FEEDER_KV", 12.47, "REAL", "SMART-DS Master.dss basekV")
 HEAD_LINE = const("HEAD_LINE", "l(r:p1udt17263-p1uhs19_1247)", "REAL",
@@ -47,6 +49,9 @@ HEAD_LINE = const("HEAD_LINE", "l(r:p1udt17263-p1uhs19_1247)", "REAL",
 HEAD_RATING_A = const("HEAD_RATING_A", 370.0, "REAL", "SMART-DS NormAmps of the head cable; site/ems/flow-spec.md")
 HEAD_RATING_KVA = const("HEAD_RATING_KVA", round(370.0 * 3 ** 0.5 * 12.47, 1), "DERIVED",
                         "370 A x sqrt(3) x 12.47 kV; site/ems/flow-spec.md")
+HEAD_RATING_KVA_PER_PHASE = const("HEAD_RATING_KVA_PER_PHASE", round(370.0 * 12.47 / 3 ** 0.5, 1), "DERIVED",
+                                  "370 A x 7.2 kV line-to-neutral (12.47 kV / sqrt(3)): one conductor of the head cable; "
+                                  "the 370 A limit binds per conductor (PR #19; overnight/AUDIT-R2.md L2)")
 WEAK_LINE_FACTOR = const("WEAK_LINE_FACTOR", 3.0, "ASSUMPTION",
                          "prototype shaping: one primary line lengthened 3x electrically (data/fleet.json shaping)")
 FLEET_SEED = const("FLEET_SEED", 17263, "ASSUMPTION", "prototype fleet placement seed (demos/grid-stories/sim/constants.py)")
@@ -123,6 +128,10 @@ CAPACITY_BENCHMARK_USD_KW_MONTH = const("CAPACITY_BENCHMARK_USD_KW_MONTH", 3.12,
 CAPACITY_HIGH_USD_KW_MONTH = const("CAPACITY_HIGH_USD_KW_MONTH", 8.50, "DERIVED",
                                    "implied from an UNVERIFIED Austin Energy figure; docs/research-report.md:246, docs/design.md:160-161")
 MARKET_BENCHMARK_USD_DAY = const("MARKET_BENCHMARK_USD_DAY", 1.58, "DERIVED", "docs/research-report.md:246")
+BASE_HOUSTON_CHARGE_BLOCK_MW = const("BASE_HOUSTON_CHARGE_BLOCK_MW", -45.8, "REAL",
+                                     "Base's Houston charge block reached -45.8 MW within 15 minutes on 22 Jul 2026 "
+                                     "(Base blog 'aggregated-ders-and-the-capacity-crunch'; docs/research-report.md:207-212, 297). "
+                                     "Zone level, ERCOT's base point; wording limited to what both readings of the blog agree on")
 TRANSFORMER_REPLACEMENT_USD = const("TRANSFORMER_REPLACEMENT_USD", None, "ASSUMPTION", "not sourced; never invent one (§12 Q7)")
 
 # ---- P2 (5.6) -------------------------------------------------------------------------------
