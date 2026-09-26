@@ -157,11 +157,11 @@ test('p2: the scene gets numbered candidate pins and greedy placements as new co
   const ctx = { topology, footprints: null, sceneModel, theme: 'light' };
   const base = sceneModel.buildSceneModel({ topology, frame: sceneModel.frameFromP2(doc), view: 'p2' });
   const m = p2SceneModel(ctx, { doc, n: 3, p1meta: { unrelieved: [{ tf: 240 }] } });
-  assert.equal(m.labels.filter((l) => l.kind === 'candidate').length, Math.min(10, doc.ranking.length));
-  assert.equal(m.labels.find((l) => l.kind === 'candidate').text, '#1');
+  assert.equal(m.labels.filter((l) => l.pin).length, Math.min(10, doc.ranking.length));
+  assert.equal(m.labels.find((l) => l.pin).text, '#1');
+  assert.equal(m.batteries.filter((b) => b.placed).length, 3);
   assert.equal(m.batteries.length, base.batteries.length + 3);
-  assert.ok(m.batteries.slice(-3).every((b) => b.greedy));
-  assert.equal(m.labels.filter((l) => l.kind === 'handoff').length, 1);
+  assert.equal(m.labels.filter((l) => l.handoff).length, 1);
 });
 
 // ------------------------------------------------------------------------------------------------ beats.json

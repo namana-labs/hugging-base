@@ -403,31 +403,30 @@ function handoffBlock(ctx, st) {
   return `<section class="p2-handoff"><h2>From P1: left unrelieved on ${esc(st.p1meta.day || 'the P1 day')}</h2><ul>${items}</ul></section>`;
 }
 
-/** Build the P2 scene: the shared scene model plus numbered candidate pins and greedy placements as new columns. */
+/** Build the P2 scene: the shared scene model (L4) with numbered candidate pins and greedy placements as new
+ *  columns. L4's buildSceneModel takes `pins` [{home, text}] and `placed` [{home}]; with an older model that ignores
+ *  them, the pins and placements are appended to `labels` / `batteries` here (same fields). */
 export function p2SceneModel(ctx, st) {
   const { topology, sceneModel } = ctx;
-  const model = sceneModel.buildSceneModel({ topology, footprints: ctx.footprints, frame: sceneModel.frameFromP2(st.doc), view: 'p2', theme: ctx.theme });
-  const ink = ctx.theme === 'dark' ? [228, 235, 230] : [16, 22, 19];
-  const accent = ctx.theme === 'dark' ? [92, 196, 190] : [11, 107, 111];
+  const pins = (st.doc.ranking || []).slice(0, 10).filter((e) => topology.homes[e.home]).map((e) => ({ home: e.home, text: `#${e.rank}` }));
+  const placed = (st.doc.greedy || []).slice(0, st.n).filter((g) => topology.homes[g.home]).map((g) => ({ home: g.home, k: g.k }));
+  const model = sceneModel.buildSceneModel({ topology, footprints: ctx.footprints, frame: sceneModel.frameFromP2(st.doc), view: 'p2', theme: ctx.theme, pins, placed });
+  const ink = model.ink || (ctx.theme === 'dark' ? [228, 235, 230] : [16, 22, 19]);
+  const accent = model.accent || (ctx.theme === 'dark' ? [92, 196, 190] : [11, 107, 111]);
   model.labels = model.labels || [];
-  for (const e of (st.doc.ranking || []).slice(0, 10)) {
-    const h = topology.homes[e.home];
-    if (h) model.labels.push({ text: `#${e.rank}`, position: h.lonlat, color: ink, kind: 'candidate', home: e.home });
+  model.batteries = model.batteries || [];
+  if (!model.labels.some((l) => l.pin)) {
+    for (const p of pins) model.labels.push({ key: 'pin', text: p.text, position: topology.homes[p.home].lonlat, color: ink, pin: true, home: p.home });
   }
-  const tpl = (model.batteries || [])[0] || {};
-  for (const g of (st.doc.greedy || []).slice(0, st.n)) {
-    const h = topology.homes[g.home];
-    if (!h) continue;
-    const b = { ...tpl, j: `greedy-${g.k}`, position: [h.lonlat[0] + 0.00012, h.lonlat[1]], greedy: true, k: g.k };
-    if ('height' in tpl || !('height' in b)) b.height = 30;
-    if ('soc' in tpl) b.soc = 1;
-    if ('state' in tpl) b.state = 'I';
-    b.color = [...accent, 255];
-    (model.batteries = model.batteries || []).push(b);
+  if (!model.batteries.some((b) => b.placed)) {
+    for (const p of placed) {
+      const h = topology.homes[p.home];
+      model.batteries.push({ j: -1, home: p.home, position: [h.lonlat[0] + 0.00012, h.lonlat[1]], height: 30, soc: 0.9, kw: 0, state: 'N', color: [...accent, 255], placed: true });
+    }
   }
   for (const u of (st.p1meta && st.p1meta.unrelieved) || []) {
     const t = topology.transformers[u.tf];
-    if (t) model.labels.push({ text: 'P1: unrelieved', position: t.lonlat, color: ink, kind: 'handoff', tf: u.tf });
+    if (t) model.labels.push({ key: 'handoff', text: 'P1: unrelieved', position: t.lonlat, color: ink, handoff: true, tf: u.tf });
   }
   return model;
 }
