@@ -188,15 +188,17 @@ def reason_of(e):
     return f"no stress to relieve; no new violation; month peak with the battery {e['peakWith']:.1f}% (SIM, lowest first)"
 
 
-def homes_dark(ctx, tf):
-    fset = set(ctx.fleet)
-    return [h for h in np.flatnonzero(ctx.home_tf == tf).tolist() if h not in fset]
+def homes_dark(ctx, tf, with_battery=()):
+    """Homes on tf with no battery (neither the fleet's nor the new ones in `with_battery`): they go dark when
+    protection operates; battery homes island and stay lit (4.5)."""
+    lit = set(ctx.fleet) | set(with_battery)
+    return [h for h in np.flatnonzero(ctx.home_tf == tf).tolist() if h not in lit]
 
 
 def entry_doc(ctx, sim, e, rank, home, tie_broken, cls_new):
     tf = e["tf"]
     M = sim["M"]
-    dark = homes_dark(ctx, tf) if (e["protWith"] >= 0) else []
+    dark = homes_dark(ctx, tf, [home]) if (e["protWith"] >= 0) else []
     d = {"rank": rank, "home": home, "homeId": ctx.home_ids[home], "label": ctx.labels[home], "tf": tf,
          "tfId": ctx.tf_ids[tf], "kva": labelled(ctx.kva[tf], "REAL", "SMART-DS Transformers.dss"),
          "reason": reason_of(e),
@@ -387,7 +389,7 @@ def build_combo(ctx, combo, steps=STEPS):
     totals["newViolationTfs"] = labelled(len(nv_rows), "SIM", "transformers where one more battery adds a normal-tier event, an emergency interval or a protection operation")
     totals["newViolationHomes"] = labelled(sum(len(ctx.cand_on[r[2]]) for r in nv_rows), "SIM", "candidates on those transformers")
     prot_cases = [{"home": r[3], "tf": r[2], "label": ctx.labels[r[3]], "t": stamp(r[1]["protWith"]),
-                   "peakWithPct": labelled(round(r[1]["peakWith"], 1), "SIM", SCREEN), "homesDark": homes_dark(ctx, r[2])}
+                   "peakWithPct": labelled(round(r[1]["peakWith"], 1), "SIM", SCREEN), "homesDark": homes_dark(ctx, r[2], [r[3]])}
                   for r in rows if r[1]["protWith"] >= 0 and r[1]["protWithout"] < 0]
     totals["protectionWithTfs"] = labelled(len(prot_cases), "SIM", "protection may operate (ASSUMPTION rule) with one more battery")
     doc = envelope(f"p2.{combo}", "sim.p2_build", inputs=inputs_sha(), constants=export(*CONSTS), sources=SOURCES,
@@ -613,6 +615,13 @@ def build_index(ctx, extras, uc, bench_s):
                                                         ctx.Q.sum(axis=1), x["sim"]["n"]), 1), "DERIVED", HEAD_CITE)}
         if name == "none":
             none_peakT = Mx["peakT"]
+    fprot = {}
+    for name, x in (("naive", xn), ("aware", xa)):
+        Mx = x["sim"]["M"]
+        fprot[name] = [{"tf": tf, "tfId": ctx.tf_ids[tf], "t": stamp(int(Mx["protection"][c])),
+                        "peakPct": labelled(round(float(Mx["peak"][c]), 1), "SIM", SCREEN),
+                        "homesDark": homes_dark(ctx, tf), "homesOnBattery": [h for h in ctx.fleet_on[tf]]}
+                       for tf, c in enumerate(x["base_cols"]) if Mx["protection"][c] >= 0]
     tf_peak_hour = np.bincount(((np.asarray(none_peakT) % 96) // 4).astype(int), minlength=24).tolist()
     pmh = [0] * 24
     for d in range(MONTH_DAYS):
@@ -658,6 +667,8 @@ def build_index(ctx, extras, uc, bench_s):
                    "rule": "prev >= $60 and next <= 0.5 x prev, consecutive 15-min starts", "period": "2026-01-01..2026-09-19",
                    "events": cliffs},
         "fleetCounterfactual": fc, "fleetCounterfactualTotals": fct,
+        "fleetProtection": {"rule": "protection may operate (ASSUMPTION rule, 4.5: one 15-min interval above 200% of nameplate); the month run does not isolate the transformer afterwards",
+                            "naive": fprot["naive"], "aware": fprot["aware"]},
         "flip": flip_doc(ctx, xn, xa),
         "ties": {"byId": labelled(ties, "SIM", "candidates whose place only the id decided (siblings on one transformer are identical in the surrogate)"), "of": len(ctx.cands)},
         "drivers": {"top10DistinctProfiles": labelled(len(set(profs)), "SIM", "SMART-DS profiles of the aware top 10 (their transformer's peak home)"),
