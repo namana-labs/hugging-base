@@ -6,7 +6,8 @@ Hackathon project (Base Power & AITX, Sep 2026). A feeder-aware simulator for a 
 
 1. `docs/README.md` for reading order, on-site corrections, and the rules below.
 2. `docs/design.md` for scope, the three scenarios, the model, and the proposed `sim/` layout. Build only what is in its **Scope: In** table.
-3. `docs/research-report.md` when you need a number. Every figure carries a label; keep it.
+3. `docs/plan.md` for the stack, who owns which module, and the milestone you are currently building toward.
+4. `docs/research-report.md` when you need a number. Every figure carries a label; keep it.
 
 ## Non-negotiables
 

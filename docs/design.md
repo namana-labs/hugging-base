@@ -224,6 +224,7 @@ Pre-extract every replay window to CSV before the demo. ERCOT allows raw data in
 ```
 docs/README.md            reading order and status of every doc
 docs/design.md            this document
+docs/plan.md              stack, work split, stages, milestones
 docs/research-report.md   the sourced research report (176 citations); canonical for every figure
 data/                     pre-extracted SMART-DS feeder, load parquet, price CSVs
 sim/devices.py            battery classes and state machine

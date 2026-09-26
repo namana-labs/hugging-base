@@ -5,6 +5,7 @@ Read in this order. Each file has one job; do not duplicate content between them
 | File | Job | Status | Owner of truth for |
 |---|---|---|---|
 | [design.md](design.md) | What we are building, why, and what is out of scope. The group signs off on this before code. | Living. Edit when scope or a decision changes. | Scope, decisions, scenarios, model, metrics, repo layout |
+| [plan.md](plan.md) | Stack, work split by stream, stages, milestones with pass tests, risks to retire first. | Living. Update when a milestone passes or slips. | Sequencing and tooling |
 | [research-report.md](research-report.md) | The sourced research on Base, ERCOT, physics and data. 176 inline citations. | Frozen as of 25 Sep 2026 except for corrections. | Every number and label (UNVERIFIED / DERIVED / ASSUMPTION / INFERENCE) |
 
 ## How the two relate
