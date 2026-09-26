@@ -199,23 +199,36 @@ def run_branch(sc, branch, faults=None):
     need_fuse = max(1, math.ceil(FUSE_MINUTES * 60 / P1_STEP_SECONDS))
     need_inst = max(1, math.ceil(FUSE_INSTANT_SECONDS / P1_STEP_SECONDS))
     over300 = np.zeros(T, dtype=int)
+    # Faults (5.4.4). The defaults are aware_faults' three events; sim.chaos (P3, 5.7) passes the optional keys:
+    #   pick_silent(sc, cmds, k) -> [batt]  who goes silent at the first controller tick at or after `comms`
+    #                                       (default: 5.4.4's rule, one battery)
+    #   hot_tf, hot_minutes                 which transformer runs hot (default C) and for how long (HOT_MINUTES)
+    #   stall_min                           how long the controller stalls (default STALL_MIN)
     silent = None
+    silent_from = None
     comms_at = faults.get("comms")
+    picker = faults.get("pick_silent")
     hot_at = faults.get("hot")
+    hot_minutes = int(faults.get("hot_minutes", HOT_MINUTES))
     stall_at = faults.get("stall")
+    stall_min = int(faults.get("stall_min", STALL_MIN))
     hot_home = None
     if hot_at is not None:
-        c_tf = sc.focus["C"]
+        c_tf = sc.focus["C"] if faults.get("hot_tf") is None else int(faults["hot_tf"])
+        who = "C" if faults.get("hot_tf") is None else sc.focus_of_tf.get(c_tf, f"tf {c_tf}")
         hot_home = int(min(sc.feeder.transformers[c_tf]["homes"]))
         hot_loads = np.flatnonzero(sc.load_home == hot_home)
         events.append({"step": hot_at, "t": hhmm(win.time(hot_at)), "kind": "hot", "tf": c_tf, "home": hot_home,
-                       "deltaKW": EV_KW, "minutes": HOT_MINUTES,
-                       "text": f"C runs hot: {sc.labels[hot_home]} plugs in a Level 2 EV, +{EV_KW} kW for {HOT_MINUTES} min (ASSUMPTION)"})
-    stall_steps = set(range(stall_at, stall_at + STALL_MIN)) if stall_at is not None else set()
+                       "deltaKW": EV_KW, "minutes": hot_minutes,
+                       "text": f"{who} runs hot: {sc.labels[hot_home]} plugs in a Level 2 EV, +{EV_KW} kW for {hot_minutes} min (ASSUMPTION)"})
+    stall_steps = set(range(stall_at, stall_at + stall_min)) if stall_at is not None else set()
     if stall_at is not None:
-        events.append({"step": stall_at, "t": hhmm(win.time(stall_at)), "kind": "stall", "minutes": STALL_MIN,
-                       "resumeStep": stall_at + STALL_MIN,
-                       "text": f"our controller stalls for {STALL_MIN} min (longer than the {TAG['COMMAND_TTL_S']['value']} s command TTL)"})
+        ttl = TAG['COMMAND_TTL_S']['value']
+        events.append({"step": stall_at, "t": hhmm(win.time(stall_at)), "kind": "stall", "minutes": stall_min,
+                       "resumeStep": stall_at + stall_min,
+                       "text": f"our controller stalls for {stall_min} min "
+                               + (f"(longer than the {ttl} s command TTL)" if stall_min * 60 > ttl
+                                  else f"(within the {ttl} s command TTL: live commands run on)")})
     last_cmd_kw = np.zeros(m)
     if branch == "naive":
         prev_mode = None
@@ -232,7 +245,7 @@ def run_branch(sc, branch, faults=None):
         t_s = k * P1_STEP_SECONDS
         tnow = win.time(k)
         kw, kvar = sc.home_loads(k)
-        if hot_at is not None and hot_at <= k < hot_at + HOT_MINUTES:
+        if hot_at is not None and hot_at <= k < hot_at + hot_minutes:
             kw[hot_loads] += EV_KW / len(hot_loads)
         mode = sc.modes[k]
         blocked = np.array([sc.tf_of_batt[i] in f.isolated for i in range(m)])
@@ -248,7 +261,7 @@ def run_branch(sc, branch, faults=None):
             target[k] = float(sum(bat[i].limit(cmd_kw[i], DT_H) for i in range(m)))
         else:
             heard = ~blocked.copy()
-            if silent is not None and k > comms_at:
+            if silent is not None and k >= silent_from:
                 heard[silent] = False
             stalled = k in stall_steps
             if not stalled:
@@ -282,8 +295,9 @@ def run_branch(sc, branch, faults=None):
                             stats["rejected"] += 1
                         last_cmd_kw[i] = c.kw
                 _ticker(sc, win, k, dec, caps, grants, ticker)
-                if comms_at is not None and k == comms_at and silent is None:
+                if comms_at is not None and k >= comms_at and silent is None and picker is None:
                     silent = _pick_silent(sc, cmds)
+                    silent_from = k + 1
                     c = cmds[silent]
                     if not c.kw > MIN_GRANT_KW:
                         raise AssertionError(f"comms-loss battery {silent} has a zero command at step {k}")
@@ -293,6 +307,14 @@ def run_branch(sc, branch, faults=None):
                           "expiresStep": int(c.expires_s // P1_STEP_SECONDS),
                           "text": f"{sc.labels[h]} (behind {sc.focus_of_tf.get(int(sc.tf_of_batt[silent]), 'tf')}) goes silent after its {hhmm(tnow)} command (+{c.kw:.1f} kW)"}
                     events.append(ev)
+                elif comms_at is not None and k >= comms_at and silent is None:
+                    silent = np.asarray(sorted(int(i) for i in picker(sc, cmds, k)), dtype=np.int64)
+                    silent_from = k + 1
+                    events.append({"step": k, "t": hhmm(tnow), "kind": "comms_lost", "batts": silent.tolist(),
+                                   "homes": [int(sc.fleet[i]) for i in silent], "silentFrom": k + 1,
+                                   "cmdKW": [round(cmds[int(i)].kw, 2) for i in silent],
+                                   "expiresStep": [int(cmds[int(i)].expires_s // P1_STEP_SECONDS) for i in silent],
+                                   "text": f"{len(silent)} batteries go silent after their {hhmm(tnow)} commands"})
             else:
                 target[k] = 0.0
         # devices act
@@ -588,6 +610,12 @@ def assemble(sc, runs, tc, faults, solves, dwell=MIN_DWELL_MIN):
     relief_steps = [k for k in range(win.steps) if sc.modes[k] == "idle" and per_tf_aware[k, a] < -MIN_GRANT_KW]
     relief_kw = float(-per_tf_aware[relief_steps, a].min()) if relief_steps else 0.0
     relief_kwh = float(-per_tf_aware[relief_steps, a].sum() * DT_H) if relief_steps else 0.0
+    # when the largest relief minute is, and what A's batteries give at the peak minute itself (judge R1 F7: the
+    # peak relief and the 16:45 value differ by a minute; captions word it from these, not from one number)
+    kr = relief_steps[int(np.argmin(per_tf_aware[relief_steps, a]))] if relief_steps else None
+    relief_when = ({"t": hhmm(win.time(kr)), "step": int(kr)} if kr is not None else {})
+    relief_at_peak = labelled(round(float(max(0.0, -per_tf_aware[kp, a])), 2), "SIM",
+                              "A's batteries' discharge at the peak minute (relief.t)")
     loads = sc.loads
     k15 = loads.step_of(win.day, win.start_min + kp)
     driver = loads.driver(a, k15)
@@ -597,7 +625,8 @@ def assemble(sc, runs, tc, faults, solves, dwell=MIN_DWELL_MIN):
         "aware": labelled(round(float(aware["pct"][kp, a]), 1), "SIM", "OpenDSS, feeder-aware"),
         "minutesOver100": labelled(int((none_a > TIER_AMBER_PCT).sum()), "SIM", "minutes A spends above nameplate, none vs aware",
                                    none=int((none_a > TIER_AMBER_PCT).sum()), aware=int((aware["pct"][:, a] > TIER_AMBER_PCT).sum())),
-        "reliefKW": labelled(round(relief_kw, 2), "SIM", "A's batteries discharging outside the market plan (relief)"),
+        "reliefKW": labelled(round(relief_kw, 2), "SIM", "A's batteries discharging outside the market plan (relief): the largest minute",
+                             **relief_when, atPeak=relief_at_peak),
         "reliefKWh": labelled(round(relief_kwh, 3), "SIM", "energy of that relief"),
         "driver": driver,
         "text": "over nameplate for about 15 minutes (amber; not a failure): one home's 15-minute spike",
