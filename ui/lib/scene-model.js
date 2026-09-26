@@ -14,7 +14,8 @@
 //     model.canRings[379]    {i, position, radius, pct:110}                 ring at 110% (normal rating)
 //     model.canCaps[379]     {i, position, radius, pct:150}                 red cap at 150% (emergency rating)
 //     model.lines[2531]      {path, color}                                  stable identity per topology+theme
-//     model.labels[]         {text, short, position:[lon,lat,z], color, key} A-D (with room), T-240, pins; short at low zoom
+//     model.labels[]         {text, short, position:[lon,lat,z], color, key, room?, roomDir?} A-D (with room: charge
+//                            room, or export room while the can back-feeds), T-240, pins; short at low zoom
 //     model.pulses[]         {position, color}                              batteries whose command changed
 //     model.alerts[]         {position, text:'!'}                           stale / expired batteries
 //     model.staticKey        string: the home/context geometry is unchanged while this is unchanged
@@ -22,7 +23,9 @@
 //   frameFromP1(branchDoc, k)     -> frame at step k (decodes the quantized contract arrays)
 //   frameFromP2(comboDoc)         -> frame of month peaks (transformer fill = the month peak)
 //   homeStatesAt(changes, k, n)   -> ['lit'|'battery'|'dark' x n] from p1 `homeState` (changes only)
-//   roomKW(kva, pct, pKW)         -> kW of room to nameplate (DERIVED), negative when over
+//   roomKW(kva, pct, pKW)         -> kW of charge room to nameplate (DERIVED), negative when over
+//   exportRoomKW(kva, pct, pKW)   -> kW of export (back-feed) room to nameplate (DERIVED), negative when over
+//   headroom(kva, pct, pKW)       -> {dir: 'charge'|'export', kw}: the room in the direction power flows now
 //   TIER_RGB[code], TIER_NAMES[code], STATE_NAMES
 // Display scales (not data): CAN_H_M, BAT_H_M etc. The UI never re-derives tiers: codes come from the JSON.
 
@@ -118,6 +121,22 @@ export function roomKW(kva, pct, pKW = null) {
   if (pKW === null || pKW === undefined || !Number.isFinite(pKW)) return kva - S;
   const q2 = Math.max(0, S * S - pKW * pKW);
   return Math.sqrt(Math.max(0, kva * kva - q2)) - pKW;
+}
+
+/** kW of export (back-feed) room to nameplate on a transformer (DERIVED; display only): with P < 0 while the
+ *  transformer exports, E = sqrt(kVA^2 - Q^2) + P (the controller's export headroom `E` at alpha = 1, build prompt
+ *  5.4.3 step 2). Negative when over nameplate. */
+export function exportRoomKW(kva, pct, pKW) {
+  const S = (pct / 100) * kva;
+  const q2 = Math.max(0, S * S - pKW * pKW);
+  return Math.sqrt(Math.max(0, kva * kva - q2)) + pKW;
+}
+
+/** The room in the direction power flows now: a transformer whose real power P is negative is back-feeding, so its
+ *  headroom is export room (judge R1 F6: an exporting can at 98% must not read "room 99.7 kW"). Without P: charge. */
+export function headroom(kva, pct, pKW = null) {
+  if (pKW !== null && pKW !== undefined && Number.isFinite(pKW) && pKW < 0) return { dir: 'export', kw: exportRoomKW(kva, pct, pKW) };
+  return { dir: 'charge', kw: roomKW(kva, pct, pKW) };
 }
 
 /** Frame at step k of a p1/<branch>.json (docs/contracts.md A.6). Decodes loading (pct x10), kW x10, SoC per mille. */
@@ -279,10 +298,11 @@ export function buildSceneModel({ topology, footprints = null, frame = null, vie
     const t = tfs[i];
     const fd = frame && frame.focus ? frame.focus[key] : null;
     const pKW = fd ? fd.homeKW + fd.batKW : null;
-    const room = roomKW(t.kva, pct[i] || 0, pKW);
     const p = pct[i] || 0;
-    const roomTxt = !frame ? '' : p > 100 ? ` · over by ${((p / 100 - 1) * t.kva).toFixed(1)} kVA` : ` · room ${Math.max(0, room).toFixed(1)} kW`;
-    labels.push({ key, short: key, text: `${key} · ${t.kva} kVA${roomTxt}`, position: [t.lonlat[0], t.lonlat[1], CAN_H_M * Math.max(1.55, (pct[i] || 0) / 100) + 6], color: ink, room });
+    const hr = headroom(t.kva, p, pKW);   // room in the direction power flows now (export while back-feeding)
+    const roomTxt = !frame ? '' : p > 100 ? ` · over by ${((p / 100 - 1) * t.kva).toFixed(1)} kVA`
+      : hr.dir === 'export' ? ` · room to export ${Math.max(0, hr.kw).toFixed(1)} kW` : ` · room ${Math.max(0, hr.kw).toFixed(1)} kW`;
+    labels.push({ key, short: key, text: `${key} · ${t.kva} kVA${roomTxt}`, position: [t.lonlat[0], t.lonlat[1], CAN_H_M * Math.max(1.55, (pct[i] || 0) / 100) + 6], color: ink, room: hr.kw, roomDir: hr.dir });
   }
   for (const b of topology.bridge || []) {
     const t = tfs[b.tf];

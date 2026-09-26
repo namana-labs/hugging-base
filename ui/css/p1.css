@@ -75,6 +75,21 @@ body.view-p1 .hb-scene { bottom: var(--transport-h); }
 .p1-text { font-size: 12.5px; }
 .p1 code { font-family: var(--mono); font-size: 11.5px; }
 
+/* scale ladder (build prompt 3.4): one rung per scale, a log bar each */
+.p1-ladder-h { font-size: 12.5px; color: var(--muted); margin: 2px 0 6px; }
+.p1-rung { margin: 6px 0 8px; }
+.p1-rung-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.p1-rung-name { font-weight: 700; font-size: 13px; }
+.p1-rung-val { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.p1-rung-val .chip { font-size: 9px; }
+.p1-rung-bar { height: 8px; margin: 3px 0 3px; border-radius: 3px; background: color-mix(in srgb, var(--rule) 45%, transparent); overflow: hidden; }
+.p1-rung-bar i { display: block; height: 100%; border-radius: 3px; background: var(--accent); }
+.p1-rung-can .p1-rung-bar i { background: var(--crit); }
+.p1-rung-text { font-size: 12px; color: var(--muted); line-height: 1.35; }
+.p1-rung-axis { position: relative; height: 14px; font-size: 10px; color: var(--muted); margin-top: 2px; }
+.p1-rung-axis span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; }
+.p1-rung-axis span:first-child { transform: none; }
+
 /* overlays on the scene */
 .p1-overlay { position: fixed; z-index: 12; }
 .p1-cams { top: calc(var(--header-h) + 12px); right: calc(var(--panel-w) + 12px); display: flex; gap: 6px; }
