@@ -22,6 +22,19 @@ scripts/serve.sh            # static server from the repo root on port 8765
 
 Open **http://127.0.0.1:8765/ui/**. Deep links (`?view=p1&branch=aware&t=22:30`, `?view=p2`, `?view=more`) are listed in [`scripts/deeplinks.txt`](scripts/deeplinks.txt). A yellow FIXTURE banner means that view still shows synthetic stand-in data. The gate is `scripts/check_all.sh` (it ends `ALL CHECKS: PASS`); `scripts/setup.sh` checks the Python venv, node and Chrome it needs.
 
+## Simulators
+
+Candidate simulators live one per folder under [`simulators/`](simulators/README.md); the trial by fire picks the one the main app promotes. Each is self-contained. For example, the four-node mechanics test in `simulators/connor/`:
+
+```sh
+cd simulators/connor
+uv sync --group dev
+.venv/bin/python -m sim.scenarios.four_node
+python3 -m http.server 4388 --bind 127.0.0.1 --directory .
+```
+
+Open **http://127.0.0.1:4388/ui/four-node.html**. Tests: `.venv/bin/python -m pytest`.
+
 ## Run the toy demo
 
 From the repository root:
