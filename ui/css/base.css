@@ -154,6 +154,22 @@ body.view-more .hb-panel > * { pointer-events: auto; }
 .hb-daypick .chip-ASSUMPTION { border-color: var(--muted); }
 .hb-day-aware { color: var(--muted); }
 
+/* the money calendar strip inside the day picker (days.calendarStripHTML) */
+.hb-cal { border-top: 1px solid var(--rule); margin-top: 8px; padding: 8px 6px 2px; font-size: 11.5px; }
+.hb-cal-h { color: var(--muted); margin-bottom: 6px; line-height: 1.35; }
+.hb-cal-h .num { color: var(--ink); }
+.hb-cal-grid { display: grid; gap: 2px; }
+.hb-cal-row { display: flex; align-items: center; gap: 2px; }
+.hb-cal-m { width: 26px; color: var(--muted); font-size: 10.5px; }
+.hb-cal-cell { width: 10px; height: 10px; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; flex: none;
+  padding: 0; border: 0; font: 700 8px/1 var(--font); color: var(--ink); background: var(--rule); position: relative; }
+.hb-cal-cell.gap { background: repeating-linear-gradient(45deg, var(--rule) 0 2px, transparent 2px 4px); }
+.hb-cal-cell.lose { background: rgb(125, 147, 178); }
+.hb-cal-cell.paid::after { content: ""; position: absolute; right: 0; top: 0; width: 3px; height: 3px; border-radius: 50%; background: var(--accent); }
+.hb-cal-cell.sim { outline: 1.5px solid var(--ink); outline-offset: 0; cursor: pointer; }
+.hb-cal-cell.cur { outline: 2px solid var(--accent); }
+.hb-cal-key { display: flex; align-items: center; gap: 5px; color: var(--muted); margin-top: 6px; font-size: 10.5px; }
+
 .hb-error { position: fixed; bottom: 12px; left: 12px; z-index: 30; background: var(--crit); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 13px; max-width: 60vw; }
 .hb-error[hidden] { display: none; }
 
