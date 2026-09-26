@@ -143,6 +143,23 @@ Written by L0 (the lead) on 26 Sep 2026 for the overnight build. Two halves: **P
 
 `month, stepMinutes:15, steps:2976, controls{policy, cls, rule, growth}, combos[16] (ids), default:"aware-core-d26-g0", price[2976], cliffs{count, evening, rule, period, events}, fleetCounterfactual{none|naive|aware:{h100[379], normalEvents[379], emergencyN[379]}}, flip{top10Overlap, spearman, untied{top10Overlap, spearman, n}, combos}, ties{byId, of:911}, drivers{top10DistinctProfiles, profiles[]}, insight{tfPeakHour[24], priceMaxHour[24]}, usefulCapacity{naive{v,label,stop}, aware{v,label,stop}, curve{naive[], aware[]}}, referee{runs, errorPts{max,p99}, tierAgreementPct}, bridge[], engine{screenSecondsPerCombo}`.
 
+**OpenDSS checks of the feeder head and of useful capacity** (L3; `sim.referee` writes `data/out/referee-2026-08.json`, and `sim.p2_build` merges it into this file). The feeder head is `l(r:p1udt17263-p1uhs19_1247)`, rated 370 A **per conductor** (`site/ems/flow-spec.md`); its OpenDSS reading is the max-phase current (Part B, `Feeder.solve()["head_amps"]`). P2's own head estimate (`sim.siting`, DERIVED) is **per primary phase**: the summed `|ΣP + jΣQ|` of the transformers on the most loaded phase (SMART-DS `Transformers.dss`) against 370 A × 7.2 kV = 2,663.8 kVA; the three three-phase transformers split 1/3 per phase (ASSUMPTION). `HEAD_CAP` (ASSUMPTION, alpha 0.95) caps that estimate in the aware useful-capacity build only.
+
+- `referee_schedule_sha256` (string): sha256 of the battery schedules the referee judges (the four `*-core-d26-g0|g20` default combos). OpenDSS numbers merge in only when `data/out/referee-2026-08.json`'s `schedule_sha256` equals it; otherwise `referee.runs` is 0 and every card says "screening".
+- `referee_capacity_sha256` (string): sha256 of the two useful-capacity builds (each policy's first `n` homes in greedy order) plus `referee_schedule_sha256`. `usefulCapacity.opendss` is filled only when the referee file's `capacity.sha256` equals it.
+- `referee.head{<run>: {...}}`, one entry per `referee.runList` name (e.g. `"baseline aware-core-d26-g0"`, `"top5 naive-core-d26-g0"`, `"baseline naive-core-d26-g20"`), present when the referee ran. Each field is labelled:
+  - `maxPct{v, label:"SIM", cite, amps, t}`: OpenDSS head current / 370 A, the month's max, with its amps and local time `"YYYY-MM-DD HH:MM"`;
+  - `estMaxPct{v, label:"DERIVED", cite}`: the per-phase estimate's month max;
+  - `underReadMaxPts{v, label:"SIM", cite}`: max over the month of (OpenDSS % − estimate %); positive = the estimate reads low;
+  - `overReadMaxPts{v, label:"SIM", cite}`: max over the month of (estimate % − OpenDSS %); positive = the estimate reads high;
+  - `balancedMaxPct{v, label:"DERIVED", cite}`: the balanced three-phase total `|ΣP + jΣQ|` / 7,991.5 kVA that P2 used before this check (reads low when phases are unequal).
+- `usefulCapacity.opendss`: `{status}` alone (`"not run on these builds (run scripts/build_all.sh referee)"`) when the capacity sha does not match; otherwise `{status:"OpenDSS-checked builds", rule, naive, aware}`, where `rule` is text and each of `naive|aware` is one OpenDSS month of that policy's useful-capacity build from an empty feeder:
+  - `n` (int, the build's battery count = `usefulCapacity.<policy>.v`);
+  - `causedNormal{v, label, cite, tfs[]}` (battery-caused normal-tier events: above 110% for ≥ 30 min while the transformer's batteries charge, or it back-feeds while they discharge; `tfs` = transformer indices), `normalEvents` (all normal-tier events, home load included), `causedEmergencyN` (battery-caused intervals above 150%), `emergencyN` (all intervals above 150%), `protectionTfs{v, label, cite, tfs[]}` (transformers where the fuse rule, ASSUMPTION, would operate);
+  - `maxPct{v, label, cite, tf, t}` (highest transformer loading); `headMaxPct{v, label:"SIM", cite, amps, t, stepsOver100}`; `headEstMaxPct` (DERIVED); `headUnderReadPts` (OpenDSS − estimate, max; positive = the estimate reads low); `headBalancedMaxPct` (DERIVED);
+  - `vMinPu{v, label, cite, volts, home, t}` (minimum home voltage, pu on a 120 V base), `homesBelow095` (homes that leave 0.95 pu at any step), `errorAllPts{max, p99}` (surrogate − OpenDSS, all 379 transformers).
+- When the check ran, `usefulCapacity.naive.cite` and `usefulCapacity.aware.cite` restate what OpenDSS measured on that build (battery-caused events and the head), so a view that shows only `v` and `stop` still carries it in the cite. `sim.verify p2` prints the check as one `[INVARIANT]` line (`builds match`) and one `[EXPECT]` line per policy.
+
 ### A.8 `p2/<combo>.json` (L3)
 
 - `baseline{peak, peakT, h100, normalEvents, emergencyN, protection}`: 379 values each (peak in pct tenths; peakT a step index).
