@@ -240,7 +240,9 @@ export const FACTS = {
   naiveVmin: [['p1meta'], (S) => {
     const x = get(S, 'p1meta.summary.naive.vMinHome');
     if (!isL(x)) return null;
-    return [{ ...x, o: { digits: 4, unit: ' pu' } }, typeof x.volts === 'number' ? ` (${x.volts.toFixed(1)} V)` : ''];
+    return typeof x.volts === 'number'
+      ? [{ ...x, o: { digits: 4, unit: ' pu' } }, ' = ', { v: x.volts, label: x.label, cite: x.cite, o: { digits: 1, unit: ' V' } }]
+      : [{ ...x, o: { digits: 4, unit: ' pu' } }];
   }],
   naiveHead: [['p1meta'], (S) => withO(get(S, 'p1meta.summary.naive.feederHead'), { unit: '%', digits: 1 })],
   naiveHeadOnset: [['p1meta'], (S) => {

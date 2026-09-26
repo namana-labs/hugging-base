@@ -288,8 +288,16 @@ function candidateCard(ctx, st) {
     const dark = (oEntry.homesDarkWith || []).map((i) => homeLabel(topology, i));
     if (dark.length) neighbour = `<div class="p2-neighbour">Under ${oc.policy === 'naive' ? 'naive' : 'feeder-aware'} dispatch, protection may operate here (ASSUMPTION rule) and ${esc(dark.join(', '))} go dark. Under this policy they stay lit: your neighbour's battery, managed this way, kept your lights on (SIM).</div>`;
   }
+  let oWhere = oRank ? `rank ${esc(oRank)}` : 'not in its top 50';
+  let oViol = !!(oEntry && oEntry.noNewViolation && oEntry.noNewViolation.v === false);
+  if (!oRank && otherCombo) {
+    const so = standingOutside(index, e.home, e.tf, oc.policy);
+    if (so.rank) oWhere = `rank ${fmt.fmtHTML(so.rank)} (one entry per transformer)`;
+    if (so.bridge && fmt.isLabelled(so.bridge.peakWithPct)) oWhere += `, month peak with it ${fmt.fmtHTML(so.bridge.peakWithPct, { unit: '%', digits: 1 })}`;
+    oViol = oViol || !!(so.bridge && so.bridge.noNewViolation && so.bridge.noNewViolation.v === false);
+  }
   const toggle = otherCombo
-    ? `<a class="p2-toggle" href="${ctx.href({ view: 'p2', combo: otherCombo, home: homeId })}">Managed ${oc.policy === 'naive' ? 'naively' : 'feeder-aware'} instead: ${oRank ? `rank ${esc(oRank)}` : 'not in its top 50'}${oEntry && oEntry.noNewViolation && oEntry.noNewViolation.v === false ? ', adds a violation' : ''}</a>` : '';
+    ? `<a class="p2-toggle" href="${ctx.href({ view: 'p2', combo: otherCombo, home: homeId })}">Managed ${oc.policy === 'naive' ? 'naively' : 'feeder-aware'} instead: ${oWhere}${oViol ? ', adds a violation (where NOT to put it)' : ''}</a>` : '';
   return `<div class="p2-card" data-card-home="${esc(homeId || '')}">
     <div class="p2-card-h"><h3>#${esc(e.rank)} ${esc(homeLabel(topology, e.home))} · ${esc(tfName(topology, e.tf))} · ${fmt.fmtHTML(kva, { unit: ' kVA' })}</h3>${badge}</div>
     <div class="p2-reason">${esc(e.reason || '')}</div>
@@ -521,7 +529,8 @@ export function p2SceneModel(ctx, st) {
   }
   for (const u of (st.p1meta && st.p1meta.unrelieved) || []) {
     const t = topology.transformers[u.tf];
-    if (t) model.labels.push({ key: 'handoff', text: 'P1: unrelieved', position: t.lonlat, color: ink, handoff: true, tf: u.tf });
+    // nudged north of the can so it does not sit on the candidate pins and the transformer's own label
+    if (t) model.labels.push({ key: 'handoff', text: 'P1: unrelieved', position: [t.lonlat[0], t.lonlat[1] + 0.0004], color: ink, handoff: true, tf: u.tf });
   }
   return model;
 }
