@@ -45,9 +45,9 @@ def money_block(values, relief_kwh, peak_price, low_price, peak_t, low_t, fleet_
         cap[b] = {
             "fleetKW": labelled(round(kw, 1), "SIM", f"fleet discharge at the {peak_t} price peak (${peak_price:.2f}/MWh, REAL)"),
             "low": labelled(round(kw * CAPACITY_BENCHMARK_USD_KW_MONTH, 2), "DERIVED",
-                            f"x ${CAPACITY_BENCHMARK_USD_KW_MONTH}/kW-month, Modo Apr 2026 ERCOT storage market benchmark (REAL third party); {CITE_BENCH}"),
+                            f"x ${CAPACITY_BENCHMARK_USD_KW_MONTH:.2f}/kW-month (REAL third-party rate): {CITE_BENCH}"),
             "high": labelled(round(kw * CAPACITY_HIGH_USD_KW_MONTH, 2), "DERIVED",
-                             f"x ${CAPACITY_HIGH_USD_KW_MONTH}/kW-month, implied from an UNVERIFIED Austin Energy figure; {CITE_HIGH}"),
+                             f"x ${CAPACITY_HIGH_USD_KW_MONTH:.2f}/kW-month: {CITE_HIGH}"),
             "unit": "$/month",
         }
     return {
