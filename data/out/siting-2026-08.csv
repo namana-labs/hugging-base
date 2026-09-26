@@ -1,0 +1,912 @@
+rank,home_id,home_label,tf_id,tf_kva [REAL],no_new_violation [SIM],stress_avoided_h [SIM],stress_added_h [SIM],peak_without_pct [SIM],peak_with_pct [SIM],relief_kwh [SIM],revenue_usd [DERIVED],curtail_kwh [SIM],curtail_cost_usd [ASSUMPTION],"protection_with [SIM, ASSUMPTION rule]",tie_broken_by_id,checked_by,reason
+1,p1ulv24700,Home 0409,tr(r:p1udt15649-p1udt15649lv),25,yes,1.25,0.00,119.3,96.8,1.8,63.91,0.0,0.00,no,yes,OpenDSS,relieves 1.25 h above nameplate (SIM); no new violation; month peak with the battery 96.8% (SIM)
+2,p1ulv34890,Home 0562,tr(r:p1udt15649-p1udt15649lv),25,yes,1.25,0.00,119.3,96.8,1.8,63.91,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0409
+3,p1ulv10744,Home 0195,tr(r:p1udt8647-p1udt8647lv),25,yes,0.50,0.00,102.5,97.0,0.3,63.98,0.1,0.00,no,yes,OpenDSS,relieves 0.50 h above nameplate (SIM); no new violation; month peak with the battery 97.0% (SIM)
+4,p1ulv39927,Home 0635,tr(r:p1udt8647-p1udt8647lv),25,yes,0.50,0.00,102.5,97.0,0.3,63.98,0.1,0.00,no,yes,screening (surrogate),same transformer as Home 0195
+5,p1ulv5736,Home 0112,tr(r:p1udt5085-p1udt5085lv),25,yes,0.25,0.00,101.7,96.8,0.1,64.26,0.0,0.00,no,yes,OpenDSS,relieves 0.25 h above nameplate (SIM); no new violation; month peak with the battery 96.8% (SIM)
+6,p1ulv39925,Home 0633,tr(r:p1udt5085-p1udt5085lv),25,yes,0.25,0.00,101.7,96.8,0.1,64.26,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0112
+7,p1ulv6388,Home 0126,tr(r:p1udt5604-p1udt5604lv),75,yes,0.00,0.00,39.0,53.1,0.0,63.63,0.0,0.00,no,yes,OpenDSS,"no stress to relieve; no new violation; month peak with the battery 53.1% (SIM, lowest first)"
+8,p1ulv10117,Home 0184,tr(r:p1udt5604-p1udt5604lv),75,yes,0.00,0.00,39.0,53.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0126
+9,p1ulv46273,Home 0733,tr(r:p1udt5604-p1udt5604lv),75,yes,0.00,0.00,39.0,53.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0126
+10,p1ulv59805,Home 0938,tr(r:p1udt5604-p1udt5604lv),75,yes,0.00,0.00,39.0,53.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0126
+11,p1ulv34251,Home 0541,tr(r:p1udt18871-p1udt18871lv),75,yes,0.00,0.00,42.3,55.5,0.0,63.63,0.0,0.00,no,yes,OpenDSS,"no stress to relieve; no new violation; month peak with the battery 55.5% (SIM, lowest first)"
+12,p1ulv36155,Home 0579,tr(r:p1udt18871-p1udt18871lv),75,yes,0.00,0.00,42.3,55.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0541
+13,p1ulv45603,Home 0720,tr(r:p1udt18871-p1udt18871lv),75,yes,0.00,0.00,42.3,55.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0541
+14,p1ulv53071,Home 0816,tr(r:p1udt18871-p1udt18871lv),75,yes,0.00,0.00,42.3,55.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0541
+15,p1ulv5739,Home 0115,tr(r:p1udt5088-p1udt5088lv),75,yes,0.00,0.00,41.8,56.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 56.1% (SIM, lowest first)"
+16,p1ulv12620,Home 0224,tr(r:p1udt5088-p1udt5088lv),75,yes,0.00,0.00,41.8,56.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0115
+17,p1ulv24697,Home 0406,tr(r:p1udt5088-p1udt5088lv),75,yes,0.00,0.00,41.8,56.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0115
+18,p1ulv33608,Home 0537,tr(r:p1udt5088-p1udt5088lv),75,yes,0.00,0.00,41.8,56.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0115
+19,p1ulv41159,Home 0648,tr(r:p1udt5088-p1udt5088lv),75,yes,0.00,0.00,41.8,56.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0115
+20,p1ulv32945,Home 0531,tr(r:p1udt18470-p1udt18470lv),50,yes,0.00,0.00,31.1,56.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 56.7% (SIM, lowest first)"
+21,p1ulv54354,Home 0846,tr(r:p1udt18470-p1udt18470lv),50,yes,0.00,0.00,31.1,56.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0531
+22,p1ulv18296,Home 0302,tr(r:p1udt12886-p1udt12886lv),75,yes,0.00,0.00,44.3,58.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 58.3% (SIM, lowest first)"
+23,p1ulv26600,Home 0435,tr(r:p1udt12886-p1udt12886lv),75,yes,0.00,0.00,44.3,58.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0302
+24,p1ulv35516,Home 0570,tr(r:p1udt12886-p1udt12886lv),75,yes,0.00,0.00,44.3,58.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0302
+25,p1ulv44974,Home 0714,tr(r:p1udt12886-p1udt12886lv),75,yes,0.00,0.00,44.3,58.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0302
+26,p1ulv18980,Home 0312,tr(r:p1udt13228-p1udt13228lv),75,yes,0.00,0.00,44.4,58.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 58.9% (SIM, lowest first)"
+27,p1ulv20249,Home 0331,tr(r:p1udt13228-p1udt13228lv),75,yes,0.00,0.00,44.4,58.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0312
+28,p1ulv43030,Home 0694,tr(r:p1udt13228-p1udt13228lv),75,yes,0.00,0.00,44.4,58.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0312
+29,p1ulv48111,Home 0761,tr(r:p1udt13228-p1udt13228lv),75,yes,0.00,0.00,44.4,58.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0312
+30,p1ulv55600,Home 0871,tr(r:p1udt13228-p1udt13228lv),75,yes,0.00,0.00,44.4,58.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0312
+31,p1ulv3230,Home 0055,tr(r:p1udt3022-p1udt3022lv),75,yes,0.00,0.00,46.7,59.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 59.1% (SIM, lowest first)"
+32,p1ulv7644,Home 0144,tr(r:p1udt3022-p1udt3022lv),75,yes,0.00,0.00,46.7,59.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0055
+33,p1ulv45607,Home 0724,tr(r:p1udt3022-p1udt3022lv),75,yes,0.00,0.00,46.7,59.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0055
+34,p1ulv60420,Home 0943,tr(r:p1udt3022-p1udt3022lv),75,yes,0.00,0.00,46.7,59.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0055
+35,p1ulv62943,Home 0983,tr(r:p1udt3022-p1udt3022lv),75,yes,0.00,0.00,46.7,59.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0055
+36,p1ulv23,Home 0002,tr(r:p1udt22-p1udt22lv),75,yes,0.00,0.00,44.9,60.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 60.1% (SIM, lowest first)"
+37,p1ulv1288,Home 0024,tr(r:p1udt22-p1udt22lv),75,yes,0.00,0.00,44.9,60.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0002
+38,p1ulv10114,Home 0181,tr(r:p1udt22-p1udt22lv),75,yes,0.00,0.00,44.9,60.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0002
+39,p1ulv10743,Home 0194,tr(r:p1udt22-p1udt22lv),75,yes,0.00,0.00,44.9,60.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0002
+40,p1ulv1957,Home 0036,tr(r:p1udt1865-p1udt1865lv),75,yes,0.00,0.00,42.2,60.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 60.4% (SIM, lowest first)"
+41,p1ulv3881,Home 0081,tr(r:p1udt1865-p1udt1865lv),75,yes,0.00,0.00,42.2,60.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0036
+42,p1ulv7652,Home 0147,tr(r:p1udt1865-p1udt1865lv),75,yes,0.00,0.00,42.2,60.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0036
+43,p1ulv53746,Home 0832,tr(r:p1udt1865-p1udt1865lv),75,yes,0.00,0.00,42.2,60.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0036
+44,p1ulv54993,Home 0857,tr(r:p1udt1865-p1udt1865lv),75,yes,0.00,0.00,42.2,60.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0036
+45,p1ulv1959,Home 0038,tr(r:p1udt1867-p1udt1867lv),75,yes,0.00,0.00,46.9,60.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 60.9% (SIM, lowest first)"
+46,p1ulv24104,Home 0399,tr(r:p1udt1867-p1udt1867lv),75,yes,0.00,0.00,46.9,60.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0038
+47,p1ulv29751,Home 0489,tr(r:p1udt1867-p1udt1867lv),75,yes,0.00,0.00,46.9,60.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0038
+48,p1ulv48108,Home 0758,tr(r:p1udt1867-p1udt1867lv),75,yes,0.00,0.00,46.9,60.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0038
+49,p1ulv54994,Home 0858,tr(r:p1udt1867-p1udt1867lv),75,yes,0.00,0.00,46.9,60.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0038
+50,p1ulv29,Home 0008,tr(r:p1udt28-p1udt28lv),75,yes,0.00,0.00,53.1,61.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 61.7% (SIM, lowest first)"
+51,p1ulv13873,Home 0246,tr(r:p1udt28-p1udt28lv),75,yes,0.00,0.00,53.1,61.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0008
+52,p1ulv20248,Home 0330,tr(r:p1udt28-p1udt28lv),75,yes,0.00,0.00,53.1,61.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0008
+53,p1ulv22147,Home 0363,tr(r:p1udt28-p1udt28lv),75,yes,0.00,0.00,53.1,61.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0008
+54,p1ulv15710,Home 0264,tr(r:p1udt11542-p1udt11542lv),50,yes,0.00,0.00,44.4,61.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 61.9% (SIM, lowest first)"
+55,p1ulv44325,Home 0705,tr(r:p1udt11542-p1udt11542lv),50,yes,0.00,0.00,44.4,61.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0264
+56,p1ulv3880,Home 0080,tr(r:p1udt3593-p1udt3593lv),75,yes,0.00,0.00,42.9,62.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 62.0% (SIM, lowest first)"
+57,p1ulv7015,Home 0139,tr(r:p1udt3593-p1udt3593lv),75,yes,0.00,0.00,42.9,62.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0080
+58,p1ulv62953,Home 0987,tr(r:p1udt3593-p1udt3593lv),75,yes,0.00,0.00,42.9,62.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0080
+59,p1ulv64842,Home 1009,tr(r:p1udt3593-p1udt3593lv),75,yes,0.00,0.00,42.9,62.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0080
+60,p1ulv24105,Home 0400,tr(r:p1udt15432-p1udt15432lv),75,yes,0.00,0.00,50.2,62.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 62.5% (SIM, lowest first)"
+61,p1ulv27272,Home 0450,tr(r:p1udt15432-p1udt15432lv),75,yes,0.00,0.00,50.2,62.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0400
+62,p1ulv31019,Home 0509,tr(r:p1udt15432-p1udt15432lv),75,yes,0.00,0.00,50.2,62.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0400
+63,p1ulv51804,Home 0808,tr(r:p1udt15432-p1udt15432lv),75,yes,0.00,0.00,50.2,62.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0400
+64,p1ulv53748,Home 0833,tr(r:p1udt15432-p1udt15432lv),75,yes,0.00,0.00,50.2,62.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0400
+65,p1ulv26,Home 0005,tr(r:p1udt25-p1udt25lv),75,yes,0.00,0.00,50.3,63.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 63.0% (SIM, lowest first)"
+66,p1ulv3249,Home 0067,tr(r:p1udt25-p1udt25lv),75,yes,0.00,0.00,50.3,63.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0005
+67,p1ulv23429,Home 0388,tr(r:p1udt25-p1udt25lv),75,yes,0.00,0.00,50.3,63.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0005
+68,p1ulv41161,Home 0650,tr(r:p1udt25-p1udt25lv),75,yes,0.00,0.00,50.3,63.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0005
+69,p1ulv42420,Home 0678,tr(r:p1udt25-p1udt25lv),75,yes,0.00,0.00,50.3,63.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0005
+70,p1ulv20243,Home 0325,tr(r:p1udt13812-p1udt13812lv),75,yes,0.00,0.00,48.0,63.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 63.2% (SIM, lowest first)"
+71,p1ulv30383,Home 0495,tr(r:p1udt13812-p1udt13812lv),75,yes,0.00,0.00,48.0,63.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0325
+72,p1ulv48718,Home 0766,tr(r:p1udt13812-p1udt13812lv),75,yes,0.00,0.00,48.0,63.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0325
+73,p1ulv54987,Home 0851,tr(r:p1udt13812-p1udt13812lv),75,yes,0.00,0.00,48.0,63.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0325
+74,p1ulv4476,Home 0095,tr(r:p1udt4087-p1udt4087lv),75,yes,0.00,0.00,47.2,63.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 63.5% (SIM, lowest first)"
+75,p1ulv10119,Home 0185,tr(r:p1udt4087-p1udt4087lv),75,yes,0.00,0.00,47.2,63.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0095
+76,p1ulv38029,Home 0610,tr(r:p1udt4087-p1udt4087lv),75,yes,0.00,0.00,47.2,63.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0095
+77,p1ulv44977,Home 0717,tr(r:p1udt4087-p1udt4087lv),75,yes,0.00,0.00,47.2,63.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0095
+78,p1ulv54995,Home 0859,tr(r:p1udt4087-p1udt4087lv),75,yes,0.00,0.00,47.2,63.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0095
+79,p1ulv13238,Home 0229,tr(r:p1udt10160-p1udt10160lv),75,yes,0.00,0.00,47.0,63.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 63.6% (SIM, lowest first)"
+80,p1ulv20244,Home 0326,tr(r:p1udt10160-p1udt10160lv),75,yes,0.00,0.00,47.0,63.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0229
+81,p1ulv35514,Home 0568,tr(r:p1udt10160-p1udt10160lv),75,yes,0.00,0.00,47.0,63.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0229
+82,p1ulv38658,Home 0617,tr(r:p1udt10160-p1udt10160lv),75,yes,0.00,0.00,47.0,63.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0229
+83,p1ulv59194,Home 0926,tr(r:p1udt10160-p1udt10160lv),75,yes,0.00,0.00,47.0,63.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0229
+84,p1ulv1958,Home 0037,tr(r:p1udt1866-p1udt1866lv),75,yes,0.00,0.00,45.0,64.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 64.0% (SIM, lowest first)"
+85,p1ulv15713,Home 0267,tr(r:p1udt1866-p1udt1866lv),75,yes,0.00,0.00,45.0,64.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0037
+86,p1ulv23431,Home 0390,tr(r:p1udt1866-p1udt1866lv),75,yes,0.00,0.00,45.0,64.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0037
+87,p1ulv41775,Home 0659,tr(r:p1udt1866-p1udt1866lv),75,yes,0.00,0.00,45.0,64.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0037
+88,p1ulv55599,Home 0870,tr(r:p1udt1866-p1udt1866lv),75,yes,0.00,0.00,45.0,64.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0037
+89,p1ulv60432,Home 0949,tr(r:p1udt1866-p1udt1866lv),75,yes,0.00,0.00,45.0,64.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0037
+90,p1ulv1956,Home 0035,tr(r:p1udt1864-p1udt1864lv),75,yes,0.00,0.00,56.9,64.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 64.2% (SIM, lowest first)"
+91,p1ulv8250,Home 0155,tr(r:p1udt1864-p1udt1864lv),75,yes,0.00,0.00,56.9,64.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0035
+92,p1ulv9515,Home 0174,tr(r:p1udt1864-p1udt1864lv),75,yes,0.00,0.00,56.9,64.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0035
+93,p1ulv45617,Home 0725,tr(r:p1udt1864-p1udt1864lv),75,yes,0.00,0.00,56.9,64.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0035
+94,p1ulv16346,Home 0271,tr(r:p1udt11875-p1udt11875lv),50,yes,0.00,0.00,41.6,64.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 64.4% (SIM, lowest first)"
+95,p1ulv32271,Home 0519,tr(r:p1udt11875-p1udt11875lv),50,yes,0.00,0.00,41.6,64.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0271
+96,p1ulv3227,Home 0053,tr(r:p1udt3019-p1udt3019lv),75,yes,0.00,0.00,49.1,65.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 65.1% (SIM, lowest first)"
+97,p1ulv3863,Home 0071,tr(r:p1udt3019-p1udt3019lv),75,yes,0.00,0.00,49.1,65.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0053
+98,p1ulv7642,Home 0143,tr(r:p1udt3019-p1udt3019lv),75,yes,0.00,0.00,49.1,65.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0053
+99,p1ulv44966,Home 0710,tr(r:p1udt3019-p1udt3019lv),75,yes,0.00,0.00,49.1,65.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0053
+100,p1ulv51155,Home 0794,tr(r:p1udt3019-p1udt3019lv),75,yes,0.00,0.00,49.1,65.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0053
+101,p1ulv7653,Home 0148,tr(r:p1udt6549-p1udt6549lv),75,yes,0.00,0.00,49.6,65.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 65.2% (SIM, lowest first)"
+102,p1ulv23428,Home 0387,tr(r:p1udt6549-p1udt6549lv),75,yes,0.00,0.00,49.6,65.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0148
+103,p1ulv45619,Home 0727,tr(r:p1udt6549-p1udt6549lv),75,yes,0.00,0.00,49.6,65.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0148
+104,p1ulv46277,Home 0736,tr(r:p1udt6549-p1udt6549lv),75,yes,0.00,0.00,49.6,65.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0148
+105,p1ulv56178,Home 0879,tr(r:p1udt6549-p1udt6549lv),75,yes,0.00,0.00,49.6,65.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0148
+106,p1ulv11984,Home 0211,tr(r:p1udt9406-p1udt9406lv),75,yes,0.00,0.00,54.2,65.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 65.3% (SIM, lowest first)"
+107,p1ulv24088,Home 0392,tr(r:p1udt9406-p1udt9406lv),75,yes,0.00,0.00,54.2,65.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0211
+108,p1ulv48114,Home 0764,tr(r:p1udt9406-p1udt9406lv),75,yes,0.00,0.00,54.2,65.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0211
+109,p1ulv54330,Home 0835,tr(r:p1udt9406-p1udt9406lv),75,yes,0.00,0.00,54.2,65.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0211
+110,p1ulv1290,Home 0025,tr(r:p1udt1254-p1udt1254lv),75,yes,0.00,0.00,51.5,65.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 65.3% (SIM, lowest first)"
+111,p1ulv25335,Home 0417,tr(r:p1udt1254-p1udt1254lv),75,yes,0.00,0.00,51.5,65.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0025
+112,p1ulv35520,Home 0573,tr(r:p1udt1254-p1udt1254lv),75,yes,0.00,0.00,51.5,65.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0025
+113,p1ulv50549,Home 0789,tr(r:p1udt1254-p1udt1254lv),75,yes,0.00,0.00,51.5,65.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0025
+114,p1ulv61039,Home 0961,tr(r:p1udt1254-p1udt1254lv),75,yes,0.00,0.00,51.5,65.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0025
+115,p1ulv29747,Home 0486,tr(r:p1udt17479-p1udt17479lv),75,yes,0.00,0.00,59.4,65.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 65.5% (SIM, lowest first)"
+116,p1ulv34882,Home 0556,tr(r:p1udt17479-p1udt17479lv),75,yes,0.00,0.00,59.4,65.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0486
+117,p1ulv43700,Home 0703,tr(r:p1udt17479-p1udt17479lv),75,yes,0.00,0.00,59.4,65.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0486
+118,p1ulv46874,Home 0743,tr(r:p1udt17479-p1udt17479lv),75,yes,0.00,0.00,59.4,65.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0486
+119,p1ulv5737,Home 0113,tr(r:p1udt5086-p1udt5086lv),75,yes,0.00,0.00,54.8,65.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 65.8% (SIM, lowest first)"
+120,p1ulv16356,Home 0274,tr(r:p1udt5086-p1udt5086lv),75,yes,0.00,0.00,54.8,65.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0113
+121,p1ulv25332,Home 0415,tr(r:p1udt5086-p1udt5086lv),75,yes,0.00,0.00,54.8,65.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0113
+122,p1ulv29128,Home 0474,tr(r:p1udt5086-p1udt5086lv),75,yes,0.00,0.00,54.8,65.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0113
+123,p1ulv33604,Home 0533,tr(r:p1udt5086-p1udt5086lv),75,yes,0.00,0.00,54.8,65.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0113
+124,p1ulv2577,Home 0052,tr(r:p1udt2435-p1udt2435lv),75,yes,0.00,0.00,46.4,66.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 66.4% (SIM, lowest first)"
+125,p1ulv11997,Home 0218,tr(r:p1udt2435-p1udt2435lv),75,yes,0.00,0.00,46.4,66.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0052
+126,p1ulv15714,Home 0268,tr(r:p1udt2435-p1udt2435lv),75,yes,0.00,0.00,46.4,66.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0052
+127,p1ulv26603,Home 0438,tr(r:p1udt2435-p1udt2435lv),75,yes,0.00,0.00,46.4,66.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0052
+128,p1ulv38663,Home 0622,tr(r:p1udt2435-p1udt2435lv),75,yes,0.00,0.00,46.4,66.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0052
+129,p1ulv20246,Home 0328,tr(r:p1udt13814-p1udt13814lv),75,yes,0.00,0.00,55.7,66.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 66.6% (SIM, lowest first)"
+130,p1ulv23430,Home 0389,tr(r:p1udt13814-p1udt13814lv),75,yes,0.00,0.00,55.7,66.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0328
+131,p1ulv27270,Home 0448,tr(r:p1udt13814-p1udt13814lv),75,yes,0.00,0.00,55.7,66.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0328
+132,p1ulv62295,Home 0979,tr(r:p1udt13814-p1udt13814lv),75,yes,0.00,0.00,55.7,66.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0328
+133,p1ulv63574,Home 0993,tr(r:p1udt13814-p1udt13814lv),75,yes,0.00,0.00,55.7,66.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0328
+134,p1ulv25974,Home 0431,tr(r:p1udt16143-p1udt16143lv),50,yes,0.00,0.00,35.6,66.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 66.7% (SIM, lowest first)"
+135,p1ulv31018,Home 0508,tr(r:p1udt16143-p1udt16143lv),50,yes,0.00,0.00,35.6,66.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0431
+136,p1ulv64841,Home 1008,tr(r:p1udt16143-p1udt16143lv),50,yes,0.00,0.00,35.6,66.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0431
+137,p1ulv1278,Home 0021,tr(r:p1udt1243-p1udt1243lv),75,yes,0.00,0.00,52.0,66.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 66.7% (SIM, lowest first)"
+138,p1ulv35504,Home 0564,tr(r:p1udt1243-p1udt1243lv),75,yes,0.00,0.00,52.0,66.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0021
+139,p1ulv53076,Home 0818,tr(r:p1udt1243-p1udt1243lv),75,yes,0.00,0.00,52.0,66.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0021
+140,p1ulv64214,Home 0997,tr(r:p1udt1243-p1udt1243lv),75,yes,0.00,0.00,52.0,66.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0021
+141,p1ulv8900,Home 0170,tr(r:p1udt7454-p1udt7454lv),50,yes,0.00,0.00,35.9,66.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 66.8% (SIM, lowest first)"
+142,p1ulv26608,Home 0439,tr(r:p1udt7454-p1udt7454lv),50,yes,0.00,0.00,35.9,66.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0170
+143,p1ulv27278,Home 0452,tr(r:p1udt7454-p1udt7454lv),50,yes,0.00,0.00,35.9,66.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0170
+144,p1ulv1948,Home 0031,tr(r:p1udt1857-p1udt1857lv),75,yes,0.00,0.00,49.9,67.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 67.3% (SIM, lowest first)"
+145,p1ulv11359,Home 0206,tr(r:p1udt1857-p1udt1857lv),75,yes,0.00,0.00,49.9,67.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0031
+146,p1ulv25960,Home 0424,tr(r:p1udt1857-p1udt1857lv),75,yes,0.00,0.00,49.9,67.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0031
+147,p1ulv25961,Home 0425,tr(r:p1udt1857-p1udt1857lv),75,yes,0.00,0.00,49.9,67.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0031
+148,p1ulv61672,Home 0967,tr(r:p1udt1857-p1udt1857lv),75,yes,0.00,0.00,49.9,67.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0031
+149,p1ulv13867,Home 0240,tr(r:p1udt10527-p1udt10527lv),50,yes,0.00,0.00,36.9,67.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 67.6% (SIM, lowest first)"
+150,p1ulv24695,Home 0404,tr(r:p1udt10527-p1udt10527lv),50,yes,0.00,0.00,36.9,67.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0240
+151,p1ulv57409,Home 0893,tr(r:p1udt10527-p1udt10527lv),50,yes,0.00,0.00,36.9,67.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0240
+152,p1ulv2559,Home 0041,tr(r:p1udt2418-p1udt2418lv),75,yes,0.00,0.00,54.1,67.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 67.7% (SIM, lowest first)"
+153,p1ulv5720,Home 0109,tr(r:p1udt2418-p1udt2418lv),75,yes,0.00,0.00,54.1,67.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0041
+154,p1ulv8239,Home 0150,tr(r:p1udt2418-p1udt2418lv),75,yes,0.00,0.00,54.1,67.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0041
+155,p1ulv28532,Home 0464,tr(r:p1udt2418-p1udt2418lv),75,yes,0.00,0.00,54.1,67.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0041
+156,p1ulv39915,Home 0629,tr(r:p1udt2418-p1udt2418lv),75,yes,0.00,0.00,54.1,67.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0041
+157,p1ulv4478,Home 0097,tr(r:p1udt4089-p1udt4089lv),75,yes,0.00,0.00,52.4,67.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 67.9% (SIM, lowest first)"
+158,p1ulv10751,Home 0202,tr(r:p1udt4089-p1udt4089lv),75,yes,0.00,0.00,52.4,67.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0097
+159,p1ulv18301,Home 0306,tr(r:p1udt4089-p1udt4089lv),75,yes,0.00,0.00,52.4,67.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0097
+160,p1ulv29754,Home 0491,tr(r:p1udt4089-p1udt4089lv),75,yes,0.00,0.00,52.4,67.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0097
+161,p1ulv45620,Home 0728,tr(r:p1udt4089-p1udt4089lv),75,yes,0.00,0.00,52.4,67.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0097
+162,p1ulv62294,Home 0978,tr(r:p1udt24836-p1udt24836lv),50,yes,0.00,0.00,28.6,68.3,0.0,63.63,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 68.3% (SIM, lowest first)"
+163,p1ulv30388,Home 0498,tr(r:p1udt17690-p1udt17690lv),75,yes,0.00,0.00,58.2,68.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 68.4% (SIM, lowest first)"
+164,p1ulv31669,Home 0514,tr(r:p1udt17690-p1udt17690lv),75,yes,0.00,0.00,58.2,68.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0498
+165,p1ulv34889,Home 0561,tr(r:p1udt17690-p1udt17690lv),75,yes,0.00,0.00,58.2,68.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0498
+166,p1ulv41777,Home 0661,tr(r:p1udt17690-p1udt17690lv),75,yes,0.00,0.00,58.2,68.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0498
+167,p1ulv64843,Home 1010,tr(r:p1udt17690-p1udt17690lv),75,yes,0.00,0.00,58.2,68.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0498
+168,p1ulv2576,Home 0051,tr(r:p1udt2434-p1udt2434lv),50,yes,0.00,0.00,50.7,68.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 68.7% (SIM, lowest first)"
+169,p1ulv17653,Home 0296,tr(r:p1udt2434-p1udt2434lv),50,yes,0.00,0.00,50.7,68.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0051
+170,p1ulv27904,Home 0459,tr(r:p1udt2434-p1udt2434lv),50,yes,0.00,0.00,50.7,68.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0051
+171,p1ulv6377,Home 0122,tr(r:p1udt5594-p1udt5594lv),50,yes,0.00,0.00,45.8,68.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 68.9% (SIM, lowest first)"
+172,p1ulv15706,Home 0261,tr(r:p1udt5594-p1udt5594lv),50,yes,0.00,0.00,45.8,68.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0122
+173,p1ulv54976,Home 0849,tr(r:p1udt5594-p1udt5594lv),50,yes,0.00,0.00,45.8,68.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0122
+174,p1ulv1946,Home 0030,tr(r:p1udt1855-p1udt1855lv),75,yes,0.00,0.00,52.0,68.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 68.9% (SIM, lowest first)"
+175,p1ulv6376,Home 0121,tr(r:p1udt1855-p1udt1855lv),75,yes,0.00,0.00,52.0,68.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0030
+176,p1ulv38644,Home 0612,tr(r:p1udt1855-p1udt1855lv),75,yes,0.00,0.00,52.0,68.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0030
+177,p1ulv56781,Home 0882,tr(r:p1udt1855-p1udt1855lv),75,yes,0.00,0.00,52.0,68.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0030
+178,p1ulv57402,Home 0888,tr(r:p1udt1855-p1udt1855lv),75,yes,0.00,0.00,52.0,68.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0030
+179,p1ulv5738,Home 0114,tr(r:p1udt5087-p1udt5087lv),75,yes,0.00,0.00,56.0,68.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 68.9% (SIM, lowest first)"
+180,p1ulv9514,Home 0173,tr(r:p1udt5087-p1udt5087lv),75,yes,0.00,0.00,56.0,68.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0114
+181,p1ulv25333,Home 0416,tr(r:p1udt5087-p1udt5087lv),75,yes,0.00,0.00,56.0,68.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0114
+182,p1ulv51168,Home 0800,tr(r:p1udt5087-p1udt5087lv),75,yes,0.00,0.00,56.0,68.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0114
+183,p1ulv62291,Home 0976,tr(r:p1udt5087-p1udt5087lv),75,yes,0.00,0.00,56.0,68.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0114
+184,p1ulv1291,Home 0026,tr(r:p1udt1255-p1udt1255lv),75,yes,0.00,0.00,51.3,69.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 69.3% (SIM, lowest first)"
+185,p1ulv24103,Home 0398,tr(r:p1udt1255-p1udt1255lv),75,yes,0.00,0.00,51.3,69.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0026
+186,p1ulv31016,Home 0506,tr(r:p1udt1255-p1udt1255lv),75,yes,0.00,0.00,51.3,69.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0026
+187,p1ulv38662,Home 0621,tr(r:p1udt1255-p1udt1255lv),75,yes,0.00,0.00,51.3,69.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0026
+188,p1ulv53745,Home 0831,tr(r:p1udt1255-p1udt1255lv),75,yes,0.00,0.00,51.3,69.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0026
+189,p1ulv3243,Home 0061,tr(r:p1udt3033-p1udt3033lv),75,yes,0.00,0.00,59.8,69.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 69.6% (SIM, lowest first)"
+190,p1ulv24098,Home 0395,tr(r:p1udt3033-p1udt3033lv),75,yes,0.00,0.00,59.8,69.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0061
+191,p1ulv27902,Home 0457,tr(r:p1udt3033-p1udt3033lv),75,yes,0.00,0.00,59.8,69.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0061
+192,p1ulv58592,Home 0916,tr(r:p1udt3033-p1udt3033lv),75,yes,0.00,0.00,59.8,69.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0061
+193,p1ulv63572,Home 0991,tr(r:p1udt3033-p1udt3033lv),75,yes,0.00,0.00,59.8,69.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0061
+194,p1ulv2562,Home 0044,tr(r:p1udt2421-p1udt2421lv),50,yes,0.00,0.00,60.2,69.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 69.7% (SIM, lowest first)"
+195,p1ulv18284,Home 0299,tr(r:p1udt2421-p1udt2421lv),50,yes,0.00,0.00,60.2,69.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0044
+196,p1ulv63559,Home 0988,tr(r:p1udt2421-p1udt2421lv),50,yes,0.00,0.00,60.2,69.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0044
+197,p1ulv5082,Home 0107,tr(r:p1udt4570-p1udt4570lv),50,yes,0.00,0.00,53.0,70.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 70.0% (SIM, lowest first)"
+198,p1ulv54351,Home 0843,tr(r:p1udt4570-p1udt4570lv),50,yes,0.00,0.00,53.0,70.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0107
+199,p1ulv32,Home 0011,tr(r:p1udt31-p1udt31lv),75,yes,0.00,0.00,51.9,70.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 70.1% (SIM, lowest first)"
+200,p1ulv3884,Home 0084,tr(r:p1udt31-p1udt31lv),75,yes,0.00,0.00,51.9,70.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0011
+201,p1ulv43035,Home 0696,tr(r:p1udt31-p1udt31lv),75,yes,0.00,0.00,51.9,70.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0011
+202,p1ulv47480,Home 0750,tr(r:p1udt31-p1udt31lv),75,yes,0.00,0.00,51.9,70.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0011
+203,p1ulv50553,Home 0793,tr(r:p1udt31-p1udt31lv),75,yes,0.00,0.00,51.9,70.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0011
+204,p1ulv20896,Home 0339,tr(r:p1udt14100-p1udt14100lv),50,yes,0.00,0.00,33.7,70.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 70.1% (SIM, lowest first)"
+205,p1ulv54990,Home 0854,tr(r:p1udt14100-p1udt14100lv),50,yes,0.00,0.00,33.7,70.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0339
+206,p1ulv13870,Home 0243,tr(r:p1udt10530-p1udt10530lv),50,yes,0.00,0.00,41.7,70.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 70.2% (SIM, lowest first)"
+207,p1ulv46272,Home 0732,tr(r:p1udt10530-p1udt10530lv),50,yes,0.00,0.00,41.7,70.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0243
+208,p1ulv60428,Home 0945,tr(r:p1udt10530-p1udt10530lv),50,yes,0.00,0.00,41.7,70.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0243
+209,p1ulv42424,Home 0682,tr(r:p1udt21006-p1udt21006lv),50,yes,0.00,0.00,46.6,70.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 70.4% (SIM, lowest first)"
+210,p1ulv43009,Home 0683,tr(r:p1udt21006-p1udt21006lv),50,yes,0.00,0.00,46.6,70.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0682
+211,p1ulv53733,Home 0823,tr(r:p1udt21006-p1udt21006lv),50,yes,0.00,0.00,46.6,70.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0682
+212,p1ulv3228,Home 0054,tr(r:p1udt3020-p1udt3020lv),50,yes,0.00,0.00,38.8,70.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 70.4% (SIM, lowest first)"
+213,p1ulv39917,Home 0631,tr(r:p1udt3020-p1udt3020lv),50,yes,0.00,0.00,38.8,70.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0054
+214,p1ulv53735,Home 0825,tr(r:p1udt3020-p1udt3020lv),50,yes,0.00,0.00,38.8,70.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0054
+215,p1ulv2560,Home 0042,tr(r:p1udt2419-p1udt2419lv),75,yes,0.00,0.00,56.0,70.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 70.5% (SIM, lowest first)"
+216,p1ulv20234,Home 0321,tr(r:p1udt2419-p1udt2419lv),75,yes,0.00,0.00,56.0,70.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0042
+217,p1ulv25959,Home 0423,tr(r:p1udt2419-p1udt2419lv),75,yes,0.00,0.00,56.0,70.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0042
+218,p1ulv36765,Home 0586,tr(r:p1udt2419-p1udt2419lv),75,yes,0.00,0.00,56.0,70.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0042
+219,p1ulv54331,Home 0836,tr(r:p1udt2419-p1udt2419lv),75,yes,0.00,0.00,56.0,70.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0042
+220,p1ulv7016,Home 0140,tr(r:p1udt6083-p1udt6083lv),50,yes,0.00,0.00,46.0,70.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 70.6% (SIM, lowest first)"
+221,p1ulv25338,Home 0420,tr(r:p1udt6083-p1udt6083lv),50,yes,0.00,0.00,46.0,70.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0140
+222,p1ulv43031,Home 0695,tr(r:p1udt6083-p1udt6083lv),50,yes,0.00,0.00,46.0,70.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0140
+223,p1ulv24102,Home 0397,tr(r:p1udt15431-p1udt15431lv),75,yes,0.00,0.00,49.9,70.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 70.7% (SIM, lowest first)"
+224,p1ulv32943,Home 0529,tr(r:p1udt15431-p1udt15431lv),75,yes,0.00,0.00,49.9,70.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0397
+225,p1ulv35521,Home 0574,tr(r:p1udt15431-p1udt15431lv),75,yes,0.00,0.00,49.9,70.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0397
+226,p1ulv38027,Home 0608,tr(r:p1udt15431-p1udt15431lv),75,yes,0.00,0.00,49.9,70.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0397
+227,p1ulv54992,Home 0856,tr(r:p1udt15431-p1udt15431lv),75,yes,0.00,0.00,49.9,70.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0397
+228,p1ulv29132,Home 0477,tr(r:p1udt17270-p1udt17270lv),50,yes,0.00,0.00,49.0,71.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 71.1% (SIM, lowest first)"
+229,p1ulv40557,Home 0641,tr(r:p1udt17270-p1udt17270lv),50,yes,0.00,0.00,49.0,71.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0477
+230,p1ulv27895,Home 0455,tr(r:p1udt16829-p1udt16829lv),50,yes,0.00,0.00,55.6,71.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 71.4% (SIM, lowest first)"
+231,p1ulv51798,Home 0805,tr(r:p1udt16829-p1udt16829lv),50,yes,0.00,0.00,55.6,71.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0455
+232,p1ulv55591,Home 0867,tr(r:p1udt16829-p1udt16829lv),50,yes,0.00,0.00,55.6,71.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0455
+233,p1ulv25,Home 0004,tr(r:p1udt24-p1udt24lv),75,yes,0.00,0.00,53.1,71.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 71.7% (SIM, lowest first)"
+234,p1ulv35518,Home 0571,tr(r:p1udt24-p1udt24lv),75,yes,0.00,0.00,53.1,71.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0004
+235,p1ulv54991,Home 0855,tr(r:p1udt24-p1udt24lv),75,yes,0.00,0.00,53.1,71.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0004
+236,p1ulv3864,Home 0072,tr(r:p1udt3581-p1udt3581lv),75,yes,0.00,0.00,57.9,71.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 71.8% (SIM, lowest first)"
+237,p1ulv3865,Home 0073,tr(r:p1udt3581-p1udt3581lv),75,yes,0.00,0.00,57.9,71.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0072
+238,p1ulv14464,Home 0251,tr(r:p1udt3581-p1udt3581lv),75,yes,0.00,0.00,57.9,71.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0072
+239,p1ulv18283,Home 0298,tr(r:p1udt3581-p1udt3581lv),75,yes,0.00,0.00,57.9,71.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0072
+240,p1ulv20233,Home 0320,tr(r:p1udt3581-p1udt3581lv),75,yes,0.00,0.00,57.9,71.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0072
+241,p1ulv31000,Home 0501,tr(r:p1udt3581-p1udt3581lv),75,yes,0.00,0.00,57.9,71.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0072
+242,p1ulv29135,Home 0480,tr(r:p1udt17272-p1udt17272lv),75,yes,0.00,0.00,57.9,72.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 72.0% (SIM, lowest first)"
+243,p1ulv42421,Home 0679,tr(r:p1udt17272-p1udt17272lv),75,yes,0.00,0.00,57.9,72.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0480
+244,p1ulv48110,Home 0760,tr(r:p1udt17272-p1udt17272lv),75,yes,0.00,0.00,57.9,72.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0480
+245,p1ulv57421,Home 0904,tr(r:p1udt17272-p1udt17272lv),75,yes,0.00,0.00,57.9,72.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0480
+246,p1ulv60433,Home 0950,tr(r:p1udt17272-p1udt17272lv),75,yes,0.00,0.00,57.9,72.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0480
+247,p1ulv14479,Home 0255,tr(r:p1udt10869-p1udt10869lv),50,yes,0.00,0.00,50.1,72.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 72.1% (SIM, lowest first)"
+248,p1ulv16365,Home 0280,tr(r:p1udt10869-p1udt10869lv),50,yes,0.00,0.00,50.1,72.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0255
+249,p1ulv46281,Home 0740,tr(r:p1udt10869-p1udt10869lv),50,yes,0.00,0.00,50.1,72.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0255
+250,p1ulv21542,Home 0352,tr(r:p1udt14383-p1udt14383lv),75,yes,0.00,0.00,45.7,72.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 72.2% (SIM, lowest first)"
+251,p1ulv34265,Home 0547,tr(r:p1udt14383-p1udt14383lv),75,yes,0.00,0.00,45.7,72.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0352
+252,p1ulv34267,Home 0549,tr(r:p1udt14383-p1udt14383lv),75,yes,0.00,0.00,45.7,72.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0352
+253,p1ulv56174,Home 0876,tr(r:p1udt14383-p1udt14383lv),75,yes,0.00,0.00,45.7,72.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0352
+254,p1ulv3241,Home 0059,tr(r:p1udt3031-p1udt3031lv),50,yes,0.00,0.00,71.5,72.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 72.3% (SIM, lowest first)"
+255,p1ulv7651,Home 0146,tr(r:p1udt3031-p1udt3031lv),50,yes,0.00,0.00,71.5,72.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0059
+256,p1ulv27268,Home 0446,tr(r:p1udt3031-p1udt3031lv),50,yes,0.00,0.00,71.5,72.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0059
+257,p1ulv38013,Home 0600,tr(r:p1udt19947-p1udt19947lv),50,yes,0.00,0.00,43.7,72.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 72.5% (SIM, lowest first)"
+258,p1ulv45604,Home 0721,tr(r:p1udt19947-p1udt19947lv),50,yes,0.00,0.00,43.7,72.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0600
+259,p1ulv3244,Home 0062,tr(r:p1udt3034-p1udt3034lv),75,yes,0.00,0.00,58.7,72.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 72.8% (SIM, lowest first)"
+260,p1ulv13239,Home 0230,tr(r:p1udt3034-p1udt3034lv),75,yes,0.00,0.00,58.7,72.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0062
+261,p1ulv25972,Home 0429,tr(r:p1udt3034-p1udt3034lv),75,yes,0.00,0.00,58.7,72.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0062
+262,p1ulv32285,Home 0522,tr(r:p1udt3034-p1udt3034lv),75,yes,0.00,0.00,58.7,72.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0062
+263,p1ulv51167,Home 0799,tr(r:p1udt3034-p1udt3034lv),75,yes,0.00,0.00,58.7,72.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0062
+264,p1ulv54345,Home 0837,tr(r:p1udt3034-p1udt3034lv),75,yes,0.00,0.00,58.7,72.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0062
+265,p1ulv4467,Home 0089,tr(r:p1udt4080-p1udt4080lv),75,yes,0.00,0.00,56.5,73.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 73.1% (SIM, lowest first)"
+266,p1ulv21541,Home 0351,tr(r:p1udt4080-p1udt4080lv),75,yes,0.00,0.00,56.5,73.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0089
+267,p1ulv22141,Home 0359,tr(r:p1udt4080-p1udt4080lv),75,yes,0.00,0.00,56.5,73.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0089
+268,p1ulv24696,Home 0405,tr(r:p1udt4080-p1udt4080lv),75,yes,0.00,0.00,56.5,73.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0089
+269,p1ulv35512,Home 0566,tr(r:p1udt19242-p1udt19242lv),50,yes,0.00,0.00,47.4,73.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 73.1% (SIM, lowest first)"
+270,p1ulv59193,Home 0925,tr(r:p1udt19242-p1udt19242lv),50,yes,0.00,0.00,47.4,73.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0566
+271,p1ulv59803,Home 0936,tr(r:p1udt19242-p1udt19242lv),50,yes,0.00,0.00,47.4,73.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0566
+272,p1ulv28549,Home 0470,tr(r:p1udt17072-p1udt17072lv),75,yes,0.00,0.00,61.3,73.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 73.1% (SIM, lowest first)"
+273,p1ulv29753,Home 0490,tr(r:p1udt17072-p1udt17072lv),75,yes,0.00,0.00,61.3,73.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0470
+274,p1ulv30387,Home 0497,tr(r:p1udt17072-p1udt17072lv),75,yes,0.00,0.00,61.3,73.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0470
+275,p1ulv35525,Home 0578,tr(r:p1udt17072-p1udt17072lv),75,yes,0.00,0.00,61.3,73.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0470
+276,p1ulv58002,Home 0914,tr(r:p1udt17072-p1udt17072lv),75,yes,0.00,0.00,61.3,73.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0470
+277,p1ulv1950,Home 0032,tr(r:p1udt1859-p1udt1859lv),75,yes,0.00,0.00,54.8,73.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 73.7% (SIM, lowest first)"
+278,p1ulv3234,Home 0058,tr(r:p1udt1859-p1udt1859lv),75,yes,0.00,0.00,54.8,73.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0032
+279,p1ulv12614,Home 0221,tr(r:p1udt1859-p1udt1859lv),75,yes,0.00,0.00,54.8,73.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0032
+280,p1ulv61675,Home 0969,tr(r:p1udt1859-p1udt1859lv),75,yes,0.00,0.00,54.8,73.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0032
+281,p1ulv64215,Home 0998,tr(r:p1udt1859-p1udt1859lv),75,yes,0.00,0.00,54.8,73.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0032
+282,p1ulv33610,Home 0539,tr(r:p1udt18677-p1udt18677lv),75,yes,0.00,0.00,64.3,73.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 73.9% (SIM, lowest first)"
+283,p1ulv36171,Home 0582,tr(r:p1udt18677-p1udt18677lv),75,yes,0.00,0.00,64.3,73.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0539
+284,p1ulv48109,Home 0759,tr(r:p1udt18677-p1udt18677lv),75,yes,0.00,0.00,64.3,73.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0539
+285,p1ulv53082,Home 0822,tr(r:p1udt18677-p1udt18677lv),75,yes,0.00,0.00,64.3,73.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0539
+286,p1ulv64225,Home 1002,tr(r:p1udt18677-p1udt18677lv),75,yes,0.00,0.00,64.3,73.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0539
+287,p1ulv13244,Home 0234,tr(r:p1udt10162-p1udt10162lv),50,yes,0.00,0.00,74.1,74.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 74.1% (SIM, lowest first)"
+288,p1ulv60434,Home 0951,tr(r:p1udt10162-p1udt10162lv),50,yes,0.00,0.00,74.1,74.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0234
+289,p1ulv62296,Home 0980,tr(r:p1udt10162-p1udt10162lv),50,yes,0.00,0.00,74.1,74.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0234
+290,p1ulv6378,Home 0123,tr(r:p1udt5595-p1udt5595lv),50,yes,0.00,0.00,45.6,74.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 74.2% (SIM, lowest first)"
+291,p1ulv31003,Home 0503,tr(r:p1udt5595-p1udt5595lv),50,yes,0.00,0.00,45.6,74.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0123
+292,p1ulv63561,Home 0990,tr(r:p1udt5595-p1udt5595lv),50,yes,0.00,0.00,45.6,74.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0123
+293,p1ulv25962,Home 0426,tr(r:p1udt16136-p1udt16136lv),50,yes,0.00,0.00,46.7,74.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 74.3% (SIM, lowest first)"
+294,p1ulv59188,Home 0923,tr(r:p1udt16136-p1udt16136lv),50,yes,0.00,0.00,46.7,74.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0426
+295,p1ulv62942,Home 0982,tr(r:p1udt16136-p1udt16136lv),50,yes,0.00,0.00,46.7,74.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0426
+296,p1ulv7639,Home 0141,tr(r:p1udt6542-p1udt6542lv),50,yes,0.00,0.00,41.2,74.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 74.6% (SIM, lowest first)"
+297,p1ulv22148,Home 0364,tr(r:p1udt6542-p1udt6542lv),50,yes,0.00,0.00,41.2,74.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0141
+298,p1ulv5742,Home 0117,tr(r:p1udt5091-p1udt5091lv),75,yes,0.00,0.00,62.4,74.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 74.6% (SIM, lowest first)"
+299,p1ulv20900,Home 0343,tr(r:p1udt5091-p1udt5091lv),75,yes,0.00,0.00,62.4,74.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0117
+300,p1ulv22793,Home 0378,tr(r:p1udt5091-p1udt5091lv),75,yes,0.00,0.00,62.4,74.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0117
+301,p1ulv31668,Home 0513,tr(r:p1udt5091-p1udt5091lv),75,yes,0.00,0.00,62.4,74.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0117
+302,p1ulv44978,Home 0718,tr(r:p1udt5091-p1udt5091lv),75,yes,0.00,0.00,62.4,74.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0117
+303,p1ulv8891,Home 0167,tr(r:p1udt7447-p1udt7447lv),50,yes,0.00,0.00,39.9,74.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 74.6% (SIM, lowest first)"
+304,p1ulv44979,Home 0719,tr(r:p1udt7447-p1udt7447lv),50,yes,0.00,0.00,39.9,74.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0167
+305,p1ulv56792,Home 0887,tr(r:p1udt7447-p1udt7447lv),50,yes,0.00,0.00,39.9,74.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0167
+306,p1ulv34871,Home 0551,tr(r:p1udt19049-p1udt19049lv),50,yes,0.00,0.00,43.8,74.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 74.6% (SIM, lowest first)"
+307,p1ulv56171,Home 0875,tr(r:p1udt19049-p1udt19049lv),50,yes,0.00,0.00,43.8,74.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0551
+308,p1ulv62286,Home 0975,tr(r:p1udt19049-p1udt19049lv),50,yes,0.00,0.00,43.8,74.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0551
+309,p1ulv7009,Home 0135,tr(r:p1udt6079-p1udt6079lv),50,yes,0.00,0.00,43.9,74.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 74.7% (SIM, lowest first)"
+310,p1ulv41769,Home 0655,tr(r:p1udt6079-p1udt6079lv),50,yes,0.00,0.00,43.9,74.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0135
+311,p1ulv59192,Home 0924,tr(r:p1udt6079-p1udt6079lv),50,yes,0.00,0.00,43.9,74.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0135
+312,p1ulv1286,Home 0022,tr(r:p1udt1251-p1udt1251lv),50,yes,0.00,0.00,50.5,74.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 74.8% (SIM, lowest first)"
+313,p1ulv20892,Home 0335,tr(r:p1udt1251-p1udt1251lv),50,yes,0.00,0.00,50.5,74.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0022
+314,p1ulv59802,Home 0935,tr(r:p1udt1251-p1udt1251lv),50,yes,0.00,0.00,50.5,74.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0022
+315,p1ulv3878,Home 0078,tr(r:p1udt3591-p1udt3591lv),50,yes,0.00,0.00,51.8,74.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 74.8% (SIM, lowest first)"
+316,p1ulv6389,Home 0127,tr(r:p1udt3591-p1udt3591lv),50,yes,0.00,0.00,51.8,74.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0078
+317,p1ulv38025,Home 0606,tr(r:p1udt3591-p1udt3591lv),50,yes,0.00,0.00,51.8,74.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0078
+318,p1ulv28545,Home 0467,tr(r:p1udt17070-p1udt17070lv),50,yes,0.00,0.00,46.6,74.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 74.9% (SIM, lowest first)"
+319,p1ulv29129,Home 0475,tr(r:p1udt17070-p1udt17070lv),50,yes,0.00,0.00,46.6,74.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0467
+320,p1ulv32286,Home 0523,tr(r:p1udt17070-p1udt17070lv),50,yes,0.00,0.00,46.6,74.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0467
+321,p1ulv8251,Home 0156,tr(r:p1udt6989-p1udt6989lv),50,yes,0.00,0.00,46.5,75.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 75.1% (SIM, lowest first)"
+322,p1ulv24698,Home 0407,tr(r:p1udt6989-p1udt6989lv),50,yes,0.00,0.00,46.5,75.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0156
+323,p1ulv45618,Home 0726,tr(r:p1udt6989-p1udt6989lv),50,yes,0.00,0.00,46.5,75.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0156
+324,p1ulv36763,Home 0585,tr(r:p1udt19600-p1udt19600lv),50,yes,0.00,0.00,46.0,75.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 75.4% (SIM, lowest first)"
+325,p1ulv56167,Home 0873,tr(r:p1udt19600-p1udt19600lv),50,yes,0.00,0.00,46.0,75.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0585
+326,p1ulv59186,Home 0921,tr(r:p1udt19600-p1udt19600lv),50,yes,0.00,0.00,46.0,75.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0585
+327,p1ulv16357,Home 0275,tr(r:p1udt11883-p1udt11883lv),50,yes,0.00,0.00,48.6,75.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 75.7% (SIM, lowest first)"
+328,p1ulv17023,Home 0286,tr(r:p1udt11883-p1udt11883lv),50,yes,0.00,0.00,48.6,75.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0275
+329,p1ulv53741,Home 0827,tr(r:p1udt11883-p1udt11883lv),50,yes,0.00,0.00,48.6,75.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0275
+330,p1ulv20236,Home 0322,tr(r:p1udt13807-p1udt13807lv),50,yes,0.00,0.00,39.9,75.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 75.7% (SIM, lowest first)"
+331,p1ulv38014,Home 0601,tr(r:p1udt13807-p1udt13807lv),50,yes,0.00,0.00,39.9,75.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0322
+332,p1ulv46265,Home 0730,tr(r:p1udt13807-p1udt13807lv),50,yes,0.00,0.00,39.9,75.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0322
+333,p1ulv5077,Home 0102,tr(r:p1udt4566-p1udt4566lv),50,yes,0.00,0.00,58.4,76.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 76.0% (SIM, lowest first)"
+334,p1ulv32284,Home 0521,tr(r:p1udt4566-p1udt4566lv),50,yes,0.00,0.00,58.4,76.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0102
+335,p1ulv57999,Home 0911,tr(r:p1udt4566-p1udt4566lv),50,yes,0.00,0.00,58.4,76.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0102
+336,p1ulv9511,Home 0171,tr(r:p1udt7845-p1udt7845lv),50,yes,0.00,0.00,39.2,76.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 76.1% (SIM, lowest first)"
+337,p1ulv23422,Home 0382,tr(r:p1udt7845-p1udt7845lv),50,yes,0.00,0.00,39.2,76.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0171
+338,p1ulv53079,Home 0819,tr(r:p1udt7845-p1udt7845lv),50,yes,0.00,0.00,39.2,76.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0171
+339,p1ulv37402,Home 0597,tr(r:p1udt19779-p1udt19779lv),50,yes,0.00,0.00,54.2,76.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 76.2% (SIM, lowest first)"
+340,p1ulv54997,Home 0861,tr(r:p1udt19779-p1udt19779lv),50,yes,0.00,0.00,54.2,76.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0597
+341,p1ulv56179,Home 0880,tr(r:p1udt19779-p1udt19779lv),50,yes,0.00,0.00,54.2,76.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0597
+342,p1ulv5741,Home 0116,tr(r:p1udt5090-p1udt5090lv),50,yes,0.00,0.00,44.8,76.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 76.2% (SIM, lowest first)"
+343,p1ulv22791,Home 0376,tr(r:p1udt5090-p1udt5090lv),50,yes,0.00,0.00,44.8,76.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0116
+344,p1ulv57419,Home 0902,tr(r:p1udt5090-p1udt5090lv),50,yes,0.00,0.00,44.8,76.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0116
+345,p1ulv14463,Home 0250,tr(r:p1udt10858-p1udt10858lv),50,yes,0.00,0.00,59.1,76.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 76.3% (SIM, lowest first)"
+346,p1ulv48113,Home 0763,tr(r:p1udt10858-p1udt10858lv),50,yes,0.00,0.00,59.1,76.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0250
+347,p1ulv51170,Home 0802,tr(r:p1udt10858-p1udt10858lv),50,yes,0.00,0.00,59.1,76.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0250
+348,p1ulv18285,Home 0300,tr(r:p1udt12879-p1udt12879lv),50,yes,0.00,0.00,58.2,76.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 76.3% (SIM, lowest first)"
+349,p1ulv53073,Home 0817,tr(r:p1udt12879-p1udt12879lv),50,yes,0.00,0.00,58.2,76.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0300
+350,p1ulv61031,Home 0956,tr(r:p1udt12879-p1udt12879lv),50,yes,0.00,0.00,58.2,76.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0300
+351,p1ulv2573,Home 0048,tr(r:p1udt2431-p1udt2431lv),50,yes,0.00,0.00,47.2,76.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 76.5% (SIM, lowest first)"
+352,p1ulv38028,Home 0609,tr(r:p1udt2431-p1udt2431lv),50,yes,0.00,0.00,47.2,76.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0048
+353,p1ulv56177,Home 0878,tr(r:p1udt2431-p1udt2431lv),50,yes,0.00,0.00,47.2,76.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0048
+354,p1ulv35524,Home 0577,tr(r:p1udt19245-p1udt19245lv),50,yes,0.00,0.00,51.7,76.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 76.5% (SIM, lowest first)"
+355,p1ulv57420,Home 0903,tr(r:p1udt19245-p1udt19245lv),50,yes,0.00,0.00,51.7,76.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0577
+356,p1ulv58594,Home 0918,tr(r:p1udt19245-p1udt19245lv),50,yes,0.00,0.00,51.7,76.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0577
+357,p1ulv13240,Home 0231,tr(r:p1udt10161-p1udt10161lv),50,yes,0.00,0.00,55.2,76.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 76.9% (SIM, lowest first)"
+358,p1ulv13241,Home 0232,tr(r:p1udt10161-p1udt10161lv),50,yes,0.00,0.00,55.2,76.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0231
+359,p1ulv53742,Home 0828,tr(r:p1udt10161-p1udt10161lv),50,yes,0.00,0.00,55.2,76.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0231
+360,p1ulv29744,Home 0484,tr(r:p1udt17477-p1udt17477lv),50,yes,0.00,0.00,53.1,77.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 77.0% (SIM, lowest first)"
+361,p1ulv38012,Home 0599,tr(r:p1udt17477-p1udt17477lv),50,yes,0.00,0.00,53.1,77.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0484
+362,p1ulv57985,Home 0908,tr(r:p1udt17477-p1udt17477lv),50,yes,0.00,0.00,53.1,77.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0484
+363,p1ulv61024,Home 0952,tr(r:p1udt17477-p1udt17477lv),50,yes,0.00,0.00,53.1,77.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0484
+364,p1ulv31666,Home 0511,tr(r:p1udt18075-p1udt18075lv),75,yes,0.00,0.00,50.9,77.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 77.1% (SIM, lowest first)"
+365,p1ulv36170,Home 0581,tr(r:p1udt18075-p1udt18075lv),75,yes,0.00,0.00,50.9,77.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0511
+366,p1ulv42415,Home 0673,tr(r:p1udt18075-p1udt18075lv),75,yes,0.00,0.00,50.9,77.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0511
+367,p1ulv46275,Home 0734,tr(r:p1udt18075-p1udt18075lv),75,yes,0.00,0.00,50.9,77.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0511
+368,p1ulv6387,Home 0125,tr(r:p1udt5603-p1udt5603lv),50,yes,0.00,0.00,63.8,77.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 77.1% (SIM, lowest first)"
+369,p1ulv31013,Home 0504,tr(r:p1udt5603-p1udt5603lv),50,yes,0.00,0.00,63.8,77.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0125
+370,p1ulv39926,Home 0634,tr(r:p1udt5603-p1udt5603lv),50,yes,0.00,0.00,63.8,77.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0125
+371,p1ulv30,Home 0009,tr(r:p1udt29-p1udt29lv),50,yes,0.00,0.00,57.9,77.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 77.1% (SIM, lowest first)"
+372,p1ulv3250,Home 0068,tr(r:p1udt29-p1udt29lv),50,yes,0.00,0.00,57.9,77.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0009
+373,p1ulv3885,Home 0085,tr(r:p1udt29-p1udt29lv),50,yes,0.00,0.00,57.9,77.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0009
+374,p1ulv13243,Home 0233,tr(r:p1udt29-p1udt29lv),50,yes,0.00,0.00,57.9,77.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0009
+375,p1ulv8245,Home 0151,tr(r:p1udt6985-p1udt6985lv),50,yes,0.00,0.00,42.3,77.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 77.5% (SIM, lowest first)"
+376,p1ulv23423,Home 0383,tr(r:p1udt6985-p1udt6985lv),50,yes,0.00,0.00,42.3,77.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0151
+377,p1ulv46271,Home 0731,tr(r:p1udt6985-p1udt6985lv),50,yes,0.00,0.00,42.3,77.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0151
+378,p1ulv29130,Home 0476,tr(r:p1udt17269-p1udt17269lv),50,yes,0.00,0.00,77.5,77.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 77.5% (SIM, lowest first)"
+379,p1ulv51803,Home 0807,tr(r:p1udt17269-p1udt17269lv),50,yes,0.00,0.00,77.5,77.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0476
+380,p1ulv61038,Home 0960,tr(r:p1udt17269-p1udt17269lv),50,yes,0.00,0.00,77.5,77.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0476
+381,p1ulv16345,Home 0270,tr(r:p1udt11874-p1udt11874lv),50,yes,0.00,0.00,51.4,77.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 77.6% (SIM, lowest first)"
+382,p1ulv44316,Home 0704,tr(r:p1udt11874-p1udt11874lv),50,yes,0.00,0.00,51.4,77.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0270
+383,p1ulv62282,Home 0972,tr(r:p1udt11874-p1udt11874lv),50,yes,0.00,0.00,51.4,77.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0270
+384,p1ulv27260,Home 0442,tr(r:p1udt16608-p1udt16608lv),50,yes,0.00,0.00,48.5,77.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 77.9% (SIM, lowest first)"
+385,p1ulv38650,Home 0615,tr(r:p1udt16608-p1udt16608lv),50,yes,0.00,0.00,48.5,77.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0442
+386,p1ulv46873,Home 0742,tr(r:p1udt16608-p1udt16608lv),50,yes,0.00,0.00,48.5,77.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0442
+387,p1ulv10121,Home 0187,tr(r:p1udt8237-p1udt8237lv),75,yes,0.00,0.00,77.9,77.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 77.9% (SIM, lowest first)"
+388,p1ulv10752,Home 0203,tr(r:p1udt8237-p1udt8237lv),75,yes,0.00,0.00,77.9,77.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0187
+389,p1ulv44329,Home 0707,tr(r:p1udt8237-p1udt8237lv),75,yes,0.00,0.00,77.9,77.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0187
+390,p1ulv58595,Home 0919,tr(r:p1udt8237-p1udt8237lv),75,yes,0.00,0.00,77.9,77.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0187
+391,p1ulv63577,Home 0996,tr(r:p1udt8237-p1udt8237lv),75,yes,0.00,0.00,77.9,77.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0187
+392,p1ulv20232,Home 0319,tr(r:p1udt13806-p1udt13806lv),50,yes,0.00,0.00,49.5,78.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 78.0% (SIM, lowest first)"
+393,p1ulv32267,Home 0517,tr(r:p1udt13806-p1udt13806lv),50,yes,0.00,0.00,49.5,78.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0319
+394,p1ulv52461,Home 0810,tr(r:p1udt13806-p1udt13806lv),50,yes,0.00,0.00,49.5,78.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0319
+395,p1ulv3247,Home 0065,tr(r:p1udt3037-p1udt3037lv),75,yes,0.00,0.00,51.8,78.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 78.1% (SIM, lowest first)"
+396,p1ulv4471,Home 0090,tr(r:p1udt3037-p1udt3037lv),75,yes,0.00,0.00,51.8,78.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0065
+397,p1ulv7013,Home 0137,tr(r:p1udt3037-p1udt3037lv),75,yes,0.00,0.00,51.8,78.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0065
+398,p1ulv42414,Home 0672,tr(r:p1udt3037-p1udt3037lv),75,yes,0.00,0.00,51.8,78.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0065
+399,p1ulv22789,Home 0374,tr(r:p1udt14895-p1udt14895lv),75,yes,0.00,0.00,51.9,78.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 78.2% (SIM, lowest first)"
+400,p1ulv24101,Home 0396,tr(r:p1udt14895-p1udt14895lv),75,yes,0.00,0.00,51.9,78.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0374
+401,p1ulv34266,Home 0548,tr(r:p1udt14895-p1udt14895lv),75,yes,0.00,0.00,51.9,78.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0374
+402,p1ulv53080,Home 0820,tr(r:p1udt14895-p1udt14895lv),75,yes,0.00,0.00,51.9,78.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0374
+403,p1ulv12623,Home 0226,tr(r:p1udt9800-p1udt9800lv),50,yes,0.00,0.00,60.0,78.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 78.2% (SIM, lowest first)"
+404,p1ulv15094,Home 0259,tr(r:p1udt9800-p1udt9800lv),50,yes,0.00,0.00,60.0,78.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0226
+405,p1ulv43027,Home 0691,tr(r:p1udt9800-p1udt9800lv),50,yes,0.00,0.00,60.0,78.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0226
+406,p1ulv21544,Home 0354,tr(r:p1udt14384-p1udt14384lv),75,yes,0.00,0.00,62.6,78.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 78.5% (SIM, lowest first)"
+407,p1ulv27906,Home 0461,tr(r:p1udt14384-p1udt14384lv),75,yes,0.00,0.00,62.6,78.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0354
+408,p1ulv54974,Home 0847,tr(r:p1udt14384-p1udt14384lv),75,yes,0.00,0.00,62.6,78.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0354
+409,p1ulv57424,Home 0907,tr(r:p1udt14384-p1udt14384lv),75,yes,0.00,0.00,62.6,78.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0354
+410,p1ulv59200,Home 0932,tr(r:p1udt14384-p1udt14384lv),75,yes,0.00,0.00,62.6,78.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0354
+411,p1ulv1951,Home 0033,tr(r:p1udt1860-p1udt1860lv),50,yes,0.00,0.00,55.3,78.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 78.6% (SIM, lowest first)"
+412,p1ulv3232,Home 0056,tr(r:p1udt1860-p1udt1860lv),50,yes,0.00,0.00,55.3,78.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0033
+413,p1ulv52464,Home 0812,tr(r:p1udt1860-p1udt1860lv),50,yes,0.00,0.00,55.3,78.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0033
+414,p1ulv4480,Home 0099,tr(r:p1udt4091-p1udt4091lv),75,yes,0.00,0.00,60.1,78.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 78.7% (SIM, lowest first)"
+415,p1ulv8890,Home 0166,tr(r:p1udt4091-p1udt4091lv),75,yes,0.00,0.00,60.1,78.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0099
+416,p1ulv17028,Home 0291,tr(r:p1udt4091-p1udt4091lv),75,yes,0.00,0.00,60.1,78.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0099
+417,p1ulv28550,Home 0471,tr(r:p1udt4091-p1udt4091lv),75,yes,0.00,0.00,60.1,78.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0099
+418,p1ulv36172,Home 0583,tr(r:p1udt4091-p1udt4091lv),75,yes,0.00,0.00,60.1,78.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0099
+419,p1ulv670,Home 0015,tr(r:p1udt660-p1udt660lv),75,yes,0.00,0.00,56.6,78.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 78.7% (SIM, lowest first)"
+420,p1ulv22774,Home 0369,tr(r:p1udt660-p1udt660lv),75,yes,0.00,0.00,56.6,78.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0015
+421,p1ulv27259,Home 0441,tr(r:p1udt660-p1udt660lv),75,yes,0.00,0.00,56.6,78.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0015
+422,p1ulv49918,Home 0776,tr(r:p1udt660-p1udt660lv),75,yes,0.00,0.00,56.6,78.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0015
+423,p1ulv55587,Home 0863,tr(r:p1udt660-p1udt660lv),75,yes,0.00,0.00,56.6,78.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0015
+424,p1ulv38649,Home 0614,tr(r:p1udt20109-p1udt20109lv),50,yes,0.00,0.00,52.7,78.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 78.8% (SIM, lowest first)"
+425,p1ulv51795,Home 0803,tr(r:p1udt20109-p1udt20109lv),50,yes,0.00,0.00,52.7,78.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0614
+426,p1ulv61028,Home 0954,tr(r:p1udt20109-p1udt20109lv),50,yes,0.00,0.00,52.7,78.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0614
+427,p1ulv18299,Home 0304,tr(r:p1udt12888-p1udt12888lv),50,yes,0.00,0.00,57.1,78.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 78.8% (SIM, lowest first)"
+428,p1ulv40558,Home 0642,tr(r:p1udt12888-p1udt12888lv),50,yes,0.00,0.00,57.1,78.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0304
+429,p1ulv40559,Home 0643,tr(r:p1udt12888-p1udt12888lv),50,yes,0.00,0.00,57.1,78.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0304
+430,p1ulv8238,Home 0149,tr(r:p1udt6979-p1udt6979lv),50,yes,0.00,0.00,48.6,78.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 78.8% (SIM, lowest first)"
+431,p1ulv10104,Home 0177,tr(r:p1udt6979-p1udt6979lv),50,yes,0.00,0.00,48.6,78.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0149
+432,p1ulv29743,Home 0483,tr(r:p1udt6979-p1udt6979lv),50,yes,0.00,0.00,48.6,78.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0149
+433,p1ulv48112,Home 0762,tr(r:p1udt6979-p1udt6979lv),50,yes,0.00,0.00,48.6,78.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0149
+434,p1ulv33609,Home 0538,tr(r:p1udt18676-p1udt18676lv),50,yes,0.00,0.00,48.9,78.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 78.9% (SIM, lowest first)"
+435,p1ulv41774,Home 0658,tr(r:p1udt18676-p1udt18676lv),50,yes,0.00,0.00,48.9,78.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0538
+436,p1ulv47479,Home 0749,tr(r:p1udt18676-p1udt18676lv),50,yes,0.00,0.00,48.9,78.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0538
+437,p1ulv34879,Home 0553,tr(r:p1udt19052-p1udt19052lv),50,yes,0.00,0.00,52.8,79.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 79.0% (SIM, lowest first)"
+438,p1ulv35513,Home 0567,tr(r:p1udt19052-p1udt19052lv),50,yes,0.00,0.00,52.8,79.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0553
+439,p1ulv38022,Home 0603,tr(r:p1udt19052-p1udt19052lv),50,yes,0.00,0.00,52.8,79.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0553
+440,p1ulv57410,Home 0894,tr(r:p1udt19052-p1udt19052lv),50,yes,0.00,0.00,52.8,79.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0553
+441,p1ulv9512,Home 0172,tr(r:p1udt7846-p1udt7846lv),50,yes,0.00,0.00,62.6,79.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 79.2% (SIM, lowest first)"
+442,p1ulv38021,Home 0602,tr(r:p1udt7846-p1udt7846lv),50,yes,0.00,0.00,62.6,79.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0172
+443,p1ulv43699,Home 0702,tr(r:p1udt7846-p1udt7846lv),50,yes,0.00,0.00,62.6,79.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0172
+444,p1ulv21540,Home 0350,tr(r:p1udt14382-p1udt14382lv),50,yes,0.00,0.00,62.2,79.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 79.2% (SIM, lowest first)"
+445,p1ulv34261,Home 0545,tr(r:p1udt14382-p1udt14382lv),50,yes,0.00,0.00,62.2,79.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0350
+446,p1ulv41770,Home 0656,tr(r:p1udt14382-p1udt14382lv),50,yes,0.00,0.00,62.2,79.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0350
+447,p1ulv59195,Home 0927,tr(r:p1udt14382-p1udt14382lv),50,yes,0.00,0.00,62.2,79.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0350
+448,p1ulv26601,Home 0436,tr(r:p1udt16377-p1udt16377lv),50,yes,0.00,0.00,45.8,79.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 79.6% (SIM, lowest first)"
+449,p1ulv57413,Home 0897,tr(r:p1udt16377-p1udt16377lv),50,yes,0.00,0.00,45.8,79.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0436
+450,p1ulv59196,Home 0928,tr(r:p1udt16377-p1udt16377lv),50,yes,0.00,0.00,45.8,79.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0436
+451,p1ulv4477,Home 0096,tr(r:p1udt4088-p1udt4088lv),50,yes,0.00,0.00,57.4,79.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 79.8% (SIM, lowest first)"
+452,p1ulv31017,Home 0507,tr(r:p1udt4088-p1udt4088lv),50,yes,0.00,0.00,57.4,79.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0096
+453,p1ulv7650,Home 0145,tr(r:p1udt6548-p1udt6548lv),75,yes,0.00,0.00,56.2,79.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 79.9% (SIM, lowest first)"
+454,p1ulv10115,Home 0182,tr(r:p1udt6548-p1udt6548lv),75,yes,0.00,0.00,56.2,79.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0145
+455,p1ulv15712,Home 0266,tr(r:p1udt6548-p1udt6548lv),75,yes,0.00,0.00,56.2,79.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0145
+456,p1ulv29749,Home 0487,tr(r:p1udt6548-p1udt6548lv),75,yes,0.00,0.00,56.2,79.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0145
+457,p1ulv53743,Home 0829,tr(r:p1udt6548-p1udt6548lv),75,yes,0.00,0.00,56.2,79.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0145
+458,p1ulv38646,Home 0613,tr(r:p1udt20108-p1udt20108lv),50,yes,0.00,0.00,61.0,80.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 80.2% (SIM, lowest first)"
+459,p1ulv40550,Home 0637,tr(r:p1udt20108-p1udt20108lv),50,yes,0.00,0.00,61.0,80.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0613
+460,p1ulv60416,Home 0941,tr(r:p1udt20108-p1udt20108lv),50,yes,0.00,0.00,61.0,80.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0613
+461,p1ulv1955,Home 0034,tr(r:p1udt1863-p1udt1863lv),50,yes,0.00,0.00,54.4,80.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 80.6% (SIM, lowest first)"
+462,p1ulv21543,Home 0353,tr(r:p1udt1863-p1udt1863lv),50,yes,0.00,0.00,54.4,80.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0034
+463,p1ulv40556,Home 0640,tr(r:p1udt1863-p1udt1863lv),50,yes,0.00,0.00,54.4,80.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0034
+464,p1ulv5080,Home 0105,tr(r:p1udt4569-p1udt4569lv),50,yes,0.00,0.00,53.1,80.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 80.7% (SIM, lowest first)"
+465,p1ulv32287,Home 0524,tr(r:p1udt4569-p1udt4569lv),50,yes,0.00,0.00,53.1,80.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0105
+466,p1ulv64223,Home 1000,tr(r:p1udt4569-p1udt4569lv),50,yes,0.00,0.00,53.1,80.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0105
+467,p1ulv30386,Home 0496,tr(r:p1udt17689-p1udt17689lv),50,yes,0.00,0.00,54.0,81.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 81.1% (SIM, lowest first)"
+468,p1ulv47478,Home 0748,tr(r:p1udt17689-p1udt17689lv),50,yes,0.00,0.00,54.0,81.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0496
+469,p1ulv56176,Home 0877,tr(r:p1udt17689-p1udt17689lv),50,yes,0.00,0.00,54.0,81.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0496
+470,p1ulv2575,Home 0050,tr(r:p1udt2433-p1udt2433lv),50,yes,0.00,0.00,47.2,81.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 81.1% (SIM, lowest first)"
+471,p1ulv18979,Home 0311,tr(r:p1udt2433-p1udt2433lv),50,yes,0.00,0.00,47.2,81.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0050
+472,p1ulv51169,Home 0801,tr(r:p1udt2433-p1udt2433lv),50,yes,0.00,0.00,47.2,81.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0050
+473,p1ulv11996,Home 0217,tr(r:p1udt9415-p1udt9415lv),50,yes,0.00,0.00,51.3,81.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 81.1% (SIM, lowest first)"
+474,p1ulv20247,Home 0329,tr(r:p1udt9415-p1udt9415lv),50,yes,0.00,0.00,51.3,81.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0217
+475,p1ulv58001,Home 0913,tr(r:p1udt9415-p1udt9415lv),50,yes,0.00,0.00,51.3,81.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0217
+476,p1ulv16347,Home 0272,tr(r:p1udt11876-p1udt11876lv),50,yes,0.00,0.00,49.4,81.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 81.2% (SIM, lowest first)"
+477,p1ulv20237,Home 0323,tr(r:p1udt11876-p1udt11876lv),50,yes,0.00,0.00,49.4,81.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0272
+478,p1ulv43014,Home 0685,tr(r:p1udt11876-p1udt11876lv),50,yes,0.00,0.00,49.4,81.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0272
+479,p1ulv8248,Home 0153,tr(r:p1udt6988-p1udt6988lv),75,yes,0.00,0.00,55.1,81.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 81.5% (SIM, lowest first)"
+480,p1ulv35519,Home 0572,tr(r:p1udt6988-p1udt6988lv),75,yes,0.00,0.00,55.1,81.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0153
+481,p1ulv36777,Home 0589,tr(r:p1udt6988-p1udt6988lv),75,yes,0.00,0.00,55.1,81.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0153
+482,p1ulv62951,Home 0985,tr(r:p1udt6988-p1udt6988lv),75,yes,0.00,0.00,55.1,81.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0153
+483,p1ulv667,Home 0012,tr(r:p1udt658-p1udt658lv),50,yes,0.00,0.00,57.1,81.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 81.6% (SIM, lowest first)"
+484,p1ulv22770,Home 0366,tr(r:p1udt658-p1udt658lv),50,yes,0.00,0.00,57.1,81.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0012
+485,p1ulv25319,Home 0410,tr(r:p1udt658-p1udt658lv),50,yes,0.00,0.00,57.1,81.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0012
+486,p1ulv15709,Home 0263,tr(r:p1udt11541-p1udt11541lv),50,yes,0.00,0.00,47.4,81.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 81.7% (SIM, lowest first)"
+487,p1ulv17022,Home 0285,tr(r:p1udt11541-p1udt11541lv),50,yes,0.00,0.00,47.4,81.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0263
+488,p1ulv52470,Home 0814,tr(r:p1udt11541-p1udt11541lv),50,yes,0.00,0.00,47.4,81.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0263
+489,p1ulv20899,Home 0342,tr(r:p1udt14102-p1udt14102lv),50,yes,0.00,0.00,65.6,82.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 82.0% (SIM, lowest first)"
+490,p1ulv48719,Home 0767,tr(r:p1udt14102-p1udt14102lv),50,yes,0.00,0.00,65.6,82.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0342
+491,p1ulv61040,Home 0962,tr(r:p1udt14102-p1udt14102lv),50,yes,0.00,0.00,65.6,82.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0342
+492,p1ulv21532,Home 0346,tr(r:p1udt14378-p1udt14378lv),50,yes,0.00,0.00,47.4,82.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 82.0% (SIM, lowest first)"
+493,p1ulv39286,Home 0625,tr(r:p1udt14378-p1udt14378lv),50,yes,0.00,0.00,47.4,82.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0346
+494,p1ulv57403,Home 0889,tr(r:p1udt14378-p1udt14378lv),50,yes,0.00,0.00,47.4,82.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0346
+495,p1ulv6380,Home 0124,tr(r:p1udt5597-p1udt5597lv),50,yes,0.00,0.00,52.8,82.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 82.2% (SIM, lowest first)"
+496,p1ulv10732,Home 0191,tr(r:p1udt5597-p1udt5597lv),50,yes,0.00,0.00,52.8,82.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0124
+497,p1ulv36158,Home 0580,tr(r:p1udt5597-p1udt5597lv),50,yes,0.00,0.00,52.8,82.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0124
+498,p1ulv6999,Home 0133,tr(r:p1udt6070-p1udt6070lv),50,yes,0.00,0.00,60.0,82.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 82.3% (SIM, lowest first)"
+499,p1ulv22775,Home 0370,tr(r:p1udt6070-p1udt6070lv),50,yes,0.00,0.00,60.0,82.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0133
+500,p1ulv59791,Home 0933,tr(r:p1udt6070-p1udt6070lv),50,yes,0.00,0.00,60.0,82.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0133
+501,p1ulv3245,Home 0063,tr(r:p1udt3035-p1udt3035lv),50,yes,0.00,0.00,57.8,82.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 82.3% (SIM, lowest first)"
+502,p1ulv34880,Home 0554,tr(r:p1udt3035-p1udt3035lv),50,yes,0.00,0.00,57.8,82.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0063
+503,p1ulv44972,Home 0712,tr(r:p1udt3035-p1udt3035lv),50,yes,0.00,0.00,57.8,82.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0063
+504,p1ulv10745,Home 0196,tr(r:p1udt8648-p1udt8648lv),50,yes,0.00,0.00,70.1,82.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 82.5% (SIM, lowest first)"
+505,p1ulv32289,Home 0525,tr(r:p1udt8648-p1udt8648lv),50,yes,0.00,0.00,70.1,82.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0196
+506,p1ulv38024,Home 0605,tr(r:p1udt8648-p1udt8648lv),50,yes,0.00,0.00,70.1,82.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0196
+507,p1ulv13860,Home 0238,tr(r:p1udt10522-p1udt10522lv),50,yes,0.00,0.00,46.0,82.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 82.7% (SIM, lowest first)"
+508,p1ulv60419,Home 0942,tr(r:p1udt10522-p1udt10522lv),50,yes,0.00,0.00,46.0,82.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0238
+509,p1ulv61673,Home 0968,tr(r:p1udt10522-p1udt10522lv),50,yes,0.00,0.00,46.0,82.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0238
+510,p1ulv30376,Home 0494,tr(r:p1udt17683-p1udt17683lv),50,yes,0.00,0.00,59.9,82.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 82.8% (SIM, lowest first)"
+511,p1ulv43689,Home 0699,tr(r:p1udt17683-p1udt17683lv),50,yes,0.00,0.00,59.9,82.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0494
+512,p1ulv45605,Home 0722,tr(r:p1udt17683-p1udt17683lv),50,yes,0.00,0.00,59.9,82.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0494
+513,p1ulv5078,Home 0103,tr(r:p1udt4567-p1udt4567lv),50,yes,0.00,0.00,63.9,83.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 83.2% (SIM, lowest first)"
+514,p1ulv11992,Home 0213,tr(r:p1udt4567-p1udt4567lv),50,yes,0.00,0.00,63.9,83.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0103
+515,p1ulv19625,Home 0317,tr(r:p1udt4567-p1udt4567lv),50,yes,0.00,0.00,63.9,83.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0103
+516,p1ulv10740,Home 0192,tr(r:p1udt8645-p1udt8645lv),50,yes,0.00,0.00,55.1,83.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 83.3% (SIM, lowest first)"
+517,p1ulv34878,Home 0552,tr(r:p1udt8645-p1udt8645lv),50,yes,0.00,0.00,55.1,83.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0192
+518,p1ulv61677,Home 0970,tr(r:p1udt8645-p1udt8645lv),50,yes,0.00,0.00,55.1,83.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0192
+519,p1ulv8246,Home 0152,tr(r:p1udt6986-p1udt6986lv),50,yes,0.00,0.00,58.8,83.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 83.3% (SIM, lowest first)"
+520,p1ulv11366,Home 0208,tr(r:p1udt6986-p1udt6986lv),50,yes,0.00,0.00,58.8,83.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0152
+521,p1ulv23426,Home 0386,tr(r:p1udt6986-p1udt6986lv),50,yes,0.00,0.00,58.8,83.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0152
+522,p1ulv22790,Home 0375,tr(r:p1udt14896-p1udt14896lv),50,yes,0.00,0.00,65.4,83.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 83.6% (SIM, lowest first)"
+523,p1ulv29133,Home 0478,tr(r:p1udt14896-p1udt14896lv),50,yes,0.00,0.00,65.4,83.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0375
+524,p1ulv42419,Home 0677,tr(r:p1udt14896-p1udt14896lv),50,yes,0.00,0.00,65.4,83.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0375
+525,p1ulv13868,Home 0241,tr(r:p1udt10528-p1udt10528lv),50,yes,0.00,0.00,56.5,83.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 83.6% (SIM, lowest first)"
+526,p1ulv20893,Home 0336,tr(r:p1udt10528-p1udt10528lv),50,yes,0.00,0.00,56.5,83.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0241
+527,p1ulv40554,Home 0639,tr(r:p1udt10528-p1udt10528lv),50,yes,0.00,0.00,56.5,83.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0241
+528,p1ulv1287,Home 0023,tr(r:p1udt1252-p1udt1252lv),50,yes,0.00,0.00,74.5,84.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 84.1% (SIM, lowest first)"
+529,p1ulv11365,Home 0207,tr(r:p1udt1252-p1udt1252lv),50,yes,0.00,0.00,74.5,84.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0023
+530,p1ulv44326,Home 0706,tr(r:p1udt1252-p1udt1252lv),50,yes,0.00,0.00,74.5,84.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0023
+531,p1ulv11368,Home 0209,tr(r:p1udt9029-p1udt9029lv),50,yes,0.00,0.00,44.5,84.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 84.2% (SIM, lowest first)"
+532,p1ulv32290,Home 0526,tr(r:p1udt9029-p1udt9029lv),50,yes,0.00,0.00,44.5,84.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0209
+533,p1ulv29120,Home 0472,tr(r:p1udt17262-p1udt17262lv),50,yes,0.00,0.00,55.9,84.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 84.4% (SIM, lowest first)"
+534,p1ulv30374,Home 0493,tr(r:p1udt17262-p1udt17262lv),50,yes,0.00,0.00,55.9,84.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0472
+535,p1ulv32265,Home 0515,tr(r:p1udt17262-p1udt17262lv),50,yes,0.00,0.00,55.9,84.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0472
+536,p1ulv18286,Home 0301,tr(r:p1udt12880-p1udt12880lv),50,yes,0.00,0.00,51.8,84.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 84.5% (SIM, lowest first)"
+537,p1ulv43690,Home 0700,tr(r:p1udt12880-p1udt12880lv),50,yes,0.00,0.00,51.8,84.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0301
+538,p1ulv45606,Home 0723,tr(r:p1udt12880-p1udt12880lv),50,yes,0.00,0.00,51.8,84.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0301
+539,p1ulv20250,Home 0332,tr(r:p1udt13815-p1udt13815lv),50,yes,0.00,0.00,56.1,84.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 84.7% (SIM, lowest first)"
+540,p1ulv39929,Home 0636,tr(r:p1udt13815-p1udt13815lv),50,yes,0.00,0.00,56.1,84.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0332
+541,p1ulv47482,Home 0752,tr(r:p1udt13815-p1udt13815lv),50,yes,0.00,0.00,56.1,84.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0332
+542,p1ulv43028,Home 0692,tr(r:p1udt21147-p1udt21147lv),50,yes,0.00,0.00,62.4,84.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 84.8% (SIM, lowest first)"
+543,p1ulv49319,Home 0772,tr(r:p1udt21147-p1udt21147lv),50,yes,0.00,0.00,62.4,84.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0692
+544,p1ulv53749,Home 0834,tr(r:p1udt21147-p1udt21147lv),50,yes,0.00,0.00,62.4,84.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0692
+545,p1ulv54352,Home 0844,tr(r:p1udt21147-p1udt21147lv),50,yes,0.00,0.00,62.4,84.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0692
+546,p1ulv17641,Home 0293,tr(r:p1udt12561-p1udt12561lv),50,yes,0.00,0.00,54.7,85.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 85.2% (SIM, lowest first)"
+547,p1ulv41151,Home 0647,tr(r:p1udt12561-p1udt12561lv),50,yes,0.00,0.00,54.7,85.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0293
+548,p1ulv54977,Home 0850,tr(r:p1udt12561-p1udt12561lv),50,yes,0.00,0.00,54.7,85.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0293
+549,p1ulv55589,Home 0865,tr(r:p1udt12561-p1udt12561lv),50,yes,0.00,0.00,54.7,85.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0293
+550,p1ulv25975,Home 0432,tr(r:p1udt16144-p1udt16144lv),50,yes,0.00,0.00,49.5,85.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 85.5% (SIM, lowest first)"
+551,p1ulv33607,Home 0536,tr(r:p1udt16144-p1udt16144lv),50,yes,0.00,0.00,49.5,85.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0432
+552,p1ulv41771,Home 0657,tr(r:p1udt16144-p1udt16144lv),50,yes,0.00,0.00,49.5,85.5,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0432
+553,p1ulv38660,Home 0619,tr(r:p1udt20114-p1udt20114lv),50,yes,0.00,0.00,79.4,85.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 85.6% (SIM, lowest first)"
+554,p1ulv56791,Home 0886,tr(r:p1udt20114-p1udt20114lv),50,yes,0.00,0.00,79.4,85.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0619
+555,p1ulv61037,Home 0959,tr(r:p1udt20114-p1udt20114lv),50,yes,0.00,0.00,79.4,85.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0619
+556,p1ulv5079,Home 0104,tr(r:p1udt4568-p1udt4568lv),50,yes,0.00,0.00,56.1,85.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 85.8% (SIM, lowest first)"
+557,p1ulv20894,Home 0337,tr(r:p1udt4568-p1udt4568lv),50,yes,0.00,0.00,56.1,85.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0104
+558,p1ulv34883,Home 0557,tr(r:p1udt4568-p1udt4568lv),50,yes,0.00,0.00,56.1,85.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0104
+559,p1ulv12619,Home 0223,tr(r:p1udt9797-p1udt9797lv),50,yes,0.00,0.00,54.6,86.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 86.0% (SIM, lowest first)"
+560,p1ulv14471,Home 0252,tr(r:p1udt9797-p1udt9797lv),50,yes,0.00,0.00,54.6,86.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0223
+561,p1ulv33606,Home 0535,tr(r:p1udt9797-p1udt9797lv),50,yes,0.00,0.00,54.6,86.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0223
+562,p1ulv13855,Home 0235,tr(r:p1udt10519-p1udt10519lv),50,yes,0.00,0.00,72.5,86.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 86.4% (SIM, lowest first)"
+563,p1ulv29136,Home 0481,tr(r:p1udt10519-p1udt10519lv),50,yes,0.00,0.00,72.5,86.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0235
+564,p1ulv42397,Home 0664,tr(r:p1udt10519-p1udt10519lv),50,yes,0.00,0.00,72.5,86.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0235
+565,p1ulv52460,Home 0809,tr(r:p1udt10519-p1udt10519lv),50,yes,0.00,0.00,72.5,86.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0235
+566,p1ulv2572,Home 0047,tr(r:p1udt2430-p1udt2430lv),50,yes,0.00,0.00,55.0,86.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 86.4% (SIM, lowest first)"
+567,p1ulv17026,Home 0289,tr(r:p1udt2430-p1udt2430lv),50,yes,0.00,0.00,55.0,86.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0047
+568,p1ulv42416,Home 0674,tr(r:p1udt2430-p1udt2430lv),50,yes,0.00,0.00,55.0,86.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0047
+569,p1ulv47533,Home 0753,tr(r:p1udt22125-p1udt22125lv),25,yes,0.00,0.00,17.9,86.5,0.0,63.63,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 86.5% (SIM, lowest first)"
+570,p1ulv27,Home 0006,tr(r:p1udt26-p1udt26lv),50,yes,0.00,0.00,48.5,87.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 87.3% (SIM, lowest first)"
+571,p1ulv43026,Home 0690,tr(r:p1udt26-p1udt26lv),50,yes,0.00,0.00,48.5,87.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0006
+572,p1ulv57418,Home 0901,tr(r:p1udt26-p1udt26lv),50,yes,0.00,0.00,48.5,87.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0006
+573,p1ulv17642,Home 0294,tr(r:p1udt12562-p1udt12562lv),50,yes,0.00,0.00,62.7,87.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 87.6% (SIM, lowest first)"
+574,p1ulv28533,Home 0465,tr(r:p1udt12562-p1udt12562lv),50,yes,0.00,0.00,62.7,87.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0294
+575,p1ulv34253,Home 0543,tr(r:p1udt12562-p1udt12562lv),50,yes,0.00,0.00,62.7,87.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0294
+576,p1ulv672,Home 0017,tr(r:p1udt662-p1udt662lv),50,yes,0.00,0.00,71.6,88.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 88.1% (SIM, lowest first)"
+577,p1ulv21533,Home 0347,tr(r:p1udt662-p1udt662lv),50,yes,0.00,0.00,71.6,88.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0017
+578,p1ulv22776,Home 0371,tr(r:p1udt662-p1udt662lv),50,yes,0.00,0.00,71.6,88.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0017
+579,p1ulv64829,Home 1006,tr(r:p1udt662-p1udt662lv),50,yes,0.00,0.00,71.6,88.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0017
+580,p1ulv15711,Home 0265,tr(r:p1udt11543-p1udt11543lv),75,yes,0.00,0.00,61.3,88.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 88.4% (SIM, lowest first)"
+581,p1ulv23424,Home 0384,tr(r:p1udt11543-p1udt11543lv),75,yes,0.00,0.00,61.3,88.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0265
+582,p1ulv54346,Home 0838,tr(r:p1udt11543-p1udt11543lv),75,yes,0.00,0.00,61.3,88.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0265
+583,p1ulv60429,Home 0946,tr(r:p1udt11543-p1udt11543lv),75,yes,0.00,0.00,61.3,88.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0265
+584,p1ulv669,Home 0014,tr(r:p1udt659-p1udt659lv),75,yes,0.00,0.00,62.3,89.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 89.1% (SIM, lowest first)"
+585,p1ulv8881,Home 0162,tr(r:p1udt659-p1udt659lv),75,yes,0.00,0.00,62.3,89.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0014
+586,p1ulv25958,Home 0422,tr(r:p1udt659-p1udt659lv),75,yes,0.00,0.00,62.3,89.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0014
+587,p1ulv40551,Home 0638,tr(r:p1udt659-p1udt659lv),75,yes,0.00,0.00,62.3,89.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0014
+588,p1ulv18300,Home 0305,tr(r:p1udt12889-p1udt12889lv),75,yes,0.00,0.00,62.7,89.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 89.8% (SIM, lowest first)"
+589,p1ulv28548,Home 0469,tr(r:p1udt12889-p1udt12889lv),75,yes,0.00,0.00,62.7,89.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0305
+590,p1ulv50546,Home 0787,tr(r:p1udt12889-p1udt12889lv),75,yes,0.00,0.00,62.7,89.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0305
+591,p1ulv61679,Home 0971,tr(r:p1udt12889-p1udt12889lv),75,yes,0.00,0.00,62.7,89.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0305
+592,p1ulv23413,Home 0381,tr(r:p1udt4561-p1udt4561lv),75,yes,0.00,0.00,62.9,89.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 89.8% (SIM, lowest first)"
+593,p1ulv24092,Home 0394,tr(r:p1udt4561-p1udt4561lv),75,yes,0.00,0.00,62.9,89.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0381
+594,p1ulv43691,Home 0701,tr(r:p1udt4561-p1udt4561lv),75,yes,0.00,0.00,62.9,89.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0381
+595,p1ulv27903,Home 0458,tr(r:p1udt16834-p1udt16834lv),50,yes,0.00,0.00,57.2,90.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 90.0% (SIM, lowest first)"
+596,p1ulv41160,Home 0649,tr(r:p1udt16834-p1udt16834lv),50,yes,0.00,0.00,57.2,90.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0458
+597,p1ulv52471,Home 0815,tr(r:p1udt16834-p1udt16834lv),50,yes,0.00,0.00,57.2,90.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0458
+598,p1ulv3879,Home 0079,tr(r:p1udt3592-p1udt3592lv),75,yes,0.00,0.00,63.9,90.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 90.8% (SIM, lowest first)"
+599,p1ulv8249,Home 0154,tr(r:p1udt3592-p1udt3592lv),75,yes,0.00,0.00,63.9,90.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0079
+600,p1ulv10747,Home 0198,tr(r:p1udt3592-p1udt3592lv),75,yes,0.00,0.00,63.9,90.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0079
+601,p1ulv44975,Home 0715,tr(r:p1udt3592-p1udt3592lv),75,yes,0.00,0.00,63.9,90.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0079
+602,p1ulv5069,Home 0100,tr(r:p1udt4560-p1udt4560lv),75,yes,0.00,0.00,64.0,90.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 90.9% (SIM, lowest first)"
+603,p1ulv27273,Home 0451,tr(r:p1udt4560-p1udt4560lv),75,yes,0.00,0.00,64.0,90.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0100
+604,p1ulv30390,Home 0500,tr(r:p1udt4560-p1udt4560lv),75,yes,0.00,0.00,64.0,90.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0100
+605,p1ulv49915,Home 0774,tr(r:p1udt4560-p1udt4560lv),75,yes,0.00,0.00,64.0,90.9,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0100
+606,p1ulv16355,Home 0273,tr(r:p1udt11882-p1udt11882lv),50,yes,0.00,0.00,64.3,91.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 91.1% (SIM, lowest first)"
+607,p1ulv59804,Home 0937,tr(r:p1udt11882-p1udt11882lv),50,yes,0.00,0.00,64.3,91.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0273
+608,p1ulv64839,Home 1007,tr(r:p1udt11882-p1udt11882lv),50,yes,0.00,0.00,64.3,91.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0273
+609,p1ulv3242,Home 0060,tr(r:p1udt3032-p1udt3032lv),50,yes,0.00,0.00,65.3,91.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 91.4% (SIM, lowest first)"
+610,p1ulv25971,Home 0428,tr(r:p1udt3032-p1udt3032lv),50,yes,0.00,0.00,65.3,91.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0060
+611,p1ulv43021,Home 0686,tr(r:p1udt3032-p1udt3032lv),50,yes,0.00,0.00,65.3,91.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0060
+612,p1ulv57408,Home 0892,tr(r:p1udt3032-p1udt3032lv),50,yes,0.00,0.00,65.3,91.4,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0060
+613,p1ulv2574,Home 0049,tr(r:p1udt2432-p1udt2432lv),75,yes,0.00,0.00,64.8,91.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 91.7% (SIM, lowest first)"
+614,p1ulv6392,Home 0130,tr(r:p1udt2432-p1udt2432lv),75,yes,0.00,0.00,64.8,91.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0049
+615,p1ulv9517,Home 0176,tr(r:p1udt2432-p1udt2432lv),75,yes,0.00,0.00,64.8,91.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0049
+616,p1ulv53081,Home 0821,tr(r:p1udt2432-p1udt2432lv),75,yes,0.00,0.00,64.8,91.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0049
+617,p1ulv8254,Home 0159,tr(r:p1udt6991-p1udt6991lv),50,yes,0.00,0.00,68.1,92.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 92.1% (SIM, lowest first)"
+618,p1ulv42423,Home 0681,tr(r:p1udt6991-p1udt6991lv),50,yes,0.00,0.00,68.1,92.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0159
+619,p1ulv46282,Home 0741,tr(r:p1udt6991-p1udt6991lv),50,yes,0.00,0.00,68.1,92.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0159
+620,p1ulv29750,Home 0488,tr(r:p1udt15648-p1udt15648lv),75,yes,0.00,0.00,65.0,92.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 92.1% (SIM, lowest first)"
+621,p1ulv46276,Home 0735,tr(r:p1udt15648-p1udt15648lv),75,yes,0.00,0.00,65.0,92.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0488
+622,p1ulv46278,Home 0737,tr(r:p1udt15648-p1udt15648lv),75,yes,0.00,0.00,65.0,92.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0488
+623,p1ulv57417,Home 0900,tr(r:p1udt15648-p1udt15648lv),75,yes,0.00,0.00,65.0,92.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0488
+624,p1ulv1276,Home 0020,tr(r:p1udt1241-p1udt1241lv),50,yes,0.00,0.00,81.6,92.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 92.2% (SIM, lowest first)"
+625,p1ulv13856,Home 0236,tr(r:p1udt1241-p1udt1241lv),50,yes,0.00,0.00,81.6,92.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0020
+626,p1ulv24685,Home 0402,tr(r:p1udt1241-p1udt1241lv),50,yes,0.00,0.00,81.6,92.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0020
+627,p1ulv62941,Home 0981,tr(r:p1udt1241-p1udt1241lv),50,yes,0.00,0.00,81.6,92.2,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0020
+628,p1ulv18972,Home 0309,tr(r:p1udt13223-p1udt13223lv),50,yes,0.00,0.00,66.4,92.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 92.3% (SIM, lowest first)"
+629,p1ulv61670,Home 0966,tr(r:p1udt13223-p1udt13223lv),50,yes,0.00,0.00,66.4,92.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0309
+630,p1ulv10120,Home 0186,tr(r:p1udt8236-p1udt8236lv),75,yes,0.00,0.00,65.7,92.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 92.6% (SIM, lowest first)"
+631,p1ulv14473,Home 0253,tr(r:p1udt8236-p1udt8236lv),75,yes,0.00,0.00,65.7,92.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0186
+632,p1ulv43029,Home 0693,tr(r:p1udt8236-p1udt8236lv),75,yes,0.00,0.00,65.7,92.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0186
+633,p1ulv54996,Home 0860,tr(r:p1udt8236-p1udt8236lv),75,yes,0.00,0.00,65.7,92.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0186
+634,p1ulv7000,Home 0134,tr(r:p1udt6071-p1udt6071lv),75,yes,0.00,0.00,65.1,92.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 92.8% (SIM, lowest first)"
+635,p1ulv19617,Home 0315,tr(r:p1udt6071-p1udt6071lv),75,yes,0.00,0.00,65.1,92.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0134
+636,p1ulv43688,Home 0698,tr(r:p1udt6071-p1udt6071lv),75,yes,0.00,0.00,65.1,92.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0134
+637,p1ulv46263,Home 0729,tr(r:p1udt6071-p1udt6071lv),75,yes,0.00,0.00,65.1,92.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0134
+638,p1ulv671,Home 0016,tr(r:p1udt661-p1udt661lv),75,yes,0.00,0.00,67.1,93.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 93.8% (SIM, lowest first)"
+639,p1ulv10105,Home 0178,tr(r:p1udt661-p1udt661lv),75,yes,0.00,0.00,67.1,93.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0016
+640,p1ulv12612,Home 0220,tr(r:p1udt661-p1udt661lv),75,yes,0.00,0.00,67.1,93.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0016
+641,p1ulv31001,Home 0502,tr(r:p1udt661-p1udt661lv),75,yes,0.00,0.00,67.1,93.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0016
+642,p1ulv10113,Home 0180,tr(r:p1udt8233-p1udt8233lv),50,yes,0.00,0.00,69.5,94.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 94.6% (SIM, lowest first)"
+643,p1ulv29746,Home 0485,tr(r:p1udt8233-p1udt8233lv),50,yes,0.00,0.00,69.5,94.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0180
+644,p1ulv49925,Home 0777,tr(r:p1udt8233-p1udt8233lv),50,yes,0.00,0.00,69.5,94.6,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0180
+645,p1ulv3882,Home 0082,tr(r:p1udt3594-p1udt3594lv),75,yes,0.00,0.00,67.6,94.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 94.8% (SIM, lowest first)"
+646,p1ulv4474,Home 0093,tr(r:p1udt3594-p1udt3594lv),75,yes,0.00,0.00,67.6,94.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0082
+647,p1ulv46279,Home 0738,tr(r:p1udt3594-p1udt3594lv),75,yes,0.00,0.00,67.6,94.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0082
+648,p1ulv59198,Home 0930,tr(r:p1udt3594-p1udt3594lv),75,yes,0.00,0.00,67.6,94.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0082
+649,p1ulv31,Home 0010,tr(r:p1udt30-p1udt30lv),75,yes,0.00,0.00,67.7,95.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 95.0% (SIM, lowest first)"
+650,p1ulv5083,Home 0108,tr(r:p1udt30-p1udt30lv),75,yes,0.00,0.00,67.7,95.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0010
+651,p1ulv16362,Home 0279,tr(r:p1udt30-p1udt30lv),75,yes,0.00,0.00,67.7,95.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0010
+652,p1ulv21546,Home 0356,tr(r:p1udt30-p1udt30lv),75,yes,0.00,0.00,67.7,95.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0010
+653,p1ulv2558,Home 0040,tr(r:p1udt2417-p1udt2417lv),50,yes,0.00,0.00,64.7,96.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.0% (SIM, lowest first)"
+654,p1ulv3862,Home 0070,tr(r:p1udt2417-p1udt2417lv),50,yes,0.00,0.00,64.7,96.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0040
+655,p1ulv22771,Home 0367,tr(r:p1udt2417-p1udt2417lv),50,yes,0.00,0.00,64.7,96.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0040
+656,p1ulv43096,Home 0697,tr(r:p1udt21164-p1udt21164lv),25,yes,0.00,0.00,32.6,96.0,0.0,63.63,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.0% (SIM, lowest first)"
+657,p1ulv3233,Home 0057,tr(r:p1udt3024-p1udt3024lv),75,yes,0.00,0.00,69.4,96.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.3% (SIM, lowest first)"
+658,p1ulv13226,Home 0228,tr(r:p1udt3024-p1udt3024lv),75,yes,0.00,0.00,69.4,96.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0057
+659,p1ulv13861,Home 0239,tr(r:p1udt3024-p1udt3024lv),75,yes,0.00,0.00,69.4,96.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0057
+660,p1ulv22778,Home 0372,tr(r:p1udt3024-p1udt3024lv),75,yes,0.00,0.00,69.4,96.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0057
+661,p1ulv10116,Home 0183,tr(r:p1udt8234-p1udt8234lv),25,yes,0.00,0.00,24.6,96.3,0.0,63.64,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.3% (SIM, lowest first)"
+662,p1ulv31662,Home 0510,tr(r:p1udt18073-p1udt18073lv),25,yes,0.00,0.00,78.9,96.4,0.0,63.88,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.4% (SIM, lowest first)"
+663,p1ulv43022,Home 0687,tr(r:p1udt18073-p1udt18073lv),25,yes,0.00,0.00,78.9,96.4,0.0,63.88,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0510
+664,p1ulv36776,Home 0588,tr(r:p1udt19609-p1udt19609lv),25,yes,0.00,0.00,42.9,96.4,0.0,63.90,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.4% (SIM, lowest first)"
+665,p1ulv12001,Home 0219,tr(r:p1udt9418-p1udt9418lv),25,yes,0.00,0.00,18.8,96.4,0.0,63.64,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.4% (SIM, lowest first)"
+666,p1ulv37397,Home 0594,tr(r:p1udt19775-p1udt19775lv),25,yes,0.00,0.00,36.3,96.4,0.0,63.62,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.4% (SIM, lowest first)"
+667,p1ulv57415,Home 0898,tr(r:p1udt11885-p1udt11885lv),50,yes,0.00,0.00,86.1,96.4,0.0,64.18,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.4% (SIM, lowest first)"
+668,p1ulv38026,Home 0607,tr(r:p1udt19950-p1udt19950lv),25,yes,0.00,0.00,48.3,96.4,0.0,64.15,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.4% (SIM, lowest first)"
+669,p1ulv31667,Home 0512,tr(r:p1udt18076-p1udt18076lv),25,yes,0.00,0.00,66.1,96.4,0.0,63.90,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.4% (SIM, lowest first)"
+670,p1ulv46280,Home 0739,tr(r:p1udt18076-p1udt18076lv),25,yes,0.00,0.00,66.1,96.4,0.0,63.90,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0512
+671,p1ulv31015,Home 0505,tr(r:p1udt17897-p1udt17897lv),25,yes,0.00,0.00,41.6,96.4,0.0,65.34,0.1,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.4% (SIM, lowest first)"
+672,p1ulv22,Home 0001,tr(r:p1udt21-p1udt21lv),25,yes,0.00,0.00,33.5,96.4,0.0,63.65,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.4% (SIM, lowest first)"
+673,p1ulv62293,Home 0977,tr(r:p1udt24835-p1udt24835lv),25,yes,0.00,0.00,59.1,96.5,0.0,63.63,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.5% (SIM, lowest first)"
+674,p1ulv16369,Home 0282,tr(r:p1udt11893-p1udt11893lv),25,yes,0.00,0.00,19.6,96.5,0.0,63.64,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.5% (SIM, lowest first)"
+675,p1ulv49929,Home 0779,tr(r:p1udt22595-p1udt22595lv),25,yes,0.00,0.00,62.4,96.5,0.0,63.89,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.5% (SIM, lowest first)"
+676,p1ulv62952,Home 0986,tr(r:p1udt22595-p1udt22595lv),25,yes,0.00,0.00,62.4,96.5,0.0,63.89,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0779
+677,p1ulv38023,Home 0604,tr(r:p1udt19949-p1udt19949lv),25,yes,0.00,0.00,43.4,96.5,0.0,63.83,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.5% (SIM, lowest first)"
+678,p1ulv17025,Home 0288,tr(r:p1udt12245-p1udt12245lv),25,yes,0.00,0.00,60.0,96.5,0.0,63.99,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.5% (SIM, lowest first)"
+679,p1ulv49992,Home 0784,tr(r:p1udt22607-p1udt22607lv),25,yes,0.00,0.00,19.6,96.5,0.0,63.64,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.5% (SIM, lowest first)"
+680,p1ulv26666,Home 0440,tr(r:p1udt16407-p1udt16407lv),10,yes,0.00,0.00,46.5,96.5,0.0,57.45,6.0,0.15,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.5% (SIM, lowest first)"
+681,p1ulv64222,Home 0999,tr(r:p1udt25146-p1udt25146lv),25,yes,0.00,0.00,51.0,96.5,0.0,63.79,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.5% (SIM, lowest first)"
+682,p1ulv13869,Home 0242,tr(r:p1udt10529-p1udt10529lv),25,yes,0.00,0.00,83.7,96.5,0.0,64.04,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.5% (SIM, lowest first)"
+683,p1ulv44973,Home 0713,tr(r:p1udt10529-p1udt10529lv),25,yes,0.00,0.00,83.7,96.5,0.0,64.04,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0242
+684,p1ulv13875,Home 0248,tr(r:p1udt10534-p1udt10534lv),25,yes,0.00,0.00,53.9,96.5,0.0,63.84,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.5% (SIM, lowest first)"
+685,p1ulv25320,Home 0411,tr(r:p1udt15898-p1udt15898lv),25,yes,0.00,0.00,57.1,96.5,0.0,63.86,0.1,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.5% (SIM, lowest first)"
+686,p1ulv16360,Home 0277,tr(r:p1udt11886-p1udt11886lv),25,yes,0.00,0.00,56.3,96.5,0.0,63.65,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.5% (SIM, lowest first)"
+687,p1ulv20895,Home 0338,tr(r:p1udt14099-p1udt14099lv),25,yes,0.00,0.00,60.7,96.5,0.0,64.21,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.5% (SIM, lowest first)"
+688,p1ulv24106,Home 0401,tr(r:p1udt15433-p1udt15433lv),25,yes,0.00,0.00,28.4,96.5,0.0,63.66,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.5% (SIM, lowest first)"
+689,p1ulv41163,Home 0652,tr(r:p1udt20730-p1udt20730lv),25,yes,0.00,0.00,60.4,96.6,0.0,63.83,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.6% (SIM, lowest first)"
+690,p1ulv6393,Home 0131,tr(r:p1udt5606-p1udt5606lv),25,yes,0.00,0.00,46.9,96.6,0.0,63.63,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.6% (SIM, lowest first)"
+691,p1ulv39287,Home 0626,tr(r:p1udt20273-p1udt20273lv),25,yes,0.00,0.00,65.5,96.6,0.0,64.53,0.1,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.6% (SIM, lowest first)"
+692,p1ulv57404,Home 0890,tr(r:p1udt20273-p1udt20273lv),25,yes,0.00,0.00,65.5,96.6,0.0,64.53,0.1,0.00,no,yes,screening (surrogate),same transformer as Home 0626
+693,p1ulv42406,Home 0665,tr(r:p1udt20999-p1udt20999lv),25,yes,0.00,0.00,42.4,96.6,0.0,63.64,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.6% (SIM, lowest first)"
+694,p1ulv3876,Home 0077,tr(r:p1udt3589-p1udt3589lv),25,yes,0.00,0.00,74.0,96.6,0.0,64.04,0.1,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.6% (SIM, lowest first)"
+695,p1ulv60430,Home 0947,tr(r:p1udt3589-p1udt3589lv),25,yes,0.00,0.00,74.0,96.6,0.0,64.04,0.1,0.00,no,yes,screening (surrogate),same transformer as Home 0077
+696,p1ulv33611,Home 0540,tr(r:p1udt18678-p1udt18678lv),25,yes,0.00,0.00,46.0,96.6,0.0,63.67,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.6% (SIM, lowest first)"
+697,p1ulv18282,Home 0297,tr(r:p1udt12878-p1udt12878lv),25,yes,0.00,0.00,86.4,96.6,0.0,64.40,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.6% (SIM, lowest first)"
+698,p1ulv22772,Home 0368,tr(r:p1udt12878-p1udt12878lv),25,yes,0.00,0.00,86.4,96.6,0.0,64.40,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0297
+699,p1ulv14474,Home 0254,tr(r:p1udt1263-p1udt1263lv),50,yes,0.00,0.00,88.2,96.6,0.0,64.17,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.6% (SIM, lowest first)"
+700,p1ulv58005,Home 0915,tr(r:p1udt1263-p1udt1263lv),50,yes,0.00,0.00,88.2,96.6,0.0,64.17,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0254
+701,p1ulv32292,Home 0528,tr(r:p1udt18272-p1udt18272lv),25,yes,0.00,0.00,36.3,96.6,0.0,63.62,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.6% (SIM, lowest first)"
+702,p1ulv42422,Home 0680,tr(r:p1udt21005-p1udt21005lv),25,yes,0.00,0.00,36.6,96.6,0.0,63.67,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.6% (SIM, lowest first)"
+703,p1ulv2564,Home 0046,tr(r:p1udt2423-p1udt2423lv),25,yes,0.00,0.00,50.3,96.6,0.0,63.92,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.6% (SIM, lowest first)"
+704,p1ulv38651,Home 0616,tr(r:p1udt2423-p1udt2423lv),25,yes,0.00,0.00,50.3,96.6,0.0,63.92,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0046
+705,p1ulv34888,Home 0560,tr(r:p1udt19058-p1udt19058lv),25,yes,0.00,0.00,36.6,96.6,0.0,63.63,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.6% (SIM, lowest first)"
+706,p1ulv24687,Home 0403,tr(r:p1udt15644-p1udt15644lv),25,yes,0.00,0.00,33.6,96.6,0.0,63.65,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.6% (SIM, lowest first)"
+707,p1ulv41776,Home 0660,tr(r:p1udt20869-p1udt20869lv),25,yes,0.00,0.00,40.2,96.6,0.0,63.93,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.6% (SIM, lowest first)"
+708,p1ulv27261,Home 0443,tr(r:p1udt16609-p1udt16609lv),25,yes,0.00,0.00,60.1,96.6,0.0,63.99,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.6% (SIM, lowest first)"
+709,p1ulv27894,Home 0454,tr(r:p1udt16828-p1udt16828lv),50,yes,0.00,0.00,86.4,96.6,0.0,63.77,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.6% (SIM, lowest first)"
+710,p1ulv56782,Home 0883,tr(r:p1udt16828-p1udt16828lv),50,yes,0.00,0.00,86.4,96.6,0.0,63.77,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0454
+711,p1ulv3248,Home 0066,tr(r:p1udt3038-p1udt3038lv),50,yes,0.00,0.00,80.7,96.6,0.0,63.99,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.6% (SIM, lowest first)"
+712,p1ulv54350,Home 0842,tr(r:p1udt3038-p1udt3038lv),50,yes,0.00,0.00,80.7,96.6,0.0,63.99,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0066
+713,p1ulv49318,Home 0771,tr(r:p1udt22478-p1udt22478lv),25,yes,0.00,0.00,53.9,96.7,0.0,63.84,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+714,p1ulv58000,Home 0912,tr(r:p1udt24127-p1udt24127lv),25,yes,0.00,0.00,70.1,96.7,0.0,63.66,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+715,p1ulv15095,Home 0260,tr(r:p1udt11218-p1udt11218lv),25,yes,0.00,0.00,46.0,96.7,0.0,63.67,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+716,p1ulv42410,Home 0669,tr(r:p1udt21000-p1udt21000lv),25,yes,0.00,0.00,70.0,96.7,0.0,64.13,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+717,p1ulv11994,Home 0215,tr(r:p1udt9413-p1udt9413lv),75,yes,0.00,0.00,69.4,96.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+718,p1ulv22146,Home 0362,tr(r:p1udt9413-p1udt9413lv),75,yes,0.00,0.00,69.4,96.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0215
+719,p1ulv26602,Home 0437,tr(r:p1udt9413-p1udt9413lv),75,yes,0.00,0.00,69.4,96.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0215
+720,p1ulv50550,Home 0790,tr(r:p1udt9413-p1udt9413lv),75,yes,0.00,0.00,69.4,96.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0215
+721,p1ulv42418,Home 0676,tr(r:p1udt21004-p1udt21004lv),25,yes,0.00,0.00,41.1,96.7,0.0,63.63,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+722,p1ulv27271,Home 0449,tr(r:p1udt16614-p1udt16614lv),25,yes,0.00,0.00,83.6,96.7,0.0,64.42,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+723,p1ulv41162,Home 0651,tr(r:p1udt16614-p1udt16614lv),25,yes,0.00,0.00,83.6,96.7,0.0,64.42,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0449
+724,p1ulv8893,Home 0169,tr(r:p1udt7448-p1udt7448lv),25,yes,0.00,0.00,51.8,96.7,0.0,63.68,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+725,p1ulv32944,Home 0530,tr(r:p1udt18469-p1udt18469lv),25,yes,0.00,0.00,63.2,96.7,0.0,63.63,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+726,p1ulv25337,Home 0419,tr(r:p1udt15905-p1udt15905lv),25,yes,0.00,0.00,45.7,96.7,0.0,63.84,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+727,p1ulv11993,Home 0214,tr(r:p1udt9412-p1udt9412lv),50,yes,0.00,0.00,78.1,96.7,0.0,63.71,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+728,p1ulv6375,Home 0120,tr(r:p1udt5593-p1udt5593lv),75,yes,0.00,0.00,70.6,96.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+729,p1ulv7640,Home 0142,tr(r:p1udt5593-p1udt5593lv),75,yes,0.00,0.00,70.6,96.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0120
+730,p1ulv28531,Home 0463,tr(r:p1udt5593-p1udt5593lv),75,yes,0.00,0.00,70.6,96.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0120
+731,p1ulv32266,Home 0516,tr(r:p1udt5593-p1udt5593lv),75,yes,0.00,0.00,70.6,96.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0120
+732,p1ulv10730,Home 0190,tr(r:p1udt8641-p1udt8641lv),25,yes,0.00,0.00,26.6,96.7,0.0,63.64,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+733,p1ulv42411,Home 0670,tr(r:p1udt21001-p1udt21001lv),25,yes,0.00,0.00,66.9,96.7,0.0,63.86,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+734,p1ulv6390,Home 0128,tr(r:p1udt5605-p1udt5605lv),50,yes,0.00,0.00,75.0,96.7,0.0,63.78,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+735,p1ulv50551,Home 0791,tr(r:p1udt5605-p1udt5605lv),50,yes,0.00,0.00,75.0,96.7,0.0,63.78,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0128
+736,p1ulv16361,Home 0278,tr(r:p1udt11887-p1udt11887lv),25,yes,0.00,0.00,60.7,96.7,0.0,64.89,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+737,p1ulv10728,Home 0188,tr(r:p1udt8639-p1udt8639lv),50,yes,0.00,0.00,76.4,96.7,0.0,63.93,0.1,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+738,p1ulv20883,Home 0333,tr(r:p1udt8639-p1udt8639lv),50,yes,0.00,0.00,76.4,96.7,0.0,63.93,0.1,0.00,no,yes,screening (surrogate),same transformer as Home 0188
+739,p1ulv4472,Home 0091,tr(r:p1udt4084-p1udt4084lv),25,yes,0.00,0.00,60.0,96.7,0.0,64.04,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+740,p1ulv38659,Home 0618,tr(r:p1udt20113-p1udt20113lv),25,yes,0.00,0.00,57.1,96.7,0.0,63.70,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+741,p1ulv20901,Home 0344,tr(r:p1udt14103-p1udt14103lv),25,yes,0.00,0.00,44.2,96.7,0.0,63.65,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+742,p1ulv56790,Home 0885,tr(r:p1udt23887-p1udt23887lv),25,yes,0.00,0.00,46.1,96.7,0.0,63.75,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+743,p1ulv5081,Home 0106,tr(r:p1udt4086-p1udt4086lv),50,yes,0.00,0.00,87.9,96.7,0.0,64.44,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+744,p1ulv6391,Home 0129,tr(r:p1udt4086-p1udt4086lv),50,yes,0.00,0.00,87.9,96.7,0.0,64.44,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0106
+745,p1ulv40560,Home 0644,tr(r:p1udt4086-p1udt4086lv),50,yes,0.00,0.00,87.9,96.7,0.0,64.44,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0106
+746,p1ulv36173,Home 0584,tr(r:p1udt19422-p1udt19422lv),25,yes,0.00,0.00,81.4,96.7,0.0,63.78,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+747,p1ulv59199,Home 0931,tr(r:p1udt19422-p1udt19422lv),25,yes,0.00,0.00,81.4,96.7,0.0,63.78,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0584
+748,p1ulv18978,Home 0310,tr(r:p1udt13227-p1udt13227lv),25,yes,0.00,0.00,51.3,96.7,0.0,63.63,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+749,p1ulv15090,Home 0257,tr(r:p1udt11215-p1udt11215lv),50,yes,0.00,0.00,72.1,96.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+750,p1ulv62949,Home 0984,tr(r:p1udt11215-p1udt11215lv),50,yes,0.00,0.00,72.1,96.7,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0257
+751,p1ulv51166,Home 0798,tr(r:p1udt22851-p1udt22851lv),25,yes,0.00,0.00,42.0,96.7,0.0,63.68,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+752,p1ulv682,Home 0018,tr(r:p1udt672-p1udt672lv),25,yes,0.00,0.00,68.4,96.7,0.0,63.85,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+753,p1ulv55588,Home 0864,tr(r:p1udt23655-p1udt23655lv),25,yes,0.00,0.00,42.8,96.7,0.0,63.68,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+754,p1ulv57412,Home 0896,tr(r:p1udt24005-p1udt24005lv),25,yes,0.00,0.00,63.2,96.7,0.0,63.73,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+755,p1ulv51796,Home 0804,tr(r:p1udt22965-p1udt22965lv),25,yes,0.00,0.00,42.7,96.7,0.0,63.63,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+756,p1ulv13874,Home 0247,tr(r:p1udt10533-p1udt10533lv),25,yes,0.00,0.00,57.2,96.7,0.0,63.71,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.7% (SIM, lowest first)"
+757,p1ulv51157,Home 0795,tr(r:p1udt22849-p1udt22849lv),25,yes,0.00,0.00,44.3,96.8,0.0,63.85,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+758,p1ulv35515,Home 0569,tr(r:p1udt7444-p1udt7444lv),50,yes,0.00,0.00,92.0,96.8,0.0,64.34,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+759,p1ulv51802,Home 0806,tr(r:p1udt7444-p1udt7444lv),50,yes,0.00,0.00,92.0,96.8,0.0,64.34,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0569
+760,p1ulv12624,Home 0227,tr(r:p1udt9801-p1udt9801lv),50,yes,0.00,0.00,72.8,96.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+761,p1ulv15715,Home 0269,tr(r:p1udt9801-p1udt9801lv),50,yes,0.00,0.00,72.8,96.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0227
+762,p1ulv49933,Home 0783,tr(r:p1udt9801-p1udt9801lv),50,yes,0.00,0.00,72.8,96.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0227
+763,p1ulv38664,Home 0623,tr(r:p1udt20115-p1udt20115lv),25,yes,0.00,0.00,37.3,96.8,0.0,63.66,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+764,p1ulv48722,Home 0770,tr(r:p1udt22362-p1udt22362lv),25,yes,0.00,0.00,54.3,96.8,0.0,63.74,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+765,p1ulv8892,Home 0168,tr(r:p1udt1257-p1udt1257lv),50,yes,0.00,0.00,80.9,96.8,0.0,64.71,0.1,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+766,p1ulv14462,Home 0249,tr(r:p1udt1257-p1udt1257lv),50,yes,0.00,0.00,80.9,96.8,0.0,64.71,0.1,0.00,no,yes,screening (surrogate),same transformer as Home 0168
+767,p1ulv18302,Home 0307,tr(r:p1udt1257-p1udt1257lv),50,yes,0.00,0.00,80.9,96.8,0.0,64.71,0.1,0.00,no,yes,screening (surrogate),same transformer as Home 0168
+768,p1ulv37401,Home 0596,tr(r:p1udt19778-p1udt19778lv),25,yes,0.00,0.00,54.6,96.8,0.0,63.69,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+769,p1ulv13871,Home 0244,tr(r:p1udt10531-p1udt10531lv),75,yes,0.00,0.00,69.6,96.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+770,p1ulv23425,Home 0385,tr(r:p1udt10531-p1udt10531lv),75,yes,0.00,0.00,69.6,96.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0244
+771,p1ulv42408,Home 0667,tr(r:p1udt10531-p1udt10531lv),75,yes,0.00,0.00,69.6,96.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0244
+772,p1ulv48721,Home 0769,tr(r:p1udt22361-p1udt22361lv),25,yes,0.00,0.00,50.8,96.8,0.0,63.65,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+773,p1ulv42417,Home 0675,tr(r:p1udt21003-p1udt21003lv),25,yes,0.00,0.00,57.1,96.8,0.0,63.70,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+774,p1ulv48097,Home 0754,tr(r:p1udt22227-p1udt22227lv),25,yes,0.00,0.00,53.9,96.8,0.0,63.76,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+775,p1ulv39296,Home 0627,tr(r:p1udt20276-p1udt20276lv),25,yes,0.00,0.00,54.3,96.8,0.0,63.74,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+776,p1ulv20902,Home 0345,tr(r:p1udt4090-p1udt4090lv),50,yes,0.00,0.00,78.1,96.8,0.0,63.88,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+777,p1ulv46878,Home 0745,tr(r:p1udt4090-p1udt4090lv),50,yes,0.00,0.00,78.1,96.8,0.0,63.88,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0345
+778,p1ulv57422,Home 0905,tr(r:p1udt24006-p1udt24006lv),25,yes,0.00,0.00,33.9,96.8,0.0,63.63,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+779,p1ulv54989,Home 0853,tr(r:p1udt23539-p1udt23539lv),25,yes,0.00,0.00,51.1,96.8,0.0,63.79,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+780,p1ulv10749,Home 0200,tr(r:p1udt8650-p1udt8650lv),25,yes,0.00,0.00,49.7,96.8,0.0,63.67,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+781,p1ulv50544,Home 0785,tr(r:p1udt22726-p1udt22726lv),25,yes,0.00,0.00,72.9,96.8,0.0,63.82,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+782,p1ulv13872,Home 0245,tr(r:p1udt10532-p1udt10532lv),50,yes,0.00,0.00,62.6,96.8,0.0,63.65,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+783,p1ulv48104,Home 0755,tr(r:p1udt10532-p1udt10532lv),50,yes,0.00,0.00,62.6,96.8,0.0,63.65,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0245
+784,p1ulv50548,Home 0788,tr(r:p1udt10532-p1udt10532lv),50,yes,0.00,0.00,62.6,96.8,0.0,63.65,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0245
+785,p1ulv9516,Home 0175,tr(r:p1udt7848-p1udt7848lv),25,yes,0.00,0.00,44.1,96.8,0.0,63.64,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+786,p1ulv15093,Home 0258,tr(r:p1udt11217-p1udt11217lv),25,yes,0.00,0.00,75.9,96.8,0.0,64.70,0.2,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+787,p1ulv54353,Home 0845,tr(r:p1udt23424-p1udt23424lv),25,yes,0.00,0.00,46.9,96.8,0.0,63.63,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+788,p1ulv28547,Home 0468,tr(r:p1udt17071-p1udt17071lv),50,yes,0.00,0.00,60.5,96.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+789,p1ulv38661,Home 0620,tr(r:p1udt17071-p1udt17071lv),50,yes,0.00,0.00,60.5,96.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0468
+790,p1ulv57416,Home 0899,tr(r:p1udt17071-p1udt17071lv),50,yes,0.00,0.00,60.5,96.8,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0468
+791,p1ulv44965,Home 0709,tr(r:p1udt21559-p1udt21559lv),25,yes,0.00,0.00,54.3,96.8,0.0,63.74,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+792,p1ulv25973,Home 0430,tr(r:p1udt16142-p1udt16142lv),25,yes,0.00,0.00,73.8,96.8,0.0,64.94,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+793,p1ulv34262,Home 0546,tr(r:p1udt16142-p1udt16142lv),25,yes,0.00,0.00,73.8,96.8,0.0,64.94,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0430
+794,p1ulv25976,Home 0433,tr(r:p1udt16145-p1udt16145lv),50,yes,0.00,0.00,81.8,96.8,0.0,64.01,0.1,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+795,p1ulv54348,Home 0840,tr(r:p1udt16145-p1udt16145lv),50,yes,0.00,0.00,81.8,96.8,0.0,64.01,0.1,0.00,no,yes,screening (surrogate),same transformer as Home 0433
+796,p1ulv34891,Home 0563,tr(r:p1udt19059-p1udt19059lv),50,yes,0.00,0.00,71.3,96.8,0.0,63.71,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+797,p1ulv47481,Home 0751,tr(r:p1udt19059-p1udt19059lv),50,yes,0.00,0.00,71.3,96.8,0.0,63.71,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0563
+798,p1ulv54988,Home 0852,tr(r:p1udt23538-p1udt23538lv),25,yes,0.00,0.00,36.4,96.8,0.0,63.62,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+799,p1ulv57423,Home 0906,tr(r:p1udt24007-p1udt24007lv),25,yes,0.00,0.00,26.2,96.8,0.0,63.65,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+800,p1ulv29121,Home 0473,tr(r:p1udt17263-p1udt17263lv),25,yes,0.00,0.00,60.8,96.8,0.0,63.66,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+801,p1ulv63576,Home 0995,tr(r:p1udt25045-p1udt25045lv),25,yes,0.00,0.00,65.6,96.8,0.0,63.65,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+802,p1ulv13858,Home 0237,tr(r:p1udt10520-p1udt10520lv),25,yes,0.00,0.00,44.3,96.8,0.0,63.85,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.8% (SIM, lowest first)"
+803,p1ulv25977,Home 0434,tr(r:p1udt16146-p1udt16146lv),50,yes,0.00,0.00,86.6,96.9,0.0,64.16,0.1,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.9% (SIM, lowest first)"
+804,p1ulv27269,Home 0447,tr(r:p1udt16146-p1udt16146lv),50,yes,0.00,0.00,86.6,96.9,0.0,64.16,0.1,0.00,no,yes,screening (surrogate),same transformer as Home 0434
+805,p1ulv33605,Home 0534,tr(r:p1udt18675-p1udt18675lv),25,yes,0.00,0.00,76.6,96.9,0.0,63.72,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.9% (SIM, lowest first)"
+806,p1ulv35522,Home 0575,tr(r:p1udt19244-p1udt19244lv),25,yes,0.00,0.00,63.0,96.9,0.0,63.70,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.9% (SIM, lowest first)"
+807,p1ulv39924,Home 0632,tr(r:p1udt20430-p1udt20430lv),25,yes,0.00,0.00,31.2,96.9,0.0,63.63,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.9% (SIM, lowest first)"
+808,p1ulv7014,Home 0138,tr(r:p1udt6082-p1udt6082lv),25,yes,0.00,0.00,52.0,96.9,0.0,63.64,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.9% (SIM, lowest first)"
+809,p1ulv49917,Home 0775,tr(r:p1udt22591-p1udt22591lv),25,yes,0.00,0.00,55.8,96.9,0.0,63.70,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.9% (SIM, lowest first)"
+810,p1ulv63573,Home 0992,tr(r:p1udt25044-p1udt25044lv),25,yes,0.00,0.00,54.0,96.9,0.0,63.84,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.9% (SIM, lowest first)"
+811,p1ulv48107,Home 0757,tr(r:p1udt22230-p1udt22230lv),25,yes,0.00,0.00,56.4,96.9,0.0,63.65,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.9% (SIM, lowest first)"
+812,p1ulv3246,Home 0064,tr(r:p1udt3036-p1udt3036lv),25,yes,0.00,0.00,68.4,96.9,0.0,63.85,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.9% (SIM, lowest first)"
+813,p1ulv5743,Home 0118,tr(r:p1udt5092-p1udt5092lv),50,yes,0.00,0.00,80.0,96.9,0.0,63.93,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.9% (SIM, lowest first)"
+814,p1ulv40561,Home 0645,tr(r:p1udt5092-p1udt5092lv),50,yes,0.00,0.00,80.0,96.9,0.0,63.93,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0118
+815,p1ulv10729,Home 0189,tr(r:p1udt8640-p1udt8640lv),50,yes,0.00,0.00,88.4,96.9,0.0,64.18,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.9% (SIM, lowest first)"
+816,p1ulv41762,Home 0653,tr(r:p1udt8640-p1udt8640lv),50,yes,0.00,0.00,88.4,96.9,0.0,64.18,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0189
+817,p1ulv61042,Home 0964,tr(r:p1udt24632-p1udt24632lv),25,yes,0.00,0.00,90.4,96.9,0.0,64.17,0.2,0.01,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.9% (SIM, lowest first)"
+818,p1ulv8252,Home 0157,tr(r:p1udt6990-p1udt6990lv),25,yes,0.00,0.00,74.1,96.9,0.0,64.06,0.1,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.9% (SIM, lowest first)"
+819,p1ulv59806,Home 0939,tr(r:p1udt6990-p1udt6990lv),25,yes,0.00,0.00,74.1,96.9,0.0,64.06,0.1,0.00,no,yes,screening (surrogate),same transformer as Home 0157
+820,p1ulv23432,Home 0391,tr(r:p1udt15161-p1udt15161lv),25,yes,0.00,0.00,63.3,96.9,0.0,63.73,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 96.9% (SIM, lowest first)"
+821,p1ulv61041,Home 0963,tr(r:p1udt24631-p1udt24631lv),25,yes,0.00,0.00,62.5,97.0,0.0,63.66,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.0% (SIM, lowest first)"
+822,p1ulv61026,Home 0953,tr(r:p1udt24630-p1udt24630lv),25,yes,0.00,0.00,76.6,97.0,0.0,63.72,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.0% (SIM, lowest first)"
+823,p1ulv27905,Home 0460,tr(r:p1udt16835-p1udt16835lv),25,yes,0.00,0.00,65.9,97.0,0.0,64.07,0.1,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.0% (SIM, lowest first)"
+824,p1ulv63575,Home 0994,tr(r:p1udt16835-p1udt16835lv),25,yes,0.00,0.00,65.9,97.0,0.0,64.07,0.1,0.00,no,yes,screening (surrogate),same transformer as Home 0460
+825,p1ulv8879,Home 0161,tr(r:p1udt7438-p1udt7438lv),50,yes,0.00,0.00,83.7,97.0,0.0,63.88,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.0% (SIM, lowest first)"
+826,p1ulv24089,Home 0393,tr(r:p1udt7438-p1udt7438lv),50,yes,0.00,0.00,83.7,97.0,0.0,63.88,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0161
+827,p1ulv39285,Home 0624,tr(r:p1udt7438-p1udt7438lv),50,yes,0.00,0.00,83.7,97.0,0.0,63.88,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0161
+828,p1ulv683,Home 0019,tr(r:p1udt673-p1udt673lv),25,yes,0.00,0.00,63.3,97.0,0.0,63.73,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.0% (SIM, lowest first)"
+829,p1ulv58650,Home 0920,tr(r:p1udt24243-p1udt24243lv),25,yes,0.00,0.00,43.2,97.0,0.0,63.61,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.0% (SIM, lowest first)"
+830,p1ulv62284,Home 0974,tr(r:p1udt24833-p1udt24833lv),25,yes,0.00,0.00,36.4,97.0,0.0,63.62,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.0% (SIM, lowest first)"
+831,p1ulv15707,Home 0262,tr(r:p1udt11539-p1udt11539lv),50,yes,0.00,0.00,79.2,97.0,0.0,63.97,0.1,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.0% (SIM, lowest first)"
+832,p1ulv41763,Home 0654,tr(r:p1udt11539-p1udt11539lv),50,yes,0.00,0.00,79.2,97.0,0.0,63.97,0.1,0.00,no,yes,screening (surrogate),same transformer as Home 0262
+833,p1ulv41150,Home 0646,tr(r:p1udt20727-p1udt20727lv),25,yes,0.00,0.00,43.7,97.0,0.0,63.76,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.0% (SIM, lowest first)"
+834,p1ulv21534,Home 0348,tr(r:p1udt14379-p1udt14379lv),50,yes,0.00,0.00,86.7,97.0,0.0,64.07,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.0% (SIM, lowest first)"
+835,p1ulv56170,Home 0874,tr(r:p1udt14379-p1udt14379lv),50,yes,0.00,0.00,86.7,97.0,0.0,64.07,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0348
+836,p1ulv10758,Home 0204,tr(r:p1udt8656-p1udt8656lv),25,yes,0.00,0.00,34.6,97.0,0.0,63.70,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.0% (SIM, lowest first)"
+837,p1ulv18971,Home 0308,tr(r:p1udt13222-p1udt13222lv),25,yes,0.00,0.00,70.3,97.0,0.0,63.66,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.0% (SIM, lowest first)"
+838,p1ulv27263,Home 0444,tr(r:p1udt16610-p1udt16610lv),50,yes,0.00,0.00,85.2,97.0,0.0,63.86,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.0% (SIM, lowest first)"
+839,p1ulv51158,Home 0796,tr(r:p1udt16610-p1udt16610lv),50,yes,0.00,0.00,85.2,97.0,0.0,63.86,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0444
+840,p1ulv19047,Home 0313,tr(r:p1udt13267-p1udt13267lv),25,yes,0.00,0.00,18.8,97.0,0.0,63.64,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.0% (SIM, lowest first)"
+841,p1ulv42413,Home 0671,tr(r:p1udt21002-p1udt21002lv),50,yes,0.00,0.00,93.9,97.0,0.0,65.80,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.0% (SIM, lowest first)"
+842,p1ulv53744,Home 0830,tr(r:p1udt21002-p1udt21002lv),50,yes,0.00,0.00,93.9,97.0,0.0,65.80,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0671
+843,p1ulv3875,Home 0076,tr(r:p1udt3588-p1udt3588lv),75,yes,0.00,0.00,78.2,97.1,0.0,63.64,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.1% (SIM, lowest first)"
+844,p1ulv10741,Home 0193,tr(r:p1udt3588-p1udt3588lv),75,yes,0.00,0.00,78.2,97.1,0.0,63.64,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0076
+845,p1ulv22142,Home 0360,tr(r:p1udt3588-p1udt3588lv),75,yes,0.00,0.00,78.2,97.1,0.0,63.64,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0076
+846,p1ulv61036,Home 0958,tr(r:p1udt3588-p1udt3588lv),75,yes,0.00,0.00,78.2,97.1,0.0,63.64,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0076
+847,p1ulv49320,Home 0773,tr(r:p1udt22479-p1udt22479lv),25,yes,0.00,0.00,44.1,97.1,0.0,64.08,0.2,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.1% (SIM, lowest first)"
+848,p1ulv10750,Home 0201,tr(r:p1udt8651-p1udt8651lv),75,yes,0.00,0.00,70.4,97.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.1% (SIM, lowest first)"
+849,p1ulv17652,Home 0295,tr(r:p1udt8651-p1udt8651lv),75,yes,0.00,0.00,70.4,97.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0201
+850,p1ulv48720,Home 0768,tr(r:p1udt8651-p1udt8651lv),75,yes,0.00,0.00,70.4,97.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0201
+851,p1ulv60431,Home 0948,tr(r:p1udt8651-p1udt8651lv),75,yes,0.00,0.00,70.4,97.1,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0201
+852,p1ulv4457,Home 0087,tr(r:p1udt4071-p1udt4071lv),50,yes,0.00,0.00,74.5,97.1,0.0,63.69,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.1% (SIM, lowest first)"
+853,p1ulv11357,Home 0205,tr(r:p1udt4071-p1udt4071lv),50,yes,0.00,0.00,74.5,97.1,0.0,63.69,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0087
+854,p1ulv4466,Home 0088,tr(r:p1udt4079-p1udt4079lv),50,yes,0.00,0.00,77.8,97.1,0.0,64.03,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.1% (SIM, lowest first)"
+855,p1ulv25331,Home 0414,tr(r:p1udt4079-p1udt4079lv),50,yes,0.00,0.00,77.8,97.1,0.0,64.03,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0088
+856,p1ulv34260,Home 0544,tr(r:p1udt4079-p1udt4079lv),50,yes,0.00,0.00,77.8,97.1,0.0,64.03,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0088
+857,p1ulv28,Home 0007,tr(r:p1udt27-p1udt27lv),50,yes,0.00,0.00,86.3,97.2,0.0,64.01,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.2% (SIM, lowest first)"
+858,p1ulv8253,Home 0158,tr(r:p1udt27-p1udt27lv),50,yes,0.00,0.00,86.3,97.2,0.0,64.01,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0007
+859,p1ulv20898,Home 0341,tr(r:p1udt14101-p1udt14101lv),50,yes,0.00,0.00,83.8,97.2,0.0,64.08,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.2% (SIM, lowest first)"
+860,p1ulv54347,Home 0839,tr(r:p1udt14101-p1udt14101lv),50,yes,0.00,0.00,83.8,97.2,0.0,64.08,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0341
+861,p1ulv5725,Home 0110,tr(r:p1udt5076-p1udt5076lv),50,yes,0.00,0.00,87.8,97.2,0.0,64.18,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.2% (SIM, lowest first)"
+862,p1ulv61030,Home 0955,tr(r:p1udt5076-p1udt5076lv),50,yes,0.00,0.00,87.8,97.2,0.0,64.18,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0110
+863,p1ulv37400,Home 0595,tr(r:p1udt19777-p1udt19777lv),25,yes,0.00,0.00,79.2,97.2,0.0,63.63,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.2% (SIM, lowest first)"
+864,p1ulv24,Home 0003,tr(r:p1udt23-p1udt23lv),25,yes,0.00,0.00,56.5,97.2,0.0,64.13,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.2% (SIM, lowest first)"
+865,p1ulv56186,Home 0881,tr(r:p1udt23781-p1udt23781lv),25,yes,0.00,0.00,51.4,97.2,0.0,63.98,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.2% (SIM, lowest first)"
+866,p1ulv43024,Home 0688,tr(r:p1udt21146-p1udt21146lv),25,yes,0.00,0.00,35.3,97.2,0.0,64.62,0.1,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.2% (SIM, lowest first)"
+867,p1ulv27893,Home 0453,tr(r:p1udt2422-p1udt2422lv),50,yes,0.00,0.00,79.2,97.2,0.0,63.86,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.2% (SIM, lowest first)"
+868,p1ulv34252,Home 0542,tr(r:p1udt2422-p1udt2422lv),50,yes,0.00,0.00,79.2,97.2,0.0,63.86,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0453
+869,p1ulv33603,Home 0532,tr(r:p1udt16613-p1udt16613lv),50,yes,0.00,0.00,84.8,97.3,0.0,63.92,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.3% (SIM, lowest first)"
+870,p1ulv36775,Home 0587,tr(r:p1udt16613-p1udt16613lv),50,yes,0.00,0.00,84.8,97.3,0.0,63.92,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0532
+871,p1ulv8888,Home 0164,tr(r:p1udt7445-p1udt7445lv),75,yes,0.00,0.00,74.8,97.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.3% (SIM, lowest first)"
+872,p1ulv19626,Home 0318,tr(r:p1udt7445-p1udt7445lv),75,yes,0.00,0.00,74.8,97.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0164
+873,p1ulv42407,Home 0666,tr(r:p1udt7445-p1udt7445lv),75,yes,0.00,0.00,74.8,97.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0164
+874,p1ulv43025,Home 0689,tr(r:p1udt7445-p1udt7445lv),75,yes,0.00,0.00,74.8,97.3,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0164
+875,p1ulv4473,Home 0092,tr(r:p1udt4085-p1udt4085lv),50,yes,0.00,0.00,70.4,97.3,0.0,63.73,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.3% (SIM, lowest first)"
+876,p1ulv17027,Home 0290,tr(r:p1udt4085-p1udt4085lv),50,yes,0.00,0.00,70.4,97.3,0.0,63.73,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0092
+877,p1ulv19615,Home 0314,tr(r:p1udt13526-p1udt13526lv),25,yes,0.00,0.00,97.3,97.3,0.0,61.76,0.2,0.01,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.3% (SIM, lowest first)"
+878,p1ulv4456,Home 0086,tr(r:p1udt4070-p1udt4070lv),50,yes,0.00,0.00,79.5,97.3,0.0,63.99,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.3% (SIM, lowest first)"
+879,p1ulv32268,Home 0518,tr(r:p1udt4070-p1udt4070lv),50,yes,0.00,0.00,79.5,97.3,0.0,63.99,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0086
+880,p1ulv43010,Home 0684,tr(r:p1udt4070-p1udt4070lv),50,yes,0.00,0.00,79.5,97.3,0.0,63.99,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0086
+881,p1ulv28530,Home 0462,tr(r:p1udt17067-p1udt17067lv),50,yes,0.00,0.00,79.8,97.3,0.0,63.91,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.3% (SIM, lowest first)"
+882,p1ulv37403,Home 0598,tr(r:p1udt17067-p1udt17067lv),50,yes,0.00,0.00,79.8,97.3,0.0,63.91,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0462
+883,p1ulv3866,Home 0074,tr(r:p1udt3582-p1udt3582lv),50,yes,0.00,0.00,79.0,97.3,0.0,63.93,0.1,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.3% (SIM, lowest first)"
+884,p1ulv48711,Home 0765,tr(r:p1udt3582-p1udt3582lv),50,yes,0.00,0.00,79.0,97.3,0.0,63.93,0.1,0.00,no,yes,screening (surrogate),same transformer as Home 0074
+885,p1ulv22139,Home 0357,tr(r:p1udt14635-p1udt14635lv),50,yes,0.00,0.00,97.4,97.4,0.0,65.58,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.4% (SIM, lowest first)"
+886,p1ulv1963,Home 0039,tr(r:p1udt1871-p1udt1871lv),25,yes,0.00,0.00,31.3,97.4,0.0,63.63,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.4% (SIM, lowest first)"
+887,p1ulv25330,Home 0413,tr(r:p1udt15903-p1udt15903lv),50,yes,0.00,0.00,75.7,97.4,0.0,63.66,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.4% (SIM, lowest first)"
+888,p1ulv16368,Home 0281,tr(r:p1udt11892-p1udt11892lv),25,yes,0.00,0.00,78.9,97.5,0.0,65.00,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.5% (SIM, lowest first)"
+889,p1ulv20897,Home 0340,tr(r:p1udt11892-p1udt11892lv),25,yes,0.00,0.00,78.9,97.5,0.0,65.00,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0281
+890,p1ulv44336,Home 0708,tr(r:p1udt6081-p1udt6081lv),50,yes,0.00,0.00,97.5,97.5,0.0,65.08,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.5% (SIM, lowest first)"
+891,p1ulv11995,Home 0216,tr(r:p1udt9414-p1udt9414lv),50,yes,0.00,0.00,79.5,97.5,0.0,63.94,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.5% (SIM, lowest first)"
+892,p1ulv49931,Home 0781,tr(r:p1udt9414-p1udt9414lv),50,yes,0.00,0.00,79.5,97.5,0.0,63.94,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0216
+893,p1ulv37391,Home 0592,tr(r:p1udt15899-p1udt15899lv),50,yes,0.00,0.00,82.3,97.6,0.0,64.25,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.6% (SIM, lowest first)"
+894,p1ulv47471,Home 0746,tr(r:p1udt15899-p1udt15899lv),50,yes,0.00,0.00,82.3,97.6,0.0,64.25,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0592
+895,p1ulv17013,Home 0284,tr(r:p1udt12240-p1udt12240lv),50,yes,0.00,0.00,84.9,97.7,0.0,63.97,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.7% (SIM, lowest first)"
+896,p1ulv39916,Home 0630,tr(r:p1udt12240-p1udt12240lv),50,yes,0.00,0.00,84.9,97.7,0.0,63.97,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0284
+897,p1ulv54999,Home 0862,tr(r:p1udt23540-p1udt23540lv),25,yes,0.00,0.00,41.3,97.9,0.0,63.63,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 97.9% (SIM, lowest first)"
+898,p1ulv6394,Home 0132,tr(r:p1udt1256-p1udt1256lv),75,yes,0.00,0.00,98.0,98.0,0.0,65.10,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 98.0% (SIM, lowest first)"
+899,p1ulv39297,Home 0628,tr(r:p1udt1256-p1udt1256lv),75,yes,0.00,0.00,98.0,98.0,0.0,65.10,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0132
+900,p1ulv55601,Home 0872,tr(r:p1udt1256-p1udt1256lv),75,yes,0.00,0.00,98.0,98.0,0.0,65.10,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0132
+901,p1ulv64227,Home 1004,tr(r:p1udt1256-p1udt1256lv),75,yes,0.00,0.00,98.0,98.0,0.0,65.10,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0132
+902,p1ulv2561,Home 0043,tr(r:p1udt2420-p1udt2420lv),75,yes,0.00,0.00,71.6,98.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 98.0% (SIM, lowest first)"
+903,p1ulv20884,Home 0334,tr(r:p1udt2420-p1udt2420lv),75,yes,0.00,0.00,71.6,98.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0043
+904,p1ulv50545,Home 0786,tr(r:p1udt2420-p1udt2420lv),75,yes,0.00,0.00,71.6,98.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0043
+905,p1ulv63560,Home 0989,tr(r:p1udt2420-p1udt2420lv),75,yes,0.00,0.00,71.6,98.0,0.0,63.63,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0043
+906,p1ulv21539,Home 0349,tr(r:p1udt5084-p1udt5084lv),50,yes,0.00,0.00,98.0,98.0,0.0,65.78,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 98.0% (SIM, lowest first)"
+907,p1ulv21545,Home 0355,tr(r:p1udt14385-p1udt14385lv),50,yes,0.00,0.00,82.4,98.5,0.0,64.01,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 98.5% (SIM, lowest first)"
+908,p1ulv32291,Home 0527,tr(r:p1udt14385-p1udt14385lv),50,yes,0.00,0.00,82.4,98.5,0.0,64.01,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0355
+909,p1ulv60421,Home 0944,tr(r:p1udt24532-p1udt24532lv),25,yes,0.00,0.00,64.0,99.1,0.0,63.71,0.0,0.00,no,no,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 99.1% (SIM, lowest first)"
+910,p1ulv41778,Home 0662,tr(r:p1udt3039-p1udt3039lv),50,yes,0.00,0.00,86.2,99.6,0.0,64.17,0.0,0.00,no,yes,screening (surrogate),"no stress to relieve; no new violation; month peak with the battery 99.6% (SIM, lowest first)"
+911,p1ulv64226,Home 1003,tr(r:p1udt3039-p1udt3039lv),50,yes,0.00,0.00,86.2,99.6,0.0,64.17,0.0,0.00,no,yes,screening (surrogate),same transformer as Home 0662
