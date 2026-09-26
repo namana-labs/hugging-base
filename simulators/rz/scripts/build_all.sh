@@ -4,13 +4,12 @@
 #   targets: topology fixtures (light, no lock) | p1 p2 referee calibrate chaos history (heavy: lockf + nice inside) | all
 #   history (round 2, L2's sim.history): the real ERCOT evenings under ui/data/p1/days/ (+ index, calendar); not in all
 #   all = topology fixtures p1 p2 referee (chaos is not in all: sim.verify p1 --rebuild already rebuilds and byte-compares p1/chaos.json)
-# Heavy targets take the shared heavy-run lock unless HB_LOCK_HELD=1 (check_all.sh --full holds it once).
+# Heavy targets take the heavy-run lock ($HB_LOCK, scripts/_env.sh) unless HB_LOCK_HELD=1 (check_all.sh --full holds it once).
+# Runs from this folder (simulators/rz) only; PY defaults to $HB_VENV/bin/python (default .venv/).
 # A target whose module is not on this branch prints "BUILD <t>: SKIP (...)". Gate on the final "BUILD: PASS" line.
 set -u
-ROOT="$(git rev-parse --show-toplevel)" || exit 2
+. "$(dirname "$0")/_env.sh"
 cd "$ROOT"
-PY="${PY:-$HOME/hb-overnight/.venv/bin/python}"
-LOCK="${HB_LOCK:-/private/tmp/claude-501/forge-heavy-local.lock}"
 QUICK=()
 TARGETS=()
 for a in "$@"; do
@@ -36,7 +35,7 @@ for t in "${TARGETS[@]}"; do
   if [ ! -f "$file" ]; then echo "BUILD $t: SKIP ($file not on this branch)"; continue; fi
   start=$(date +%s)
   if heavy "$t" && [ -z "${QUICK[*]:-}" ] && [ "${HB_LOCK_HELD:-0}" != "1" ]; then
-    lockf -k -t 2400 "$LOCK" nice -n 10 "$PY" -m "$mod" ${QUICK[@]+"${QUICK[@]}"}
+    hb_heavy nice -n 10 "$PY" -m "$mod" ${QUICK[@]+"${QUICK[@]}"}
   else
     nice -n 10 "$PY" -m "$mod" ${QUICK[@]+"${QUICK[@]}"}
   fi

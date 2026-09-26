@@ -12,7 +12,7 @@ branches (none, naive, aware; the failure script is tuned to 23 Aug, HIST-R2 D2)
     python -m sim.history                   # every day in DAYS + index + calendar (heavy: ~15 s CPU a day; take the lock)
     python -m sim.history --only 2026-07-22 # one day (+ index + calendar)
     python -m sim.history --calendar-only   # calendar + index from the metas on disk (1-2 s)
-    python -m sim.history --quick           # calendar + a 60-step day into ~/hb-overnight/tmp/hist-quick (no lock)
+    python -m sim.history --quick           # calendar + a 60-step day into $HB_TMP/hist-quick (no lock)
     python -m sim.history --out DIR         # write days/ somewhere else (verify --days --rebuild uses this)
 
 Loads: SMART-DS 2018 on the same calendar date (LOAD_PAIRING, ASSUMPTION). August 2026 evenings read the committed
@@ -37,15 +37,15 @@ import numpy as np
 
 from .constants import (const, export, P1_DAY, SOC0, RESERVE_FLOOR, CORE_USABLE_KWH, CORE_RTE, CORE_POWER_KW,
                         FLEET_SIZE)
-from .contracts import ROOT, envelope, inputs_sha, labelled, dumps, write_json
+from .contracts import ROOT, TMP, CACHE_DIR, envelope, inputs_sha, labelled, dumps, write_json
 from .prices import onset_d26, discharge_plan, price_at, load as load_prices
 
 OUT = ROOT / "ui" / "data" / "p1"
 DAYS_DIR = OUT / "days"
 SLICES = ROOT / "data" / "profiles" / "days"
 AUG_NPZ = ROOT / "data" / "profiles" / "smartds_2018_aug.npz"
-CACHE = Path.home() / "hb-overnight" / "cache" / "smartds"
-QUICK_OUT = Path.home() / "hb-overnight" / "tmp" / "hist-quick"
+CACHE = CACHE_DIR / "smartds"                 # HB_CACHE (default .cache/), filled by scripts/fetch_profiles.py
+QUICK_OUT = TMP / "hist-quick"
 SLICE_STEPS = 120                    # 30 h of 15-min steps from <date> 00:00: covers 16:00 -> 04:00 (+ interpolation)
 HIST_BRANCHES = ("none", "naive", "aware")
 FMT = "%Y-%m-%dT%H:%M"
@@ -435,7 +435,7 @@ def write_index_and_calendar(root=OUT):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--quick", action="store_true", help="calendar + one 60-step day into ~/hb-overnight/tmp/hist-quick")
+    ap.add_argument("--quick", action="store_true", help="calendar + one 60-step day into $HB_TMP/hist-quick (default .tmp/)")
     ap.add_argument("--only", default=None, help="build one day (YYYY-MM-DD)")
     ap.add_argument("--calendar-only", action="store_true", help="index + calendar from the metas on disk")
     ap.add_argument("--out", default=None, help="the p1 data root to write into (default ui/data/p1)")

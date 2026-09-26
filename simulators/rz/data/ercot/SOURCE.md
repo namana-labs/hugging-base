@@ -6,3 +6,9 @@
 - **Clock (hour-ending):** ERCOT's `hour` is hour-ending 1-24, so **interval start = (hour-1)*60 + (interval-1)*15 minutes** after local midnight of `date`. Unit test: 08/23 hour 22 interval 1 = 21:00-21:15 = $566.42 (`sim/tests/test_prices.py`). This matches four-home's `price_for_step()`.
 - **Use:** replayed from this file only. **No live ERCOT calls anywhere** in the app. ERCOT data may be redistributed in analyses; ERCOT's logo may not be used.
 - **Label:** REAL. Derived quantities (the D-26 onset, the discharge plan, cliffs) are DERIVED and computed in `sim/prices.py`.
+
+# ERCOT system demand, 25 Sep 2026 (REAL): `demand_2026-09-25.csv`
+
+- **What:** ERCOT's 5-minute system demand for 25 Sep 2026 (the supply-demand dashboard, published 2026-09-25 22:45 -05:00), the only ERCOT demand series in the repo. It is the ERCOT rung of P1's scale ladder (`sim/money.py` `ercot_demand()`: the day's peak 5-min demand).
+- **This file** is a byte copy of `four-home-simulation/data/demand_2026-09-25.csv` (Michael's folder, commit 4bcca51; provenance in `four-home-simulation/data/four_home_provenance.json`), sha256 `cfc8eece0d96552847b473137300f53e56d7e4d9c80bb1fe439caa4b3af0df7f`. It was copied into `simulators/rz` so this folder never reads another team member's folder. The committed data still names the original path as its source.
+- **Label:** REAL (ERCOT). The ladder's shares built from it are DERIVED.

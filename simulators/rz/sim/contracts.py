@@ -22,6 +22,7 @@ Also the helpers every producer uses: envelope(), write_json(), write_json_gz(),
 import gzip
 import hashlib
 import json
+import os
 import re
 import sys
 from functools import lru_cache
@@ -30,6 +31,10 @@ from pathlib import Path
 from .constants import LABELS, DATA_BUDGET_MB, DATA_FILE_CAP_MB
 
 ROOT = Path(__file__).resolve().parents[1]
+# simulators/rz runs from its own folder: quick-run output goes under HB_TMP (default <folder>/.tmp) and fetched public
+# files are cached under HB_CACHE (default <folder>/.cache). Both defaults are gitignored.
+TMP = Path(os.environ.get("HB_TMP") or ROOT / ".tmp")
+CACHE_DIR = Path(os.environ.get("HB_CACHE") or ROOT / ".cache")
 UI_DATA = ROOT / "ui" / "data"
 PRICES_CSV = ROOT / "data" / "ercot" / "lz_north_2026.csv"
 LOADS_NPZ = ROOT / "data" / "profiles" / "smartds_2018_aug.npz"

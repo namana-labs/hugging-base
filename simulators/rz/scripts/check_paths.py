@@ -3,9 +3,10 @@
 
     python3 scripts/check_paths.py --lane <id> [--base <ref>]
 
-Compares HEAD with the merge-base of HEAD and origin/main (or --base). Every changed path must match one of the
-lane's "owns" globs; for l0-foundation a path matching "stubs" is allowed only when the branch ADDS it.
-Never allowed for any lane: teammates' folders and the existing docs (build prompt 8.6).
+Compares HEAD with the merge-base of HEAD and origin/main (or --base). In simulators/rz every lane glob is relative to
+this folder: a changed path inside it must match one of the lane's "owns" globs (for l0-foundation a path matching
+"stubs" is allowed only when the branch ADDS it). Never allowed for any lane: any path outside this folder (teammates'
+folders, the root app, the team docs; build prompt 8.6).
 Ends with one line: "PATHS: PASS (...)" or "PATHS: FAIL (...)".
 """
 import argparse
@@ -15,10 +16,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-FORBIDDEN = ["demos/**", "four-home-simulation/**", "docs/headroom/**", "headroom-gridspine-dossier.html",
-             "docs/{design,plan,ui-brief,reconciliation,research-report}.md",
-             # round 2 (RZ ruling 26 Sep): never edit Connor's folders or the design handoff he owns
-             "simulators/**", "docs/design-handoff/**", ".claude/skills/**"]
+FOLDER = Path(__file__).resolve().parents[1]          # simulators/rz: lane globs are relative to it
 
 
 def glob_re(pat):
@@ -60,8 +58,9 @@ def main():
     ap.add_argument("--lane", required=True)
     ap.add_argument("--base", default=None)
     a = ap.parse_args()
-    root = git("rev-parse", "--show-toplevel", cwd=".").strip()
-    lanes = json.loads(Path(root, "scripts", "lanes.json").read_text())
+    root = git("rev-parse", "--show-toplevel", cwd=FOLDER).strip()
+    prefix = git("rev-parse", "--show-prefix", cwd=FOLDER).strip()        # "simulators/rz/" in the team repo
+    lanes = json.loads((FOLDER / "scripts" / "lanes.json").read_text())
     if a.lane not in lanes or a.lane.startswith("_"):
         print(f"PATHS: FAIL (unknown lane {a.lane!r}; known: {', '.join(k for k in lanes if not k.startswith('_'))})")
         return 1
@@ -73,9 +72,11 @@ def main():
     for row in rows:
         status, path = row.split("\t", 1)
         n += 1
-        if matches(path, FORBIDDEN):
-            bad.append(f"{path} (forbidden for every lane)")
-        elif matches(path, lane["owns"]):
+        if not path.startswith(prefix):
+            bad.append(f"{path} (outside {prefix or 'this folder'}: forbidden for every lane)")
+            continue
+        path = path[len(prefix):]
+        if matches(path, lane["owns"]):
             continue
         elif status.startswith("A") and matches(path, lane.get("stubs", [])):
             continue

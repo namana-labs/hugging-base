@@ -924,6 +924,14 @@ const STORIES = [
 /** Adopt #5 (TEAMMATES_REVIEW, RZ's list): honest caveats on the teammate cards, in OUR copy only; their folders are
  *  untouched. Numbers are facts about their code, read and re-run by our review, each with its source. */
 const PROTO_CAVEAT = (fmt) => `Caveats from our review: its battery loads run at ${fmt.fmtHTML({ v: 0.88, label: 'REAL', cite: "read from the prototype's battery() (it writes kW only, so OpenDSS applies pf 0.88); overnight/REVIEW-connor-proto.md W1" }, { digits: 2 })} power factor, so its voltage sag and trade-off figures are artefacts (at unity power factor the naive rebound shows no voltage violation); its detector has a privileged voltage baseline and is keyed to a fixed ${fmt.fmtHTML({ v: 350, label: 'REAL', cite: 'build_replays.py:69, the fixed alternating attack wave; overnight/REVIEW-connor-proto.md W3' }, { unit: ' W', digits: 0 })} alternating wave. Connor's newer simulator (simulators/connor) fixes the power factor.`;
+// The teammates' apps live at the repo root, not in simulators/rz. Served from the repo root (the app at
+// /simulators/rz/ui/) they are three folders up; served from this folder alone (run.sh) they are not on the server,
+// so the link opens them in the team repo instead.
+const TEAM_REPO = 'https://github.com/namana-labs/hugging-base/tree/main/';
+export function teamHref(path, pathname = (typeof location !== 'undefined' ? location.pathname : '')) {
+  const i = pathname.indexOf('/simulators/rz/ui/');
+  return i >= 0 ? pathname.slice(0, i + 1) + path : TEAM_REPO + path;
+}
 const FOURHOME_CAVEAT = (fmt) => `Caveat from our review: its frequency figure uses the retired ${fmt.fmtHTML({ v: '3–5 mHz', label: 'DERIVED', cite: 'four_home_constants.py:73-74 F_SENS 0.075/0.12 mHz/MW x a 40 MW swing; the team corrected it to 3-17 mHz on 26 Sep (docs/research-report.md:308-318)' })} band for a thousand-battery swing, and its naive branch is not labelled an assumption.`;
 
 async function chaosCard(ctx) {
@@ -1098,9 +1106,9 @@ export async function mount(el, ctx) {
     <div class="hb-cards more-mid">${plugInCard(ctx, S)}${engineCard(ctx, S)}</div>
     <h2 class="more-h">Everything that already worked, unchanged</h2>
     <div class="hb-cards">
-      ${STORIES.map(([t, d]) => `<div class="hb-card"><h3><a href="../demos/grid-stories/ui/dist/">${esc(t)}</a></h3><div class="hb-sub">${esc(d)} Pick it in the prototype's story menu. Connor's prototype, unchanged; its prices and loads are scripted.</div></div>`).join('')}
+      ${STORIES.map(([t, d]) => `<div class="hb-card"><h3><a href="${teamHref('demos/grid-stories/ui/dist/')}">${esc(t)}</a></h3><div class="hb-sub">${esc(d)} Pick it in the prototype's story menu. Connor's prototype, unchanged; its prices and loads are scripted.</div></div>`).join('')}
       <div class="hb-card more-caveat"><h3>${svg('info', { size: 16 })} Before you quote the prototype</h3><div class="hb-sub">${PROTO_CAVEAT(fmt)}</div></div>
-      <div class="hb-card"><h3><a href="../four-home-simulation/four-home.html">Four-home simulation</a></h3><div class="hb-sub">Michael's four-home model on real prices, unchanged. ${FOURHOME_CAVEAT(fmt)}</div></div>
+      <div class="hb-card"><h3><a href="${teamHref('four-home-simulation/four-home.html')}">Four-home simulation</a></h3><div class="hb-sub">Michael's four-home model on real prices, unchanged. ${FOURHOME_CAVEAT(fmt)}</div></div>
       ${await chaosCard(ctx)}
     </div>
     ${await emsCards(ctx)}</div>`;

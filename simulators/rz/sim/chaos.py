@@ -2,7 +2,7 @@
 
     python -m sim.chaos             # CHAOS_RUNS (50) runs of the full P1 evening -> ui/data/p1/chaos.json
                                     # heavy (~50 x 721 OpenDSS solves, about 3 min): run it under the shared lock
-    python -m sim.chaos --quick     # CHAOS_QUICK_RUNS (3) runs on 22:00-23:00 -> ~/hb-overnight/tmp/p1-chaos-quick
+    python -m sim.chaos --quick     # CHAOS_QUICK_RUNS (3) runs on 22:00-23:00 -> $HB_TMP/p1-chaos-quick (default .tmp/)
                                     # (under 20 s, no lock)
     python -m sim.chaos --out DIR   # write somewhere else (sim.verify p1 --rebuild uses this)
 
@@ -31,7 +31,7 @@ import numpy as np
 
 from .constants import (const, TAG, EV_KW, HOT_MINUTES, MIN_GRANT_KW, MIN_DWELL_MIN, TIER_AMBER_PCT,
                         TIER_EMERGENCY_PCT, RESERVE_FLOOR, P1_STEP_SECONDS)
-from .contracts import envelope, inputs_sha, labelled, write_json
+from .contracts import TMP, envelope, inputs_sha, labelled, write_json
 from .p1_build import (OUT, Window, Scenario, run_branch, summarize, hhmm, constants_block, LOADS_TEXT)
 
 CHAOS_RUNS = const("CHAOS_RUNS", 50, "ASSUMPTION", "build prompt 5.7 item 2: the P1 evening runs 50 times")
@@ -44,7 +44,7 @@ CHAOS_HOT_POOL = const("CHAOS_HOT_POOL", "a transformer hosting at least one fle
                        "build prompt 5.7 item 2 ('one hot transformer'); the controller only acts where batteries are")
 CHAOS_WINDOW = const("CHAOS_WINDOW", "each event starts at a uniform minute in [Tc, Tend] of the unfaulted aware run",
                      "ASSUMPTION", "Tc = first minute aware grants charge (build prompt 5.4.4); Tend = the last one")
-QUICK_OUT = Path.home() / "hb-overnight" / "tmp" / "p1-chaos-quick"
+QUICK_OUT = TMP / "p1-chaos-quick"
 FAULT_CONSTANTS = ("CHAOS_RUNS", "CHAOS_SEED", "CHAOS_SILENT", "CHAOS_STALL", "CHAOS_HOT_POOL", "CHAOS_WINDOW",
                    "EV_KW", "HOT_MINUTES", "COMMAND_TTL_S", "COMMS_STALE_S", "AWARE_MARGIN", "MIN_DWELL_MIN",
                    "MIN_GRANT_KW", "RESERVE_FLOOR", "SOC0", "CORE_POWER_KW", "CORE_USABLE_KWH", "CORE_RTE",

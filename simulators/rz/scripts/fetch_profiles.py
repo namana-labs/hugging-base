@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Fetch the SMART-DS 2018 AUS P1U load shapes and build the committed August slice.
 
-    python3 scripts/fetch_profiles.py [--dss data/smartds/Loads.dss] [--cache ~/hb-overnight/cache/smartds]
+    python3 scripts/fetch_profiles.py [--dss data/smartds/Loads.dss] [--cache $HB_CACHE/smartds (default .cache/smartds)]
                                       [--fetch-only | --build-only] [--jobs 8]
 
 Fetch: every `yearly=` kW shape named in Loads.dss (254) and its kvar twin (`_kw_` -> `_kvar_`), from the
@@ -27,7 +27,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 URL = 'https://oedi-data-lake.s3.amazonaws.com/SMART-DS/v1.0/2018/AUS/P1U/profiles/{name}.csv'
-DEFAULT_CACHE = Path.home() / 'hb-overnight' / 'cache' / 'smartds'
+DEFAULT_CACHE = Path(os.environ.get('HB_CACHE') or ROOT / '.cache') / 'smartds'   # gitignored
 OUT = ROOT / 'data' / 'profiles' / 'smartds_2018_aug.npz'
 SOURCE_MD = ROOT / 'data' / 'profiles' / 'SOURCE.md'
 YEAR_STEPS = 35040            # 365 days x 96 intervals, 2018
@@ -192,7 +192,7 @@ def write_source(dss_path, rows, kw_names, kvar_names, kw_ok, kvar_ok, manifest,
         f'- **URL pattern:** `{URL}`',
         f'- **Names:** every `yearly=` shape in `{rel}` ({len(kw_names)} kW shapes over {len(rows)} load objects); '
         'each kvar shape is the kW name with `_kw_` replaced by `_kvar_`.',
-        f'- **Fetched by:** `python3 scripts/fetch_profiles.py` (curl -fsS --retry 3, 8 in parallel, cached in `~/hb-overnight/cache/smartds/`, never committed).',
+        f'- **Fetched by:** `python3 scripts/fetch_profiles.py` (curl -fsS --retry 3, 8 in parallel, cached in `$HB_CACHE/smartds/` (default `.cache/smartds/`), never committed).',
         f'- **Counts:** kW {int(kw_ok.sum())}/{len(kw_names)}, kvar {int(kvar_ok.sum())}/{len(kvar_names)}.',
         f'- **Slice:** `smartds_2018_aug.npz`, float32, {N_STEPS} steps x 15 min from 2018 index {AUG1_STEP} '
         '(2018-08-01 00:00) to 2018-09-01 06:00. The reported month is the first 2,976 steps; the last 24 exist only so the '

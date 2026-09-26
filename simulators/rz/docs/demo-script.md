@@ -6,7 +6,7 @@ RZ records by clicking; no terminal on screen. Each beat is **one deep link**. I
 
 ## Before you record
 
-1. `scripts/serve.sh`, then open http://127.0.0.1:8765/ui/?view=more at 1920 x 1080.
+1. From `simulators/rz/`: `./run.sh` (or `scripts/serve.sh`), then open http://127.0.0.1:8765/ui/?view=more at 1920 x 1080. (Served from the repo root instead, the base is http://127.0.0.1:8765/simulators/rz/ui/.)
 2. The More tab lists every beat with its headline (open "Caption" for the full text). Click through once:
    - **no yellow FIXTURE banner** on any beat;
    - **no "(not built yet)"** in anything you plan to read (a clause whose data is not built is left out, never guessed);
@@ -26,7 +26,7 @@ RZ records by clicking; no terminal on screen. Each beat is **one deep link**. I
 
 ## The beats
 
-Base URL: `http://127.0.0.1:8765/ui/`
+Base URL: `http://127.0.0.1:8765/ui/` (`simulators/rz/run.sh`; from a server rooted at the repo root: `http://127.0.0.1:8765/simulators/rz/ui/`)
 
 | Clock | Beat (`id`) | Link | On screen | Say (the headline and caption carry the numbers) |
 |---|---|---|---|---|

@@ -1,5 +1,5 @@
 {
-  "_doc": "Path ownership per lane (build prompt 5.1 and 6). scripts/check_paths.py --lane <id> fails a branch that touches a path outside its lane's 'owns'. 'stubs' (l0-foundation only) may be ADDED by the lead once, then belong to the lane named in docs/contracts.md. 'smoke' = the deeplinks.txt groups smoke_ui.sh --lane runs (plus canary). Globs: * stays inside one directory, ** crosses directories, {a,b} alternates.",
+  "_doc": "simulators/rz: every glob below is relative to this folder, and any path outside it fails every lane. Path ownership per lane (build prompt 5.1 and 6). scripts/check_paths.py --lane <id> fails a branch that touches a path outside its lane's 'owns'. 'stubs' (l0-foundation only) may be ADDED by the lead once, then belong to the lane named in docs/contracts.md. 'smoke' = the deeplinks.txt groups smoke_ui.sh --lane runs (plus canary). Globs: * stays inside one directory, ** crosses directories, {a,b} alternates.",
   "l0-foundation": {
     "owns": [
       "CLAUDE.md", "README.md", "requirements.txt", ".gitignore", "docs/README.md",

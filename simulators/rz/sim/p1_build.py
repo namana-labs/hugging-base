@@ -9,7 +9,7 @@
   aware_faults  aware plus the three failures of 5.4.4 at Tc+15 (comms loss), Tc+35 (C runs hot), Tc+55 (stall)
 
     python -m sim.p1_build                 # the full build: writes ui/data/p1/{meta,none,naive,aware,aware_faults}.json
-    python -m sim.p1_build --quick         # 60 steps, 22:00-23:00, to ~/hb-overnight/tmp/p1-quick (under 20 s, no lock)
+    python -m sim.p1_build --quick         # 60 steps, 22:00-23:00, to $HB_TMP/p1-quick (default .tmp/; under 20 s, no lock)
     python -m sim.p1_build --out DIR       # write somewhere else (verify --rebuild uses this)
     python -m sim.p1_build --dwell N --out DIR   # MIN_DWELL_MIN override (the judge's check); the envelope exports N
 
@@ -34,7 +34,7 @@ from .constants import (export, P1_DAY, P1_START, P1_STEPS, P1_STEP_SECONDS, P1_
                         MIN_GRANT_KW, MIN_DWELL_MIN, TIER_AMBER_PCT, TIER_NORMAL_PCT, TIER_EMERGENCY_PCT, FUSE_PCT,
                         FUSE_MINUTES, FUSE_INSTANT_PCT, FUSE_INSTANT_SECONDS, CONTROLLER_VIEW, HEAD_RATING_A,
                         HEAD_RATING_KVA, TAG)
-from .contracts import envelope, inputs_sha, labelled, write_json
+from .contracts import TMP, envelope, inputs_sha, labelled, write_json
 from .devices import Battery, Device, CLASSES, discharge_limit
 from .feeder import Feeder, ROOT
 from .money import (energy_value_usd, money_block, ercot_demand, scale_ladder, ERCOT_DEMAND_REL, split_block, cash_cents,
@@ -45,7 +45,7 @@ from .tiers import tier_codes, tier_strings, normal_events, protection_events
 from .history import story_for             # the day chip's story line (tag + why), formatted from the meta
 
 OUT = ROOT / "ui" / "data" / "p1"
-QUICK_OUT = Path.home() / "hb-overnight" / "tmp" / "p1-quick"
+QUICK_OUT = TMP / "p1-quick"
 TIMING = ROOT / "data" / "cache" / "p1_build_timing.json"
 BRANCHES = ("none", "naive", "aware", "aware_faults")
 # lane L0's round-2 constants, exported by the meta once they exist in sim.constants (RZ adopt-now #2; audit L2)
@@ -837,7 +837,7 @@ def assemble(sc, runs, tc, faults, solves, dwell=MIN_DWELL_MIN, inputs=None):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--quick", action="store_true", help="60 steps from 22:00, to ~/hb-overnight/tmp/p1-quick")
+    ap.add_argument("--quick", action="store_true", help="60 steps from 22:00, to $HB_TMP/p1-quick (default .tmp/)")
     ap.add_argument("--out", default=None)
     ap.add_argument("--dwell", type=int, default=MIN_DWELL_MIN, help="MIN_DWELL_MIN override (the judge's check)")
     a = ap.parse_args(argv)

@@ -7,7 +7,7 @@
 
 Fetch (build prompt 8.2, approved scope): one Overpass query, `way["building"]` in the feeder's bounding box,
 `out geom`, with a User-Agent (Overpass answers HTTP 406 without one). The raw answer (~2.7 MB) stays in
-~/hb-overnight/cache/osm_buildings.json and is never committed.
+$HB_CACHE/osm_buildings.json (default .cache/) and is never committed.
 
 Match: each home's SMART-DS coordinate (ui/data/topology.json) against each footprint's area centroid.
 Every (home, footprint) pair within FOOTPRINT_MATCH_M = 25 m is a candidate; candidates are taken greedily
@@ -27,6 +27,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -37,7 +38,7 @@ sys.path.insert(0, str(ROOT))
 from sim.constants import const, export, FOOTPRINT_MISSING_M  # noqa: E402
 from sim.contracts import envelope, inputs_sha, write_json  # noqa: E402
 
-CACHE = Path.home() / "hb-overnight" / "cache" / "osm_buildings.json"
+CACHE = Path(os.environ.get("HB_CACHE") or ROOT / ".cache") / "osm_buildings.json"   # gitignored
 TOPOLOGY = ROOT / "ui" / "data" / "topology.json"
 OUT = ROOT / "ui" / "data" / "footprints.json"
 SOURCE_MD = ROOT / "data" / "footprints" / "SOURCE.md"
@@ -189,7 +190,7 @@ def build(cache):
     SOURCE_MD.write_text(f"""# OSM building footprints (L4)
 
 Written by `scripts/fetch_footprints.py`. Only `ui/data/footprints.json` and this file are committed; the raw
-Overpass answer stays in `~/hb-overnight/cache/osm_buildings.json`.
+Overpass answer stays in `$HB_CACHE/osm_buildings.json` (default `.cache/`).
 
 | Item | Value |
 |---|---|

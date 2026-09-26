@@ -2,7 +2,7 @@
 on this (shared) machine, not a simulation output (audit L4); the load average while measuring goes in the cites.
 
     python -m sim.bench            # about 10-20 s: OpenDSS per-step timing on the P1 evening, allocate() scale test
-    python -m sim.bench --quick    # fewer repeats, writes to ~/hb-overnight/tmp/engine-quick.json
+    python -m sim.bench --quick    # fewer repeats, writes to $HB_TMP/engine-quick.json (default .tmp/)
     python -m sim.bench --relabel  # rewrite the committed engine.json's labels and cites without re-measuring
 
 - OpenDSS: ms per solve (solve alone) and ms per P1 step (set 2,021 loads + 96 batteries + solve + readout), measured
@@ -25,12 +25,12 @@ from pathlib import Path
 import numpy as np
 
 from .constants import export
-from .contracts import envelope, inputs_sha, labelled, write_json
+from .contracts import TMP, envelope, inputs_sha, labelled, write_json
 from .feeder import ROOT
 from .orchestrator import allocate
 
 OUT = ROOT / "ui" / "data" / "engine.json"
-QUICK_OUT = Path.home() / "hb-overnight" / "tmp" / "engine-quick.json"
+QUICK_OUT = TMP / "engine-quick.json"
 TIMING = ROOT / "data" / "cache" / "p1_build_timing.json"
 SIZES = (96, 1000, 10000, 100000)
 

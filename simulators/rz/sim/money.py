@@ -136,8 +136,9 @@ def money_block(values, relief_kwh, peak_price, low_price, peak_t, low_t, fleet_
 
 
 # the scale ladder (build prompt 3.4): its ERCOT rung reads four-home's REAL demand CSV (read only, never edited)
-ERCOT_DEMAND_REL = "four-home-simulation/data/demand_2026-09-25.csv"
-ERCOT_DEMAND_CSV = ROOT / ERCOT_DEMAND_REL
+ERCOT_DEMAND_REL = "four-home-simulation/data/demand_2026-09-25.csv"   # where the file comes from (recorded in the data)
+# simulators/rz reads its own byte copy (same sha256; see data/ercot/SOURCE.md), so this folder never reads another
+ERCOT_DEMAND_CSV = ROOT / "data" / "ercot" / "demand_2026-09-25.csv"
 SCALE_LADDER_ERCOT = const(
     "SCALE_LADDER_ERCOT", "ERCOT's peak 5-min system demand on the day of four-home's demand CSV", "ASSUMPTION",
     f"{ERCOT_DEMAND_REL} (REAL, ERCOT supply-demand dashboard; four-home-simulation/data/four_home_provenance.json): the "

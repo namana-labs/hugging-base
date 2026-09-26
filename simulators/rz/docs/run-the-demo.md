@@ -2,16 +2,18 @@
 
 Hugging Base is a static web app. A Python simulator (`sim/`) wrote every number the page shows into committed JSON under `ui/data/`; the browser only reads those files. No server logic, no network at view time, no language model anywhere in the numbers.
 
-## Two commands
+## One command (from `simulators/rz/`)
 
 ```sh
-scripts/setup.sh     # once: checks (or creates) the Python venv; ends "SETUP: OK"
-scripts/serve.sh     # a plain static server from the repo root on port 8765
+cd simulators/rz
+./run.sh             # scripts/setup.sh (checks or creates .venv/; ends "SETUP: OK"), then scripts/serve.sh on port 8765
 ```
+
+Or the two steps by hand, from `simulators/rz/`: `scripts/setup.sh` once, then `scripts/serve.sh`. On RZ's machine, `HB_VENV=~/hb-overnight/.venv` reuses the existing venv.
 
 Open **http://127.0.0.1:8765/ui/**. Stop the server with Ctrl-C.
 
-`serve.sh` is only a file server (`python3 -m http.server`). Any static server rooted at the repo works; the page must be served from the **repo root** so that `/ui/`, `/demos/grid-stories/ui/dist/` and `/four-home-simulation/` resolve from one origin.
+`serve.sh` is only a file server (`python3 -m http.server`) rooted at **this folder** (`simulators/rz`). A static server rooted at the repo root also works: the app is then at `/simulators/rz/ui/`, and the More tab's links to the prototype and four-home open them from the same server. Served from this folder alone, those two links open the team repo instead.
 
 ## The three views
 
@@ -53,11 +55,12 @@ Combos: `policy` = `aware` or `naive`; `class` = `core` or `legacy`; `rule` = `d
 ## The gate (for builders)
 
 ```sh
-scripts/check_all.sh                  # unit tests, node tests, the untouched prototype's and four-home's tests,
-                                      # contracts, verifiers, and a 3-link browser smoke; ends "ALL CHECKS: PASS"
+scripts/check_all.sh                  # (from simulators/rz) unit tests, node tests, contracts, verifiers, and a
+                                      # 3-link browser smoke; ends "ALL CHECKS: PASS" (the prototype's and
+                                      # four-home's own tests run in the repo root's gate, not here)
 scripts/check_all.sh --full           # also rebuilds every artifact under the heavy-run lock and byte-compares
 node --test ui/test/*.test.js         # the UI tests alone (pass files: "node --test ui/test" fails on node 26)
 scripts/smoke_ui.sh p2                # headless Chrome over every P2 deep link (its own server on a free port)
 ```
 
-The prototype (`demos/grid-stories/`) and four-home (`four-home-simulation/`) are untouched and still run from the same server: http://127.0.0.1:8765/demos/grid-stories/ui/dist/ and http://127.0.0.1:8765/four-home-simulation/four-home.html.
+The prototype (`demos/grid-stories/`) and four-home (`four-home-simulation/`) live at the repo root, untouched. To see them next to this app, serve the repo root (`python3 -m http.server 8765 --directory <repo root>`): http://127.0.0.1:8765/simulators/rz/ui/, http://127.0.0.1:8765/demos/grid-stories/ui/dist/ and http://127.0.0.1:8765/four-home-simulation/four-home.html.
