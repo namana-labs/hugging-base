@@ -1,6 +1,6 @@
 ---
 name: hugging-base-design
-description: Hugging Base visual design system, the story-flow spec (levers, watch, result, room to grow) and the Chapter 1 (option 3a) control-room spec. Use before building or changing any Hugging Base UI (ui/, demos/grid-stories/ui/), a mock, a slide or any visual asset, or when choosing colours, type, spacing, motion, icons or UI copy.
+description: Hugging Base visual design system, the story-flow spec v2 (Configure, Run, Results, Learnings) and the Chapter 1 (option 3a) control-room spec. Use before building or changing any Hugging Base UI (ui/, demos/grid-stories/ui/), a mock, a slide or any visual asset, or when choosing colours, type, spacing, motion, icons or UI copy.
 user-invocable: true
 ---
 
@@ -13,7 +13,7 @@ Read, in order:
 1. `docs/design-handoff/README.md`: the spec. Layout, every component, interactions, state, tokens. Its values are final unless it says otherwise.
 2. `docs/design-handoff/design-system/readme.md`: brand, content rules, iconography.
 3. `docs/design-handoff/design-system/tokens/*.css` (imported by `styles.css`): use these custom properties; do not re-type hex values.
-4. `docs/design-handoff/story-flow/README.md`: the story-flow spec (1a Set the levers, 2b Watch it play, 3a Read the result, 4b Room to grow). For those screens it wins over the Chapter 1 spec. Screenshots are in `story-flow/screenshots/`; serve the folder over HTTP to open the `.dc.html` references.
+4. `docs/design-handoff/story-flow/README.md`: the story-flow spec v2 (1a Configure, 1b Running, 2b Run, 3a Results, 4b Learnings). For those screens it wins over the Chapter 1 spec. Serve the folder over HTTP to open the `.dc.html` references; v2 ships no screenshots.
 5. `docs/design-handoff/prototype/Hugging Base Heartbeat v2.dc.html` (open with `support.js` beside it): the reference for look and motion. Option 3a is `<div class="dv-opt" id="3a">`; the logic is in the `<script data-dc-script>` block.
 
 ## Rules that are easy to get wrong

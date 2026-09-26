@@ -8,7 +8,7 @@
 <body>
 <x-dc>
 <helmet>
-<title>Hugging Base · Story 2 · Watch it play</title>
+<title>Hugging Base · Story 2 · Run</title>
 <meta name="design_doc_mode" content="canvas">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;700&amp;display=swap" rel="stylesheet">
@@ -29,7 +29,7 @@
       <div style="position:absolute;top:0;height:18px;width:2px;margin-left:-1px;background:#1e4d2b;left:{{ curLeft }}"></div>
       <div style="position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;font-size:10.5px;color:#5f6b63"><span>16:00</span><span>22:00</span><span>04:00</span></div>
     </div>
-    <span style="flex:none;font-size:12px;color:#5f6b63">Shared clock with 2a and 2b</span>
+    <span style="flex:none;font-size:12px;color:#5f6b63">Shared clock with 2b</span>
   </div>
   <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
 
@@ -82,138 +82,38 @@
 <section id="t2" style="padding:48px 56px 64px;display:flex;flex-direction:column;gap:22px">
   <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
     <span style="font:600 11px ui-monospace,Menlo,monospace;padding:3px 7px;background:#10231a;color:#fff;border-radius:4px">STEP 2</span>
-    <span style="font-size:18px;font-weight:700">Watch it play</span>
-    <span style="font-size:14px;color:#5f6b63">Story: where the feeder gets tight this evening, and what the fleet does about it. <a href="Story%201%20Levers.dc.html">← Step 1 · Set the levers</a> · <a href="Story%203%20Results.dc.html">Step 3 · Read the result →</a></span>
+    <span style="font-size:18px;font-weight:700">Run</span>
+    <span style="font-size:14px;color:#5f6b63">Story: where the feeder gets tight this evening, and what the fleet does about it. <a href="Story%201%20Levers.dc.html">← Step 1 · Configure</a> · <a href="Story%203%20Results.dc.html">Step 3 · Results →</a></span>
   </div>
   <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
 
-  <div id="2a" style="display:flex;flex-direction:column;gap:10px">
-    <div style="display:flex;align-items:baseline;gap:8px;font-size:13px;color:#5f6b63"><a href="#2a" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#10231a;border-radius:5px;text-decoration:none">2a</a>3D neighbourhood with the number on it, five signal cards docked underneath, scrubber below</div>
-    <div data-screen-label="2a Watch cards" style="width:1600px;height:900px;background:#f7f4ec;display:flex;flex-direction:column;border-radius:8px;overflow:hidden;border:1px solid rgba(0,0,0,.08)">
-      <div style="height:60px;flex:none;display:flex;align-items:center;gap:18px;padding:0 24px;border-bottom:1px solid #e3dfd3">
-        <div style="flex:none;white-space:nowrap;font-weight:700;font-size:21px;letter-spacing:-0.02em;color:#1e4d2b">Hugging Base</div>
-        <div style="width:1px;height:24px;background:#e3dfd3"></div>
-        <div title="23 Aug 2026, 16:00 → 04:00" style="flex:none;white-space:nowrap;font-size:16px">Heat-wave evening <span style="color:#5f6b63">· 23 Aug</span></div>
-        <nav style="flex:none;white-space:nowrap;display:flex;gap:2px;padding:3px;border:1px solid #e3dfd3;border-radius:8px;font-size:13px;margin-left:12px">
-          <a href="Story%201%20Levers.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">1 Set the levers</a>
-          <a href="Story%202%20Watch.dc.html" style="padding:5px 10px;border-radius:6px;background:#e4efe6;color:#1e4d2b;font-weight:700;text-decoration:none">2 Watch it play</a>
-          <a href="Story%203%20Results.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">3 Read the result</a>
-          <a href="Story%204%20Room%20to%20grow.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">4 Room to grow</a>
-        </nav>
-        <div style="flex:1"></div>
-        <a href="Story%201%20Levers.dc.html" title="{{ runPill.title }}" style="flex:none;white-space:nowrap;display:flex;align-items:center;gap:9px;font-size:13px;padding:5px 6px 5px 11px;border:1px solid #e3dfd3;border-radius:8px;color:#10231a;text-decoration:none;background:#fffdf8" style-hover="border-color:#1e4d2b"><span style="width:8px;height:8px;border-radius:50%;background:{{ runPill.dot }}"></span><b>{{ runPill.label }}</b><span style="color:#5f6b63">{{ runPill.summary }}</span><span style="padding:4px 9px;border-radius:6px;background:#e4efe6;color:#1e4d2b;font-weight:700">Change levers →</span></a>
-        
-      </div>
-      <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:12px;padding:14px 18px 14px">
-        <div style="flex:1;min-height:0;position:relative;border:1px solid #e3dfd3;border-radius:10px;overflow:hidden;background:#E9EDE7">
-          <div ref="{{ sceneA }}" style="position:absolute;inset:0"></div>
-          <sc-if value="{{ loading }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#5f6b63;font-size:14px">Loading the feeder…</div></sc-if>
-          <div style="position:absolute;top:12px;left:12px;display:flex;flex-direction:column;gap:8px;width:430px;pointer-events:none">
-            <div style="background:rgba(255,253,248,.96);border:1px solid #e3dfd3;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px">
-              <div style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">WORST SERVICE TRANSFORMER NOW</div>
-              <div style="display:flex;align-items:center;gap:12px"><span style="font-size:64px;font-weight:700;line-height:1;letter-spacing:-0.03em;font-variant-numeric:tabular-nums">{{ now.worst }}</span><span style="width:18px;height:18px;border-radius:4px;background:{{ now.tierColor }};border:1.5px solid #fffdf8;outline:1px solid #cfcabd"></span><span style="display:flex;flex-direction:column;gap:2px;font-size:13px"><b>{{ now.tfName }}</b><span style="color:#5f6b63">{{ now.tierName }}</span></span><span style="margin-left:auto;align-self:flex-start;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">SIM</span></div>
-              <div style="font-size:12.5px;color:#5f6b63;font-variant-numeric:tabular-nums">{{ now.countsText }}</div>
-            </div>
-            <div style="display:flex;gap:10px;padding:9px 12px;background:rgba(255,253,248,.96);border:1px solid #e3dfd3;border-radius:8px;font-size:13.5px;line-height:1.35"><b style="font-variant-numeric:tabular-nums">{{ story.t }}</b><span style="text-wrap:pretty">{{ story.text }}</span></div>
-          </div>
-          <div style="position:absolute;top:12px;right:12px;display:flex;gap:2px;padding:3px;background:#fffdf8;border:1px solid #e3dfd3;border-radius:8px">
-            <sc-for list="{{ camsA }}" as="c" hint-placeholder-count="3"><button onClick="{{ c.onClick }}" style="border:0;padding:7px 12px;border-radius:6px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;background:{{ c.bg }};color:{{ c.fg }}">{{ c.text }}</button></sc-for>
-          </div>
-          <div style="position:absolute;left:12px;bottom:40px;display:flex;flex-direction:column;gap:5px;padding:9px 12px;background:rgba(255,253,248,.96);border:1px solid #e3dfd3;border-radius:8px;font-size:12px">
-            <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#5f6b63">CANS · TRANSFORMER LOADING</div>
-            <div style="display:grid;grid-template-columns:auto auto;gap:4px 14px">
-              <span style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:2px;background:#0ca30c"></span>within nameplate</span>
-              <span style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:2px;background:#fab219"></span>over nameplate</span>
-              <span style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:2px;background:#ec835a"></span>above 110%</span>
-              <span style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:2px;background:#d03b3b"></span>emergency (150%)</span>
-              <span style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:2px;background:#0B6B6F"></span>battery charging</span>
-              <span style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:2px;background:#ec835a"></span>battery discharging</span>
-            </div>
-          </div>
-          <div style="position:absolute;left:0;right:0;bottom:0;height:28px;display:flex;align-items:center;gap:16px;padding:0 12px;background:rgba(255,253,248,.9);border-top:1px solid #e3dfd3;font-size:11.5px;color:#5f6b63"><span style="font-weight:700;color:#10231a">NREL SMART-DS 2018 AUS P1U · CC BY 4.0</span><span>Buildings © OpenStreetMap contributors, ODbL 1.0</span><span>Loading: OpenDSS, every minute</span><span style="margin-left:auto">3D scene in the Atlas palette</span></div>
-        </div>
-
-        <div style="flex:none;height:150px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px">
-          <div style="background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:10px 12px 8px;display:flex;flex-direction:column;gap:6px;min-width:0">
-            <div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:13.5px;font-weight:700">Worst transformer</span><span style="font-size:11.5px;color:#5f6b63">%</span><span style="margin-left:auto;font-size:11.5px;color:#5f6b63;font-variant-numeric:tabular-nums">now <b style="color:#10231a">{{ now.worst }}</b></span></div>
-            <div onPointerDown="{{ scrubDown }}" onPointerMove="{{ scrubMove }}" onPointerUp="{{ scrubUp }}" style="flex:1;min-height:0;position:relative;cursor:ew-resize;touch-action:none">
-              <svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible"><rect width="1000" height="100" fill="#f6f3ea"></rect><line x1="0" x2="1000" y1="63.53" y2="63.53" stroke="#5f6b63" stroke-opacity=".6" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"></line><line x1="0" x2="1000" y1="58.12" y2="58.12" stroke="#c7962b" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"></line><line x1="0" x2="1000" y1="36.47" y2="36.47" stroke="#b23a2f" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"></line><defs><clipPath id="c2a1"><rect x="0" y="-10" width="{{ clipW }}" height="120"></rect></clipPath></defs><g clip-path="url(#c2a1)"><path d="{{ p.worst }}" fill="none" stroke="#10231a" stroke-width="1.5" vector-effect="non-scaling-stroke"></path></g></svg>
-              <span style="position:absolute;right:3px;top:calc(58.12% - 13px);font-size:10px;font-weight:700;color:#8a6a1e;pointer-events:none">110%</span><span style="position:absolute;right:3px;top:calc(36.47% - 13px);font-size:10px;font-weight:700;color:#b23a2f;pointer-events:none">150%</span>
-              <div style="position:absolute;top:0;bottom:0;width:1.5px;margin-left:-.75px;background:#1e4d2b;left:{{ curLeft }};pointer-events:none"></div>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#5f6b63;white-space:nowrap;overflow:hidden"><span style="flex:none;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em">SIM</span>Any of 379 · dashed 100%</div>
-          </div>
-          <div style="background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:10px 12px 8px;display:flex;flex-direction:column;gap:6px;min-width:0">
-            <div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:13.5px;font-weight:700">Street A–D, T-240</span><span style="font-size:11.5px;color:#5f6b63">%</span><span style="margin-left:auto;font-size:11.5px;color:#5f6b63;font-variant-numeric:tabular-nums">top <b style="color:#10231a">{{ now.focusTop }}</b></span></div>
-            <div onPointerDown="{{ scrubDown }}" onPointerMove="{{ scrubMove }}" onPointerUp="{{ scrubUp }}" style="flex:1;min-height:0;position:relative;cursor:ew-resize;touch-action:none">
-              <svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible"><rect width="1000" height="100" fill="#f6f3ea"></rect><line x1="0" x2="1000" y1="52.19" y2="52.19" stroke="#5f6b63" stroke-opacity=".6" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"></line><line x1="0" x2="1000" y1="47.81" y2="47.81" stroke="#c7962b" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"></line><defs><clipPath id="c2a2"><rect x="0" y="-10" width="{{ clipW }}" height="120"></rect></clipPath></defs><g clip-path="url(#c2a2)"><sc-for list="{{ p.focus }}" as="f" hint-placeholder-count="5"><path d="{{ f.d }}" fill="none" stroke="#10231a" stroke-opacity="{{ f.op }}" stroke-width="1.2" stroke-dasharray="{{ f.dash }}" vector-effect="non-scaling-stroke"></path></sc-for></g></svg>
-              <div style="position:absolute;top:0;bottom:0;width:1.5px;margin-left:-.75px;background:#1e4d2b;left:{{ curLeft }};pointer-events:none"></div>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:#5f6b63;white-space:nowrap;overflow:hidden;font-variant-numeric:tabular-nums"><span style="flex:none;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em">SIM</span><sc-for list="{{ now.focus }}" as="f" hint-placeholder-count="5"><span>{{ f.key }} <b style="color:#10231a">{{ f.v }}</b></span></sc-for></div>
-          </div>
-          <div style="background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:10px 12px 8px;display:flex;flex-direction:column;gap:6px;min-width:0">
-            <div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:13.5px;font-weight:700">Price</span><span style="font-size:11.5px;color:#5f6b63">$/MWh</span><span style="margin-left:auto;font-size:11.5px;color:#5f6b63;font-variant-numeric:tabular-nums">now <b style="color:#10231a">{{ now.price }}</b></span></div>
-            <div onPointerDown="{{ scrubDown }}" onPointerMove="{{ scrubMove }}" onPointerUp="{{ scrubUp }}" style="flex:1;min-height:0;position:relative;cursor:ew-resize;touch-action:none">
-              <svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible"><rect width="1000" height="100" fill="#f6f3ea"></rect><sc-for list="{{ p.bands }}" as="b" hint-placeholder-count="0"><rect x="{{ b.x }}" y="0" width="{{ b.w }}" height="100" fill="#e9dfbb"></rect></sc-for><defs><clipPath id="c2a3"><rect x="0" y="-10" width="{{ clipW }}" height="120"></rect></clipPath></defs><g clip-path="url(#c2a3)"><path d="{{ p.price }}" fill="none" stroke="#10231a" stroke-width="1.5" vector-effect="non-scaling-stroke"></path></g></svg>
-              <div style="position:absolute;top:0;bottom:0;width:1.5px;margin-left:-.75px;background:#1e4d2b;left:{{ curLeft }};pointer-events:none"></div>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#5f6b63;white-space:nowrap;overflow:hidden"><span style="flex:none;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em">REAL</span>ERCOT LZ_NORTH · <span style="width:10px;height:8px;background:#e9dfbb"></span>market discharge</div>
-          </div>
-          <div style="background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:10px 12px 8px;display:flex;flex-direction:column;gap:6px;min-width:0">
-            <div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:13.5px;font-weight:700">Fleet charge</span><span style="font-size:11.5px;color:#5f6b63">%</span><span style="margin-left:auto;font-size:11.5px;color:#5f6b63;font-variant-numeric:tabular-nums">now <b style="color:#10231a">{{ now.soc }}</b></span></div>
-            <div onPointerDown="{{ scrubDown }}" onPointerMove="{{ scrubMove }}" onPointerUp="{{ scrubUp }}" style="flex:1;min-height:0;position:relative;cursor:ew-resize;touch-action:none">
-              <svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible"><rect width="1000" height="100" fill="#f6f3ea"></rect><line x1="0" x2="1000" y1="77.6" y2="77.6" stroke="#1e4d2b" stroke-dasharray="2 3" vector-effect="non-scaling-stroke"></line><defs><clipPath id="c2a4"><rect x="0" y="-10" width="{{ clipW }}" height="120"></rect></clipPath></defs><g clip-path="url(#c2a4)"><path d="{{ p.socArea }}" fill="#1e4d2b" fill-opacity=".14"></path><path d="{{ p.soc }}" fill="none" stroke="#1e4d2b" stroke-width="2.4" vector-effect="non-scaling-stroke"></path></g></svg>
-              <span style="position:absolute;left:4px;top:calc(77.6% + 1px);font-size:10px;font-weight:700;color:#1e4d2b;pointer-events:none">20% reserve</span>
-              <sc-if value="{{ noFleet }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12.5px;color:#5f6b63;background:rgba(246,243,234,.8)">No batteries in this run</div></sc-if>
-              <div style="position:absolute;top:0;bottom:0;width:1.5px;margin-left:-.75px;background:#1e4d2b;left:{{ curLeft }};pointer-events:none"></div>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#5f6b63;white-space:nowrap;overflow:hidden"><span style="flex:none;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em">SIM</span>Mean of {{ fleetN }} batteries</div>
-          </div>
-          <div style="background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:10px 12px 8px;display:flex;flex-direction:column;gap:6px;min-width:0">
-            <div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:13.5px;font-weight:700">Fleet power</span><span style="font-size:11.5px;color:#5f6b63">MW</span><span style="margin-left:auto;font-size:11.5px;color:#5f6b63;font-variant-numeric:tabular-nums">now <b style="color:#10231a">{{ now.kw }}</b></span></div>
-            <div onPointerDown="{{ scrubDown }}" onPointerMove="{{ scrubMove }}" onPointerUp="{{ scrubUp }}" style="flex:1;min-height:0;position:relative;cursor:ew-resize;touch-action:none">
-              <svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible"><rect width="1000" height="100" fill="#f6f3ea"></rect><line x1="0" x2="1000" y1="50" y2="50" stroke="#10231a" stroke-opacity=".25" vector-effect="non-scaling-stroke"></line><defs><clipPath id="c2a5"><rect x="0" y="-10" width="{{ clipW }}" height="120"></rect></clipPath></defs><g clip-path="url(#c2a5)"><path d="{{ p.kwPos }}" fill="#1e4d2b" fill-opacity=".5"></path><path d="{{ p.kwNeg }}" fill="#10231a" fill-opacity=".22"></path></g></svg>
-              <span style="position:absolute;left:4px;top:2px;font-size:10px;font-weight:700;color:#1e4d2b;pointer-events:none">charging ↑</span><span style="position:absolute;left:4px;bottom:2px;font-size:10px;font-weight:700;color:#34443a;pointer-events:none">discharging ↓</span>
-              <sc-if value="{{ noFleet }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12.5px;color:#5f6b63;background:rgba(246,243,234,.8)">No batteries in this run</div></sc-if>
-              <div style="position:absolute;top:0;bottom:0;width:1.5px;margin-left:-.75px;background:#1e4d2b;left:{{ curLeft }};pointer-events:none"></div>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#5f6b63;white-space:nowrap;overflow:hidden"><span style="flex:none;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em">SIM</span>Sum of battery kW · ±2 MW</div>
-          </div>
-        </div>
-
-        <div style="flex:none;height:76px;background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:8px 18px;display:flex;align-items:center;gap:18px">
-          <button onClick="{{ togglePlay }}" style="width:48px;height:48px;flex:none;border-radius:50%;border:0;background:#1e4d2b;color:#fffdf8;font-size:15px;cursor:pointer" style-hover="background:#2a6a3b">{{ playIcon }}</button>
-          <div style="flex:none;width:112px;display:flex;flex-direction:column;gap:2px"><span style="font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1">{{ clock }}</span><span style="font-size:11.5px;color:#5f6b63;font-variant-numeric:tabular-nums">Step {{ stepNo }} of 720</span></div>
-          <div onPointerDown="{{ scrubDown }}" onPointerMove="{{ scrubMove }}" onPointerUp="{{ scrubUp }}" style="flex:1;min-width:0;height:100%;position:relative;cursor:ew-resize;touch-action:none">
-            <div style="position:absolute;left:0;right:0;top:18px;height:14px;border-radius:4px;background:linear-gradient(90deg,#f1eee5 0%,#f1eee5 20%,#d8dad3 42%,#d8dad3 100%)"></div>
-            <div style="position:absolute;left:0;top:18px;height:14px;border-radius:4px 0 0 4px;background:#1e4d2b;opacity:.22;width:{{ curLeft }}"></div>
-            <sc-for list="{{ marks }}" as="m" hint-placeholder-count="0"><div style="position:absolute;left:{{ m.left }};top:0;height:34px;border-left:1px dashed {{ m.color }};pointer-events:none"><sc-if value="{{ m.hasLabel }}"><span style="position:absolute;left:4px;top:0;font-size:11px;white-space:nowrap;color:{{ m.color }};font-weight:{{ m.weight }}">{{ m.short }}</span></sc-if></div></sc-for>
-            <div style="position:absolute;top:12px;height:26px;width:2px;margin-left:-1px;background:#1e4d2b;left:{{ curLeft }};pointer-events:none"><div style="position:absolute;top:7px;left:-5px;width:12px;height:12px;border-radius:50%;background:#1e4d2b;border:2px solid #fffdf8"></div></div>
-            <div style="position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;font-size:11px;color:#5f6b63;font-variant-numeric:tabular-nums"><span>16:00</span><span>18:00</span><span>20:00</span><span>22:00</span><span>00:00</span><span>02:00</span><span>04:00</span></div>
-          </div>
-          <div style="flex:none;display:flex;flex-direction:column;gap:6px;align-items:flex-end"><div style="display:flex;gap:2px;padding:3px;border:1px solid #e3dfd3;border-radius:8px;font-size:12.5px"><sc-for list="{{ speeds }}" as="s" hint-placeholder-count="3"><button onClick="{{ s.onClick }}" style="border:0;padding:5px 8px;border-radius:6px;font:inherit;font-size:12.5px;cursor:pointer;background:{{ s.bg }};color:{{ s.fg }};font-weight:{{ s.weight }}">{{ s.text }}</button></sc-for></div><span style="font-size:11.5px;color:#5f6b63">12 h evening = {{ evSec }} s</span></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <div id="2b" style="display:flex;flex-direction:column;gap:10px">
     <div style="display:flex;align-items:baseline;gap:8px;font-size:13px;color:#5f6b63"><a href="#2b" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#10231a;border-radius:5px;text-decoration:none">2b</a>3D over a strip-chart wall: five lanes on one axis, one cursor through all. Beside it: fleet battery and a "Right now" card (2d) that lists failures and marks them red on the lanes and the scene</div>
-    <div data-screen-label="2b Watch lanes" style="width:1600px;height:900px;background:#f7f4ec;display:flex;flex-direction:column;border-radius:8px;overflow:hidden;border:1px solid rgba(0,0,0,.08)">
+    <div data-screen-label="2b Watch lanes" style="position:relative;width:1600px;height:900px;background:#f7f4ec;display:flex;flex-direction:column;border-radius:8px;overflow:hidden;border:1px solid rgba(0,0,0,.08)">
       <div style="height:60px;flex:none;display:flex;align-items:center;gap:18px;padding:0 24px;border-bottom:1px solid #e3dfd3">
         <div style="flex:none;white-space:nowrap;font-weight:700;font-size:21px;letter-spacing:-0.02em;color:#1e4d2b">Hugging Base</div>
-        <div style="width:1px;height:24px;background:#e3dfd3"></div>
-        <div title="23 Aug 2026, 16:00 → 04:00" style="flex:none;white-space:nowrap;font-size:16px">Heat-wave evening <span style="color:#5f6b63">· 23 Aug</span></div>
-        <nav style="flex:none;white-space:nowrap;display:flex;gap:2px;padding:3px;border:1px solid #e3dfd3;border-radius:8px;font-size:13px;margin-left:12px">
-          <a href="Story%201%20Levers.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">1 Set the levers</a>
-          <a href="Story%202%20Watch.dc.html" style="padding:5px 10px;border-radius:6px;background:#e4efe6;color:#1e4d2b;font-weight:700;text-decoration:none">2 Watch it play</a>
-          <a href="Story%203%20Results.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">3 Read the result</a>
-          <a href="Story%204%20Room%20to%20grow.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">4 Room to grow</a>
+        <nav style="flex:none;white-space:nowrap;display:flex;gap:2px;padding:3px;border:1px solid #e3dfd3;border-radius:8px;font-size:13px">
+          <a href="Story%201%20Levers.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">1 Configure</a>
+          <a href="Story%202%20Watch.dc.html" style="padding:5px 10px;border-radius:6px;background:#e4efe6;color:#1e4d2b;font-weight:700;text-decoration:none">2 Run</a>
+          <a href="Story%203%20Results.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">3 Results</a>
+          <a href="Story%204%20Room%20to%20grow.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">4 Learnings</a>
         </nav>
         <div style="flex:1"></div>
-        <a href="Story%201%20Levers.dc.html" title="{{ runPill.title }}" style="flex:none;white-space:nowrap;display:flex;align-items:center;gap:9px;font-size:13px;padding:5px 6px 5px 11px;border:1px solid #e3dfd3;border-radius:8px;color:#10231a;text-decoration:none;background:#fffdf8" style-hover="border-color:#1e4d2b"><span style="width:8px;height:8px;border-radius:50%;background:{{ runPill.dot }}"></span><b>{{ runPill.label }}</b><span style="color:#5f6b63">{{ runPill.summary }}</span><span style="padding:4px 9px;border-radius:6px;background:#e4efe6;color:#1e4d2b;font-weight:700">Change levers →</span></a>
-        
+        <sc-if value="{{ ready }}" hint-placeholder-val="{{ false }}"><div title="{{ runPill.title }}" style="flex:none;white-space:nowrap;display:flex;align-items:center;gap:9px;font-size:13px;padding:6px 11px;border:1px solid #e3dfd3;border-radius:8px;color:#10231a;background:#fffdf8"><span style="width:8px;height:8px;border-radius:50%;background:{{ runPill.dot }}"></span><b>{{ runPill.label }}</b><span style="color:#5f6b63">{{ runPill.summary }}</span></div></sc-if>
+        <a href="Story%203%20Results.dc.html" style="flex:none;white-space:nowrap;display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;background:#1e4d2b;color:#fffdf8;font-size:14px;font-weight:700;text-decoration:none" style-hover="background:#2a6a3b">Continue to Results →</a>
       </div>
+      <sc-if value="{{ notReady }}" hint-placeholder-val="{{ true }}">
+        <div style="position:absolute;left:0;right:0;top:60px;bottom:0;z-index:20;background:#f7f4ec;display:flex;align-items:center;justify-content:center">
+          <div style="width:440px;display:flex;flex-direction:column;gap:14px">
+            <div style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">{{ prep.eyebrow }}</div>
+            <div style="font-size:26px;font-weight:700;letter-spacing:-0.01em">{{ prep.title }}</div>
+            <div style="height:6px;border-radius:3px;background:#e3dfd3;overflow:hidden"><div style="height:100%;border-radius:3px;background:{{ prep.bar }};width:{{ prep.pct }};transition:width .12s linear"></div></div>
+            <div style="display:flex;justify-content:space-between;gap:12px;font-size:13px;color:#34443a;font-variant-numeric:tabular-nums"><span>{{ prep.stage }}</span><span style="color:#5f6b63">{{ prep.stepTxt }}</span></div>
+            <div style="font-size:13px;color:#5f6b63;text-wrap:pretty">{{ prep.summary }}</div>
+            <sc-if value="{{ prep.failed }}" hint-placeholder-val="{{ false }}"><a href="Story%201%20Levers.dc.html" style="font-size:13.5px;font-weight:700">← Back to the levers</a></sc-if>
+          </div>
+        </div>
+      </sc-if>
       <div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 340px;grid-template-rows:minmax(0,1fr);gap:14px;padding:14px 18px">
         <div style="min-width:0;display:flex;flex-direction:column;gap:12px;min-height:0">
           <div style="flex:1;min-height:0;position:relative;border:1px solid #e3dfd3;border-radius:10px;overflow:hidden;background:#E9EDE7">
@@ -236,6 +136,7 @@
             <div style="display:flex;align-items:center;gap:14px">
               <button onClick="{{ togglePlay }}" style="width:38px;height:38px;flex:none;border-radius:50%;border:0;background:#1e4d2b;color:#fffdf8;font-size:13px;cursor:pointer" style-hover="background:#2a6a3b">{{ playIcon }}</button>
               <span style="font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1">{{ clock }}</span>
+              <button onClick="{{ replay }}" title="Replay from 16:00" style="flex:none;font:inherit;display:flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:8px;border:1px solid #cfcabd;background:transparent;color:#10231a;font-size:13px;font-weight:700;cursor:pointer" style-hover="background:#f1eee5">↺ Replay</button>
               <span style="font-size:11.5px;color:#5f6b63;font-variant-numeric:tabular-nums">Step {{ stepNo }} of 720</span>
               <div style="margin-left:auto;display:flex;gap:2px;padding:3px;border:1px solid #e3dfd3;border-radius:8px"><sc-for list="{{ speeds }}" as="s" hint-placeholder-count="3"><button onClick="{{ s.onClick }}" style="border:0;padding:4px 8px;border-radius:6px;font:inherit;font-size:12.5px;cursor:pointer;background:{{ s.bg }};color:{{ s.fg }};font-weight:{{ s.weight }}">{{ s.text }}</button></sc-for></div>
             </div>
@@ -323,7 +224,10 @@ class Component extends DCLogic {
   async componentDidMount() {
     try {
       const S = this.S = await import(new URL('ui/story.js', document.baseURI).href);
-      const rr = S.getRun(); const res = S.resolve(rr ? rr.levers : S.getLevers()); res.id = rr ? rr.id : null; res.run = rr;
+      const levers = S.getLevers(); let rr = S.getRun();
+      if (!rr || rr.status !== 'done' || !S.sameLevers(rr.levers, levers)) { location.replace('Story%201b%20Running.dc.html'); return; }
+      this.setState({ prep: rr });
+      const res = S.resolve(rr.levers); res.id = rr.id; res.run = rr;
       const run = await S.loadRun(res.branch);
       this.paths = this.buildPaths(run);
       this.storyItems = this.buildStory(run);
@@ -508,7 +412,18 @@ class Component extends DCLogic {
       ? { label: `Run #${rrun.id}`, dot: rrun.status === 'done' ? '#8aa58f' : rrun.status === 'running' ? '#c7962b' : '#b23a2f', upper: `RUN #${rrun.id}`,
           summary: `${({ none: 'No batteries', naive: 'Naive split', aware: 'Feeder-aware' })[L.controller]}${L.controller !== 'none' && L.failures ? ' + failures' : ''}${L.controller === 'none' ? '' : ` · ${L.fleetSize} ${L.cls === 'core' ? 'Core' : 'Legacy'} · ${L.reserve}% reserve`}`,
           title: rrun.connected ? 'Results from the simulator' : `No simulator connected in this prototype: showing the committed run nearest these settings (${NAMES[res.branch]})` }
-      : { label: 'No run yet', dot: '#cfcabd', upper: NAMES[res.branch].toUpperCase(), summary: `showing ${NAMES[res.branch]}`, title: 'Set the levers and run the simulator' };
+      : { label: '', dot: '#cfcabd', upper: '', summary: '', title: '' };
+    const pr = st.prep, failed = !!(pr && pr.status === 'failed');
+    const pL = pr ? pr.levers : null;
+    const prep = {
+      eyebrow: pr ? `RUN #${pr.id}${failed ? ' · FAILED' : ''}` : 'PREPARING',
+      title: failed ? 'The run didn’t finish' : pr && pr.status === 'done' ? 'Loading the evening' : 'Running the evening',
+      stage: failed ? pr.stage : pr ? (pr.status === 'done' ? 'Drawing the feeder' : pr.stage) : 'Starting',
+      stepTxt: pr && pr.status === 'running' ? `${pr.step} / 720 min` : '',
+      pct: `${pr ? (pr.status === 'done' ? 100 : Math.round(pr.step / 720 * 96 + 2)) : 2}%`,
+      bar: failed ? '#b23a2f' : '#1e4d2b', failed,
+      summary: pL ? `${({ none: 'No batteries', naive: 'Naive split', aware: 'Feeder-aware' })[pL.controller]}${pL.controller !== 'none' && pL.failures ? ' + failures' : ''} · ${pL.fleetSize} batteries · ${pL.reserve}% reserve · starts at ${pL.soc0}%` : '',
+    };
     const cams = (key) => [['feeder', 'Whole feeder'], ['street', 'Street A–D'], ['t240', 'T-240']].map(([id, text], i) => {
       const on = st[key] === id;
       return { text, bg: on ? '#1e4d2b' : 'transparent', fg: on ? '#fffdf8' : '#10231a',
@@ -516,8 +431,9 @@ class Component extends DCLogic {
     });
     const speeds = [1, 2, 4].map((x) => ({ text: `${x}×`, bg: st.speed === x ? '#e4efe6' : 'transparent', fg: st.speed === x ? '#1e4d2b' : '#10231a', weight: st.speed === x ? 700 : 400, onClick: () => this.setState({ speed: x }) }));
     const base = {
-      loading: st.loading, runPill, camsA: cams('camA'), camsB: cams('camB'), speeds, evSec: Math.round(72 / st.speed), sceneA: this.sceneA, sceneB: this.sceneB,
+      loading: st.loading, ready: !st.loading, notReady: !!st.loading, prep, runPill, camsA: cams('camA'), camsB: cams('camB'), speeds, evSec: Math.round(72 / st.speed), sceneA: this.sceneA, sceneB: this.sceneB,
       playIcon: st.playing ? '❚❚' : '▶',
+      replay: () => { if (!run) return; cancelAnimationFrame(this.raf); this.seek(0); this.setState({ playing: true }, () => this.play()); },
       togglePlay: () => { if (!run) return; const p = !st.playing; if (p && k >= run.s.n - 1) this.seek(0); this.setState({ playing: p }, () => { if (p) this.play(); }); },
       scrubDown: (e) => { this.drag = true; try { e.currentTarget.setPointerCapture(e.pointerId); } catch (x) { /* ignore */ } this.seek(this.kFromEvent(e)); },
       scrubMove: (e) => { if (this.drag) this.seek(this.kFromEvent(e)); },
