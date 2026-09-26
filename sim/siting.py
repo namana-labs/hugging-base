@@ -8,9 +8,9 @@ Three layers, all deterministic numpy, no model in the loop:
      room = sqrt(max(0, (alpha kVA)^2 - bg_kvar^2)); H = room - bg_kw; E = room + bg_kw; R = max(0, bg_kw - room)
    a. relief overrides the market: where R > 0 the transformer's batteries above reserve discharge just enough,
       highest SoC first (id breaks ties);
-   b. discharge (mode 'discharge'): the fleet target goes highest SoC first, each capped by its transformer's
-      export headroom E (less what relief already exports);
-   c. charge (mode 'charge'): batteries below full, sorted by (floor(SoC / SOC_BUCKET), id) ascending, are granted
+   b. discharge (mode 'discharge'): the fleet target (its magnitude; the relief already given counts toward it) goes
+      highest SoC first, each capped by its transformer's export headroom E (less what relief already exports);
+   c. charge (mode 'charge'): batteries below full, sorted by (floor(SoC / SOC_BUCKET + 1e-9), id) ascending, granted
       in turn g = min(pmax, taper(SoC), H - granted on the tf, target - granted in total); there is no equal split;
    d. every grant below MIN_GRANT_KW (0.5 kW) becomes 0; the reserve always holds; a battery stops at full.
    taper(SoC) is the energy-to-full limit over one step, (1 - SoC) E / sqrt(RTE) / dt (four-home's
@@ -134,11 +134,12 @@ def grant(bg_kw, bg_kvar, kva, col, soc, ids, dis_cap, dis_want, chg_want, alpha
     rel_tf = np.bincount(col, weights=rel, minlength=len(E))
     mcap = _floor_grant(np.minimum(dis_want, dis_cap) - rel)
     if mcap.any():
-        g = _target_clip(desc, _seg_grant(desc, col, mcap, E - rel_tf), dis_target)
+        # the discharge target counts the relief already given (as orchestrator.allocate)
+        g = _target_clip(desc, _seg_grant(desc, col, mcap, E - rel_tf), dis_target - rel.sum())
         kw = kw - g
     ccap = _floor_grant(np.where(rel > 0, 0.0, chg_want))
     if ccap.any():
-        bucket = np.floor(soc / SOC_BUCKET)
+        bucket = np.floor(soc / SOC_BUCKET + 1e-9)
         asc = np.lexsort((ids, bucket))
         g = _target_clip(asc, _seg_grant(asc, col, ccap, H), chg_target)
         kw = kw + g
@@ -200,7 +201,7 @@ def per_tf_rule_reference(bg_kw, bg_kvar, kva, soc, pmax, emax, tf_of, fleet_tar
         rel_tf[tf] += g
     if mode == "discharge":
         exp_tf = rel_tf.copy()
-        total = 0.0
+        total = float(rel_tf.sum())
         target = abs(fleet_target_kw)
         for i in desc:
             tf = tf_of[i]
@@ -213,7 +214,7 @@ def per_tf_rule_reference(bg_kw, bg_kvar, kva, soc, pmax, emax, tf_of, fleet_tar
     elif mode == "charge":
         got_tf = np.zeros(len(H))
         total = 0.0
-        asc = sorted(range(m), key=lambda i: (math.floor(soc[i] / SOC_BUCKET), i))
+        asc = sorted(range(m), key=lambda i: (math.floor(soc[i] / SOC_BUCKET + 1e-9), i))
         for i in asc:
             if kw[i] < 0:
                 continue
@@ -459,3 +460,44 @@ def stamp(k):
 
 def growth_factor(g):
     return 1.0 + (GROWTH if int(g) else 0.0)
+
+
+# =================================================================================================================
+# 4. parity with P1 (build prompt 5.4.3 step 9)
+# =================================================================================================================
+def random_states(n=1000, seed=20260826, T=40, m=96):
+    """n deterministic single-step states: (bg_kw, bg_kvar, kva, soc, pmax, emax, rte, tf_of, target, mode)."""
+    rng = np.random.default_rng(seed)
+    for i in range(n):
+        kva = rng.choice([10.0, 25.0, 50.0, 75.0, 150.0], T)
+        bg_kw = rng.uniform(-0.6, 1.25, T) * kva
+        bg_kvar = rng.uniform(0.0, 0.5, T) * np.abs(bg_kw)
+        soc = rng.uniform(0.15, 1.0, m)
+        soc[rng.random(m) < 0.1] = 1.0
+        soc[rng.random(m) < 0.1] = RESERVE_FLOOR
+        legacy = rng.random(m) < 0.3
+        pmax = np.where(legacy, LEGACY_POWER_KW, CORE_POWER_KW)
+        emax = np.where(legacy, LEGACY_USABLE_KWH, CORE_USABLE_KWH)
+        rte = np.where(legacy, LEGACY_RTE, CORE_RTE)
+        tf_of = rng.integers(0, T, m)
+        mode = ("charge", "discharge", "idle")[i % 3]
+        target = float(rng.choice([1e6, rng.uniform(0.0, 600.0)]))
+        if mode == "discharge" and rng.random() < 0.5:
+            target = -target
+        yield bg_kw, bg_kvar, kva, soc, pmax, emax, rte, tf_of, target, mode
+
+
+def parity(n=1000, seed=20260826):
+    """max |allocate(state=None, cover=False) - per_tf_rule| over n random single-step states (kW), or None when
+    sim.orchestrator (lane L2) is not on this branch. Returns (max_diff or None, n, detail)."""
+    try:
+        from .orchestrator import allocate  # lane L2
+    except ImportError as e:
+        return None, 0, f"sim.orchestrator not importable ({e})"
+    worst = 0.0
+    for bg_kw, bg_kvar, kva, soc, pmax, emax, rte, tf_of, target, mode in random_states(n, seed):
+        a, _, _ = allocate(bg_kw, bg_kvar, kva, tf_of, soc, pmax, emax, target, mode, state=None, cover=False,
+                           rte=rte, explain=False)
+        b = per_tf_rule(bg_kw, bg_kvar, kva, soc, pmax, emax, tf_of, target, mode, rte=rte)
+        worst = max(worst, float(np.max(np.abs(np.asarray(a) - b))))
+    return worst, n, "orchestrator.allocate(state=None, cover=False) vs siting.per_tf_rule"

@@ -111,7 +111,7 @@ class StatelessRule(unittest.TestCase):
                                 20.0, 37.0, np.array([0, 0, 0, 0]), 1e9, "charge")
         H = AWARE_MARGIN * 25 - 2.0
         self.assertAlmostEqual(kw[1], 20.0)
-        self.assertAlmostEqual(kw[3], H - 20.0)       # next bucket (0.31 -> 15) takes the rest
+        self.assertAlmostEqual(kw[3], H - 20.0)       # next bucket takes the rest
         self.assertEqual(kw[0], 0.0)
         self.assertEqual(kw[2], 0.0)
 
@@ -121,6 +121,17 @@ class StatelessRule(unittest.TestCase):
                                 20.0, 37.0, np.array([0, 0]), 0.0, "idle")
         self.assertAlmostEqual(kw[1], -6.25)          # highest SoC relieves first, just enough
         self.assertEqual(kw[0], 0.0)
+
+
+class ParityWithP1(unittest.TestCase):
+    """5.4.3 step 9: allocate(state=None, cover=False) == per_tf_rule on 1,000 random single-step states, to 1e-6."""
+
+    def test_parity(self):
+        worst, n, detail = siting.parity(1000)
+        if worst is None:
+            self.skipTest(detail)
+        self.assertEqual(n, 1000)
+        self.assertLess(worst, 1e-6, detail)
 
 
 if __name__ == "__main__":
