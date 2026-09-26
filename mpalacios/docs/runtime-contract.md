@@ -1,6 +1,7 @@
 # Contract for the two new files (to fold into `docs/contracts.md` Part A)
 
-Written to be pasted into `docs/contracts.md` as sections A.6b and A.10 (request 4 in [requests.md](requests.md)).
+Written to be pasted into `docs/contracts.md` as sections A.6b and A.11 (request 4 in [requests.md](requests.md)).
+A.10 was free when this was drafted and `7b99d24` took it for `p1/days/index.json`, so the covert section is A.11.
 Both files follow Part A.1 and A.2: the envelope, the four labels, quantization, byte-identical rebuilds, and the
 size caps. Their producer is `mpalacios.<module>`, which `sim.contracts` will accept once request 3 lands. Until
 then, `python -m mpalacios.runtime.verify` and `python -m mpalacios.detect.verify` run every other `sim.contracts`
@@ -11,7 +12,7 @@ Rows for the A.3 file table:
 | File | Producer | Body beyond the envelope |
 |---|---|---|
 | `p1/worker_kill.json` | `mpalacios.runtime` (`python -m mpalacios.runtime.build`) | A.6b; a P1 branch (A.6) plus `summary` and `runtime` |
-| `p3/covert.json` | `mpalacios.detect` (`python -m mpalacios.detect.build`) | A.10 |
+| `p3/covert.json` | `mpalacios.detect` (`python -m mpalacios.detect.build`) | A.11 |
 
 ---
 
@@ -94,7 +95,7 @@ and `X` only if a command expires before the takeover (it does not in the commit
 
 ---
 
-## A.10 `p3/covert.json` (deliverable D, milestone M6′)
+## A.11 `p3/covert.json` (deliverable D, milestone M6′)
 
 The same evening under the runtime (no worker failure), run three times through OpenDSS:
 

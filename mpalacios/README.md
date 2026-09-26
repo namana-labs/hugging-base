@@ -11,7 +11,7 @@ in [docs/requests.md](docs/requests.md) and not applied.
 | B3 covert (deliverable D, M6′) | A fictional adversary's hidden carrier on the dense cohort; a detector that reads telemetry and the homes' own meters, never a privileged solve; quarantine and re-cover | `out/p3/covert.json`, `fixtures/p3/covert.json` | Done. `VERIFY covert: PASS` |
 
 The contract for the two new files is [docs/runtime-contract.md](docs/runtime-contract.md), written to be pasted into
-`docs/contracts.md` as sections A.6b and A.10.
+`docs/contracts.md` as sections A.6b and A.11.
 
 ## Run it
 
@@ -36,8 +36,9 @@ bash mpalacios/check.sh [--full]             # all of the above, then scripts/ch
 ```
 
 `check.sh` ends in one line, `MPALACIOS CHECKS: PASS` or `FAIL (<steps>)`. It passes the repo gate unless the gate
-fails a step that did not fail before this work. On Windows those are `unit` and `contract`, and requests 3b and 8
-fix them.
+fails a step that did not fail before this work. On Windows those steps are `unit` and `contract`: four tests, all of
+them either `os.getloadavg` or a `\` vs `/` path comparison, none of them this folder's. Requests 3b, 3c and 8 fix
+them.
 
 ## Layout
 

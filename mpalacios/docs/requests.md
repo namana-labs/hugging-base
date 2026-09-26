@@ -51,11 +51,25 @@ Entries 1 to 6 are what the kickoff expected. Entries 7 to 13 are what running t
   is exempt from. For a, `python -m mpalacios.runtime.verify` runs every other `sim.contracts` check on the new files
   and names this as their only gap.
 
+### 3c. REQUEST (lead): two more path-separator failures, in the round-2 history code
+
+- **Paths:** `sim/tests/test_contracts.py` and `sim/tests/test_verify.py` (L0), or the code they test.
+- **What fails on Windows at `7b99d24`:**
+  - `HistoryContractTests.test_the_admit_half_a_bad_gz_day_fails` compares `validate()`'s returned paths with
+    `p1/days/<date>/…` literals, and gets `p1\days\<date>\…`;
+  - `VerifyTests.test_p1_days_dispatch` asserts the regex `days/index.json` against a message that reads
+    `days\index.json`.
+- **Change:** normalize with `.replace("\\", "/")` where those paths are built or asserted, as `check_shapes()`
+  already does on its own argument.
+- **Evidence:** both fail at `7b99d24` in a scratch worktree of that commit, with `mpalacios/` absent. They are the
+  same class as 3b, and they are not caused by this work, which changes no file outside `mpalacios/`.
+
 ### 4. REQUEST (lead): fold the new files into the contract
 
 - **Path:** `docs/contracts.md` (L0).
 - **Change:** add [runtime-contract.md](runtime-contract.md) to Part A: section A.6b for `p1/worker_kill.json` and
-  section A.10 for `p3/covert.json`, and add their rows to the A.3 file table.
+  section A.11 for `p3/covert.json`, and add their rows to the A.3 file table. (A.10 went to `p1/days/index.json`
+  in `7b99d24`; A.6b and A.11 are free as of that commit.)
 
 ### 5. REQUEST (lead): where the replays live and how they load
 

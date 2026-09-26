@@ -4,7 +4,8 @@
 #   2 runtime  $PY -m mpalacios.runtime.verify   [--rebuild with --full]
 #   3 covert   $PY -m mpalacios.detect.verify    [--rebuild with --full]
 #   4 repo     bash scripts/check_all.sh: passes unless it fails a step that did not fail before this work. On Windows
-#              the repo gate fails `unit` and `contract` before any change here (mpalacios/docs/requests.md 3b and 8);
+#              the repo gate fails `unit` and `contract` before any change here (mpalacios/docs/requests.md 3b, 3c
+#              and 8: four tests, all Windows path separators or os.getloadavg, none of them this folder's);
 #              HB_KNOWN_REPO_FAILS overrides that list.
 # Ends with exactly one line: "MPALACIOS CHECKS: PASS" or "MPALACIOS CHECKS: FAIL (<steps>)".
 set -u

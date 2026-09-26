@@ -4,17 +4,32 @@ Everything below was measured on 26 Sep 2026, on a Windows 11 machine with 8 cor
 OpenDSSDirect.py 0.9.4 and Node 20.19.6. Each result names the command that reproduces it. The raw outputs of the
 physics runs are in `mpalacios/out/physics/`. Every number here is SIM, DERIVED or a count unless it says otherwise.
 
-**Tree.** The measurements were taken at `4054729`, and this work is committed on `1950500`. `main` moved twice in
-between:
+**Tree.** The measurements were taken at `4054729`, and this work is committed on `7b99d24`. `main` moved three times
+in between:
 
 - `0335760` brought PR #19, P2's per-phase feeder head (`sim/p2_build.py`, `sim/referee.py`, `sim/siting.py` and the
   P2 data), and the overnight report;
 - `1950500` brought the round-2 shared UI kit, `sim/topology.py`'s `mount` field (so `ui/data/topology.json` changed),
-  three new constants in `sim/constants.py`, and the `FORBIDDEN` entries protecting Connor's folders.
+  three new constants in `sim/constants.py`, and the `FORBIDDEN` entries protecting Connor's folders;
+- `7b99d24` brought round-2 history plumbing (gzip contracts, `sim/contracts.py`'s `write_json_gz` and the history
+  shapes, `sim/verify.py --days`) and Connor's dashboard.
 
-Nothing this folder reads changed in either: the three input hashes still match the committed envelopes, and the
-constants this work exports are untouched. On `1950500`, `bash mpalacios/check.sh --full` passes, both replays still
-rebuild byte-identically, and the repo's unit suite (now 124 tests) fails only the same two Windows tests.
+Nothing this folder reads changed in any of them: the three input hashes still match the committed envelopes, and the
+constants this work exports are untouched. `sim/contracts.py` grew the history shapes and moved the P1 branch checks
+into `_check_p1_branch()`, which asks for exactly the fields `p1/worker_kill.json` already carries, so this folder's
+verifiers still call it unchanged. On `7b99d24`, `bash mpalacios/check.sh --full` passes and both replays still rebuild
+byte-identically.
+
+The repo's own unit suite now fails **four** tests on Windows, not the two in the table above. `7b99d24` added two more
+of the same path-separator kind, both in its new history code (request 3c):
+
+- `test_contracts.HistoryContractTests.test_the_admit_half_a_bad_gz_day_fails`, which compares
+  `p1\days\…` with `p1/days/…`;
+- `test_verify.VerifyTests.test_p1_days_dispatch`, whose regex expects `days/index.json` in a message that reads
+  `days\index.json`.
+
+Both fail at `7b99d24` with this folder absent, checked in a scratch worktree of that commit, and this work changes no
+file outside `mpalacios/`.
 
 The P2 and referee determinism row in B1.3 was measured at `4054729` and has not been re-run since PR #19 rebuilt that
 data.
