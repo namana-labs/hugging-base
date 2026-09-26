@@ -20,7 +20,7 @@ Written by L0 (the lead) on 26 Sep 2026 for the overnight build. Two halves: **P
 | **Labels** | Every **headline number** is `{"v": n, "label": "REAL\|SIM\|DERIVED\|ASSUMPTION", "cite"?: "..."}`. Bulk arrays are labelled once, in `series`. |
 
 **Labels, precisely** (what `sim.contracts` checks):
-- Inside any object under a headline key (`summary`, `relief`, `money`, `referee`, `flip`, `usefulCapacity`, `ranking`, `greedy`, `metrics`, `headline`, `fleetCounterfactualTotals`), every **scalar number** must sit in a labelled dict. A bare one fails the build (and `format.js` throws on it in the page, raising `data-errors`).
+- Inside any object under a headline key (`summary`, `relief`, `money`, `referee`, `flip`, `usefulCapacity`, `ranking`, `greedy`, `metrics`, `headline`, `fleetCounterfactualTotals`, `scaleLadder`), every **scalar number** must sit in a labelled dict. A bare one fails the build (and `format.js` throws on it in the page, raising `data-errors`).
 - Inside a labelled dict, **siblings of `v` share its label**, e.g. `"maxLoading": {"v": 197.0, "label": "SIM", "tf": 150, "t": "22:30"}`.
 - Ids and counters named `rank, home, tf, step, k, n, index, of, runs, minute, seq, batt` may be bare.
 - Numeric **arrays** are bulk data: label them in the envelope's `series`.
@@ -97,6 +97,13 @@ Written by L0 (the lead) on 26 Sep 2026 for the overnight build. Two halves: **P
   - `avoidedHarm{<branch>: {normalEvents, emergencyTfs, protectionOperated}}` (SIM).
 - `unrelieved[{tf, reason, peak{v, label, cite, t}, driver}]` (the P2 bridge).
 - **`driver`** = `{home, label, profile, kwAtPeak{v,label}, sharedWith[]}`: the home whose load makes the peak, its SMART-DS profile name, its kW at that step, and the other homes using the same profile.
+- `scaleLadder{text, kw{v,label:"DERIVED",cite}, rungs[3]}` (build prompt 3.4; a headline key, so `sim.contracts` refuses a bare number in it). `kw` is the same 40 kW at every rung: the batteries on A, counted from `data/fleet.json`, × the Core's 20 kW. Each rung: `{scale:"can"|"feeder"|"ercot", name, base{v, label, cite, unit:"kVA"|"MW", at?}, sharePct{v, label:"DERIVED", cite}, text}`, in that order:
+  - `can`: A's nameplate kVA (REAL, `Transformers.dss`);
+  - `feeder`: the head cable's rating, 370 A × √3 × 12.47 kV = 7,991.5 kVA (DERIVED, `site/ems/flow-spec.md`), a rating and not a measured load;
+  - `ercot`: the peak 5-minute ERCOT system demand in `four-home-simulation/data/demand_2026-09-25.csv` (REAL, read only; `at` is its local time). It is the only ERCOT demand series in the repo and **not the P1 day**; the cite says so.
+  - `sharePct.v` = `kw` ÷ `base` × 100 (kVA and MW converted to kW at unity pf), kept to 3 significant figures, so the ERCOT rung is about 5e-05 and a one-decimal formatter would print 0.0. `text` is the rung's on-screen wording with the share already formatted; a panel should show `text` (or format small shares to 2 significant figures), not round `sharePct` to one decimal.
+  - `sim.verify p1` re-derives every rung from `topology.json`, the fleet and the CSV as an [INVARIANT].
+  - The envelope carries `sources.ercotDemand{label:"REAL", text}` (the CSV) and the constant `SCALE_LADDER_ERCOT{value (which statistic of that CSV is the ERCOT rung: the day's peak), label:"ASSUMPTION", cite}`.
 - `engine{solves, msPerSolve}` (labelled). `msPerSolve.v` is `null` by design: timings are not deterministic, so they live in `engine.json` and a rebuild stays byte-identical.
 
 ### A.6 `p1/<branch>.json` (L2)
