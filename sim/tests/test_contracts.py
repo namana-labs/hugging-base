@@ -33,6 +33,13 @@ class ContractTests(unittest.TestCase):
         doc["constants"]["B"] = {"value": 1, "label": "ASSUMPTION"}
         self.assertTrue(check_envelope(doc))
 
+    def test_producer_sim_or_scripts(self):
+        inputs = {"prices_sha256": None, "loads_sha256": None, "topology_sha256": None}
+        for ok in ("sim.p1_build", "scripts.fetch_footprints"):
+            self.assertEqual(check_envelope(envelope("x", ok, inputs=inputs)), [], ok)
+        for bad in ("scripts/fetch_footprints.py", "ui.fetch", "sim.", "Sim.x", "sim.x.y", "handwritten"):
+            self.assertTrue(check_envelope(envelope("x", bad, inputs=inputs)), bad)
+
     def test_deterministic_dump_rejects_nan(self):
         self.assertEqual(dumps({"a": 1, "b": [1.5]}), '{"a":1,"b":[1.5]}')
         with self.assertRaises(ValueError):
