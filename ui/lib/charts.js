@@ -68,6 +68,17 @@ export function heatStripSVG({ values, days = 31, hours = 24, label, tenths = tr
   return frame(w, h, body, 'hb-heat', title);
 }
 
+/** Axis tick texts with the fewest decimals (0-3) that keep distinct ticks distinct: a 0-1 axis reads "0, 0.5, 1",
+ *  never "0, 1, 1" (rounding every tick to an integer printed duplicate labels on small ranges). */
+export function axisTickTexts(ticks) {
+  const nDistinct = new Set(ticks.map((t) => Math.round(t * 1e6))).size;
+  for (let d = 0; d <= 3; d++) {
+    const txt = ticks.map((t) => String(Number(t.toFixed(d))));
+    if (new Set(txt).size === nDistinct) return txt;
+  }
+  return ticks.map((t) => String(Number(t.toFixed(3))));
+}
+
 // ---------------------------------------------------------------------------------------------------------------
 // Line chart: series [{name, values[], cls}] on a shared x index; refs [{y, text, cls}] horizontal lines;
 // xTicks [{i, text}]. Missing values break the line.
@@ -82,9 +93,11 @@ export function lineChartSVG({ series, label, refs = [], xTicks = [], yMin = nul
   const X = (i) => padL + (n <= 1 ? 0 : (i / (n - 1)) * (width - padL - padR));
   const Y = (v) => padT + (1 - (v - lo) / (hi - lo)) * (height - padT - padB);
   let body = `<rect class="lc-bg" x="${padL}" y="${padT}" width="${width - padL - padR}" height="${height - padT - padB}"/>`;
-  for (const t of [lo, (lo + hi) / 2, hi]) {
-    body += `<text class="lc-tick" x="${padL - 4}" y="${r1(Y(t) + 3)}" text-anchor="end">${esc(Math.round(t))}${esc(unit)}</text>`;
-  }
+  const ticks = [lo, (lo + hi) / 2, hi];
+  const tickText = axisTickTexts(ticks);
+  ticks.forEach((t, i) => {
+    body += `<text class="lc-tick" x="${padL - 4}" y="${r1(Y(t) + 3)}" text-anchor="end">${esc(tickText[i])}${esc(unit)}</text>`;
+  });
   for (const r of refs) {
     if (r.y < lo || r.y > hi) continue;
     body += `<line class="lc-ref ${esc(r.cls || '')}" x1="${padL}" x2="${width - padR}" y1="${r1(Y(r.y))}" y2="${r1(Y(r.y))}"/>`;

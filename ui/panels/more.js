@@ -76,6 +76,83 @@ function backfeed(doc, topology) {
   const lab = (doc.series && doc.series.loading && doc.series.loading.label) || 'SIM';
   return { ...best, v: best.pct / 10, label: lab, name: tfName(topology, best.tf) };
 }
+// Display rule for the flip headline (ASSUMPTION, shown on screen): the sentence "How you charge decides where the
+// next battery goes" appears only when naive and aware share at most this many of their top 10 (and, when at least
+// 10 untied candidates exist, the untied top 10 too). p2.js re-exports both.
+export const FLIP_HEADLINE_MAX_OVERLAP = 5;
+
+/** The flip verdict from index.flip (labelled numbers). */
+export function flipVerdict(flip) {
+  const ov = flip && flip.top10Overlap;
+  if (!ov || typeof ov.v !== 'number') return { supports: false, headline: null };
+  const un = flip.untied && flip.untied.top10Overlap;
+  const nU = flip.untied ? (typeof flip.untied.n === 'number' ? flip.untied.n : flip.untied.n && flip.untied.n.v) : null;
+  const unOk = !un || typeof un.v !== 'number' || !(nU >= 10) || un.v <= FLIP_HEADLINE_MAX_OVERLAP;
+  const supports = ov.v <= FLIP_HEADLINE_MAX_OVERLAP && unOk;
+  return { supports, headline: supports ? 'How you charge decides where the next battery goes.' : null };
+}
+
+/** Indices j into fleet[96] (and so into a branch's batKW[step][96]) of the batteries behind transformer tf. */
+export function fleetOn(topology, tf) {
+  const out = [];
+  ((topology && topology.fleet) || []).forEach((h, j) => {
+    const hi = typeof h === 'number' ? h : h && h.home;
+    if (topology.homes[hi] && topology.homes[hi].tf === tf) out.push(j);
+  });
+  return out;
+}
+const minGrantKW = (meta) => { const c = meta && meta.constants && meta.constants.MIN_GRANT_KW; return c && typeof c.value === 'number' ? c.value : 0.5; };
+
+/**
+ * What the "transformer runs hot" fault actually did, measured in the aware_faults branch (build prompt 5.4.4).
+ * The caption says this instead of asserting a throttle: on 23 Aug the hot transformer's batteries may not be charging
+ * when the extra load arrives, and then there is nothing to shift (sim.verify p1 prints the same three kW values).
+ *   before/at/after: kW on the transformer's batteries the minute before the load arrives, at it, and the minute after
+ *   state: 'idle' (not charging before: nothing to shift) | 'throttled' (cut by more than MIN_GRANT_KW the next minute)
+ *          | 'kept' (kept charging)
+ *   maxPct/maxPctStep: the transformer's highest OpenDSS loading over the event window; maxKW/firstChargeStep: its
+ *   batteries' highest charge in the window and the first minute they charge in it (null if they never do)
+ * Null when the event, the branch file or the topology is missing.
+ */
+export function hotOutcome(meta, doc, topology) {
+  const e = ((meta && meta.events && meta.events.aware_faults) || []).find((x) => x.kind === 'hot');
+  if (!e || !doc || !Array.isArray(doc.batKW) || !Array.isArray(doc.loading) || !topology || typeof e.step !== 'number') return null;
+  const js = fleetOn(topology, e.tf);
+  const n = Math.min(doc.batKW.length, doc.loading.length);
+  if (e.step < 1 || e.step >= n) return null;
+  const kwAt = (k) => js.reduce((s, j) => s + (Number(doc.batKW[k][j]) || 0), 0) / 10;
+  const g = minGrantKW(meta);
+  const s0 = e.step;
+  const before = kwAt(s0 - 1), at = kwAt(s0), after = kwAt(Math.min(n - 1, s0 + 1));
+  const end = Math.min(n, s0 + (typeof e.minutes === 'number' ? Math.round(e.minutes * 60 / (meta.stepSeconds || 60)) : 60));
+  let maxPct = -Infinity, maxPctStep = s0, maxKW = 0, firstChargeStep = null;
+  for (let k = s0; k < end; k++) {
+    const p = Number(doc.loading[k][e.tf]) / 10;
+    if (p > maxPct) { maxPct = p; maxPctStep = k; }
+    const kw = kwAt(k);
+    if (kw > maxKW) maxKW = kw;
+    if (kw > g && firstChargeStep === null) firstChargeStep = k;
+  }
+  const state = before <= g ? 'idle' : (after < before - g ? 'throttled' : 'kept');
+  return { tf: e.tf, home: e.home, step: s0, minutes: e.minutes, batteries: js.length, before, at, after, state, maxPct, maxPctStep, maxKW, firstChargeStep, minGrant: g };
+}
+
+/** The first minute (from Tc) each focus transformer A-D gets charge in a branch, in time order: the measured order
+ *  the charge reaches the street (the rotation EXPECT in 7.3 is refuted on this data, so the beat states the order). */
+export function chargeOrder(meta, doc, topology) {
+  if (!meta || !doc || !Array.isArray(doc.batKW) || !topology) return null;
+  const k0 = meta.tc && typeof meta.tc.step === 'number' ? meta.tc.step : 0;
+  const g = minGrantKW(meta);
+  const out = [];
+  for (const f of topology.focus || []) {
+    const js = fleetOn(topology, f.tf);
+    for (let k = k0; k < doc.batKW.length; k++) {
+      if (js.reduce((s, j) => s + (Number(doc.batKW[k][j]) || 0), 0) / 10 > g) { out.push({ key: f.key, tf: f.tf, step: k }); break; }
+    }
+  }
+  return out.sort((a, b) => a.step - b.step || String(a.key).localeCompare(String(b.key)));
+}
+
 function scanEngine(eng, re) {
   let hit = null;
   const walk = (o, path) => {
@@ -166,6 +243,15 @@ export const FACTS = {
     return [{ ...x, o: { digits: 4, unit: ' pu' } }, typeof x.volts === 'number' ? ` (${x.volts.toFixed(1)} V)` : ''];
   }],
   naiveHead: [['p1meta'], (S) => withO(get(S, 'p1meta.summary.naive.feederHead'), { unit: '%', digits: 1 })],
+  naiveHeadOnset: [['p1meta'], (S) => {
+    const x = get(S, 'p1meta.summary.naive.feederHead.afterOnset');
+    return isL(x) ? [{ ...x, o: { unit: '%', digits: 1 } }, ' of its rating', x.t ? ` at ${x.t}` : ''] : null;
+  }],
+  naiveVoltVerdict: [['p1meta'], (S) => {
+    const x = get(S, 'p1meta.summary.naive.homesBelow095');
+    if (!isL(x)) return null;
+    return x.v === 0 ? ['voltage stays in range at unity pf (', { ...x, o: {} }, ' homes below 0.95 pu)'] : [{ ...x, o: {} }, ' homes fall below 0.95 pu'];
+  }],
   naiveBackfeedMax: [['p1:naive', 'topology'], (S) => { const b = backfeed(S['p1:naive'], S.topology); return b ? [{ v: b.v, label: b.label, o: { unit: '%', digits: 1 } }, ` on ${b.name} at ${stepTime(S['p1:naive'], b.k)}`] : null; }],
   awareBackfeedMax: [['p1:aware', 'topology'], (S) => { const b = backfeed(S['p1:aware'], S.topology); return b ? [{ v: b.v, label: b.label, o: { unit: '%', digits: 1 } }, ` on ${b.name}`] : 'no export above its cap'; }],
   faultCommsT: [['p1meta'], (S) => { const e = (get(S, 'p1meta.events.aware_faults') || []).find((x) => x.kind === 'comms_lost'); return e ? L(e.t, 'SIM') : null; }],
@@ -173,6 +259,47 @@ export const FACTS = {
   faultCommsKW: [['p1meta'], (S) => { const e = (get(S, 'p1meta.events.aware_faults') || []).find((x) => x.kind === 'comms_lost'); return e && typeof e.cmdKW === 'number' ? L(e.cmdKW, 'SIM', 'its last charge command', { unit: ' kW', digits: 1, signed: true }) : null; }],
   faultHotT: [['p1meta'], (S) => { const e = (get(S, 'p1meta.events.aware_faults') || []).find((x) => x.kind === 'hot'); return e ? L(e.t, 'SIM') : null; }],
   faultStallT: [['p1meta'], (S) => { const e = (get(S, 'p1meta.events.aware_faults') || []).find((x) => x.kind === 'stall'); return e ? L(e.t, 'SIM') : null; }],
+  faultHotTf: [['p1meta', 'topology'], (S) => { const e = (get(S, 'p1meta.events.aware_faults') || []).find((x) => x.kind === 'hot'); return e ? `transformer ${tfName(S.topology, e.tf)}` : null; }],
+  faultHotMinutes: [['p1meta'], (S) => {
+    const e = (get(S, 'p1meta.events.aware_faults') || []).find((x) => x.kind === 'hot');
+    return constOf(S.p1meta, 'HOT_MINUTES', { unit: ' min' }) || (e && typeof e.minutes === 'number' ? L(e.minutes, 'ASSUMPTION', 'hot-transformer event length', { unit: ' min' }) : null);
+  }],
+  // What the hot-transformer fault did, measured (hotOutcome). Never asserts a shift the data did not show.
+  faultHotOutcome: [['p1meta', 'p1:aware_faults', 'topology'], (S) => {
+    const h = hotOutcome(S.p1meta, S['p1:aware_faults'], S.topology);
+    if (!h) return null;
+    const d = S['p1:aware_faults'];
+    const kl = (d.series && d.series.batKW && d.series.batKW.label) || 'SIM';
+    const pl = (d.series && d.series.loading && d.series.loading.label) || 'SIM';
+    const kw = (v, cite) => L(Math.round(v * 10) / 10, kl, cite, { unit: ' kW', digits: 1, signed: true });
+    const peak = L(Math.round(h.maxPct * 10) / 10, pl, `OpenDSS, highest loading on T-${h.tf} during the event (aware_faults)`, { unit: '%', digits: 1 });
+    const parts = [];
+    if (h.state === 'idle') {
+      parts.push('Its batteries were not charging when the load arrived (', kw(h.before, 'battery kW on that transformer the minute before'), '), so there was no charge to shift.');
+    } else if (h.state === 'throttled') {
+      parts.push('Its batteries were throttled from ', kw(h.before, 'battery kW the minute before'), ' to ', kw(h.after, 'battery kW the minute after'), ' within a minute.');
+    } else {
+      parts.push('Its batteries kept charging (', kw(h.before, 'battery kW the minute before'), ', then ', kw(h.after, 'battery kW the minute after'), ').');
+    }
+    parts.push(' During the event it peaked at ', peak, ' of nameplate');
+    if (h.firstChargeStep !== null && h.state === 'idle') parts.push(', with its batteries charging from ', L(stepTime(S.p1meta, h.firstChargeStep), 'SIM', 'first minute they charge during the event'), ' at up to ', kw(h.maxKW, 'highest battery charge on that transformer during the event'));
+    else if (h.firstChargeStep === null) parts.push('; its batteries stayed idle throughout');
+    parts.push('.');
+    return parts;
+  }],
+  faultCover: [['p1meta', 'topology'], (S) => {
+    const e = (get(S, 'p1meta.events.aware_faults') || []).find((x) => x.kind === 'comms_lost');
+    if (!e) return null;
+    if (typeof e.coveredStep !== 'number' || !Array.isArray(e.coveredBy) || !e.coveredBy.length) return 'no neighbour picked up its headroom';
+    const who = e.coveredBy.map((i) => homeLabel(S.topology, i)).filter(Boolean).join(' and ');
+    const s = typeof e.expiredStep === 'number' ? (e.coveredStep - e.expiredStep) * (S.p1meta.stepSeconds || 60) : null;
+    return [`${who} on the same transformer pick up its headroom`, s === null ? '' : ' ', s === null ? '' : L(s, 'SIM', 'seconds from expiry to the re-grant (5.4.3 cover)', { unit: ' s' }), s === null ? '' : ' after expiry'];
+  }],
+  chargeOrder: [['p1meta', 'p1:aware', 'topology'], (S) => {
+    const o = chargeOrder(S.p1meta, S['p1:aware'], S.topology);
+    if (!o || !o.length) return null;
+    return L(o.map((x) => `${x.key} ${stepTime(S.p1meta, x.step)}`).join(', '), 'SIM', 'first minute each focus transformer\'s batteries charge (feeder-aware, 23 Aug)');
+  }],
   staleS: [['p1meta'], (S) => constOf(S.p1meta, 'COMMS_STALE_S', { unit: ' s' })],
   ttlS: [['p1meta'], (S) => constOf(S.p1meta, 'COMMAND_TTL_S', { unit: ' s' })],
   evKW: [['p1meta'], (S) => constOf(S.p1meta, 'EV_KW', { unit: ' kW', digits: 1 })],
@@ -197,7 +324,18 @@ export const FACTS = {
     const x = isL(m) && typeof m.v === 'number' ? m : scanEngine(S.engine, /solve/i);
     return x ? { ...x, o: { unit: ' ms', digits: 1 } } : null;
   }, ['p1meta', 'engine']],
-  allocateLargest: [['topology'], (S) => { const h = scanEngine(S.engine, /100k|100000|1e5/i) || scanEngine(S.engine, /alloc/i); return h ? { ...h, o: { unit: ' µs', digits: 0 } } : null; }, ['engine']],
+  allocateLargest: [['topology'], (S) => {
+    const a = S.engine && S.engine.allocate;
+    if (a && typeof a === 'object') {
+      const sizes = Object.keys(a).filter((k) => /^\d+$/.test(k) && isL(a[k]) && typeof a[k].v === 'number').map(Number).sort((x, y) => x - y);
+      if (sizes.length) {
+        const big = sizes[sizes.length - 1], x = a[String(big)];
+        return [{ ...x, v: Math.round(x.v / 100) / 10, o: { unit: ' ms', digits: 1 } }, ' for ', L(big, 'ASSUMPTION', 'synthetic scale test fleet (sim.bench)'), ' batteries'];
+      }
+    }
+    const h = scanEngine(S.engine, /100k|100000|1e5/i) || scanEngine(S.engine, /alloc/i);
+    return h ? { ...h, o: { unit: ' µs', digits: 0 } } : null;
+  }, ['engine']],
   candidates: [['p2index'], (S) => { const t = get(S, 'p2index.ties'); return t && typeof t.of === 'number' ? L(t.of, 'DERIVED', 'eligible homes without a battery') : null; }],
   refereeRuns: [['p2index'], (S) => { const r = get(S, 'p2index.referee'); return r && typeof r.runs === 'number' ? L(r.runs, 'SIM', 'sim.referee OpenDSS month runs') : null; }],
   refereeP99: [['p2index'], (S) => {
@@ -211,26 +349,71 @@ export const FACTS = {
     const a = get(S, `p2:${DEFAULT_AWARE}.ranking.0`), nd = S[`p2:${DEFAULT_NAIVE}`];
     if (!a || !nd) return null;
     const e = rankOf(nd, a.home);
-    if (!e) return 'not in the naive top fifty';
-    const viol = e.noNewViolation && e.noNewViolation.v === false;
-    return [`naive rank `, L(e.rank, 'SIM', 'naive ranking'), viol ? ', and it adds a violation there (where not to put it)' : ''];
-  }],
+    if (e) {
+      const viol = e.noNewViolation && e.noNewViolation.v === false;
+      return [`naive rank `, L(e.rank, 'SIM', 'naive ranking'), viol ? ', and it adds a violation there (where NOT to put it)' : ''];
+    }
+    // outside the naive top 50: the collapsed rank (flip.movers) and the naive with/without peak (index.bridge)
+    const mv = (get(S, 'p2index.flip.movers') || []).find((m) => m.home === a.home);
+    const br = (get(S, 'p2index.bridge') || []).find((b) => b.tf === a.tf);
+    const bn = br && br.naive && br.naive.home === a.home ? br.naive : null;
+    const parts = [];
+    parts.push(mv && isL(mv.rankNaive) ? 'naive rank ' : 'outside the naive top fifty');
+    if (mv && isL(mv.rankNaive)) parts.push({ ...mv.rankNaive, o: {} }, isL(mv.rankAware) ? ' (feeder-aware rank ' : '', isL(mv.rankAware) ? { ...mv.rankAware, o: {} } : '', isL(mv.rankAware) ? ')' : '');
+    if (bn && isL(bn.peakWithoutPct) && isL(bn.peakWithPct)) parts.push('; managed naively, a battery there takes its month peak from ', { ...bn.peakWithoutPct, o: { unit: '%', digits: 1 } }, ' to ', { ...bn.peakWithPct, o: { unit: '%', digits: 1 } });
+    if (bn && bn.noNewViolation && bn.noNewViolation.v === false) parts.push(' and adds a violation (where NOT to put it)');
+    return parts;
+  }, ['p2index']],
   flipHeadline: [['p2index'], (S) => {
-    const f = get(S, 'p2index.flip.top10Overlap');
-    if (!isL(f)) return null;
-    return f.v <= 5 ? 'How you charge decides where the next battery goes.' : 'The rankings mostly agree in this data.';
+    const f = get(S, 'p2index.flip');
+    if (!f || !isL(f.top10Overlap)) return null;
+    const v = flipVerdict(f);
+    return v.supports ? v.headline : 'The flip is partial in this data (the headline needs at most five shared homes in both top tens).';
+  }],
+  flipUntied: [['p2index'], (S) => {
+    const u = get(S, 'p2index.flip.untied');
+    if (!u || !isL(u.top10Overlap)) return null;
+    const n = typeof u.n === 'number' ? L(u.n, u.top10Overlap.label, 'candidates no id tie-break placed') : (isL(u.n) ? u.n : null);
+    return [{ ...u.top10Overlap, o: {} }, ' of ten', isL(u.spearman) ? ' (Spearman ' : '', isL(u.spearman) ? { ...u.spearman, o: { digits: 2 } } : '', n ? ', over ' : '', n ? { ...n, o: {} } : '', n ? ' candidates' : '', isL(u.spearman) ? ')' : ''];
   }],
   flipOverlap: [['p2index'], (S) => withO(get(S, 'p2index.flip.top10Overlap'))],
   flipSpearman: [['p2index'], (S) => withO(get(S, 'p2index.flip.spearman'), { digits: 2 })],
   capNaive: [['p2index'], (S) => withO(get(S, 'p2index.usefulCapacity.naive'))],
   capAware: [['p2index'], (S) => withO(get(S, 'p2index.usefulCapacity.aware'))],
-  protectionCases: [['p2:' + DEFAULT_NAIVE], (S) => {
-    const d = S[`p2:${DEFAULT_NAIVE}`];
-    if (!d || !Array.isArray(d.ranking)) return null;
-    return L(d.ranking.filter((e) => e.protectionWith && e.protectionWith.v === true).length, 'SIM', 'naive top-50 candidates where the ASSUMPTION fuse rule operates');
+  capAwareStop: [['p2index', 'topology'], (S) => {
+    const a = get(S, 'p2index.usefulCapacity.aware');
+    if (!isL(a)) return null;
+    const eligible = (S.topology.homes || []).filter((h) => h.eligible).length;
+    return a.v >= eligible ? 'every eligible home, without curtailment passing the cap' : 'before curtailment passes the cap';
   }],
+  // Where the ASSUMPTION protection rule operates in P2 (naive): candidate placements and the existing fleet. Dark
+  // homes are counted from the data; with none, the caption says so instead of animating dark homes.
+  protectionWhere: [['p2:' + DEFAULT_NAIVE, 'topology'], (S) => {
+    const d = S[`p2:${DEFAULT_NAIVE}`];
+    const cases = Array.isArray(d.protectionCases) ? d.protectionCases : null;
+    const fleet = get(S, 'p2index.fleetProtection.naive');
+    if (!cases && !Array.isArray(fleet)) return null;
+    const cs = cases || [], fl = Array.isArray(fleet) ? fleet : [];
+    const dark = new Set([...cs.flatMap((c) => c.homesDark || []), ...fl.flatMap((c) => c.homesDark || [])]);
+    const parts = [L(cs.length, 'SIM', 'naive candidate placements where the ASSUMPTION rule operates (one 15-min interval above 200%)'), ' naive candidate placement' + (cs.length === 1 ? '' : 's')];
+    if (cs.length) parts.push(' (' + cs.map((c) => `${c.label || homeLabel(S.topology, c.home)} on ${tfName(S.topology, c.tf)}`).join(', ') + ')');
+    if (Array.isArray(fleet)) {
+      parts.push(' and ', L(fl.length, 'SIM', 'transformers where the rule operates with the existing fleet managed naively'), ' transformer' + (fl.length === 1 ? '' : 's') + ' with the existing fleet managed naively');
+      if (fl.length) parts.push(' (' + fl.map((c) => tfName(S.topology, c.tf)).join(', ') + ')');
+    }
+    parts.push('. Battery-less homes that would go dark: ');
+    if (dark.size === 0) parts.push(L(0, 'SIM', 'battery-less homes behind those transformers'), ': every home behind them has a battery and islands');
+    else parts.push(L(dark.size, 'SIM', 'battery-less homes behind those transformers'), ` (${[...dark].map((i) => homeLabel(S.topology, i)).join(', ')})`);
+    return parts;
+  }, ['p2index']],
   insightTfHour: [['p2index'], (S) => { const h = modeHour(get(S, 'p2index.insight.tfPeakHour')); return h === null ? null : L(`${String(h).padStart(2, '0')}:00`, 'SIM', 'mode of the hour of each transformer\'s monthly peak'); }],
   insightPriceHour: [['p2index'], (S) => { const h = modeHour(get(S, 'p2index.insight.priceMaxHour')); return h === null ? null : L(`${String(h).padStart(2, '0')}:00`, 'REAL', 'mode of the hour of each August day\'s max LZ_NORTH price'); }],
+  insightVerdict: [['p2index'], (S) => {
+    const t = modeHour(get(S, 'p2index.insight.tfPeakHour')), p = modeHour(get(S, 'p2index.insight.priceMaxHour'));
+    if (t === null || p === null) return null;
+    return t !== p ? 'The two peaks fall at different hours: a market-only dispatcher saves its energy for the price peak and does nothing for the load peak.'
+      : 'In this data the two peaks share an hour.';
+  }],
   cliffCount: [['p2index'], (S) => withO(get(S, 'p2index.cliffs.count'))],
   cliffEvening: [['p2index'], (S) => withO(get(S, 'p2index.cliffs.evening'))],
 };

@@ -5,7 +5,7 @@
   "constants": {},
   "sources": {},
   "series": {},
-  "_doc": "L5, hand-written (no generator). The 5-minute video as deep links. Captions are TEMPLATES: prose plus {{fact}} placeholders that ui/panels/more.js resolves from the committed JSON at view time, each with its honesty label; {{chip:LABEL:cite}} labels a prose claim. No caption or title carries a bare digit (ui/test/p2.test.js). t0/t1 are the video clock. Beat times follow build prompt section 11; every caption uses what was measured.",
+  "_doc": "L5, hand-written (no generator). The 5-minute video as deep links. Captions are TEMPLATES: prose plus {{fact}} placeholders that ui/panels/more.js resolves from the committed JSON at view time, each with its honesty label; {{chip:LABEL:cite}} labels a prose claim. No caption or title carries a bare digit (ui/test/p2.test.js). t0/t1 are the video clock. Beat times follow build prompt section 11; every caption uses what was measured, and a refuted expectation (for example the A-B-C-D rotation, or a throttle on the hot transformer) is stated as measured, never asserted.",
   "beats": [
     {
       "id": "problem",
@@ -29,7 +29,7 @@
       "title": "When transformers peak vs when prices peak",
       "label": "SIM",
       "link": "view=p2&combo=aware-core-d26-g0",
-      "caption": "Across August, transformers most often hit their monthly peak at {{insightTfHour}}; the day's highest price most often falls at {{insightPriceHour}}. A market-only dispatcher saves its energy for the price peak and does nothing for the load peak."
+      "caption": "Across August, transformers most often hit their monthly peak at {{insightTfHour}}; the day's highest price most often falls at {{insightPriceHour}}. {{insightVerdict}}"
     },
     {
       "id": "backfeed",
@@ -45,7 +45,7 @@
       "title": "The price collapse: naive rebound",
       "label": "SIM",
       "link": "view=p1&branch=naive&t=22:30&cam=street",
-      "caption": "The price falls from {{eveningPeakPrice}} at {{eveningPeakT}} to {{onsetPrice}} at {{onsetT}}, the charge onset. Naive: every battery charges at once, and the worst service transformer reaches {{naiveMax}} ({{naiveMaxTf}} at {{naiveMaxT}}): {{naiveNormalEvents}} normal-tier events and {{naiveEmergencyTfs}} transformers past the emergency rating. This rule's fuse opens above {{fusePct}} for {{fuseMinutes}}; it operated on {{naiveProtection}} transformers. Grid check: minimum service voltage {{naiveVmin}}; feeder head {{naiveHead}} of its rating."
+      "caption": "The price falls from {{eveningPeakPrice}} at {{eveningPeakT}} to {{onsetPrice}} at {{onsetT}}, the charge onset. Naive: every battery charges at once, and the worst service transformer reaches {{naiveMax}} ({{naiveMaxTf}} at {{naiveMaxT}}): {{naiveNormalEvents}} normal-tier events and {{naiveEmergencyTfs}} transformers past the emergency rating. This rule's fuse opens above {{fusePct}} for {{fuseMinutes}}; it operated on {{naiveProtection}} transformers. Grid check: minimum service voltage {{naiveVmin}}, so {{naiveVoltVerdict}}; after the onset the feeder head peaks at {{naiveHeadOnset}}."
     },
     {
       "id": "rebound-aware",
@@ -53,7 +53,7 @@
       "title": "The price collapse: feeder-aware rotation",
       "label": "SIM",
       "link": "view=p1&branch=aware&t=22:30&cam=street",
-      "caption": "Feeder-aware: before sending charge, check each transformer's headroom and send only what fits. Charge moves from battery to battery down the street (watch the ticker and the gauges). Battery-caused normal-tier events: {{awareBatteryNormal}}; emergency: {{awareBatteryEmergency}}. {{awareVerdict}} Charged by the morning deadline: {{awareCharged}}. What the controller sees: {{controllerView}}."
+      "caption": "Feeder-aware: before sending charge, check each transformer's headroom and send only what fits. On street A–D the first charge reaches each transformer at {{chargeOrder}}; the ticker names every grant and hand-off. Battery-caused normal-tier events: {{awareBatteryNormal}}; emergency: {{awareBatteryEmergency}}. {{awareVerdict}} Charged by the morning deadline: {{awareCharged}}. What the controller sees: {{controllerView}}."
     },
     {
       "id": "faults",
@@ -61,7 +61,7 @@
       "title": "Pieces fail mid-balance",
       "label": "SIM",
       "link": "view=p1&branch=aware_faults&t=22:16&cam=street",
-      "caption": "At {{faultCommsT}} the battery at {{faultCommsHome}} goes silent holding a {{faultCommsKW}} command: stale after {{staleS}}, expired and idle with backup armed after {{ttlS}}, and a neighbour covers. At {{faultHotT}} transformer C runs hot ({{evKW}} of new load) and charge shifts away. At {{faultStallT}} our controller stalls for {{stallMin}}; every command expires on schedule. Battery-caused normal-tier events: {{faultsBatteryNormal}}; emergency: {{faultsBatteryEmergency}}."
+      "caption": "At {{faultCommsT}} the battery at {{faultCommsHome}} goes silent holding a {{faultCommsKW}} command: stale after {{staleS}}, expired and idle with backup armed after {{ttlS}}, and {{faultCover}}. At {{faultHotT}} {{faultHotTf}} runs hot ({{evKW}} of new load for {{faultHotMinutes}}). {{faultHotOutcome}} At {{faultStallT}} our controller stalls for {{stallMin}}; every command expires on schedule. Battery-caused normal-tier events: {{faultsBatteryNormal}}; emergency: {{faultsBatteryEmergency}}."
     },
     {
       "id": "p2-controls",
@@ -77,7 +77,7 @@
       "title": "The flip",
       "label": "DERIVED",
       "link": "view=p2&combo=naive-core-d26-g0",
-      "caption": "{{flipHeadline}} Naive and feeder-aware share {{flipOverlap}} of their top ten (Spearman {{flipSpearman}}). Feeder-aware's first choice, {{awareTop1}}, under naive dispatch: {{awareTop1UnderNaive}}."
+      "caption": "{{flipHeadline}} Naive and feeder-aware share {{flipOverlap}} of their top ten (Spearman {{flipSpearman}}); among candidates whose place no id tie-break decided, they share {{flipUntied}}. Feeder-aware's first choice, {{awareTop1}} on {{awareTop1Tf}}, under naive dispatch: {{awareTop1UnderNaive}}."
     },
     {
       "id": "p2-capacity",
@@ -85,7 +85,7 @@
       "title": "Useful capacity and dark homes",
       "label": "SIM",
       "link": "view=p2&combo=aware-core-d26-g0&n=10",
-      "caption": "From an empty feeder, naive dispatch fits {{capNaive}} batteries before the first battery-caused normal-tier event; feeder-aware fits {{capAware}} before curtailment passes the cap. Where protection operates in the naive counterfactuals {{chip:ASSUMPTION:fuse rule, round-1 world-sim}}, battery-less homes go dark and battery homes island: {{protectionCases}} of the naive top candidates."
+      "caption": "From an empty feeder, naive dispatch fits {{capNaive}} batteries before the first battery-caused normal-tier event; feeder-aware fits {{capAware}}: {{capAwareStop}}. Protection may operate {{chip:ASSUMPTION:fuse rule, round-1 world-sim}} in {{protectionWhere}}."
     },
     {
       "id": "money",

@@ -6,16 +6,15 @@
 //
 // Pure helpers are exported for ui/test/p2.test.js (no DOM at import time).
 import { chartHTML, modeIndex } from '../lib/charts.js';
-import { beatBarHTML, sharedNames } from './more.js';
+import { beatBarHTML, sharedNames, flipVerdict, FLIP_HEADLINE_MAX_OVERLAP } from './more.js';
+
+// The flip display rule lives in more.js (the beat captions use it too); re-exported here for the panel's tests.
+export { flipVerdict, FLIP_HEADLINE_MAX_OVERLAP };
 
 export const POLICIES = [['aware', 'feeder-aware'], ['naive', 'naive']];
 export const CLASSES = [['core', 'Core'], ['legacy', 'Legacy']];
 export const RULES = [['d26', 'D-26 onset'], ['cheapest', 'cheapest hours']];
 export const GROWTHS = [['0', 'today'], ['20', 'growth']];
-
-// Display rule for the flip headline (ASSUMPTION, shown on screen): the sentence "How you charge decides where the
-// next battery goes" appears only when naive and aware share at most this many of their top 10.
-export const FLIP_HEADLINE_MAX_OVERLAP = 5;
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -77,17 +76,6 @@ export function rankOf(doc, homeIdx) {
     if (e.home === homeIdx || (e.alsoOnTf || []).includes(homeIdx)) return e.rank;
   }
   return null;
-}
-
-/** The flip verdict from index.flip (labelled numbers). */
-export function flipVerdict(flip) {
-  const ov = flip && flip.top10Overlap;
-  if (!ov || typeof ov.v !== 'number') return { supports: false, headline: null };
-  const un = flip.untied && flip.untied.top10Overlap;
-  const nU = flip.untied ? (typeof flip.untied.n === 'number' ? flip.untied.n : flip.untied.n && flip.untied.n.v) : null;
-  const unOk = !un || typeof un.v !== 'number' || !(nU >= 10) || un.v <= FLIP_HEADLINE_MAX_OVERLAP;
-  const supports = ov.v <= FLIP_HEADLINE_MAX_OVERLAP && unOk;
-  return { supports, headline: supports ? 'How you charge decides where the next battery goes.' : null };
 }
 
 /** Totals of the existing-fleet counterfactual (index.fleetCounterfactual): per policy, summed over transformers. */
@@ -172,6 +160,13 @@ function partText(p, fmt) { return typeof p === 'string' ? p : fmt.fmt(p, { unit
 function partHTML(p, fmt) { return typeof p === 'string' ? esc(p) : fmt.fmtHTML(p, { unit: p.unit, digits: p.digits, money: p.money }); }
 export const counterfactualText = (args, fmt) => counterfactualParts(args).map((p) => partText(p, fmt)).join('');
 export const counterfactualHTML = (args, fmt) => counterfactualParts(args).map((p) => partHTML(p, fmt)).join('');
+
+/** The month peak with the battery as the table shows it: OpenDSS's number when the referee ran this candidate,
+ *  otherwise the surrogate screening number (5.6.11: shortlist rows show OpenDSS numbers). */
+export function peakWithShown(e) {
+  if (checkedByOpenDSS(e) && e.opendss.after && e.opendss.after.peakPct) return e.opendss.after.peakPct;
+  return e.peakWithPct || null;
+}
 
 /** Labelled metrics of an object as [key, labelled] pairs (skips anything not labelled). */
 export function labelledPairs(obj, isLabelled) {
@@ -288,7 +283,8 @@ function rankingTable(ctx, st) {
   const rows = (doc.ranking || []).slice(0, 15).map((e) => {
     const id = topology.homes[e.home] ? topology.homes[e.home].id : '';
     const on = sel.entry && sel.entry.rank === e.rank;
-    const pw = e.peakWithPct ? fmt.fmtValue(e.peakWithPct, { digits: 1 }) : 'n/a';
+    const pk = peakWithShown(e);
+    const pw = pk ? fmt.fmtValue(pk, { digits: 1 }) : 'n/a';
     const av = e.stressAvoidedH ? fmt.fmtValue(e.stressAvoidedH, { digits: 2 }) : 'n/a';
     const rv = e.revenueUSD ? fmt.fmtValue(e.revenueUSD, { money: true, digits: 0 }) : 'n/a';
     const viol = e.noNewViolation && e.noNewViolation.v === false ? ' p2-viol' : '';
@@ -299,7 +295,7 @@ function rankingTable(ctx, st) {
     const e = (doc.ranking || [])[0];
     return e && e[k] && e[k].label ? fmt.chip(e[k].label, e[k].cite) : fmt.chip(fallback);
   };
-  return `<table class="p2-rank"><thead><tr><th>#</th><th>home</th><th>transformer</th><th>peak with, %${lab('peakWithPct', 'SIM')}</th><th>stress avoided, h${lab('stressAvoidedH', 'SIM')}</th><th>August value${lab('revenueUSD', 'DERIVED')}</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+  return `<table class="p2-rank"><thead><tr><th>#</th><th>home</th><th>transformer</th><th>peak with, % (● OpenDSS, ○ screening)${lab('peakWithPct', 'SIM')}</th><th>stress avoided, h${lab('stressAvoidedH', 'SIM')}</th><th>August value${lab('revenueUSD', 'DERIVED')}</th><th></th></tr></thead><tbody>${rows}</tbody></table>
     <div class="hb-sub">Rank rule, no weights: adds no new violation; stress hours avoided; peak with the battery, lowest first; value minus curtailment; home id. Rows in red add a violation. ● OpenDSS-checked, ○ screening.</div>`;
 }
 
@@ -329,6 +325,10 @@ function flipBlock(ctx, st) {
     body += `<div class="hb-sub">Spearman ${sp ? fmt.fmtHTML(sp, { digits: 2 }) : 'n/a'}${un.top10Overlap ? ` · untied candidates only: overlap ${fmt.fmtHTML(un.top10Overlap)}, Spearman ${un.spearman ? fmt.fmtHTML(un.spearman, { digits: 2 }) : 'n/a'} over ${un.n != null ? fmt.fmtHTML(typeof un.n === 'number' ? { v: un.n, label: un.top10Overlap.label || 'DERIVED' } : un.n) : 'n/a'} candidates` : ''}${ties ? ` · places decided by id: ${fmt.fmtHTML(ties)} of ${esc(st.index.ties.of)}` : ''}</div>`;
     const dr = st.index.drivers;
     if (dr && dr.top10DistinctProfiles) body += `<div class="hb-sub">The feeder-aware top 10 is driven by ${fmt.fmtHTML(dr.top10DistinctProfiles)} distinct SMART-DS load profiles${Array.isArray(dr.profiles) && dr.profiles.length ? ` (${esc([...new Set(dr.profiles)].join(', '))})` : ''}: shared shapes are one piece of evidence, not several.</div>`;
+    const mv = Array.isArray(f.movers) ? f.movers.filter((m) => fmt.isLabelled(m.rankNaive) && fmt.isLabelled(m.rankAware)) : [];
+    if (mv.length) {
+      body += `<div class="hb-sub"><b>Biggest movers</b> (one entry per transformer): <ul class="p2-fliplist">${mv.slice(0, 5).map((m) => `<li>${esc(m.label || homeLabel(topology, m.home))} on ${esc(tfName(topology, m.tf))}: naive rank ${fmt.fmtHTML(m.rankNaive)} → feeder-aware rank ${fmt.fmtHTML(m.rankAware)}</li>`).join('')}</ul></div>`;
+    }
     body += `<div class="hb-sub">Headline rule: shown only when the two top tens share at most ${esc(FLIP_HEADLINE_MAX_OVERLAP)} homes (display rule ${fmt.chip('ASSUMPTION', 'ui/panels/p2.js FLIP_HEADLINE_MAX_OVERLAP')}).</div>`;
   }
   if (st.aware && st.naive) {
@@ -414,6 +414,24 @@ function marketBlock(ctx, st) {
     if (Array.isArray(cl.events)) out += chartHTML('cliff', { events: cl.events, period: cl.period, label: cl.count.label || 'DERIVED', caption: `Rule: ${cl.rule || ''}. Accent = evening`, title: 'price cliffs' });
   }
   return out;
+}
+
+/** Where the ASSUMPTION protection rule operates in the month (naive): candidate placements (combo protectionCases)
+ *  and the existing fleet (index.fleetProtection). Dark homes only where the data lists them. */
+function protectionBlock(ctx, st) {
+  const { fmt, topology } = ctx;
+  const cs = Array.isArray(st.naive && st.naive.protectionCases) ? st.naive.protectionCases : [];
+  const fp = st.index.fleetProtection;
+  const fl = fp && Array.isArray(fp.naive) ? fp.naive : [];
+  if (!cs.length && !fl.length) return '';
+  const dark = (list) => (list && list.length ? `<b>dark:</b> ${esc(list.map((i) => homeLabel(topology, i)).join(', '))}` : 'no battery-less home behind it (nothing goes dark)');
+  const rows = [
+    ...cs.map((c) => `<li>New battery at ${esc(c.label || homeLabel(topology, c.home))} on ${esc(tfName(topology, c.tf))}, managed naively: peak ${fmt.isLabelled(c.peakWithPct) ? fmt.fmtHTML(c.peakWithPct, { unit: '%', digits: 1 }) : 'n/a'} (${esc(c.t || '')}); ${dark(c.homesDark)}.</li>`),
+    ...fl.map((c) => `<li>Existing fleet managed naively, ${esc(tfName(topology, c.tf))}: peak ${fmt.isLabelled(c.peakPct) ? fmt.fmtHTML(c.peakPct, { unit: '%', digits: 1 }) : 'n/a'} (${esc(c.t || '')}); ${dark(c.homesDark)}${(c.homesOnBattery || []).length ? `; on battery: ${esc(c.homesOnBattery.map((i) => homeLabel(topology, i)).join(', '))}` : ''}.</li>`),
+  ];
+  return `<section class="p2-protect"><h2>Where protection may operate ${fmt.chip('ASSUMPTION', (fp && fp.rule) || 'fuse rule, round-1 world-sim')}</h2>
+    <ul class="p2-fliplist">${rows.join('')}</ul>
+    <div class="hb-sub">Battery-less homes behind an open transformer go dark; battery homes island on their own battery and stay lit. Only the homes the data lists are shown.</div></section>`;
 }
 
 function refereeBlock(ctx, st) {
@@ -535,6 +553,7 @@ export async function mount(el, ctx) {
     ${rankingTable(ctx, st)}
     ${greedyBlock(ctx, st)}
     ${capacityBlock(ctx, st)}
+    ${protectionBlock(ctx, st)}
     ${insightBlock(ctx, st)}
     ${fleetBlock(ctx, st)}
     ${marketBlock(ctx, st)}

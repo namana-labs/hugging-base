@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   heatStripSVG, lineChartSVG, barChartSVG, priceStripSVG, cliffStripSVG, chartHTML, captionHTML, band, modeIndex,
-  ChartLabelError, parseISOmin, priceStrip, heatStrip, lineChart, barChart, cliffStrip,
+  ChartLabelError, parseISOmin, priceStrip, heatStrip, lineChart, barChart, cliffStrip, axisTickTexts,
 } from '../lib/charts.js';
 
 const UI = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -94,4 +94,16 @@ test('charts: chartHTML wraps the SVG with a caption carrying the chip; DOM wrap
   const el = { innerHTML: '' };
   assert.equal(heatStrip(el, { values: [1], days: 1, hours: 1, label: 'SIM', caption: 'c' }), el);
   assert.match(el.innerHTML, /^<svg.*chip-SIM/s);
+});
+
+test('charts: y-axis ticks stay distinct on small ranges (judge R0: the naive capacity curve printed "1, 1, 0")', () => {
+  assert.deepEqual(axisTickTexts([0, 0.5, 1]), ['0', '0.5', '1']);
+  assert.deepEqual(axisTickTexts([0, 50, 100]), ['0', '50', '100']);
+  assert.deepEqual(axisTickTexts([0, 0.05, 0.1]), ['0', '0.05', '0.1']);
+  assert.deepEqual(axisTickTexts([2, 2, 2]), ['2', '2', '2']);
+  // the chart itself: a 0/1 series (transformers with a battery-caused event) draws three different tick labels
+  const svg = lineChartSVG({ series: [{ values: [0, 0, 0, 1] }], label: 'SIM' });
+  const ticks = [...svg.matchAll(/<text class="lc-tick"[^>]*text-anchor="end">([^<]*)<\/text>/g)].map((m) => m[1]);
+  assert.equal(ticks.length, 3);
+  assert.equal(new Set(ticks).size, 3, `duplicate ticks ${ticks}`);
 });

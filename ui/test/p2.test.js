@@ -289,3 +289,140 @@ test('L3 shapes: bare untied.n, OpenDSS numbers replace screening numbers in the
   assert.match(txt, /spent 0\.75 h SIM above nameplate without a new battery \(peak 121\.9% SIM\)/);
   assert.match(txt, /under feeder-aware dispatch \(OpenDSS month run\): 0\.00 h SIM above nameplate, peak 97\.1% SIM/);
 });
+
+// ------------------------------------------------------------------------------------ fix round 0 (judge F6)
+// The faults beat once hard-coded "transformer C runs hot ... and charge shifts away" while C's batteries were idle
+// (sim.verify p1: "C's batteries +0.0 -> +0.0 -> +0.0 kW ... the throttle is not exercised"). The hot-transformer
+// clause is now measured (more.js hotOutcome); these tests fail if a caption asserts a shift the data did not show.
+import { hotOutcome, chargeOrder, fleetOn } from '../panels/more.js';
+
+const SHIFT_CLAIM = /shift(s|ed)? (away|to|elsewhere)|charge shifts|throttl|moves? away|re-?balanced/i;
+const realJSON = (p) => { try { return readJSON(p); } catch { return null; } };
+
+/** A synthetic aware_faults world: one hot event on transformer C at step 5 (3 minutes), C's batteries given by kw(k). */
+function hotWorld(kwOnC) {
+  const C = topology.focus.find((f) => f.key === 'C').tf;
+  const js = fleetOn(topology, C);
+  assert.ok(js.length >= 1, 'C has batteries in the topology');
+  const steps = 12;
+  const meta = { start: '22:00', stepSeconds: 60, steps, constants: { MIN_GRANT_KW: { value: 0.5, label: 'ASSUMPTION' }, HOT_MINUTES: { value: 3, label: 'ASSUMPTION', cite: 't' } },
+    events: { aware_faults: [{ step: 5, t: '22:05', kind: 'hot', tf: C, home: topology.transformers[C].homes[0], deltaKW: 7.2, minutes: 3 }] } };
+  const doc = {
+    series: { batKW: { label: 'SIM' }, loading: { label: 'SIM' } },
+    batKW: Array.from({ length: steps }, (_, k) => Array.from({ length: topology.fleet.length }, (_, j) => (js.includes(j) ? Math.round(kwOnC(k) * 10 / js.length) : 0))),
+    loading: Array.from({ length: steps }, (_, k) => Array.from({ length: topology.transformers.length }, (_, t) => (t === C ? 500 + 10 * k : 300))),
+  };
+  return { meta, doc, C };
+}
+const faultsBeat = () => beats.find((b) => b.id === 'faults');
+const resolveHot = (w) => resolveCaption(faultsBeat().caption, { topology, p1meta: w.meta, 'p1:aware_faults': w.doc }, fmt, { html: false });
+
+test('faults beat (F6): the caption template asserts no shift or throttle of its own; the clause comes from data', () => {
+  const b = faultsBeat();
+  assert.ok(!SHIFT_CLAIM.test(stripPlaceholders(b.caption)), `static shift claim in the faults caption: ${stripPlaceholders(b.caption)}`);
+  assert.ok(b.caption.includes('{{faultHotOutcome}}'), 'the hot-transformer outcome must be the measured fact');
+  // the admit half: the old caption is caught
+  assert.ok(SHIFT_CLAIM.test(stripPlaceholders('At {{faultHotT}} transformer C runs hot ({{evKW}} of new load) and charge shifts away.')));
+});
+
+test('faults beat (F6): idle batteries on the hot transformer -> "no charge to shift", never a shift or throttle', () => {
+  const w = hotWorld(() => 0);
+  const h = hotOutcome(w.meta, w.doc, topology);
+  assert.equal(h.state, 'idle');
+  assert.equal(h.firstChargeStep, null);
+  const txt = resolveHot(w);
+  assert.match(txt, /Its batteries were not charging when the load arrived \(0\.0 kW SIM\), so there was no charge to shift\./);
+  assert.match(txt, /its batteries stayed idle throughout/);
+  assert.ok(!SHIFT_CLAIM.test(txt.replace('no charge to shift', '')), `idle batteries but the caption claims a shift: ${txt}`);
+  // idle at the event, charging later in the window: says when and how much, still no shift claim
+  const w2 = hotWorld((k) => (k >= 7 ? 12.6 : 0));
+  const t2 = resolveHot(w2);
+  assert.match(t2, /no charge to shift\. During the event it peaked at 57\.0% SIM of nameplate, with its batteries charging from 22:07 SIM at up to \+12\.6 kW SIM\./);
+  assert.ok(!SHIFT_CLAIM.test(t2.replace('no charge to shift', '')));
+});
+
+test('faults beat (F6): a real throttle is reported as measured (before -> after), and "kept charging" is not a throttle', () => {
+  const cut = hotWorld((k) => (k < 6 ? 19.6 : 8.0));
+  assert.equal(hotOutcome(cut.meta, cut.doc, topology).state, 'throttled');
+  assert.match(resolveHot(cut), /Its batteries were throttled from \+19\.6 kW SIM to \+8\.0 kW SIM within a minute\./);
+  const kept = hotWorld(() => 10);
+  assert.equal(hotOutcome(kept.meta, kept.doc, topology).state, 'kept');
+  const tk = resolveHot(kept);
+  assert.match(tk, /Its batteries kept charging \(\+10\.0 kW SIM, then \+10\.0 kW SIM\)\./);
+  assert.ok(!/throttled/.test(tk));
+  // missing branch file -> "(not built yet)", never a guess
+  assert.match(resolveCaption('{{faultHotOutcome}}', { topology, p1meta: cut.meta }, fmt, { html: false }), /^\(not built yet\)$/);
+});
+
+test('faults beat (F6), REAL data: the clause matches aware_faults focus.C, the path sim.verify p1 prints', { skip: !realJSON('p1/meta.json') && 'no real P1 data' }, () => {
+  const meta = realJSON('p1/meta.json'), af = realJSON('p1/aware_faults.json');
+  const e = meta.events.aware_faults.find((x) => x.kind === 'hot');
+  const key = topology.transformers[e.tf].focus;
+  const f = af.focus[key];
+  assert.equal(f.tf, e.tf);
+  const h = hotOutcome(meta, af, topology);
+  // independent path: the branch's focus.<key>.batKW (tenths of kW) at Tc+34..+36, as sim.verify p1 reads it
+  assert.deepEqual([h.before, h.at, h.after], [f.batKW[e.step - 1] / 10, f.batKW[e.step] / 10, f.batKW[e.step + 1] / 10]);
+  const S = { topology, p1meta: meta, 'p1:aware_faults': af };
+  const txt = resolveCaption(faultsBeat().caption, S, fmt, { html: false });
+  assert.ok(!/not built yet/.test(txt), txt);
+  if (h.state === 'idle') {
+    assert.match(txt, /no charge to shift/);
+    assert.ok(!SHIFT_CLAIM.test(txt.replace('no charge to shift', '')), `C idle at the event but the caption claims a shift: ${txt}`);
+  }
+  const peak = Math.max(...af.loading.slice(e.step, e.step + e.minutes).map((r) => r[e.tf])) / 10;
+  assert.ok(txt.includes(`peaked at ${peak.toFixed(1)}% SIM`), `peak ${peak} not in: ${txt}`);
+});
+
+test('rebound-aware beat: states the measured order charge reaches A-D (the rotation EXPECT is refuted), no "down the street" claim', () => {
+  const b = beats.find((x) => x.id === 'rebound-aware');
+  assert.ok(!/down the street|A → B → C → D|A-B-C-D|rotat/i.test(stripPlaceholders(b.caption)), stripPlaceholders(b.caption));
+  assert.ok(b.caption.includes('{{chargeOrder}}'));
+  const meta = realJSON('p1/meta.json'), aw = realJSON('p1/aware.json');
+  if (!meta || !aw) return;
+  const o = chargeOrder(meta, aw, topology);
+  assert.equal(o.length, 4);
+  for (const x of o) {
+    const kw = aw.focus[x.key].batKW;
+    const first = kw.findIndex((v, k) => k >= meta.tc.step && v / 10 > 0.5);
+    assert.equal(x.step, first, `first charge on ${x.key}`);
+  }
+  for (let i = 1; i < o.length; i++) assert.ok(o[i].step >= o[i - 1].step);
+});
+
+test('beats.json on the REAL committed data: every placeholder resolves (no "(not built yet)"), every value labelled', { skip: !(realJSON('p1/meta.json') && realJSON('p2/index.json')) && 'real P1/P2 data not built' }, () => {
+  const S = {
+    topology, p1meta: realJSON('p1/meta.json'), p2index: realJSON('p2/index.json'), engine: realJSON('engine.json'),
+    'p1:naive': realJSON('p1/naive.json'), 'p1:aware': realJSON('p1/aware.json'), 'p1:aware_faults': realJSON('p1/aware_faults.json'),
+    'p2:aware-core-d26-g0': realJSON('p2/aware-core-d26-g0.json'), 'p2:naive-core-d26-g0': realJSON('p2/naive-core-d26-g0.json'),
+  };
+  for (const b of beats) {
+    for (const p of placeholders(b.caption)) {
+      if (!p.name) continue;
+      const parts = evalFact(p.name, S);
+      assert.ok(parts, `${b.id}: {{${p.name}}} did not resolve on real data`);
+      for (const x of parts) if (typeof x !== 'string') assert.ok(fmt.isLabelled(x), `${b.id}: {{${p.name}}} unlabelled ${JSON.stringify(x)}`);
+    }
+    const txt = resolveCaption(b.caption, S, fmt, { html: false });
+    assert.ok(!/not built yet/.test(txt), `${b.id}: ${txt}`);
+  }
+  // spot values that sim.verify p1/p2 print (the screen equals the JSON)
+  const t = (id) => resolveCaption(beats.find((b) => b.id === id).caption, S, fmt, { html: false });
+  const m = S.p1meta;
+  assert.ok(t('peak-relief').includes(`${m.relief.none.v.toFixed(1)}% SIM`));
+  assert.ok(t('rebound-naive').includes(`${m.summary.naive.maxLoading.v.toFixed(1)}% SIM`));
+  assert.ok(t('p2-capacity').includes(`${S.p2index.usefulCapacity.naive.v} SIM`));
+  // the flip headline follows the measured flip (7/10 on this data: partial), never asserted
+  assert.equal(/How you charge decides/.test(t('p2-flip')), flipVerdict(S.p2index.flip).supports);
+});
+
+test('ranking table: refereed rows show the OpenDSS peak, screening rows the surrogate (judge R0: no screening mark on OpenDSS-able rows)', async () => {
+  const { peakWithShown } = await import('../panels/p2.js');
+  const e = stressedEntry(fx('p2/aware-core-d26-g0.json'));
+  assert.equal(peakWithShown(e).v, 96.4);
+  e.opendss = { before: { peakPct: { v: 121.9, label: 'SIM' } }, after: { peakPct: { v: 97.1, label: 'SIM', cite: 'OpenDSS' } } };
+  e.screening = false;
+  assert.equal(peakWithShown(e).v, 97.1);
+  const real = realJSON('p2/aware-core-d26-g0.json');
+  if (real) for (const x of real.ranking.slice(0, 5)) if (x.opendss && x.opendss.after) assert.equal(peakWithShown(x), x.opendss.after.peakPct);
+});
