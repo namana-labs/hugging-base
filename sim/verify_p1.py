@@ -736,12 +736,14 @@ def _dates(cal):
 
 
 def rebuild_days_compare():
-    """Rebuild every history day, the index and the calendar into a temp root (23 Aug's committed meta copied in for
-    the index row), in one hold of the shared lock unless HB_LOCK_HELD=1, and byte-compare everything under
+    """Rebuild every history day, the index and the calendar into a temp root (23 Aug's committed meta and naive
+    branch copied in for its index row), in one hold of the shared lock unless HB_LOCK_HELD=1, and byte-compare everything under
     ui/data/p1/days/. Non-August load slices are re-cut from the SMART-DS cache and compared with data/profiles/days/."""
     from .history import SLICES, CACHE
     with tempfile.TemporaryDirectory(prefix="p1-days-rebuild-") as tmp:
-        shutil.copy(P1 / "meta.json", Path(tmp) / "meta.json")
+        # 23 Aug's committed meta + naive branch (the index row's naiveMax.tier); `verify p1 --rebuild` checks them
+        for name in ("meta.json", "naive.json"):
+            shutil.copy(P1 / name, Path(tmp) / name)
         code = ("import sys; from pathlib import Path; from sim.history import main, slice_loads; "
                 "sys.exit(main(['--out', sys.argv[1]]))")
         steps = [[sys.executable, "-c", code, tmp]]
