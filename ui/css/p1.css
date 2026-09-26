@@ -216,7 +216,7 @@ body.p1-intro-on .hb-scene::after { content: ""; position: absolute; inset: 0; b
 .tp-speed button:last-child { border-right: 0; }
 .tp-speed button[aria-pressed="true"], .tp-cc[aria-pressed="true"] { background: var(--accent); color: var(--paper); }
 .tp-hold { font-size: 12px; color: var(--muted); display: inline-flex; gap: 3px; align-items: center; cursor: pointer; }
-.p1-clock { flex: none; width: 170px; }
+.p1-clock { flex: none; width: 200px; }
 .p1-time { font-size: 30px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; }
 .p1-date { font-size: 12px; color: var(--muted); margin-top: 1px; }
 .p1-price { font-size: 13px; margin-top: 3px; white-space: nowrap; display: flex; align-items: center; gap: 3px; }

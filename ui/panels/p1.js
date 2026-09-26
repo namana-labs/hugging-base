@@ -660,7 +660,13 @@ export function moneyHTML(fmt, money, branch, branchNames = BRANCH_NAMES, consts
   }
   // L7: a branch note from l2 (for example the silent battery's lower end charge on aware + failures)
   const note = summary && summary[branch] && (summary[branch].note || summary[branch].energyNote);
-  if (note) out.push(`<div class="p1-note">${typeof note === 'string' ? esc(note) : isLabelledRecord(fmt, note) ? recordHTML(fmt, note) : labelledTreeHTML(fmt, note)}</div>`);
+  if (note) {
+    // {text, label, cite?, ...labelled siblings}: the sentence carries the numbers; its tag carries their provenance
+    const html = typeof note === 'string' ? esc(note)
+      : typeof note.text === 'string' && fmt.LABELS.includes(note.label) ? `${esc(note.text)} ${fmt.chip(note.label, note.cite || Object.entries(note).filter(([, v]) => fmt.isLabelled(v)).map(([, v]) => v.cite).filter(Boolean).join('; '))}`
+        : isLabelledRecord(fmt, note) ? recordHTML(fmt, note) : labelledTreeHTML(fmt, note);
+    out.push(`<div class="p1-note">${svg('info', { size: 14 })} ${html}</div>`);
+  }
   const r = money.relief;
   if (r && typeof r === 'object' && !fmt.isLabelled(r)) {
     done.add('relief');
