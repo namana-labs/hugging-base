@@ -31,7 +31,7 @@ PRICES_CSV = ROOT / "data" / "ercot" / "lz_north_2026.csv"
 LOADS_NPZ = ROOT / "data" / "profiles" / "smartds_2018_aug.npz"
 
 HEADLINE_KEYS = {"summary", "relief", "money", "referee", "flip", "usefulCapacity", "ranking", "greedy",
-                 "metrics", "headline", "fleetCounterfactualTotals"}
+                 "metrics", "headline", "fleetCounterfactualTotals", "scaleLadder"}
 ID_KEYS = {"rank", "home", "tf", "step", "k", "n", "index", "of", "runs", "minute", "seq", "batt"}
 ENVELOPE_KEYS = ("schema", "producer", "inputs", "constants", "sources", "series")
 # sim.<module> for simulator output; scripts.<name> for a fetcher in scripts/ (footprints.json: scripts.fetch_footprints)

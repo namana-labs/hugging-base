@@ -14,6 +14,18 @@ class ContractTests(unittest.TestCase):
         self.assertEqual(errs, [])
         self.assertEqual(n, 2)
 
+    def test_scale_ladder_is_a_headline_key(self):
+        rung = {"scale": "ercot", "name": "ERCOT", "base": labelled(81612.0, "REAL", unit="MW", at="2026-09-25 16:40 CT"),
+                "sharePct": labelled(4.9e-05, "DERIVED"), "text": "40 kW is 0.000049% of ERCOT"}
+        doc = {"scaleLadder": {"text": "t", "kw": labelled(40.0, "DERIVED"), "rungs": [rung]}}
+        errs, n = audit_labels(doc)
+        self.assertEqual(errs, [])
+        self.assertEqual(n, 3)
+        doc["scaleLadder"]["rungs"][0]["sharePct"] = 4.9e-05
+        errs, _ = audit_labels(doc)
+        self.assertEqual(len(errs), 1)
+        self.assertIn("bare headline number", errs[0])
+
     def test_bad_label_fails(self):
         with self.assertRaises(ValueError):
             labelled(1, "SOURCED")
