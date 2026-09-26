@@ -54,6 +54,22 @@ export function spikeDriverAt(meta, fmt, tf, k) {
   return null;
 }
 
+/** When the relief's peak discharge (`meta.relief.reliefKW`, which carries no time) happens: the step, within
+ *  DRIVER_WINDOW_MIN of the relief step, where the relief transformer's focus batKW is most negative, if it equals
+ *  reliefKW to the contract's 0.1 kW quantum. "HH:MM" or null (judge R1 F7: 6.9 kW is at 16:46, not 16:45). */
+export function reliefPeakAt(meta, doc, fmt) {
+  const r = meta && meta.relief;
+  if (!r || !r.reliefKW || !doc || !doc.focus) return null;
+  const f = Object.values(doc.focus).find((x) => x && x.tf === r.tf);
+  const step = Number.isInteger(r.step) ? r.step : (r.t ? fmt.timeToStep(meta, r.t) : null);
+  if (!f || step === null) return null;
+  const w = Math.round(DRIVER_WINDOW_MIN * 60 / (meta.stepSeconds || 60));
+  let best = null;
+  for (let i = Math.max(0, step - w); i <= Math.min(f.batKW.length - 1, step + w); i++) if (best === null || f.batKW[i] < f.batKW[best]) best = i;
+  if (best === null || Math.abs(-f.batKW[best] / 10 - r.reliefKW.v) > 0.1) return null;
+  return fmt.stepToTime(meta, best);
+}
+
 /** One line for the hero: whose spike it is, its SMART-DS profile, and where else the same profile is used. */
 export function driverLineHTML(fmt, info, homeLabel) {
   if (!info) return '';
@@ -130,8 +146,10 @@ export function tfEvening(doc, tf, stepSeconds = 60) {
   return { maxPct: max / 10, maxStep: at, min110: n110 * m, min150: n150 * m, openStep: open };
 }
 
-/** The gauge for one focus transformer at step k. Percent-of-nameplate splits use kW / kVA (DERIVED). */
-export function gaugeModel(meta, doc, topology, key, k, roomKW) {
+/** The gauge for one focus transformer at step k. Percent-of-nameplate splits use kW / kVA (DERIVED).
+ *  `room` is charge room (roomKW); while the can back-feeds (home + battery kW < 0) `exporting` is true and
+ *  `exportRoom` is its export room (exportRoomKW, when given), which the gauge shows instead (judge R1 F6). */
+export function gaugeModel(meta, doc, topology, key, k, roomKW, exportRoomKW = null) {
   const f = doc.focus && doc.focus[key];
   if (!f) return null;
   const tf = f.tf;
@@ -142,10 +160,13 @@ export function gaugeModel(meta, doc, topology, key, k, roomKW) {
   const homeKW = f.homeKW[k] / 10, batKW = f.batKW[k] / 10;
   const ev = tfEvening(doc, tf, meta.stepSeconds || 60);
   const batteries = (topology.fleet || []).filter((hi) => topology.homes[hi].tf === tf).length;
+  const pKW = homeKW + batKW;
+  const exporting = pKW < 0;
   return {
     key, tf, id: t.id, kva, homes: t.homes.length, batteries, pct, code, homeKW, batKW,
     homePct: 100 * homeKW / kva, batPct: 100 * batKW / kva,
-    room: roomKW(kva, pct, homeKW + batKW), open: code === 5, ...ev,
+    room: roomKW(kva, pct, pKW), exporting, exportRoom: exporting && exportRoomKW ? exportRoomKW(kva, pct, pKW) : null,
+    open: code === 5, ...ev,
   };
 }
 
@@ -220,6 +241,16 @@ export function optsFor(key) {
   return {};
 }
 
+/** Format options for a percentage: 0 decimals from 10, 1 decimal from 0.1, else 2 significant figures, so a share
+ *  like 4.9e-05 prints "0.000049%", never "0.0%" (judge R1 F2; docs/contracts.md A.5). */
+export function pctOpts(v) {
+  const a = Math.abs(Number(v));
+  if (!Number.isFinite(a) || a === 0) return { unit: '%', digits: 0 };
+  if (a >= 10) return { unit: '%', digits: a === Math.round(a) ? 0 : 1 };
+  if (a >= 0.1) return { unit: '%', digits: 1 };
+  return { unit: '%', digits: Math.min(20, 1 - Math.floor(Math.log10(a))) };
+}
+
 const ID_KEYS = new Set(['rank', 'home', 'tf', 'step', 'k', 'n', 'index', 'of', 'runs', 'minute', 'seq', 'batt']);
 
 /** Generic HTML for a labelled tree (money, scale ladder, anything L2 adds): labelled values get their chip,
@@ -243,7 +274,9 @@ export function labelledTreeHTML(fmt, x, key = '', depth = 0, inherit = '') {
   if (fmt.isLabelled ? fmt.isLabelled(x) : ('v' in x && 'label' in x)) {
     const extras = Object.entries(x).filter(([k]) => !['v', 'label', 'cite'].includes(k))
       .map(([k, v]) => `${esc(humanKey(k))} ${labelledTreeHTML(fmt, v, k, depth + 1)}`).join(' · ');
-    return `${fmt.fmtHTML(x, optsFor(own))}${extras ? ` <span class="hb-sub">${extras}</span>` : ''}`;
+    const o = optsFor(own);
+    const small = o.unit === '%' && typeof x.v === 'number' && x.v !== 0 && Math.abs(x.v) < 0.1;
+    return `${fmt.fmtHTML(x, small ? pctOpts(x.v) : o)}${extras ? ` <span class="hb-sub">${extras}</span>` : ''}`;
   }
   const rows = Object.entries(x).map(([k, v]) =>
     `<div class="p1-row"><span class="p1-k">${esc(humanKey(k))}</span><span class="p1-v">${labelledTreeHTML(fmt, v, k, depth + 1, own)}</span></div>`);
@@ -324,9 +357,45 @@ export function moneyHTML(fmt, money, branch, branchNames = BRANCH_NAMES, consts
       <table class="p1-table"><tr><th></th>${heads.map((h) => `<th>${h}</th>`).join('')}</tr>
       ${bs.map((b) => `<tr${b === branch ? ' class="now"' : ''}><td>${esc(branchNames[b] || b)}</td>${cols.map((c) => `<td>${ah[b][c] ? esc(fmt.fmtValue(ah[b][c])) : ''}</td>`).join('')}</tr>`).join('')}</table>`);
   }
+  done.add('scaleLadder');   // drawn by ladderHTML in its own section
   const rest = Object.fromEntries(Object.entries(money).filter(([k]) => !done.has(k)));
   if (Object.keys(rest).length) out.push(labelledTreeHTML(fmt, rest));
   return out.join('');
+}
+
+/** Log-scale bar length (0..1) for a share given as a fraction: 1e-7 (0.00001%) at the left, about 224% at the right
+ *  (four-home's drawLadder pattern, one decade lower so ERCOT's rung has a visible bar). Display only. */
+export const LADDER_LOG_LO = -7;
+export const LADDER_LOG_HI = 0.35;
+export function ladderFrac(sharePct) {
+  const f = Math.max(Number(sharePct) / 100, 10 ** (LADDER_LOG_LO - 1));
+  return Math.max(0.01, Math.min(1, (Math.log10(f) - LADDER_LOG_LO) / (LADDER_LOG_HI - LADDER_LOG_LO)));
+}
+export const LADDER_AXIS = [[1e-7, '0.00001%'], [1e-5, '0.001%'], [1e-3, '0.1%'], [1e-1, '10%'], [1, '100%']];
+
+/** The scale ladder (build prompt 3.4): the same kW at three scales, each rung its own words, its share (2 significant
+ *  figures below 0.1%), a log bar and its base with the base's label. Every number carries its label. */
+export function ladderHTML(fmt, ladder) {
+  if (!ladder || !Array.isArray(ladder.rungs)) return '';
+  // the rung's words already carry the base ("... of A's 25 kVA nameplate"); the base's own label is its chip
+  const base = (b) => (b && fmt.isLabelled(b) ? fmt.chip(b.label, `base ${fmt.fmtValue(b, { unit: b.unit ? ` ${b.unit}` : '', digits: Number.isInteger(b.v) ? 0 : 1 })}: ${b.cite || ''}`) : '');
+  const rungs = ladder.rungs.map((r) => {
+    const s = r.sharePct;
+    const val = s ? fmt.fmtHTML(s, pctOpts(s.v)) : '';
+    const w = s && typeof s.v === 'number' ? (100 * ladderFrac(s.v)).toFixed(1) : '0';
+    return `<div class="p1-rung p1-rung-${esc(r.scale || '')}">
+      <div class="p1-rung-top"><span class="p1-rung-name">${esc(r.name || r.scale || '')}</span><span class="p1-rung-val">${val}</span></div>
+      <div class="p1-rung-bar" aria-hidden="true"><i style="width:${w}%"></i></div>
+      <div class="p1-rung-text">${esc(r.text || '')} ${base(r.base)}</div>
+    </div>`;
+  }).join('');
+  const kw = ladder.kw && fmt.isLabelled(ladder.kw) ? ` ${fmt.chip(ladder.kw.label, ladder.kw.cite)}` : '';
+  // the heading's own "(DERIVED)" becomes the chip (which carries the cite), not a second copy of the label
+  const head = kw ? String(ladder.text || '').replace(new RegExp(`\\s*\\(${ladder.kw.label}\\)\\s*$`), '') : String(ladder.text || '');
+  const axis = LADDER_AXIS.map(([f, t]) => `<span style="left:${(100 * ladderFrac(f * 100)).toFixed(1)}%">${t}</span>`).join('');
+  return `<div class="p1-ladder-h">${esc(head)}${kw}</div>${rungs}
+    <div class="p1-rung-axis" aria-hidden="true">${axis}</div>
+    <div class="hb-sub">Bar length on a log scale (display only).</div>`;
 }
 
 /** The grid-check line of a branch summary (build prompt 7.3): measured, never asserted. */
@@ -393,13 +462,13 @@ export async function mount(el, ctx) {
     <section id="p1-faults-sec" hidden><h2>Pieces fail ${fmt.chip('ASSUMPTION', 'event times and sizes are named constants (build prompt 5.4.4)')}</h2><div id="p1-faults"></div></section>
     <section><h2>Street A–D and T-240 · headroom now</h2><div id="p1-gauges"></div>
       <div class="p1-legend-gauge"><span class="sw sw-home"></span>home load <span class="sw sw-bat"></span>battery charging <span class="sw sw-relief"></span>battery discharging (relief) · ticks: 100% nameplate, 110% normal rating, 150% emergency ${fmt.chip('REAL', 'SMART-DS normhkva / EmergHKVA')}, 200% fuse rule ${fmt.chip('ASSUMPTION', meta.protection && meta.protection.cite)}</div></section>
+    <section id="p1-ladder-sec" hidden><h2>Scale ladder</h2><div id="p1-ladder" class="p1-ladder"></div></section>
     <section><h2>Orchestrator ticker ${fmt.chip(seriesLabel(doc, 'ticker', 'SIM'), 'sim.orchestrator.allocate(): deterministic, no model in the loop')}</h2><ol class="p1-ticker" id="p1-ticker"></ol></section>
     <section id="p1-relief-sec" hidden><h2>Peak relief</h2><div id="p1-relief"></div></section>
     <section id="p1-unrel-sec" hidden><h2>Not relieved here → P2</h2><div id="p1-unrel"></div></section>
     <section><h2>Grid checks · this branch</h2><div id="p1-grid" class="p1-grid"></div></section>
     <section><h2>This evening · this branch</h2><div id="p1-summary"></div></section>
     <section id="p1-money-sec" hidden><h2>Money</h2><div id="p1-money"></div></section>
-    <section id="p1-ladder-sec" hidden><h2>Scale ladder</h2><div id="p1-ladder"></div></section>
     <section id="p1-pick-sec" hidden><h2>Selected</h2><div id="p1-pick"></div></section>
     <section><h2>What the controller sees</h2><div class="hb-sub">${esc(meta.controllerView ? meta.controllerView.text : '')} ${meta.controllerView ? fmt.chip(meta.controllerView.label, meta.controllerView.cite) : ''}</div></section>
     <section><h2>Sources</h2><div class="hb-sub" id="p1-sources"></div></section>`;
@@ -422,7 +491,7 @@ export async function mount(el, ctx) {
     <div><span class="sw" style="background:${rgb(sceneModel.BACKUP_GLOW)}"></span>lit by its own battery</div>
     <div class="p1-legend-h">Batteries (column = state of charge; ring = 20% reserve)</div>
     <div><span class="sw" style="background:var(--accent)"></span>charging <span class="sw" style="background:var(--serious)"></span>discharging <span class="sw" style="background:rgb(140,164,146)"></span>idle <span class="sw" style="background:rgb(150,150,150)"></span>stale / expired (!)</div>
-    <div class="p1-legend-h">Cans: glass = 100% of nameplate; fill = loading; ring 110%; red cap 150%. Room = kW to nameplate ${fmt.chip('DERIVED')}</div>`;
+    <div class="p1-legend-h">Cans: glass = 100% of nameplate; fill = loading; ring 110%; red cap 150%. Room = kW to nameplate (charge room; export room while the can back-feeds) ${fmt.chip('DERIVED')}</div>`;
   const credits = document.createElement('div');
   credits.className = 'p1-overlay p1-credits';
   const fm = ctx.footprints && ctx.footprints.meta;
@@ -490,7 +559,7 @@ export async function mount(el, ctx) {
       $('p1-relief').innerHTML = `
         <div class="p1-relief-big">${esc(tfName(r.tf))} at ${esc(r.t || '')}: ${r.none ? fmt.fmtHTML(r.none, { unit: '%', digits: 1 }) : 'n/a'} without batteries → ${r.aware ? fmt.fmtHTML(r.aware, { unit: '%', digits: 1 }) : 'n/a'} feeder-aware</div>
         <div class="p1-row"><span class="p1-k">Minutes over nameplate</span><span class="p1-v">${minsHTML}</span></div>
-        ${r.reliefKW ? `<div class="p1-row"><span class="p1-k">Batteries discharged</span><span class="p1-v">${fmt.fmtHTML(r.reliefKW, { unit: ' kW', digits: 1 })}${r.reliefKWh ? ' · ' + fmt.fmtHTML(r.reliefKWh, { unit: ' kWh', digits: 1 }) : ''}</span></div>` : ''}
+        ${r.reliefKW ? `<div class="p1-row"><span class="p1-k">Batteries discharged, peak</span><span class="p1-v">${fmt.fmtHTML(r.reliefKW, { unit: ' kW', digits: 1 })}${r.reliefKWh ? ' · ' + fmt.fmtHTML(r.reliefKWh, { unit: ' kWh', digits: 1 }) : ''}</span></div>` : ''}
         ${d ? `<div class="p1-driver">Driver: one home's 15-minute spike: ${esc(d.label || homeLabel(d.home))}, SMART-DS profile <code>${esc(d.profile || '')}</code>${d.kwAtPeak ? ' at ' + fmt.fmtHTML(d.kwAtPeak, { unit: ' kW', digits: 1 }) : ''}${shared}. The same shape elsewhere is not independent evidence.</div>` : ''}
         <div class="hb-sub">${esc(r.text || 'Over nameplate for about 15 minutes is amber, not a failure.')}</div>`;
     }
@@ -501,12 +570,13 @@ export async function mount(el, ctx) {
       const d = u.driver;
       return `<div class="p1-unrel">${esc(tfName(u.tf))}: ${esc(u.reason || '')}${u.peak && fmt.isLabelled(u.peak) ? ` (peak ${fmt.fmtHTML(u.peak, { unit: '%', digits: 1 })}${u.peak.t ? ' at ' + esc(u.peak.t) : ''})` : ''}${d ? `; driver ${esc(d.label || homeLabel(d.home))} (<code>${esc(d.profile || '')}</code>${d.sharedWith && d.sharedWith.length ? ', shared with ' + esc(d.sharedWith.map(homeLabel).join(', ')) : ''})` : ''}. <a href="${ctx.href({ view: 'p2', branch: null, t: null, cam: u.tf === ((topology.bridge || [])[0] || {}).tf ? 't240' : null })}">Where the next battery goes →</a></div>`;
     }).join('');
-    // money + ladder (generic labelled trees: every value carries its label)
+    // money (each line labelled) + the scale ladder (its own rungs; judge R1 F2)
     $('p1-money-sec').hidden = !meta.money;
     if (meta.money) $('p1-money').innerHTML = moneyHTML(fmt, meta.money, branch, BRANCH_NAMES, meta.constants);
     const ladder = meta.scaleLadder || (meta.money && meta.money.scaleLadder) || null;
-    $('p1-ladder-sec').hidden = !ladder || !!(meta.money && meta.money.scaleLadder);
-    if (ladder && !(meta.money && meta.money.scaleLadder)) $('p1-ladder').innerHTML = labelledTreeHTML(fmt, ladder);
+    const ladderInner = ladder ? ladderHTML(fmt, ladder) : '';
+    $('p1-ladder-sec').hidden = !ladderInner;
+    $('p1-ladder').innerHTML = ladderInner;
     $('p1-sources').innerHTML = Object.values(meta.sources || {}).map((s) => `${esc(s.text)} ${fmt.chip(s.label)}`).join('<br>');
     drawStrip();
   }
@@ -516,7 +586,7 @@ export async function mount(el, ctx) {
     const flab = seriesLabel(doc, 'focus', 'SIM');
     const fuse = { pct: meta.protection ? meta.protection.fusePct : 200, min: meta.protection ? meta.protection.fuseMinutes : 10, cite: meta.protection && meta.protection.cite };
     const html = FOCUS_KEYS.map((key) => {
-      const g = gaugeModel(meta, doc, topology, key, k, sceneModel.roomKW);
+      const g = gaugeModel(meta, doc, topology, key, k, sceneModel.roomKW, sceneModel.exportRoomKW);
       if (!g) return '';
       const w = (p) => `${Math.max(0, Math.min(100, 100 * p / GAUGE_MAX_PCT)).toFixed(2)}%`;
       const homeW = Math.max(0, g.homePct);
@@ -526,7 +596,9 @@ export async function mount(el, ctx) {
       const title = key === '240' ? `T-240 · ${g.kva} kVA · no battery` : `${key} · ${g.kva} kVA · ${g.homes} homes, ${branch === 'none' ? 'batteries off in this branch' : `${g.batteries} batteries`}`;
       const room = g.open ? 'open (protection)' : g.pct > 100
         ? `over nameplate by ${fmt.fmtHTML(L(+((g.pct / 100 - 1) * g.kva).toFixed(1), 'DERIVED', 'OpenDSS loading above 100%, times kVA'), { unit: ' kVA', digits: 1 })}`
-        : `room ${fmt.fmtHTML(L(+Math.max(0, g.room).toFixed(1), 'DERIVED', 'kW of charge that still fits under nameplate, from OpenDSS loading and metered kW (unity-pf batteries)'), { unit: ' kW', digits: 1 })}`;
+        : g.exporting && g.exportRoom !== null
+          ? `room to export ${fmt.fmtHTML(L(+Math.max(0, g.exportRoom).toFixed(1), 'DERIVED', 'kW of back-feed that still fits under nameplate while this can exports: sqrt(kVA^2 - Q^2) + P at alpha = 1, from OpenDSS loading and metered kW (unity-pf batteries)'), { unit: ' kW', digits: 1 })}`
+          : `room ${fmt.fmtHTML(L(+Math.max(0, g.room).toFixed(1), 'DERIVED', 'kW of charge that still fits under nameplate, from OpenDSS loading and metered kW (unity-pf batteries)'), { unit: ' kW', digits: 1 })}`;
       return `<div class="gauge tier-bg-${g.code}">
         <div class="g-head"><span class="g-key">${esc(title)}</span><span class="g-pct tier-${g.code}">${fmt.fmtHTML(L(+g.pct.toFixed(1), lab, 'OpenDSS loading, % of nameplate'), { unit: '%', digits: 1 })}</span></div>
         <div class="g-bar">
@@ -545,7 +617,8 @@ export async function mount(el, ctx) {
   function heroReliefHTML() {
     const r = meta.relief;
     if (!r || branch !== 'aware' || !r.none || !r.aware || !spikeDriverAt(meta, fmt, r.tf, k)) return '';
-    const kw = r.reliefKW ? `; its batteries discharged ${fmt.fmtHTML(r.reliefKW, { unit: ' kW', digits: 1 })}` : '';
+    const at = reliefPeakAt(meta, doc, fmt);
+    const kw = r.reliefKW ? `; its batteries discharged up to ${fmt.fmtHTML(r.reliefKW, { unit: ' kW', digits: 1 })}${at ? ` (${esc(at)})` : ''}` : '';
     return `<div class="p1-counts">relief on ${esc(tfName(r.tf))} at ${esc(r.t || '')}: ${fmt.fmtHTML(r.none, { unit: '%', digits: 1 })} with no batteries → ${fmt.fmtHTML(r.aware, { unit: '%', digits: 1 })} feeder-aware${kw} (over nameplate is amber, not a failure)</div>`;
   }
 

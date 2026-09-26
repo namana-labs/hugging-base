@@ -83,8 +83,9 @@ export function createScene(el, opts = {}) {
     // transformer cans, one set of ColumnLayers per radius (kVA class)
     const ghostsBy = groupBy(m.canGhosts, (d) => d.radius);
     for (const [r, g] of ghostsBy) {
+      // depthWriteEnabled false: the translucent ghost must not occlude the narrower fill drawn after it (judge R1 F1)
       out.push(new D.ColumnLayer({ id: `can-ghost-${r.toFixed(3)}`, data: g, radius: r, diskResolution: 14, extruded: true,
-        filled: true, wireframe: true, getPosition: (d) => d.position, getElevation: (d) => d.height,
+        parameters: { depthWriteEnabled: false }, filled: true, wireframe: true, getPosition: (d) => d.position, getElevation: (d) => d.height,
         getFillColor: [ink[0], ink[1], ink[2], 16], getLineColor: [ink[0], ink[1], ink[2], 70], pickable: false }));
     }
     for (const [r, g] of groupBy(m.cans, (d) => d.radius)) {
@@ -101,7 +102,7 @@ export function createScene(el, opts = {}) {
     }
     out.push(
       new D.ColumnLayer({ id: 'battery-ghost', data: m.batteryGhosts, radius: BAT_R_M, diskResolution: 12, extruded: true,
-        filled: true, wireframe: true, getPosition: (d) => d.position, getElevation: (d) => d.height,
+        parameters: { depthWriteEnabled: false }, filled: true, wireframe: true, getPosition: (d) => d.position, getElevation: (d) => d.height,
         getFillColor: [ink[0], ink[1], ink[2], 16], getLineColor: [ink[0], ink[1], ink[2], 110] }),
       new D.ColumnLayer({ id: 'batteries', data: m.batteries, radius: BAT_R_M * 0.8, diskResolution: 12, extruded: true, pickable: true,
         getPosition: (d) => d.position, getElevation: (d) => d.height, getFillColor: (d) => d.color }),
