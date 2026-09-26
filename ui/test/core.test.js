@@ -137,3 +137,49 @@ test('topology.json: 1,010 homes, 379 transformers, 96 batteries, focus A-D by i
   assert.equal(t.transformers[150].id, 'tr(r:p1udt9411-p1udt9411lv)');
   assert.equal(t.bridge[0].tf, 240);
 });
+
+// scripts/deeplinks.txt is derived from committed data (build prompt 7.5; C3 "every beat link is smoke-ok").
+// These keep it derived: when a producer's data changes a link, this fails until a lead PR regenerates the line.
+const REPO = path.resolve(UI, '..');
+const readJSON = (p) => (fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')) : null);
+function deeplinks() {
+  return fs.readFileSync(path.join(REPO, 'scripts', 'deeplinks.txt'), 'utf8').split('\n')
+    .map((l) => l.trim()).filter((l) => l && !l.startsWith('#'))
+    .map((l) => { const i = l.indexOf(' '); return { tags: l.slice(0, i).split(','), query: l.slice(i + 1).trim() }; });
+}
+const param = (q, k) => new URLSearchParams(q).get(k);
+
+test('deeplinks: exactly three canaries, one P1, one P2 (the default combo) and view=more', () => {
+  const c = deeplinks().filter((d) => d.tags.includes('canary'));
+  assert.deepEqual(c.map((d) => param(d.query, 'view')), ['p1', 'p2', 'more']);
+  const idx = readJSON(path.join(UI, 'data', 'p2', 'index.json'));
+  if (idx) assert.equal(param(c[1].query, 'combo'), idx.default);
+});
+
+test('deeplinks: one beat line per ui/data/beats.json beat ("<link>&beat=<id>", same order), none without it', () => {
+  const beats = readJSON(path.join(UI, 'data', 'beats.json'));
+  const got = deeplinks().filter((d) => d.tags.includes('beat')).map((d) => d.query);
+  const want = beats ? beats.beats.map((b) => `${b.link}&beat=${b.id}`) : [];
+  assert.deepEqual(got, want, 'regenerate the beat lines of scripts/deeplinks.txt from ui/data/beats.json (a lead PR)');
+});
+
+test('deeplinks: every P2 combo in p2/index.json, the home= link at its measured top 1, aware_faults at Tc+16', () => {
+  const links = deeplinks().filter((d) => !d.tags.includes('beat')).map((d) => d.query);
+  const idx = readJSON(path.join(UI, 'data', 'p2', 'index.json'));
+  if (idx) {
+    const plain = links.filter((q) => param(q, 'view') === 'p2' && !param(q, 'home') && !param(q, 'n')).map((q) => param(q, 'combo'));
+    assert.deepEqual([...plain].sort(), [...idx.combos].sort());
+    const topo = readJSON(path.join(UI, 'data', 'topology.json'));
+    const h = readJSON(path.join(UI, 'data', 'p2', `${idx.default}.json`)).ranking[0].home;
+    const top = typeof h === 'number' ? topo.homes[h].id : h;
+    const homeLinks = links.filter((q) => param(q, 'home'));
+    assert.ok(homeLinks.length >= 1, 'a P2 home= link');
+    for (const q of homeLinks) assert.equal(param(q, 'home'), top, `home= must be ${idx.default}'s rank 1`);
+  }
+  const meta = readJSON(path.join(UI, 'data', 'p1', 'meta.json'));
+  if (meta && meta.tc) {
+    const f = links.filter((q) => param(q, 'branch') === 'aware_faults');
+    assert.ok(f.length >= 1, 'an aware_faults link');
+    for (const q of f) assert.equal(param(q, 't'), minToHHMM(hhmmToMin(meta.tc.t) + 16), 'aware_faults t = Tc + 16 (meta.tc)');
+  }
+});
