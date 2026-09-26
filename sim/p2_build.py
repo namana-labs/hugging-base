@@ -560,7 +560,8 @@ def apply_referee(index, combos, ref):
                             "errorPts": {"max": labelled(None, "SIM", "not run"), "p99": labelled(None, "SIM", "not run")},
                             "tierAgreementPct": labelled(None, "SIM", "not run")}
         return
-    index["referee"] = {"runs": ref["runs"], "steps": ref["steps"], "status": "OpenDSS-checked shortlist",
+    index["referee"] = {"runs": ref["runs"], "steps": labelled(ref["steps"], "SIM", "15-min steps per OpenDSS month run"),
+                        "status": "OpenDSS-checked shortlist",
                         "errorPts": {"max": labelled(ref["errorPts"]["max"], "SIM", "surrogate - OpenDSS, shortlisted transformers, all runs"),
                                      "p99": labelled(ref["errorPts"]["p99"], "SIM", "surrogate - OpenDSS, shortlisted transformers, all runs")},
                         "errorAllPts": {"max": labelled(ref["errorAllPts"]["max"], "SIM", "all 379 transformers"),

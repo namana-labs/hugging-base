@@ -197,8 +197,8 @@ def main(argv):
     for combo in ("aware-core-d26-g0", "naive-core-d26-g0"):
         top = combos[combo]["ranking"][:5]
         carded[combo] = sum(1 for e in top if e["opendss"] and e["opendss"]["before"] and e["opendss"]["after"] and not e["screening"])
-    ok = r.get("runs") == 6 and r.get("steps") == idx["steps"] and fresh and all(x == 5 for x in carded.values())
-    chk.inv(ok, "referee", f"referee: {r.get('runs')} runs x {r.get('steps', 0)} | shortlist {carded['aware-core-d26-g0']}/5 "
+    ok = r.get("runs") == 6 and v(r.get("steps")) == idx["steps"] and fresh and all(x == 5 for x in carded.values())
+    chk.inv(ok, "referee", f"referee: {r.get('runs')} runs x {v(r.get('steps', 0))} | shortlist {carded['aware-core-d26-g0']}/5 "
             f"(naive {carded['naive-core-d26-g0']}/5) carry OpenDSS numbers | schedules {'match' if fresh else 'STALE or missing'}")
     if r.get("runs"):
         p99, mx = v(r["errorPts"]["p99"]), v(r["errorPts"]["max"])
