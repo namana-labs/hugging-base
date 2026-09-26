@@ -7,13 +7,13 @@
       "sim/{__init__,constants,feeder,caps,tiers,prices,topology,contracts,fixtures,verify}.py",
       "sim/tests/__init__.py",
       "sim/tests/test_{constants,feeder,caps,tiers,prices,topology,contracts,fixtures,verify}.py",
-      "ui/{index.html,app.js}", "ui/lib/{format,data}.js", "ui/css/base.css", "ui/vendor/**",
+      "ui/{index.html,app.js}", "ui/lib/{format,data,tip,days}.js", "ui/css/base.css", "ui/vendor/**",
       "ui/data/fixtures/**", "ui/data/topology.json", "ui/test/core.test.js",
       "data/smartds/**", "data/fleet.json", "data/ercot/**",
       "docs/contracts.md", "docs/overnight/**"
     ],
     "stubs": [
-      "ui/panels/{p1,p2,more}.js", "ui/lib/{scene-model,scene3d,fallback2d,charts}.js", "ui/css/{p1,p2}.css"
+      "ui/panels/{p1,p2,more}.js", "ui/lib/{scene-model,scene3d,fallback2d,charts,icons}.js", "ui/css/{p1,p2}.css"
     ],
     "smoke": []
   },
@@ -28,9 +28,9 @@
   },
   "l2-p1": {
     "owns": [
-      "sim/{devices,orchestrator,p1_build,money,bench,verify_p1,chaos}.py",
-      "sim/tests/test_{devices,orchestrator,p1_build,money,bench,verify_p1,chaos}*.py",
-      "ui/data/p1/**", "ui/data/engine.json"
+      "sim/{devices,orchestrator,p1_build,money,bench,verify_p1,chaos,history}.py",
+      "sim/tests/test_{devices,orchestrator,p1_build,money,bench,verify_p1,chaos,history}*.py",
+      "ui/data/p1/**", "ui/data/engine.json", "data/profiles/days/**"
     ],
     "smoke": ["p1"]
   },
@@ -45,7 +45,7 @@
   "l4-scene-p1": {
     "owns": [
       "scripts/fetch_footprints.py", "data/footprints/**", "ui/data/footprints.json",
-      "ui/lib/{scene-model,scene3d,fallback2d}.js", "ui/panels/p1.js", "ui/css/p1.css",
+      "ui/lib/{scene-model,scene3d,fallback2d,icons}.js", "ui/panels/p1.js", "ui/css/p1.css",
       "ui/test/{scene-model,p1}.test.js"
     ],
     "smoke": ["p1"]
