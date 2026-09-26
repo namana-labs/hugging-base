@@ -1,0 +1,27 @@
+"""Single source of truth for assumptions. Units are explicit; labels survive export."""
+CORE_POWER_KW = 20.0
+CORE_USABLE_KWH = 37.0  # ASSUMPTION
+CORE_ROUND_TRIP_EFFICIENCY = 0.89  # ASSUMPTION
+LEGACY_ROUND_TRIP_EFFICIENCY = 0.88  # ASSUMPTION
+RESERVE_FLOOR = 0.20  # design/research sourced
+COMMS_STALE_SECONDS = 180
+COMMS_LOSS_POWER_KW = 0.0  # UNVERIFIED; backup armed
+MODULATION_KW = 0.35  # ASSUMPTION; fictional compromised devices
+TELEMETRY_NOISE_KW = 0.045  # ASSUMPTION; deterministic seeded replay
+VOLTAGE_NOISE_PU = 0.00002  # ASSUMPTION; not a measured noise floor
+START_JITTER_SECONDS = 120  # ASSUMPTION; averaged within 5-minute steps
+STEP_MINUTES = 5
+TRANSFORMER_RATING_FACTOR = 1/1.1  # DERIVED: use winding kVA rather than 110% normhkva
+MARKET_BENCHMARK_DOLLARS_DAY = 1.58  # DERIVED from research report, flat within load zone
+MARKET_TOLERANCE_KW = 2000.0
+MARKET_TOLERANCE_FRACTION = 0.15
+VOLTAGE_MIN = 0.95
+VOLTAGE_MAX = 1.05
+THERMAL_LIMIT = 100.0
+SOURCE_PU = 1.03  # SMART-DS circuit source
+PEAK_LOAD_FACTOR = 0.55  # ASSUMPTION, illustrative heat stress; not measured 2026 weather
+DETECTION_MIN_SAMPLES = 4  # ASSUMPTION
+DETECTION_RMS_KW = 0.18  # ASSUMPTION
+DETECTION_CORRELATION = 0.75  # ASSUMPTION
+INITIAL_BATTERIES = 96  # ASSUMPTION
+SEED = 17263
