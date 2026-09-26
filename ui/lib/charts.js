@@ -68,6 +68,14 @@ export function heatStripSVG({ values, days = 31, hours = 24, label, tenths = tr
   return frame(w, h, body, 'hb-heat', title);
 }
 
+/** Tick values for a count axis (audit R2 L13: the capacity chart counts transformers, so "0 0.5 1" was wrong):
+ *  integers only, lo..hi widened to whole numbers, the middle tick only when it is a distinct integer. */
+export function integerTicks(lo, hi) {
+  const a = Math.floor(lo), b = Math.max(Math.ceil(hi), a + 1);
+  const mid = Math.round((a + b) / 2);
+  return mid > a && mid < b ? [a, mid, b] : [a, b];
+}
+
 /** Axis tick texts with the fewest decimals (0-3) that keep distinct ticks distinct: a 0-1 axis reads "0, 0.5, 1",
  *  never "0, 1, 1" (rounding every tick to an integer printed duplicate labels on small ranges). */
 export function axisTickTexts(ticks) {
@@ -82,19 +90,20 @@ export function axisTickTexts(ticks) {
 // ---------------------------------------------------------------------------------------------------------------
 // Line chart: series [{name, values[], cls}] on a shared x index; refs [{y, text, cls}] horizontal lines;
 // xTicks [{i, text}]. Missing values break the line.
-export function lineChartSVG({ series, label, refs = [], xTicks = [], yMin = null, yMax = null, width = 400, height = 150, title = 'line chart', unit = '' }) {
+export function lineChartSVG({ series, label, refs = [], xTicks = [], yMin = null, yMax = null, width = 400, height = 150, title = 'line chart', unit = '', integer = false }) {
   requireLabel(label, 'lineChart');
   if (!Array.isArray(series) || !series.length) throw new TypeError('lineChart: series[] required');
   const n = Math.max(...series.map((s) => s.values.length));
   const all = finite(series.flatMap((s) => s.values)).concat(refs.map((r) => r.y));
   let lo = yMin ?? Math.min(0, ...all), hi = yMax ?? Math.max(...all, lo + 1);
   if (hi <= lo) hi = lo + 1;
+  if (integer) { lo = Math.floor(lo); hi = Math.max(Math.ceil(hi), lo + 1); }
   const padL = 34, padR = 6, padT = 8, padB = 18;
   const X = (i) => padL + (n <= 1 ? 0 : (i / (n - 1)) * (width - padL - padR));
   const Y = (v) => padT + (1 - (v - lo) / (hi - lo)) * (height - padT - padB);
   let body = `<rect class="lc-bg" x="${padL}" y="${padT}" width="${width - padL - padR}" height="${height - padT - padB}"/>`;
-  const ticks = [lo, (lo + hi) / 2, hi];
-  const tickText = axisTickTexts(ticks);
+  const ticks = integer ? integerTicks(lo, hi) : [lo, (lo + hi) / 2, hi];
+  const tickText = integer ? ticks.map(String) : axisTickTexts(ticks);
   ticks.forEach((t, i) => {
     body += `<text class="lc-tick" x="${padL - 4}" y="${r1(Y(t) + 3)}" text-anchor="end">${esc(tickText[i])}${esc(unit)}</text>`;
   });

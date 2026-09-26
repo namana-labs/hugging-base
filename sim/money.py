@@ -7,8 +7,9 @@ never priced.
                                                         share of a 25 kVA can, of this feeder, and of ERCOT (DERIVED)
 
 Rules (build prompt 3.4, 5.4.6, 10):
-- the $3.12/kW-month (Modo Apr 2026 ERCOT storage market benchmark, REAL third party) to $8.50 (DERIVED from an
-  UNVERIFIED Austin Energy figure) band prices only fleet kW delivered AT THE SYSTEM/PRICE PEAK, never A's relief;
+- the $3.12/kW-month (Modo Apr 2026 grid-scale storage REVENUE benchmark, includes arbitrage; REAL third party) to
+  $8.50 (DERIVED from an UNVERIFIED Austin Energy figure) band prices only fleet kW delivered AT THE SYSTEM/PRICE PEAK,
+  never A's relief; it is a monthly benchmark, not a capacity payment, and never sits beside a per-day $ (audit M5);
 - CoServ, GVEC and Austin Energy pay for system peak, 4CP and arbitrage, not local relief (REAL, cited); El Paso
   Electric (outside ERCOT) is the only local-constraint programme found; Base's "distribution grid support" has no
   public price;
@@ -23,12 +24,17 @@ from pathlib import Path
 import numpy as np
 
 from .constants import (CAPACITY_BENCHMARK_USD_KW_MONTH, CAPACITY_HIGH_USD_KW_MONTH, TAG, TRANSFORMER_REPLACEMENT_USD,
-                        const)
+                        const, HEAD_RATING_A, FEEDER_KV)
 from .contracts import ROOT, labelled
 
 CITE_BENCH = TAG["CAPACITY_BENCHMARK_USD_KW_MONTH"]["cite"]
 CITE_HIGH = TAG["CAPACITY_HIGH_USD_KW_MONTH"]["cite"]
 CITE_PAYERS = "docs/research-report.md:59, 215-224"
+# audit M5: $3.12/kW-month is Modo's all-in ERCOT storage REVENUE benchmark for one month (arbitrage + ancillary
+# services), not a capacity payment; ERCOT pays none. Shown beside the evening's energy value it would double-count
+# arbitrage, so the band is a monthly benchmark, never a per-day figure.
+BENCH_NOTE = ("fleet kW at the price peak x a grid-scale storage revenue benchmark (Modo, Apr 2026; includes arbitrage), "
+              "not a capacity payment (ERCOT pays none); a monthly benchmark, never added to the evening's energy value")
 CITE_BASE_DGS = "docs/headroom/research_notes/base_power_product_and_system.md:388"
 
 
@@ -37,6 +43,50 @@ def energy_value_usd(bat_kw, price, dt_h):
     bat_kw = np.asarray(bat_kw, dtype=float)
     fleet = bat_kw.sum(axis=1) if bat_kw.ndim == 2 else bat_kw
     return float(-(fleet * np.asarray(price, dtype=float)).sum() * dt_h / 1000.0)
+
+
+SPLIT_CITE = "REAL LZ_NORTH x SIM battery kW; gross energy value, not Base's P&L"
+
+
+def energy_split_usd(bat_kw, price, dt_h):
+    """(sold, bought) in $, per battery-step: sold = sum over discharging battery-steps of -P x price x dt (what the
+    fleet sold, mostly at the evening peak); bought = sum over charging battery-steps of P x price x dt (what it paid to
+    charge back). sold - bought = energy_value_usd() (the same terms, grouped by sign). A negative price makes a sale
+    cost money and a charge earn it; the formula keeps the sign (REAL prices)."""
+    b = np.asarray(bat_kw, dtype=float)
+    b = b if b.ndim == 2 else b[:, None]
+    p = np.asarray(price, dtype=float)[:, None]
+    sold = float((np.where(b < 0, -b, 0.0) * p).sum() * dt_h / 1000.0)
+    bought = float((np.where(b > 0, b, 0.0) * p).sum() * dt_h / 1000.0)
+    return sold, bought
+
+
+def cash_cents(bat_kw, price, dt_h):
+    """The cumulative fleet energy value in whole US cents at the end of each step (DERIVED): the money meter, so the
+    page never does money arithmetic. The last element / 100 equals energy_value_usd() to the cent."""
+    b = np.asarray(bat_kw, dtype=float)
+    fleet = b.sum(axis=1) if b.ndim == 2 else b
+    step = -(fleet * np.asarray(price, dtype=float)) * dt_h / 1000.0
+    return [int(x) for x in np.rint(np.cumsum(step) * 100.0)]
+
+
+def split_block(bat_kws, price, dt_h, values, fleet_n):
+    """money.split: {branch: {sold, bought, net, perBattery}} for every branch with batteries. `values` is
+    {branch: energyValueUSD rounded to the cent}; net is that value (the [INVARIANT] net == energyValueUSD), and
+    sold - bought equals it within one cent of rounding."""
+    out = {}
+    for b, kw in bat_kws.items():
+        sold, bought = energy_split_usd(kw, price, dt_h)
+        net = values[b]
+        if abs((sold - bought) - net) > 0.006:
+            raise AssertionError(f"split {b}: sold - bought {sold - bought:.4f} != energy value {net:.2f}")
+        out[b] = {
+            "sold": labelled(round(sold, 2) + 0.0, "DERIVED", f"sold at the evening peak: sum of -P x price x dt over discharging battery-steps; {SPLIT_CITE}"),
+            "bought": labelled(round(bought, 2) + 0.0, "DERIVED", f"bought back after the price fell: sum of P x price x dt over charging battery-steps; {SPLIT_CITE}"),
+            "net": labelled(net, "DERIVED", f"sold - bought = energyValueUSD; {SPLIT_CITE}"),
+            "perBattery": labelled(round(net / fleet_n, 2) + 0.0, "DERIVED", f"net / {fleet_n} batteries; {SPLIT_CITE}"),
+        }
+    return out
 
 
 def money_block(values, relief_kwh, peak_price, low_price, peak_t, low_t, fleet_kw_at_peak, harm):
@@ -54,10 +104,12 @@ def money_block(values, relief_kwh, peak_price, low_price, peak_t, low_t, fleet_
         cap[b] = {
             "fleetKW": labelled(round(kw, 1), "SIM", f"fleet discharge at the {peak_t} price peak (${peak_price:.2f}/MWh, REAL)"),
             "low": labelled(round(kw * CAPACITY_BENCHMARK_USD_KW_MONTH, 2), "DERIVED",
-                            f"x ${CAPACITY_BENCHMARK_USD_KW_MONTH:.2f}/kW-month (REAL third-party rate): {CITE_BENCH}"),
+                            f"x ${CAPACITY_BENCHMARK_USD_KW_MONTH:.2f}/kW-month, a grid-scale storage revenue benchmark "
+                            f"(Modo, Apr 2026; includes arbitrage), not a capacity payment: {CITE_BENCH}"),
             "high": labelled(round(kw * CAPACITY_HIGH_USD_KW_MONTH, 2), "DERIVED",
                              f"x ${CAPACITY_HIGH_USD_KW_MONTH:.2f}/kW-month: {CITE_HIGH}"),
             "unit": "$/month",
+            "note": {"text": BENCH_NOTE, "label": "DERIVED", "cite": CITE_BENCH},
         }
     return {
         "energyValueUSD": ev,
@@ -94,6 +146,18 @@ SCALE_LADDER_ERCOT = const(
 
 
 # ---- the scale ladder (build prompt 3.4: DERIVED, every rung from repo data) -------------------------------------
+def head_kva_per_phase():
+    """One conductor of the head cable: 370 A (REAL, SMART-DS NormAmps) x 12.47 kV / sqrt(3) (7.2 kV line-to-neutral),
+    DERIVED. The 370 A limit binds per conductor, and A's batteries sit on one phase (audit L2; REPORT.md 1.4). Lane
+    L0's HEAD_RATING_KVA_PER_PHASE constant is used when it exists; the arithmetic is the same."""
+    t = TAG.get("HEAD_RATING_KVA_PER_PHASE")
+    return float(t["value"]) if t else round(HEAD_RATING_A * FEEDER_KV / 3 ** 0.5, 1)
+
+
+HEAD_PHASE_CITE = ("370 A NormAmps (REAL, SMART-DS linecode 3P_UG_AL_350kcmil_3) x 12.47 kV / sqrt(3) = 7.2 kV "
+                   "line-to-neutral: one conductor of the head cable (the 370 A limit binds per conductor; A is single-phase)")
+
+
 def sig(x, digits=3):
     """x rounded to `digits` significant figures (a plain float, deterministic in the JSON)."""
     return float(f"{float(x):.{digits}g}")
@@ -118,8 +182,8 @@ def ercot_demand(path=ERCOT_DEMAND_CSV):
 
 def scale_ladder(n_batt, pmax_kw, can_key, can_id, can_kva, head_kva, ercot):
     """The same battery kW (every battery on one focus can at full charge power) as a share of that can's nameplate,
-    of this feeder's head-cable rating, and of ERCOT's peak demand (build prompt 3.4). Battery kW = kVA at unity
-    power factor (BATTERY_PF, ASSUMPTION)."""
+    of one conductor of this feeder's head cable (head_kva = head_kva_per_phase(); audit L2), and of ERCOT's peak
+    demand (build prompt 3.4). Battery kW = kVA at unity power factor (BATTERY_PF, ASSUMPTION)."""
     kw = float(n_batt * pmax_kw)
     can_pct = kw / can_kva * 100.0
     feeder_pct = kw / head_kva * 100.0
@@ -134,10 +198,12 @@ def scale_ladder(n_batt, pmax_kw, can_key, can_id, can_kva, head_kva, ercot):
              "base": labelled(float(can_kva), "REAL", f"{can_id} nameplate kVA (SMART-DS Transformers.dss)", unit="kVA"),
              "sharePct": labelled(sig(can_pct), "DERIVED", f"{kws} / {can_kva:g} kVA nameplate; unity pf (BATTERY_PF, ASSUMPTION)"),
              "text": f"{kws} is {pct_text(can_pct)} of {can_key}'s {can_kva:g} kVA nameplate"},
-            {"scale": "feeder", "name": "this feeder: the head cable",
-             "base": labelled(float(head_kva), "DERIVED", TAG["HEAD_RATING_KVA"]["cite"], unit="kVA"),
-             "sharePct": labelled(sig(feeder_pct), "DERIVED", f"{kws} / {head_kva:,.1f} kVA head-cable rating (370 A NormAmps, REAL)"),
-             "text": f"{kws} is {pct_text(feeder_pct)} of this feeder's {head_kva:,.1f} kVA head-cable rating"},
+            {"scale": "feeder", "name": "this feeder: one conductor of the head cable",
+             "base": labelled(float(head_kva), "DERIVED", HEAD_PHASE_CITE, unit="kVA"),
+             "sharePct": labelled(sig(feeder_pct), "DERIVED", f"{kws} / {head_kva:,.1f} kVA: one conductor of the head cable "
+                                                              f"(370 A NormAmps, REAL, at 7.2 kV line-to-neutral)"),
+             "text": f"{kws} is {pct_text(feeder_pct)} of one head-cable conductor's {head_kva:,.1f} kVA "
+                     f"(the feeder's limit per phase)"},
             {"scale": "ercot", "name": "ERCOT: system demand",
              "base": labelled(ercot["mw"], "REAL", f"peak 5-min ERCOT demand {ercot['day']} {ercot['t']} CT, {ercot['path']} "
                                                   f"(sha256 {ercot['sha256'][:12]}...; {ercot['rows']} rows)", unit="MW",

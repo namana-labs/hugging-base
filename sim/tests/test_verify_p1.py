@@ -23,6 +23,22 @@ class TestVerifyP1(unittest.TestCase):
                     "rotation:", "grid   :", "money  :", "scale  :"):
             self.assertIn(tag, out)
 
+    def test_committed_days_pass_invariants(self):
+        """HIST-R2 4.4 on the committed history days (skips cleanly before they exist)."""
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            rc = main(["--days"])
+        out = buf.getvalue()
+        last = [l for l in out.splitlines() if l.startswith("VERIFY p1:")][-1]
+        if not (P1 / "days" / "index.json").exists():
+            self.assertTrue(last.startswith("VERIFY p1: SKIP"))
+            return
+        self.assertEqual(rc, 0, out)
+        self.assertTrue(last.startswith("VERIFY p1: PASS (days:"), out)
+        for tag in ("index  ", "files  ", "plan   ", "aware  ", "naive  ", "money ", "relief ", "onset  ", "story  ",
+                    "calendar:"):
+            self.assertIn(tag, out)
+
 
 if __name__ == "__main__":
     unittest.main()
