@@ -20,6 +20,20 @@ h1{font-size:20px;margin:0 0 4px}h2{font-size:13px;font-weight:600;color:var(--i
 button{font:inherit;padding:5px 12px;border:1px solid var(--grid);border-radius:6px;background:var(--surface);color:var(--ink);cursor:pointer}
 button[aria-pressed=true]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 input[type=range]{width:min(380px,60vw)}
+#panel summary{cursor:pointer;font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:12px;color:var(--ink-2)}
+#panel .bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin:10px 0}
+#panel select,#panel input[type=number],#panel input[type=text]{font:inherit;padding:4px 6px;border:1px solid var(--grid);border-radius:6px;background:var(--surface);color:var(--ink);width:100%}
+#panel input.changed{border-color:var(--s4);box-shadow:inset 0 0 0 1px var(--s4)}
+#knobs{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+#knobs fieldset{border:1px solid var(--grid);border-radius:8px;padding:8px 10px 10px;margin:0;min-width:0}
+#knobs legend{font-weight:700;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2);padding:0 4px}
+#knobs label{display:grid;grid-template-columns:1fr 92px;gap:6px;align-items:center;font-size:12px;margin:5px 0}
+#knobs label.wide{grid-template-columns:1fr}
+#knobs .tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.08em;border:1px solid var(--grid);border-radius:3px;padding:0 4px;margin-left:4px;color:var(--ink-3);vertical-align:middle}
+#knobs .u{color:var(--ink-3)}
+#panel .status{font-size:12px;color:var(--ink-3)}#panel .status.err{color:var(--s2)}
+#run{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.delta{color:var(--ink-3);font-size:12px}
 .status{margin:0 0 14px;min-height:22px;color:var(--ink-2)}.status b{color:var(--ink)}
 .grid{display:grid;grid-template-columns:1fr;gap:16px}@media(min-width:860px){.grid{grid-template-columns:1fr 1fr}}
 .card{border:1px solid var(--grid);border-radius:10px;padding:12px 12px 8px;background:var(--surface)}
@@ -36,8 +50,8 @@ tr.now td{background:var(--band)}
 </head>
 <body>
 <main>
-<h1>Four-node mechanics test</h1>
-<p class="sub">One 12.47 kV source, four 25 kVA service transformers on a radial lateral, one Core per node. OpenDSS judges every 5-minute step. Everything temporal is an ASSUMPTION; this is not SMART-DS and not the July 2026 event.</p>
+<h1 id="title">Lateral mechanics test</h1>
+<p class="sub" id="sub">One 12.47 kV source, 25 kVA service transformers on a radial lateral, one Core and one rooftop PV per node. OpenDSS judges every 5-minute step. Everything temporal is an ASSUMPTION; this is not SMART-DS and not the July 2026 event.</p>
 <div class="controls">
   <span role="group" aria-label="Policy"><button id="p-aware" aria-pressed="true">Feeder-aware</button> <button id="p-naive" aria-pressed="false">Naive</button></span>
   <label>Step <input id="step" type="range" min="0" max="23" value="0"> <span id="clock">19:00</span></label>
@@ -45,19 +59,26 @@ tr.now td{background:var(--band)}
   <button id="table-toggle" aria-pressed="false">Table view</button>
 </div>
 <p class="status" id="status"></p>
+<details class="card wide" id="panel" style="margin:0 0 16px"><summary>Parameters · rerun the simulator live</summary>
+  <div class="bar"><label>Scenario <select id="scenario"><option value="day">One simulated day (288 steps)</option><option value="mechanics">Two-hour mechanics test (24 steps)</option></select></label><button id="run">Run</button><button id="reset">Reset to defaults</button><span class="status" id="panel-status">Start <code>.venv/bin/python -m sim.server</code> and open this page from it to rerun with your own values. Until then you are viewing a static replay.</span></div>
+  <div id="knobs"></div>
+  <p class="muted" style="font-size:12px;margin:10px 0 0">Every value carries its provenance tag from <code>sim/constants.py</code>. Changed values are outlined. The controller stays deterministic: these are inputs, never setpoints. The run summary below keeps the previous run for comparison.</p>
+</details>
 <div class="grid">
   <div class="card wide"><h2>Network at this step</h2><div id="network"></div><div class="legend"><span><i style="background:var(--surface-2);border:1px solid var(--grid)"></i>≤100% nameplate</span><span><i style="background:var(--warn)"></i>&gt;100% over nameplate (amber, counted)</span><span><i style="background:var(--serious)"></i>&gt;110% normal exceeded (violation if ≥30 min)</span><span><i style="background:var(--critical)"></i>&gt;150% emergency</span><span class="muted">Ring = state of charge. Dashed = COMMS_LOST.</span></div></div>
   <div class="card"><h2>State of charge</h2><div id="soc"></div><div class="legend" id="soc-legend"></div></div>
   <div class="card"><h2>Transformer loading, % of nameplate kVA</h2><div id="loading"></div><div class="legend" id="loading-legend"></div></div>
   <div class="card"><h2>Node voltage, per unit</h2><div id="voltage"></div><div class="legend" id="voltage-legend"></div></div>
   <div class="card"><h2>Fleet base point vs delivered, kW</h2><div id="power"></div><div class="legend" id="power-legend"></div></div>
+  <div class="card"><h2>Feeder head, kW (+ import)</h2><div id="head"></div><div class="legend" id="head-legend"></div></div>
+  <div class="card"><h2>Reactive power at the feeder head, kvar</h2><div id="reactive"></div><div class="legend" id="reactive-legend"></div></div>
   <div class="card wide" id="table-card" hidden><h2>Every step</h2><div id="table"></div></div>
   <div class="card wide"><h2>Run summary</h2><div id="summary"></div></div>
 </div>
 </main>
 <div class="tip" id="tip"></div>
 <script>
-const SERIES=['var(--s1)','var(--s2)','var(--s3)','var(--s4)'];
+const PALETTE=['var(--s1)','var(--s2)','var(--s3)','var(--s4)'];const SERIES=new Proxy([],{get:(_,i)=>typeof i==='string'&&!isNaN(i)?PALETTE[i%PALETTE.length]:undefined});
 const NS='http://www.w3.org/2000/svg';
 const el=(t,a={},...c)=>{const n=document.createElementNS(NS,t);for(const[k,v]of Object.entries(a))n.setAttribute(k,v);for(const x of c)n.append(x);return n};
 let data,policy='aware',step=0,timer=null,showTable=false;
@@ -66,7 +87,28 @@ const frames=()=>data.runs[policy]||data.runs[Object.keys(data.runs)[0]];
 const cur=()=>frames()[step];
 const tip=$('tip');
 
-fetch('../data/replays/'+(new URLSearchParams(location.search).get('replay')||'four_node')+'.json').then(r=>r.json()).then(d=>{data=d;init();render();});
+let prevSummary=null,prevLabel='',schema=null,inited=false;
+function load(d,label){if(data)prevSummary=data.summary,prevLabel=data._label||'replay file';data=d;data._label=label;$('title').textContent=(d.name==='day'?'One simulated day':'Mechanics test')+' · '+d.topology.transformers.length+' nodes'+(d.params?'':'');const n=frames().length;$('step').max=n-1;if(step>n-1)step=0;$('step').value=step;if(!inited){init();inited=true;}render();}
+fetch('../data/replays/'+(new URLSearchParams(location.search).get('replay')||'four_node')+'.json').then(r=>r.json()).then(d=>{load(d,'replay file');if(d.name==='day')$('scenario').value='day';panel();});
+async function panel(){
+  let meta;try{const r=await fetch('/api/params',{cache:'no-store'});if(!r.ok)throw 0;meta=await r.json();}catch{return;}
+  schema=meta.schema;$('panel').open=true;$('panel-status').textContent='Live: the server reruns OpenDSS on every Run (a day takes well under a second).';
+  const groups={};for(const k of schema)(groups[k.group]=groups[k.group]||[]).push(k);
+  $('knobs').innerHTML=Object.entries(groups).map(([g,ks])=>`<fieldset><legend>${g}</legend>`+ks.map(k=>{
+    const id='k-'+k.name,cur=data.params?data.params[k.name]:k.default,val=Array.isArray(cur)?cur.join(', '):(cur===null?'':cur);
+    const inp=k.kind==='list'?`<input type="text" id="${id}" value="${val}">`:k.kind==='text'?`<input type="text" id="${id}" value="${val}" placeholder="none">`:`<input type="number" id="${id}" value="${val}" ${k.lo!=null?`min="${k.lo}"`:''} ${k.hi!=null?`max="${k.hi}"`:''} ${k.step!=null?`step="${k.step}"`:'step="any"'} ${k.name==='initial_soc'?'placeholder="default"':''}>`;
+    return `<label class="${k.kind==='list'?'wide':''}" title="${(k.help||'').replace(/"/g,'&quot;')}"><span>${k.label}<span class="tag">${k.tag}</span>${k.unit?` <span class="u">${k.unit}</span>`:''}</span>${inp}</label>`;}).join('')+'</fieldset>').join('');
+  const mark=()=>{for(const k of schema){const i=$('k-'+k.name);const d=Array.isArray(k.default)?k.default.join(', '):(k.default===null?'':String(k.default));i.classList.toggle('changed',i.value.replace(/\s/g,'')!==d.replace(/\s/g,''));}};mark();
+  $('knobs').oninput=mark;
+  $('reset').onclick=()=>{for(const k of schema){$('k-'+k.name).value=Array.isArray(k.default)?k.default.join(', '):(k.default===null?'':k.default);}mark();};
+  $('run').onclick=async()=>{const params={};for(const k of schema){const v=$('k-'+k.name).value;if(k.name==='initial_soc'&&v==='')params[k.name]=null;else params[k.name]=v;}
+    $('panel-status').textContent='Running…';$('panel-status').classList.remove('err');$('run').disabled=true;
+    try{const r=await fetch('/api/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scenario:$('scenario').value,params})});const d=await r.json();if(!r.ok||d.error)throw new Error(d.error||r.statusText);
+      const changed=schema.filter(k=>$('k-'+k.name).classList.contains('changed')).map(k=>k.name+'='+$('k-'+k.name).value);load(d,changed.length?changed.join(', '):'defaults');$('panel-status').textContent=`Ran ${$('scenario').value} in ${d.buildSeconds}s · ${d.topology.transformers.length} nodes · ${d.steps} steps${changed.length?' · changed: '+changed.join(', '):' · defaults'}`;}
+    catch(e){$('panel-status').textContent='Error: '+e.message;$('panel-status').classList.add('err');}
+    $('run').disabled=false;};
+  if(new URLSearchParams(location.search).get('autorun'))$('run').click();
+}
 
 function init(){
   const n=frames().length;$('step').max=n-1;
@@ -94,14 +136,18 @@ function render(){
   lines('soc','soc-legend',ids.map((u,i)=>({name:u,color:SERIES[i],values:frames().map(x=>x.soc[u]*100)})),{min:0,max:100,unit:'%',bands:[{lo:0,hi:20,label:'20% member reserve'}]});
   lines('loading','loading-legend',data.topology.transformers.map((t,i)=>({name:t.id,color:SERIES[i],values:frames().map(x=>x.loading[i])})),{min:0,max:160,unit:'%',rules:[{y:100,label:'nameplate'},{y:110,label:'normal 110%'},{y:150,label:'emergency 150%'}]});
   lines('voltage','voltage-legend',ids.map((u,i)=>({name:u,color:SERIES[i],values:frames().map(x=>x.voltage[ids.indexOf(u)])})),{min:0.93,max:1.07,unit:' pu',decimals:4,rules:[{y:0.95,label:'0.95'},{y:1.05,label:'1.05'}]});
-  lines('power','power-legend',[{name:'base point',color:'var(--ink-3)',values:frames().map(x=>x.targetKW),dash:'4 3'},{name:'delivered',color:SERIES[0],values:frames().map(x=>x.deliveredKW)}],{min:-90,max:90,unit:' kW',rules:[{y:0,label:''}]});
+  const pk=Math.ceil(ids.length*20*1.1/10)*10;
+  lines('power','power-legend',[{name:'base point',color:'var(--ink-3)',values:frames().map(x=>x.targetKW),dash:'4 3'},{name:'delivered',color:SERIES[0],values:frames().map(x=>x.deliveredKW)}],{min:-pk,max:pk,unit:' kW',rules:[{y:0,label:''}]});
+  lines('head','head-legend',[{name:'home load',color:'var(--ink-3)',values:frames().map(x=>x.loadKW)},{name:'solar',color:SERIES[2],values:frames().map(x=>x.solarKW),dash:'4 3'},{name:'fleet',color:SERIES[0],values:frames().map(x=>x.fleetKW)},{name:'feeder head',color:SERIES[3],values:frames().map(x=>x.feederKW)}],{min:-pk,max:pk,unit:' kW',rules:[{y:0,label:''}]});
+  const qk=Math.ceil(ids.length*4);
+  lines('reactive','reactive-legend',[{name:'feeder head',color:'var(--ink-3)',values:frames().map(x=>x.feederKVAr)},{name:'capacitor bank',color:SERIES[1],values:frames().map(x=>x.capKVAr),dash:'4 3'},{name:'our inverters (+ inject, − absorb)',color:SERIES[0],values:frames().map(x=>x.inverterKVAr)}],{min:-qk,max:qk,unit:' kvar',rules:[{y:0,label:''}]});
   summary();if(showTable)table(ids);
 }
 
 function network(f,ids){
-  const W=1100,H=300,x0=70,dx=240,ySrc=60;
+  const W=1100,H=300,x0=70,nn=ids.length,dx=Math.min(240,(W-x0-80)/Math.max(1,nn-1)),ySrc=60;
   const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'Feeder diagram at the current step'});
-  svg.append(el('line',{x1:x0-30,y1:ySrc,x2:x0+dx*3+40,y2:ySrc,stroke:'var(--ink-2)','stroke-width':3}));
+  svg.append(el('line',{x1:x0-30,y1:ySrc,x2:x0+dx*(nn-1)+40,y2:ySrc,stroke:'var(--ink-2)','stroke-width':3}));
   svg.append(el('rect',{x:x0-60,y:ySrc-18,width:44,height:36,rx:4,fill:'var(--ink)'}));
   svg.append(text(x0-38,ySrc+4,'SUB','var(--surface)',11,'middle'));
   svg.append(text(x0-38,ySrc+34,'12.47 kV, 1.03 pu','var(--ink-2)',11,'middle'));
@@ -135,7 +181,7 @@ function lines(id,legendId,series,o){
   for(const b of o.bands||[])svg.append(el('rect',{x:m.l,y:sy(b.hi),width:W-m.l-m.r,height:sy(b.lo)-sy(b.hi),fill:'var(--band)'}));
   const ticks=5;for(let k=0;k<=ticks;k++){const v=o.min+(o.max-o.min)*k/ticks;svg.append(el('line',{x1:m.l,x2:W-m.r,y1:sy(v),y2:sy(v),stroke:'var(--grid)'}));svg.append(text(m.l-6,sy(v)+4,v.toFixed(dec>2?2:0)+(o.unit.trim()==='%'?'%':''),'var(--ink-3)',10,'end'));}
   for(const r of o.rules||[]){svg.append(el('line',{x1:m.l,x2:W-m.r,y1:sy(r.y),y2:sy(r.y),stroke:'var(--ink-3)','stroke-dasharray':'3 3'}));if(r.label)svg.append(text(W-m.r,sy(r.y)-3,r.label,'var(--ink-3)',10,'end'));}
-  frames().forEach((f,i)=>{if(i%4===0)svg.append(text(sx(i),H-8,f.clock,'var(--ink-3)',10,'middle'));});
+  const stride=Math.max(4,Math.ceil(n/12/4)*4);frames().forEach((f,i)=>{if(i%stride===0)svg.append(text(sx(i),H-8,f.clock,'var(--ink-3)',10,'middle'));});
   series.forEach((s,k)=>{const d=s.values.map((v,i)=>(i?'L':'M')+sx(i).toFixed(1)+' '+sy(v).toFixed(1)).join(' ');
     svg.append(el('path',{d,fill:'none',stroke:s.color,'stroke-width':2,'stroke-linejoin':'round','stroke-dasharray':s.dash||''}));
     const last=s.values[n-1];svg.append(text(sx(n-1)+3,sy(last)+3,s.name,'var(--ink-2)',10));
@@ -154,7 +200,8 @@ function lines(id,legendId,series,o){
 
 function summary(){
   const s=data.summary,rows=[['Peak transformer loading','peakLoadingPct','%'],['Steps over nameplate (amber)','stepsOverNameplate',''],['Steps over 110%','stepsOverNormal',''],['Steps in sustained violation (≥30 min over 110%)','sustainedViolationSteps',''],['Emergency steps (>150%)','emergencySteps',''],['Voltage-violation steps','voltageViolationSteps',''],['Min voltage','minVoltagePu',' pu'],['Max voltage','maxVoltagePu',' pu'],['Market position given up','shortfallKWh',' kWh'],['Min state of charge','minSoc','']];
-  $('summary').innerHTML=`<table><thead><tr><th>Metric</th><th></th><th>Feeder-aware</th><th>Naive</th></tr></thead><tbody>`+rows.map(([l,k,u])=>`<tr><td>${l}</td><td></td><td>${s.aware?fmt(s.aware[k],u):'—'}</td><td>${s.naive?fmt(s.naive[k],u):'—'}</td></tr>`).join('')+`</tbody></table><p class="muted">Tolerance is max(2 MW, 15%) so tracking is trivially inside tolerance on four units; the shortfall column is the honest number. Generated ${data.generatedAt} with ${data.engine.split(' revision')[0]}.</p>`;
+  const pv=(p,k,u)=>prevSummary&&prevSummary[p]?`<span class="delta">${fmt(prevSummary[p][k],u)}</span>`:'';
+  $('summary').innerHTML=`<table><thead><tr><th>Metric</th><th></th><th>Feeder-aware</th><th>Naive</th>${prevSummary?`<th class="delta">Previous aware</th><th class="delta">Previous naive</th>`:''}</tr></thead><tbody>`+rows.map(([l,k,u])=>`<tr><td>${l}</td><td></td><td>${s.aware?fmt(s.aware[k],u):'—'}</td><td>${s.naive?fmt(s.naive[k],u):'—'}</td>${prevSummary?`<td>${pv('aware',k,u)}</td><td>${pv('naive',k,u)}</td>`:''}</tr>`).join('')+`</tbody></table>${prevSummary?`<p class="muted">Previous run: ${prevLabel}. This run: ${data._label||'replay file'}.</p>`:''}<p class="muted">Tolerance is max(2 MW, 15%) so tracking is trivially inside tolerance on four units; the shortfall column is the honest number. Generated ${data.generatedAt} with ${data.engine.split(' revision')[0]}.</p>`;
 }
 const fmt=(v,u)=>typeof v==='number'?(u===''&&v<1&&v>0?Math.round(v*100)+'%':v+u):String(v);
 function table(ids){

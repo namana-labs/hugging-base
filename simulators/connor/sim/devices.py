@@ -32,6 +32,7 @@ class Battery:
     power_kw: float = CORE_POWER_KW
     state: str = "GRID_IDLE"
     efficiency: float = CORE_ROUND_TRIP_EFFICIENCY
+    reserve: float = RESERVE_FLOOR  # the member reserve floor, a hard constraint while grid-connected
 
     @property
     def online(self) -> bool:
@@ -43,7 +44,7 @@ class Battery:
             return COMMS_LOSS_POWER_KW
         dt = STEP_MINUTES / 60
         eta = sqrt(self.efficiency)
-        lo = -(self.soc - RESERVE_FLOOR) * self.energy_kwh * eta / dt
+        lo = -(self.soc - self.reserve) * self.energy_kwh * eta / dt
         hi = (1 - self.soc) * self.energy_kwh / eta / dt
         return max(-self.power_kw, lo, min(self.power_kw, hi, power_kw))
 
@@ -53,7 +54,7 @@ class Battery:
         dt = STEP_MINUTES / 60
         eta = sqrt(self.efficiency)
         delta = (power_kw * eta if power_kw >= 0 else power_kw / eta) * dt / self.energy_kwh
-        self.soc = max(RESERVE_FLOOR, min(1.0, self.soc + delta))
+        self.soc = max(self.reserve, min(1.0, self.soc + delta))
         if self.online:
             self.state = "GRID_IDLE" if abs(power_kw) < 1e-6 else "GRID_DISPATCH"
         return power_kw

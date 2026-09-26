@@ -30,7 +30,10 @@ from ..constants import (
     CORE_POWER_KW,
     CORE_ROUND_TRIP_EFFICIENCY,
     CORE_USABLE_KWH,
+    DAY_INITIAL_SOC,
     FOUR_NODE_NODE_LOAD_KW,
+    INVERTER_KVAR_FRACTION,
+    PV_KW_PER_NODE,
     RESERVE_FLOOR,
     STEP_MINUTES,
     SUSTAINED_WINDOW_MINUTES,
@@ -41,6 +44,8 @@ from ..constants import (
 from ..devices import Battery
 from ..feeder import Feeder, Topology, four_node
 from ..market import tracking
+from ..params import Params
+from ..reactive import cap_bank_wanted, inverter_capacity_kvar, volt_var
 from ..splitter import allocate, headroom
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -60,12 +65,17 @@ class Phase:
 
 
 # ASSUMPTION schedule. Not the July 2026 event, not LZ_NORTH prices.
-DEFAULT_SCHEDULE = [
-    Phase("idle", 4, 0.0, 42.0),
-    Phase("charge", 10, 4 * CORE_POWER_KW, 12.0),
-    Phase("idle", 2, 0.0, 42.0),
-    Phase("discharge", 8, -3 * CORE_POWER_KW, 145.0),
-]
+def mechanics_schedule(params: Params | None = None) -> list[Phase]:
+    p = params or Params()
+    return [
+        Phase("idle", 4, 0.0, 42.0),
+        Phase("charge", 10, p.fleet_kw * p.mechanics_charge_fraction, 12.0),
+        Phase("idle", 2, 0.0, 42.0),
+        Phase("discharge", 8, -p.fleet_kw * p.mechanics_discharge_fraction, 145.0),
+    ]
+
+
+DEFAULT_SCHEDULE = mechanics_schedule()
 
 
 def expand(schedule: list[Phase]) -> list[dict]:
@@ -82,22 +92,30 @@ def clock(minute: int) -> str:
 
 
 def run(policy: str, topology: Topology | None = None, schedule: list[Phase] | None = None,
+        steps: list[dict] | None = None, start_minute: int = START_MINUTE,
         offline: str | None = "h3", offline_at: int = 8, restore_at: int = 12,
         backup: str | None = None, backup_at: int = 4, reconnect_at: int = 16,
-        initial_soc: dict[str, float] | None = None) -> list[dict]:
+        initial_soc: dict[str, float] | None = None, params: Params | None = None) -> list[dict]:
     """Play the schedule under one splitter policy and return one frame per step.
 
-    `offline` loses comms (holds 0 kW, stays on the grid). `backup` islands: its
-    service point opens, the feeder stops seeing that home, and the battery
-    carries the home load until `reconnect_at`.
+    `steps` (dicts with phase, targetKW, price, loadFactor and optionally
+    solarFactor) overrides `schedule`. `offline` loses comms (holds 0 kW, stays
+    on the grid). `backup` islands: its service point opens, the feeder stops
+    seeing that home, and the battery carries the home load until `reconnect_at`.
+    Units missing from `initial_soc` start at `params.initial_soc` or DAY_INITIAL_SOC.
+    `params` sets the battery, controller, referee and reactive knobs (sim/params.py).
     """
+    prm = params or Params()
     topology = topology or four_node()
-    feeder = Feeder(topology)
+    feeder = Feeder(topology, prm.sustained_window_minutes)
     home_by_id = {h.id: h for h in feeder.homes}
-    steps = expand(schedule or DEFAULT_SCHEDULE)
-    soc = initial_soc or FOUR_NODE_INITIAL_SOC
-    devices = {h.id: Battery(soc[h.id]) for h in feeder.homes}
-    capacity_kw = len(devices) * CORE_POWER_KW
+    steps = steps or expand(schedule or mechanics_schedule(prm))
+    soc = FOUR_NODE_INITIAL_SOC if initial_soc is None else initial_soc
+    fill = DAY_INITIAL_SOC if prm.initial_soc is None else prm.initial_soc
+    devices = {h.id: Battery(soc.get(h.id, fill), prm.core_usable_kwh, prm.core_power_kw,
+                             efficiency=prm.round_trip_efficiency, reserve=prm.reserve_floor)
+               for h in feeder.homes}
+    capacity_kw = len(devices) * prm.core_power_kw
     frames = []
     for i, step in enumerate(steps):
         events = []
@@ -120,15 +138,26 @@ def run(policy: str, topology: Topology | None = None, schedule: list[Phase] | N
                           "unit back in GRID_IDLE")
 
         feeder.load(step["loadFactor"])
+        feeder.pv(step.get("solarFactor", 0.0))
+        # Reactive support first, from the pre-dispatch state, so the referee sees it
+        # under every allocation it checks: the bank follows the feeder's own head
+        # demand (inverters at zero VAr), then the inverters follow their own bus
+        # voltage (one pass per step).
+        feeder.inverter_kvar = {}
+        feeder.battery({})
+        feeder.capacitor(cap_bank_wanted(feeder, feeder.solve(), prm.cap_on_kvar_per_node, prm.cap_off_kvar_per_node))
+        feeder.inverter_kvar = volt_var(feeder, devices, feeder.solve(), prm.inverter_kvar_fraction)
         feeder.battery({})
         baseline = feeder.solve()
-        room = headroom(feeder, baseline)
+        room = headroom(feeder, baseline, prm.headroom_margin)
         target = step["targetKW"]
-        command, solution = allocate(feeder, devices, target, policy, baseline)
+        command, solution = allocate(feeder, devices, target, policy, baseline, margin=prm.headroom_margin)
         # Every unit delivers what the referee saw; offline units deliver the comms-loss power.
         delivered = {h.id: (command.get(h.id, 0.0) if devices[h.id].online else COMMS_LOSS_POWER_KW)
                      for h in feeder.homes}
         solution = feeder.solve(track_thermal=True)  # same set points, now with the thermal clock
+        kvar_capacity = sum(inverter_capacity_kvar(d, prm.inverter_kvar_fraction)
+                            for u, d in devices.items() if u not in feeder.islanded)
         home_served = {}
         for unit, p in delivered.items():
             if devices[unit].state == "BACKUP_ISLANDED":
@@ -140,13 +169,16 @@ def run(policy: str, topology: Topology | None = None, schedule: list[Phase] | N
             else:
                 devices[unit].advance(p)
 
+        minute = start_minute + i * STEP_MINUTES
         frame = {
             "step": i,
-            "minute": START_MINUTE + i * STEP_MINUTES,
-            "clock": clock(START_MINUTE + i * STEP_MINUTES),
+            "minute": minute,
+            "hour": round(minute / 60, 4),
+            "clock": clock(minute),
             "phase": step["phase"],
             "price": step["price"],
             "loadFactor": step["loadFactor"],
+            "solarFactor": step.get("solarFactor", 0.0),
             "events": events,
             "powers": {k: round(v, 3) for k, v in delivered.items()},
             "soc": {k: round(v.soc, 4) for k, v in devices.items()},
@@ -155,9 +187,14 @@ def run(policy: str, topology: Topology | None = None, schedule: list[Phase] | N
             "online": [k for k, v in devices.items() if v.online],
             "islanded": sorted(feeder.islanded),
             "homeServedKW": home_served,  # islanded units: battery kW into the home, never the grid
+            "inverterKVArByUnit": {k: v for k, v in feeder.inverter_kvar.items() if k not in feeder.islanded},
+            "inverterKVArCapacity": round(kvar_capacity, 3),
+            "capOn": feeder.cap_on,
         }
         frame.update(tracking(target, sum(delivered.values()), capacity_kw))
         frame.update(solution)
+        frame["fleetKW"] = frame["deliveredKW"]
+        frame["inverterKVArReserve"] = round(kvar_capacity - abs(frame["inverterKVAr"]), 3)
         frame.update(room)
         frames.append(frame)
     return frames
@@ -217,11 +254,14 @@ def print_table(policy: str, frames: list[dict]) -> None:
           f"shortfall {s['shortfallKWh']} kWh  min SoC {s['minSoc'] * 100:.0f}%")
 
 
-def build(policies: tuple[str, ...] = ("aware", "naive"), out: Path = DEFAULT_OUT, quiet: bool = False,
-          **kwargs) -> dict:
+def build(policies: tuple[str, ...] = ("aware", "naive"), out: Path | None = DEFAULT_OUT, quiet: bool = False,
+          name: str = "four_node", topology: Topology | None = None, provenance: dict | None = None,
+          params: Params | None = None, **kwargs) -> dict:
+    """Run every policy and write the replay. `out=None` skips the file (the live server)."""
     started = time.time()
-    topology = four_node()
-    runs = {p: run(p, topology=topology, **kwargs) for p in policies}
+    params = params or Params()
+    topology = topology or four_node()
+    runs = {p: run(p, topology=topology, params=params, **kwargs) for p in policies}
     if not quiet:
         print(f"Topology: {topology.description}")
         print("Nodes: " + ", ".join(f"{h.label} ({h.id}, tf{h.tf + 1} {topology.transformers[h.tf].kva:g} kVA, "
@@ -229,12 +269,17 @@ def build(policies: tuple[str, ...] = ("aware", "naive"), out: Path = DEFAULT_OU
         for p, frames in runs.items():
             print_table(p, frames)
     replay = {
-        "name": "four_node",
+        "name": name,
         "engine": dss.Basic.Version(),
         "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "buildSeconds": round(time.time() - started, 2),
         "topology": topology.to_json(),
-        "schedule": [asdict(p) for p in (kwargs.get("schedule") or DEFAULT_SCHEDULE)],
+        "params": params.to_json(),
+        "stepMinutes": STEP_MINUTES,
+        "startMinute": kwargs.get("start_minute", START_MINUTE),
+        "steps": len(next(iter(runs.values()))),
+        "schedule": (None if kwargs.get("steps") else
+                     [asdict(ph) for ph in (kwargs.get("schedule") or mechanics_schedule(params))]),
         "event": {"offline": kwargs.get("offline", "h3"), "offlineAt": kwargs.get("offline_at", 8),
                   "restoreAt": kwargs.get("restore_at", 12),
                   "backup": kwargs.get("backup"), "backupAt": kwargs.get("backup_at", 4),
@@ -242,29 +287,46 @@ def build(policies: tuple[str, ...] = ("aware", "naive"), out: Path = DEFAULT_OU
         "runs": runs,
         "summary": {p: summarize(f) for p, f in runs.items()},
         "assumptions": {
-            "stepMinutes": STEP_MINUTES, "coreUsableKWh": CORE_USABLE_KWH, "corePowerKW": CORE_POWER_KW,
-            "roundTripEfficiency": CORE_ROUND_TRIP_EFFICIENCY, "reserveFloor": RESERVE_FLOOR,
+            "stepMinutes": STEP_MINUTES, "coreUsableKWh": params.core_usable_kwh, "corePowerKW": params.core_power_kw,
+            "roundTripEfficiency": params.round_trip_efficiency, "reserveFloor": params.reserve_floor,
             "commsStaleSeconds": COMMS_STALE_SECONDS, "commsLossKW": COMMS_LOSS_POWER_KW,
             "backupSocFloor": BACKUP_SOC_FLOOR,
-            "commandExpirySteps": COMMAND_EXPIRY_STEPS, "controllerHeadroomMargin": CONTROLLER_HEADROOM_MARGIN,
+            "commandExpirySteps": COMMAND_EXPIRY_STEPS, "controllerHeadroomMargin": params.headroom_margin,
             "tiers": {"nameplate": TIER_NAMEPLATE_PCT, "normal": TIER_NORMAL_PCT, "emergency": TIER_EMERGENCY_PCT,
-                      "sustainedWindowMinutes": SUSTAINED_WINDOW_MINUTES},
-            "nodeLoadKW": FOUR_NODE_NODE_LOAD_KW, "initialSoc": kwargs.get("initial_soc") or FOUR_NODE_INITIAL_SOC,
+                      "sustainedWindowMinutes": params.sustained_window_minutes},
+            "nodeLoadKW": params.node_load_kw, "pvKWPerNode": params.pv_kw_per_node,
+            "inverterKVArFraction": params.inverter_kvar_fraction, "capacitor": topology.capacitor,
+            "initialSoc": FOUR_NODE_INITIAL_SOC if kwargs.get("initial_soc") is None else kwargs["initial_soc"],
         },
         "provenance": {
             "topology": "ASSUMPTION: hand-built four-node lateral for a mechanics test; not SMART-DS",
             "prices": "ASSUMPTION: scripted illustrative prices, not ERCOT data",
-            "loads": "ASSUMPTION: flat aggregate node load; no weather rescaling",
+            "loads": "ASSUMPTION: scripted aggregate node load; no weather rescaling",
+            "solar": "ASSUMPTION: scripted PV shape, one aggregate PV per node",
+            "reactive": "ASSUMPTION bank size and switching; IEEE 1547-2018 Cat B volt-var (SOURCED curve)",
             "referee": "OpenDSS (OpenDSSDirect.py) judges every step; the kW view is the controller's only",
+            **(provenance or {}),
         },
     }
-    out = Path(out).resolve()
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(replay, separators=(",", ":")))
-    if not quiet:
-        shown = out.relative_to(ROOT) if out.is_relative_to(ROOT) else out
-        print(f"\nWrote {shown} in {replay['buildSeconds']} s")
+    if out is not None:
+        out = Path(out).resolve()
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(replay, separators=(",", ":")))
+        if not quiet:
+            shown = out.relative_to(ROOT) if out.is_relative_to(ROOT) else out
+            print(f"\nWrote {shown} in {replay['buildSeconds']} s")
     return replay
+
+
+def build_mechanics(params: Params | None = None, policies: tuple[str, ...] = ("aware", "naive"),
+                    out: Path | None = DEFAULT_OUT, quiet: bool = True) -> dict:
+    """The two-hour mechanics test from a Params (the panel's entry point). Events come from params."""
+    p = params or Params()
+    topology = p.topology()
+    return build(policies, out=out, quiet=quiet, name="four_node", topology=topology, params=p,
+                 offline=p.offline_unit or None, offline_at=p.offline_at, restore_at=p.restore_at,
+                 backup=p.backup_unit or None, backup_at=p.backup_at, reconnect_at=p.reconnect_at,
+                 initial_soc=None if p.initial_soc is None else {h.id: p.initial_soc for h in topology.homes})
 
 
 def main() -> None:
@@ -278,9 +340,13 @@ def main() -> None:
     ap.add_argument("--reconnect-at", type=int, default=16, help="step index at which it reconnects")
     ap.add_argument("--out", type=Path, default=DEFAULT_OUT)
     ap.add_argument("--quiet", action="store_true")
+    ap.add_argument("--set", action="append", default=[], metavar="NAME=VALUE",
+                    help="override any parameter from sim/params.py, e.g. --set nodes=6 --set node_load_kw=12")
     a = ap.parse_args()
     policies = ("aware", "naive") if a.policy == "both" else (a.policy,)
-    build(policies, out=a.out, quiet=a.quiet, offline=None if a.offline == "none" else a.offline,
+    params = Params.from_overrides(dict(kv.split("=", 1) for kv in a.set))
+    build(policies, out=a.out, quiet=a.quiet, topology=params.topology(), params=params,
+          offline=None if a.offline == "none" else a.offline,
           offline_at=a.offline_at, restore_at=a.restore_at,
           backup=a.backup, backup_at=a.backup_at, reconnect_at=a.reconnect_at)
 
