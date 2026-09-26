@@ -421,7 +421,7 @@ def summarize(sc, run, loads_driver=None):
     breaches = int(((socs < RESERVE_FLOOR - 1e-9) & ~islanded).sum())
     has_batt = run["branch"] != "none"
     dl = min(win.deadline_step, n) - 1
-    value = energy_value_usd(run["batkw"], sc.price, DT_H)
+    value = energy_value_usd(run["batkw"], sc.price, DT_H) + 0.0   # + 0.0: no "-0.0" in the JSON
     s = {
         "normalEvents": labelled(len(nev), "SIM", "OpenDSS: runs above 110% lasting >= 30 min"),
         "emergencyTfs": labelled(int(emerg.any(axis=0).sum()), "SIM", "OpenDSS: transformers above 150% at any step"),
@@ -436,7 +436,7 @@ def summarize(sc, run, loads_driver=None):
         "reserveBreaches": labelled(breaches if has_batt else 0, "SIM", "battery-steps below the 20% reserve (not islanded)"),
         "chargedPctBy0400": labelled(round(float(socs[dl].mean() * 100), 1) if has_batt else None, "SIM",
                                      f"fleet state of charge at {hhmm(win.time(dl + 1))}" if has_batt else "no batteries in this branch"),
-        "energyValueUSD": labelled(round(value, 2), "DERIVED", "sum of -P x price x dt (gross energy value, not Base's P&L)"),
+        "energyValueUSD": labelled(round(value, 2) + 0.0, "DERIVED", "sum of -P x price x dt (gross energy value, not Base's P&L)"),
         "vMinHome": labelled(round(float(v[kv, hv]), 4), "SIM", "OpenDSS minimum home voltage (pu, 120 V base)",
                              volts=round(float(v[kv, hv]) * 120, 1), home=int(hv), t=hhmm(win.time(kv))),
         "homesBelow095": labelled(below, "SIM", "homes below 0.95 pu at any step"),
