@@ -1,5 +1,7 @@
 # Handoff: Hugging Base — Chapter 1 control room (option 3a)
 
+> **Newer spec:** [`story-flow/README.md`](story-flow/README.md) is the story flow (levers → watch → result → room to grow). It shares these tokens and chrome, and for those four screens it wins over this file. This file still covers the Chapter 1 control room.
+
 > **Authoritative design source.** For colours, type, spacing, radii, motion, components and UI copy, this spec wins over `docs/ui-brief.md` and the existing prototype's look. `docs/design.md` still owns scope and the non-negotiables.
 
 ## Overview

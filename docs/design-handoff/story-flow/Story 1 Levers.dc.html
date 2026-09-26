@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Hugging Base · Story 1 · Set the levers</title>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>html,body{margin:0;background:#e6e2d7;color:#10231a;font-family:'Hanken Grotesk',system-ui,sans-serif}*{box-sizing:border-box}a{color:#1e4d2b}a:hover{color:#2a6a3b}input[type=range]{accent-color:#1e4d2b}</style>
+</helmet>
+<section id="t1" style="padding:48px 56px 64px;display:flex;flex-direction:column;gap:22px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+    <span style="font:600 11px ui-monospace,Menlo,monospace;padding:3px 7px;background:#10231a;color:#fff;border-radius:4px">STEP 1</span>
+    <span style="font-size:18px;font-weight:700">Set the levers</span>
+    <span style="font-size:14px;color:#5f6b63">Story: what you can change in the simulator, and what stays fixed. Next: <a href="Story%202%20Watch.dc.html">Step 2 · Watch it play</a> · <a href="Story%203%20Results.dc.html">Step 3 · Read the result</a></span>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+
+  <div id="1a" style="display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;align-items:baseline;gap:8px;font-size:13px;color:#5f6b63"><a href="#1a" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#10231a;border-radius:5px;text-decoration:none">1a</a>Lever sheet grouped by where each lever acts. Press Run and the simulator runs in the background</div>
+    <div data-screen-label="1a Levers sheet" style="width:1600px;height:900px;background:#f7f4ec;display:flex;flex-direction:column;border-radius:8px;overflow:hidden;border:1px solid rgba(0,0,0,.08)">
+      <div style="height:60px;flex:none;display:flex;align-items:center;gap:18px;padding:0 24px;border-bottom:1px solid #e3dfd3">
+        <div style="flex:none;white-space:nowrap;font-weight:700;font-size:21px;letter-spacing:-0.02em;color:#1e4d2b">Hugging Base</div>
+        <div style="width:1px;height:24px;background:#e3dfd3"></div>
+        <div title="23 Aug 2026, 16:00 → 04:00" style="flex:none;white-space:nowrap;font-size:16px">Heat-wave evening <span style="color:#5f6b63">· 23 Aug</span></div>
+        <nav style="flex:none;white-space:nowrap;display:flex;gap:2px;padding:3px;border:1px solid #e3dfd3;border-radius:8px;font-size:13px;margin-left:12px">
+          <a href="Story%201%20Levers.dc.html" style="padding:5px 10px;border-radius:6px;background:#e4efe6;color:#1e4d2b;font-weight:700;text-decoration:none">1 Set the levers</a>
+          <a href="Story%202%20Watch.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">2 Watch it play</a>
+          <a href="Story%203%20Results.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">3 Read the result</a>
+          <a href="Story%204%20Room%20to%20grow.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">4 Room to grow</a>
+        </nav>
+        <div style="flex:1"></div>
+        <div style="flex:none;white-space:nowrap;font-size:13px;color:#5f6b63">Oncor-suburb stand-in · LZ_NORTH</div>
+      </div>
+      <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:18px;padding:22px 24px">
+        <div style="display:flex;align-items:flex-end;gap:24px">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font-size:26px;font-weight:700;letter-spacing:-0.01em">What you can change</div>
+            <div style="font-size:14px;color:#34443a;max-width:760px;text-wrap:pretty">Set six levers, then run the simulator. It runs in the background, one OpenDSS power flow per minute of the evening. Everything on the right stays fixed for every run.</div>
+          </div>
+          <button onClick="{{ resetDefaults }}" style="margin-left:auto;font:inherit;font-size:13px;padding:7px 12px;border-radius:8px;border:1px solid #cfcabd;background:transparent;color:#10231a;cursor:pointer" style-hover="background:#fffdf8">Reset to defaults</button>
+        </div>
+
+        <div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr);gap:14px">
+          <div style="display:flex;flex-direction:column;gap:10px;min-height:0">
+            <div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">CONTROLLER</div><div style="font-size:12.5px;color:#5f6b63">Who decides each battery's charge and discharge</div></div>
+            <div style="background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:center;gap:8px"><span style="font-size:15px;font-weight:700">Dispatch policy</span><span style="padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">ASSUMPTION</span><sc-if value="{{ ch.controller }}" hint-placeholder-val="{{ false }}"><span style="margin-left:auto;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;background:#e4efe6;color:#1e4d2b">changed</span></sc-if></div>
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <sc-for list="{{ ctlOpts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.onClick }}" style="text-align:left;font:inherit;display:flex;flex-direction:column;gap:2px;padding:9px 11px;border-radius:8px;cursor:pointer;border:1px solid {{ o.border }};background:{{ o.bg }}"><span style="font-size:14px;font-weight:700;color:{{ o.fg }}">{{ o.text }}</span><span style="font-size:12.5px;color:#5f6b63;text-wrap:pretty">{{ o.sub }}</span></button></sc-for>
+              </div>
+              <div style="font-size:12.5px;color:#34443a">Changes → transformer loading, fleet charge, energy value</div>
+            </div>
+            <div style="background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:center;gap:8px"><span style="font-size:15px;font-weight:700">Inject failures</span><span style="padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">ASSUMPTION</span><sc-if value="{{ ch.failures }}" hint-placeholder-val="{{ false }}"><span style="margin-left:auto;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;background:#e4efe6;color:#1e4d2b">changed</span></sc-if></div>
+              <div style="font-size:12.5px;color:#5f6b63;text-wrap:pretty">A battery goes silent at 22:15, a Level 2 EV plugs in on street C at 22:35, and our controller stalls for 8 minutes at 22:55.</div>
+              <button onClick="{{ toggleFail }}" style="font:inherit;display:flex;align-items:center;gap:10px;padding:0;border:0;background:none;cursor:{{ failCursor }};color:#10231a;font-size:14px">
+                <span style="width:40px;height:22px;border-radius:11px;padding:2px;display:flex;background:{{ failTrack }};justify-content:{{ failJustify }};transition:background .3s cubic-bezier(.3,.7,.2,1)"><span style="width:18px;height:18px;border-radius:9px;background:#fffdf8"></span></span>{{ failText }}
+              </button>
+              <div style="font-size:12.5px;color:#34443a">Changes → transformer loading on D and C, fleet charge by 04:00</div>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px;min-height:0">
+            <div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">FLEET</div><div style="font-size:12.5px;color:#5f6b63">Our batteries: how many, which kind, and what they hold back</div></div>
+            <div style="flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:10px">
+              <div style="background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;gap:8px"><span style="font-size:15px;font-weight:700">Fleet size</span><span style="padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">ASSUMPTION</span><sc-if value="{{ ch.fleetSize }}" hint-placeholder-val="{{ false }}"><span style="margin-left:auto;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;background:#e4efe6;color:#1e4d2b">changed</span></sc-if></div>
+                <div style="font-size:12.5px;color:#5f6b63">Homes on this feeder with one of our batteries, out of 1,007 eligible.</div>
+                <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:34px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-0.02em">{{ l.fleetSize }}</span><span style="font-size:14px;color:#5f6b63">homes · default 96</span></div>
+                <input type="range" min="24" max="240" step="8" value="{{ l.fleetSize }}" onChange="{{ onFleet }}" style="width:100%">
+                <div style="margin-top:auto;font-size:12.5px;color:#34443a">Changes → how much load the fleet can shift, energy value</div>
+              </div>
+              <div style="background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;gap:8px"><span style="font-size:15px;font-weight:700">Battery class</span><span style="padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">REAL</span><span style="font-size:11px;color:#5f6b63">power ·</span><span style="padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">ASSUMPTION</span><span style="font-size:11px;color:#5f6b63">usable</span><sc-if value="{{ ch.cls }}" hint-placeholder-val="{{ false }}"><span style="margin-left:auto;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;background:#e4efe6;color:#1e4d2b">changed</span></sc-if></div>
+                <div style="font-size:12.5px;color:#5f6b63">The unit in every fleet home.</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                  <sc-for list="{{ clsOpts }}" as="o" hint-placeholder-count="2"><button onClick="{{ o.onClick }}" style="text-align:left;font:inherit;display:flex;flex-direction:column;gap:2px;padding:10px 11px;border-radius:8px;cursor:pointer;border:1px solid {{ o.border }};background:{{ o.bg }}"><span style="font-size:14px;font-weight:700;color:{{ o.fg }}">{{ o.text }}</span><span style="font-size:12.5px;color:#5f6b63;font-variant-numeric:tabular-nums">{{ o.sub }}</span></button></sc-for>
+                </div>
+                <div style="margin-top:auto;font-size:12.5px;color:#34443a">Changes → peak kW each home can shift, hours of cover</div>
+              </div>
+              <div style="background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;gap:8px"><span style="font-size:15px;font-weight:700">Member reserve</span><span style="padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">REAL</span><sc-if value="{{ ch.reserve }}" hint-placeholder-val="{{ false }}"><span style="margin-left:auto;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;background:#e4efe6;color:#1e4d2b">changed</span></sc-if></div>
+                <div style="font-size:12.5px;color:#5f6b63">Charge kept back for the member's own backup. The grid never uses it.</div>
+                <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:34px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-0.02em">{{ l.reserve }}%</span><span style="font-size:14px;color:#5f6b63">{{ reserveNote }}</span></div>
+                <input type="range" min="10" max="50" step="5" value="{{ l.reserve }}" onChange="{{ onReserve }}" style="width:100%">
+                <div style="margin-top:auto;font-size:12.5px;color:#34443a">Changes → energy the fleet can offer, reserve breaches</div>
+              </div>
+              <div style="background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;gap:8px"><span style="font-size:15px;font-weight:700">Starting charge</span><span style="padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">ASSUMPTION</span><sc-if value="{{ ch.soc0 }}" hint-placeholder-val="{{ false }}"><span style="margin-left:auto;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;background:#e4efe6;color:#1e4d2b">changed</span></sc-if></div>
+                <div style="font-size:12.5px;color:#5f6b63">Fleet state of charge at 16:00, before the evening peak.</div>
+                <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:34px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-0.02em">{{ l.soc0 }}%</span><span style="font-size:14px;color:#5f6b63">at 16:00 · default 90%</span></div>
+                <input type="range" min="40" max="100" step="5" value="{{ l.soc0 }}" onChange="{{ onSoc0 }}" style="width:100%">
+                <div style="margin-top:auto;font-size:12.5px;color:#34443a">Changes → evening discharge, how much must recharge overnight</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px;min-height:0">
+            <div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">FIXED IN THIS RUN</div><div style="font-size:12.5px;color:#5f6b63">Grid and market inputs the result depends on</div></div>
+            <div style="flex:1;min-height:0;background:#f1eee5;border:1px solid #e3dfd3;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:12px;font-size:13px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#5f6b63">GRID</div>
+              <sc-for list="{{ fixedGrid }}" as="f" hint-placeholder-count="4"><div style="display:flex;flex-direction:column;gap:2px;padding-bottom:10px;border-bottom:1px solid #e3dfd3"><div style="display:flex;align-items:baseline;gap:6px"><span style="font-weight:700">{{ f.k }}</span><span style="margin-left:auto;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">{{ f.tag }}</span></div><div style="color:#34443a;font-variant-numeric:tabular-nums">{{ f.v }}</div></div></sc-for>
+              <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#5f6b63;margin-top:4px">MARKET</div>
+              <sc-for list="{{ fixedMarket }}" as="f" hint-placeholder-count="3"><div style="display:flex;flex-direction:column;gap:2px;padding-bottom:10px;border-bottom:1px solid #e3dfd3"><div style="display:flex;align-items:baseline;gap:6px"><span style="font-weight:700">{{ f.k }}</span><span style="margin-left:auto;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">{{ f.tag }}</span></div><div style="color:#34443a;font-variant-numeric:tabular-nums">{{ f.v }}</div></div></sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="flex:none;height:96px;background:#fffdf8;border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:22px;border:1.5px solid #10231a">
+          <div style="flex:none;display:flex;flex-direction:column;gap:3px;width:300px">
+            <div style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">{{ run.eyebrow }}</div>
+            <div style="font-size:22px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ run.title }}</div>
+          </div>
+          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:7px">
+            <sc-if value="{{ run.isRunning }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:10px;font-size:13.5px"><span style="font-weight:700">{{ run.stage }}</span><span style="margin-left:auto;font-variant-numeric:tabular-nums;color:#34443a">{{ run.stepText }}</span></div>
+              <div style="height:10px;border-radius:5px;background:#f1eee5;overflow:hidden"><div style="height:100%;width:{{ run.pct }};background:#1e4d2b;transition:width .3s cubic-bezier(.3,.7,.2,1)"></div></div>
+            </sc-if>
+            <sc-if value="{{ run.notRunning }}" hint-placeholder-val="{{ true }}"><div style="font-size:13.5px;color:#34443a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ run.summary }}</div></sc-if>
+            <div style="font-size:12px;color:#5f6b63;text-wrap:pretty">{{ run.note }}</div>
+          </div>
+          <sc-if value="{{ run.showLast }}" hint-placeholder-val="{{ false }}"><a href="Story%202%20Watch.dc.html" style="flex:none;font-size:13.5px;font-weight:700;color:#1e4d2b;white-space:nowrap">Watch run #{{ run.lastId }}</a></sc-if>
+          <sc-if value="{{ run.showRun }}" hint-placeholder-val="{{ true }}"><button onClick="{{ doRun }}" style="flex:none;font:inherit;display:flex;align-items:center;gap:8px;padding:13px 20px;border-radius:8px;border:0;background:#1e4d2b;color:#fffdf8;font-size:15px;font-weight:700;cursor:pointer" style-hover="background:#2a6a3b">▶ Run simulation</button></sc-if>
+          <sc-if value="{{ run.isRunning }}" hint-placeholder-val="{{ false }}"><button disabled="{{ true }}" style="flex:none;font:inherit;padding:13px 20px;border-radius:8px;border:0;background:#e4efe6;color:#1e4d2b;font-size:15px;font-weight:700">Running…</button></sc-if>
+          <sc-if value="{{ run.showWatch }}" hint-placeholder-val="{{ false }}"><a href="Story%202%20Watch.dc.html" style="flex:none;display:flex;align-items:center;gap:8px;padding:13px 20px;border-radius:8px;background:#1e4d2b;color:#fffdf8;font-size:15px;font-weight:700;text-decoration:none;white-space:nowrap" style-hover="background:#2a6a3b">Watch it play →</a></sc-if>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { l: null, run: null };
+  static D = { controller: 'aware', failures: false, fleetSize: 96, cls: 'core', reserve: 20, soc0: 90 };
+  async componentDidMount() {
+    this.S = await import(new URL('ui/story.js', document.baseURI).href);
+    this.setState({ l: this.S.getLevers(), run: this.S.getRun() });
+  }
+  set(p) { const l = { ...(this.state.l || Component.D), ...p }; if (this.S) this.S.setLevers(l); this.setState({ l }); }
+  renderVals() {
+    const D = Component.D, l = this.state.l || D, S = this.S, last = this.state.run;
+    const NAMES = { none: 'No batteries', naive: 'Naive split', aware: 'Feeder-aware' };
+    const pick = (on) => ({ bg: on ? '#e4efe6' : '#fffdf8', fg: on ? '#1e4d2b' : '#10231a', border: on ? '#1e4d2b' : '#e3dfd3' });
+    const ctlOpts = [['none', 'No batteries', 'Homes alone. The baseline every other run is compared with.'],
+      ['naive', 'Naive split', "Splits ERCOT's one zone number evenly across the fleet, all at once, with no feeder check."],
+      ['aware', 'Feeder-aware', "Checks each transformer's headroom before sending charge, and only sends what fits."]]
+      .map(([v, text, sub]) => ({ text, sub, ...pick(l.controller === v), onClick: () => this.set({ controller: v }) }));
+    const clsOpts = [['core', 'Core', '20 kW · 37 kWh'], ['legacy', 'Legacy', '11.4 kW · 22.5 kWh']]
+      .map(([v, text, sub]) => ({ text, sub, ...pick(l.cls === v), onClick: () => this.set({ cls: v }) }));
+    const failOn = l.controller !== 'none' && l.failures, failDisabled = l.controller === 'none';
+    const ref = last ? last.levers : D;
+    const ch = {}; for (const k of Object.keys(D)) ch[k] = l[k] !== ref[k];
+    const running = !!(last && last.status === 'running');
+    const fresh = !!(last && last.status === 'done' && S && S.sameLevers(last.levers, l));
+    const summary = `${NAMES[l.controller]}${failOn ? ' + failures' : ''} · ${l.controller === 'none' ? 'no fleet' : `${l.fleetSize} ${l.cls === 'core' ? 'Core' : 'Legacy'} batteries · ${l.reserve}% reserve · ${l.soc0}% at 16:00`} · 720 one-minute steps`;
+    const offline = 'No simulator connected in this prototype: progress runs at the measured engine speed (4.2 ms per step) and results show the committed run nearest your settings.';
+    let run;
+    if (running) run = { eyebrow: `RUN #${last.id} · IN THE BACKGROUND`, title: 'Running the evening', isRunning: true, notRunning: false, stage: last.stage,
+      stepText: last.step ? `step ${last.step} of 720` : '', pct: `${(last.step / 720 * 100).toFixed(1)}%`, note: last.connected ? 'You can leave this page; the run keeps going.' : offline };
+    else if (fresh) run = { eyebrow: `RUN #${last.id} · FINISHED`, title: `Done in ${((last.finishedAt - last.startedAt) / 1000).toFixed(1)} s`, isRunning: false, notRunning: true, showWatch: true,
+      summary, note: last.connected ? 'OpenDSS checked every minute of the evening.' : offline };
+    else run = { eyebrow: last ? `CHANGED SINCE RUN #${last.id}` : 'READY', title: last ? 'Run with these settings' : 'Run the evening', isRunning: false, notRunning: true, showRun: true,
+      showLast: !!(last && last.status === 'done'), lastId: last ? last.id : '', summary, note: 'About 4 s: one OpenDSS power flow per minute, 16:00 → 04:00.' };
+    const fixedGrid = [
+      { k: 'Feeder', v: 'SMART-DS P1U · 379 transformers · 1,010 homes', tag: 'REAL' },
+      { k: 'Over nameplate', v: 'above 100% of kVA (counted, not a violation)', tag: 'REAL' },
+      { k: 'Normal rating', v: 'above 110% for 30 min or more', tag: 'ASSUMPTION' },
+      { k: 'Emergency', v: 'above 150%', tag: 'REAL' },
+      { k: 'Fuse rule', v: '200% for 10 min, or 300% for 60 s', tag: 'ASSUMPTION' },
+    ];
+    const fixedMarket = [
+      { k: 'Prices', v: 'ERCOT real-time, LZ_NORTH, 23 Aug 2026', tag: 'REAL' },
+      { k: 'Charge onset', v: 'D-26: at or below 2× the day median, from 22:00', tag: 'ASSUMPTION' },
+      { k: 'What the controller sees', v: 'total transformer load, 60 s late', tag: 'ASSUMPTION' },
+    ];
+    return {
+      l, ch, ctlOpts, clsOpts, run, fixedGrid, fixedMarket,
+      failText: failDisabled ? 'Needs a controller' : failOn ? 'On · three events' : 'Off',
+      failTrack: failOn ? '#1e4d2b' : '#cfcabd', failJustify: failOn ? 'flex-end' : 'flex-start', failCursor: failDisabled ? 'not-allowed' : 'pointer',
+      toggleFail: () => { if (!failDisabled) this.set({ failures: !l.failures }); },
+      reserveNote: l.reserve < 20 ? 'below the 20% members are promised' : l.reserve === 20 ? 'the member promise' : 'more than members are promised',
+      onFleet: (e) => this.set({ fleetSize: Number(e.target.value) }),
+      onReserve: (e) => this.set({ reserve: Number(e.target.value) }),
+      onSoc0: (e) => this.set({ soc0: Number(e.target.value) }),
+      resetDefaults: () => this.set({ ...D }),
+      doRun: () => { if (!S || running) return; S.startRun(l, (r) => this.setState({ run: r })); },
+    };
+  }
+}
+</script>
+</body>
+</html>

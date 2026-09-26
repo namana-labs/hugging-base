@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Hugging Base · Story 3 · Read the result</title>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>html,body{margin:0;background:#e6e2d7;color:#10231a;font-family:'Hanken Grotesk',system-ui,sans-serif}*{box-sizing:border-box}a{color:#1e4d2b}a:hover{color:#2a6a3b}</style>
+</helmet>
+<section id="t3" style="padding:48px 56px 64px;display:flex;flex-direction:column;gap:22px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+    <span style="font:600 11px ui-monospace,Menlo,monospace;padding:3px 7px;background:#10231a;color:#fff;border-radius:4px">STEP 3</span>
+    <span style="font-size:18px;font-weight:700">Read the result</span>
+    <span style="font-size:14px;color:#5f6b63">Story: what this evening did to the feeder and the grid around it, compared with the other runs. <a href="Story%202%20Watch.dc.html">← Step 2 · Watch it play</a> · <a href="Story%201%20Levers.dc.html">Change the levers</a></span>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+
+  <div id="3a" style="display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;align-items:baseline;gap:8px;font-size:13px;color:#5f6b63"><a href="#3a" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#10231a;border-radius:5px;text-decoration:none">3a</a>Verdict first: result tiles against every committed run, then voltage, reactive power and ERCOT context</div>
+    <div data-screen-label="3a Result control room" style="width:1600px;height:900px;background:#f7f4ec;display:flex;flex-direction:column;border-radius:8px;overflow:hidden;border:1px solid rgba(0,0,0,.08)">
+      <div style="height:60px;flex:none;display:flex;align-items:center;gap:18px;padding:0 24px;border-bottom:1px solid #e3dfd3">
+        <div style="flex:none;white-space:nowrap;font-weight:700;font-size:21px;letter-spacing:-0.02em;color:#1e4d2b">Hugging Base</div>
+        <div style="width:1px;height:24px;background:#e3dfd3"></div>
+        <div title="23 Aug 2026, 16:00 → 04:00" style="flex:none;white-space:nowrap;font-size:16px">Heat-wave evening <span style="color:#5f6b63">· 23 Aug</span></div>
+        <nav style="flex:none;white-space:nowrap;display:flex;gap:2px;padding:3px;border:1px solid #e3dfd3;border-radius:8px;font-size:13px;margin-left:12px">
+          <a href="Story%201%20Levers.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">1 Set the levers</a>
+          <a href="Story%202%20Watch.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">2 Watch it play</a>
+          <a href="Story%203%20Results.dc.html" style="padding:5px 10px;border-radius:6px;background:#e4efe6;color:#1e4d2b;font-weight:700;text-decoration:none">3 Read the result</a>
+          <a href="Story%204%20Room%20to%20grow.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">4 Room to grow</a>
+        </nav>
+        <div style="flex:1"></div>
+        <a href="Story%201%20Levers.dc.html" title="{{ runPill.title }}" style="flex:none;white-space:nowrap;display:flex;align-items:center;gap:9px;font-size:13px;padding:5px 6px 5px 11px;border:1px solid #e3dfd3;border-radius:8px;color:#10231a;text-decoration:none;background:#fffdf8" style-hover="border-color:#1e4d2b"><span style="width:8px;height:8px;border-radius:50%;background:{{ runPill.dot }}"></span><b>{{ runPill.label }}</b><span style="color:#5f6b63">{{ runPill.summary }}</span><span style="padding:4px 9px;border-radius:6px;background:#e4efe6;color:#1e4d2b;font-weight:700">Change levers →</span></a>
+        
+      </div>
+      <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:12px;padding:16px 22px">
+        <div style="flex:none;height:170px;display:grid;grid-template-columns:420px repeat(4,minmax(0,1fr));gap:10px">
+          <div style="background:#fffdf8;border:1.5px solid #10231a;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+            <div style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">THIS EVENING · {{ runPill.upper }}</div>
+            <div style="font-size:26px;font-weight:700;line-height:1.15;text-wrap:pretty">{{ verdict.title }}</div>
+            <div style="margin-top:auto;display:flex;align-items:center;gap:6px;font-size:12.5px;color:#5f6b63"><span style="padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em">SIM</span>{{ verdict.sub }}</div>
+          </div>
+          <sc-for list="{{ tiles }}" as="t" hint-placeholder-count="4">
+            <div style="background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:12px 14px 10px;display:flex;flex-direction:column;gap:6px;min-width:0">
+              <div style="display:flex;align-items:baseline;gap:6px"><span style="font-size:13.5px;font-weight:700">{{ t.title }}</span><span style="margin-left:auto;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">{{ t.tag }}</span></div>
+              <div style="font-size:40px;font-weight:700;line-height:1;letter-spacing:-0.02em;font-variant-numeric:tabular-nums">{{ t.big }}</div>
+              <div style="margin-top:auto;display:flex;flex-direction:column;gap:2px">
+                <sc-for list="{{ t.cmp }}" as="c" hint-placeholder-count="3"><div style="display:flex;gap:8px;font-size:12px;font-variant-numeric:tabular-nums;color:{{ c.color }};font-weight:{{ c.weight }}"><span>{{ c.name }}</span><span style="margin-left:auto">{{ c.v }}</span></div></sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr);gap:10px">
+          <div style="background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:10px 12px 8px;display:flex;flex-direction:column;gap:6px;min-height:0">
+            <div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:13.5px;font-weight:700">Voltage by bus</span><span style="font-size:11.5px;color:#5f6b63">pu, all 379 service transformers at {{ clock }}</span><span style="margin-left:auto;font-size:11.5px;color:#5f6b63;font-variant-numeric:tabular-nums">lowest home <b style="color:#10231a">{{ now.vmin }}</b></span></div>
+            <div style="flex:1;min-height:0;position:relative">
+              <svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%"><rect x="0" y="11.67" width="1000" height="76.66" fill="#eef2ea"></rect><line x1="0" x2="1000" y1="11.67" y2="11.67" stroke="#b23a2f" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"></line><line x1="0" x2="1000" y1="88.33" y2="88.33" stroke="#b23a2f" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"></line><line x1="0" x2="1000" y1="50" y2="50" stroke="#10231a" stroke-opacity=".2" vector-effect="non-scaling-stroke"></line><sc-for list="{{ vbus }}" as="b" hint-placeholder-count="0"><line x1="{{ b.x }}" x2="{{ b.x }}" y1="50" y2="{{ b.y }}" stroke="{{ b.c }}" stroke-width="1.6" vector-effect="non-scaling-stroke"></line></sc-for></svg>
+              <span style="position:absolute;left:4px;top:calc(11.67% - 14px);font-size:10px;font-weight:700;color:#b23a2f">1.05</span><span style="position:absolute;left:4px;top:calc(88.33% + 1px);font-size:10px;font-weight:700;color:#b23a2f">0.95</span><span style="position:absolute;left:4px;top:calc(50% - 14px);font-size:10px;color:#5f6b63">1.00</span>
+              <span style="position:absolute;left:4px;bottom:0;font-size:10.5px;color:#5f6b63">← near the substation</span><span style="position:absolute;right:4px;bottom:0;font-size:10.5px;color:#5f6b63">far end →</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#5f6b63;white-space:nowrap"><span style="padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em">ASSUMPTION</span>Shape along the feeder scripted · floor from OpenDSS lowest home voltage <span style="padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em">SIM</span> · band 0.95–1.05</div>
+          </div>
+          <div style="background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:10px 12px 8px;display:flex;flex-direction:column;gap:6px;min-height:0">
+            <div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:13.5px;font-weight:700">Reactive power</span><span style="font-size:11.5px;color:#5f6b63">MVAr at the feeder head</span><span style="margin-left:auto;font-size:11.5px;color:#5f6b63;font-variant-numeric:tabular-nums">demand <b style="color:#10231a">{{ now.qdem }}</b></span></div>
+            <div onPointerDown="{{ scrubDown }}" onPointerMove="{{ scrubMove }}" onPointerUp="{{ scrubUp }}" style="flex:1;min-height:0;position:relative;cursor:ew-resize;touch-action:none">
+              <svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible"><rect width="1000" height="100" fill="#f6f3ea"></rect><path d="{{ p.qcap }}" fill="#c9cfc4"></path><path d="{{ p.qdem }}" fill="none" stroke="#10231a" stroke-width="1.5" vector-effect="non-scaling-stroke"></path><line x1="0" x2="1000" y1="96" y2="96" stroke="#1e4d2b" stroke-width="2" vector-effect="non-scaling-stroke"></line></svg>
+              <div style="position:absolute;top:0;bottom:0;width:1.5px;margin-left:-.75px;background:#1e4d2b;left:{{ curLeft }};pointer-events:none"></div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:#5f6b63"><span style="display:flex;align-items:center;gap:5px"><span style="width:14px;border-top:1.5px solid #10231a"></span>demand</span><span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:8px;background:#c9cfc4"></span>capacitor bank</span><span style="display:flex;align-items:center;gap:5px"><span style="width:14px;border-top:2px solid #1e4d2b"></span>our inverters: 0, unity power factor in this run</span></div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#5f6b63"><span style="padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em">ASSUMPTION</span>Scripted from feeder demand · BATTERY_PF 1.0</div>
+          </div>
+        </div>
+
+        <div style="flex:none;display:flex;align-items:baseline;gap:10px"><span style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">ERCOT-WIDE CONTEXT</span><span style="font-size:12.5px;color:#5f6b63">The same in every run: one feeder is too small to move these. Scripted, including a unit trip at 18:20.</span></div>
+        <div style="flex:none;height:128px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px">
+          <sc-for list="{{ sys }}" as="g" hint-placeholder-count="5">
+            <div style="background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:10px 12px 8px;display:flex;flex-direction:column;gap:6px;min-width:0">
+              <div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:13.5px;font-weight:700">{{ g.title }}</span><span style="font-size:11.5px;color:#5f6b63">{{ g.unit }}</span><span style="margin-left:auto;font-size:11.5px;color:#5f6b63;font-variant-numeric:tabular-nums">at cursor <b style="color:#10231a">{{ g.now }}</b></span></div>
+              <div onPointerDown="{{ scrubDown }}" onPointerMove="{{ scrubMove }}" onPointerUp="{{ scrubUp }}" style="flex:1;min-height:0;position:relative;cursor:ew-resize;touch-action:none">
+                <svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible"><rect width="1000" height="100" fill="#f6f3ea"></rect><sc-for list="{{ g.refs }}" as="r" hint-placeholder-count="0"><line x1="0" x2="1000" y1="{{ r.y }}" y2="{{ r.y }}" stroke="{{ r.color }}" stroke-opacity="{{ r.op }}" stroke-dasharray="{{ r.dash }}" vector-effect="non-scaling-stroke"></line></sc-for><sc-if value="{{ g.fill }}"><path d="{{ g.area }}" fill="#dfe3da"></path></sc-if><path d="{{ g.d }}" fill="none" stroke="#10231a" stroke-width="1.3" vector-effect="non-scaling-stroke"></path></svg>
+                <sc-for list="{{ g.labels }}" as="r" hint-placeholder-count="0"><span style="position:absolute;right:3px;top:{{ r.top }};font-size:10px;font-weight:700;color:{{ r.tc }};pointer-events:none">{{ r.label }}</span></sc-for>
+                <div style="position:absolute;top:0;bottom:0;width:1.5px;margin-left:-.75px;background:#1e4d2b;left:{{ curLeft }};pointer-events:none"></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#5f6b63;white-space:nowrap;overflow:hidden"><span style="flex:none;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em">{{ g.tag }}</span>{{ g.note }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="flex:none;height:40px;display:flex;align-items:center;gap:14px">
+          <span style="flex:none;width:64px;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums">{{ clock }}</span>
+          <div onPointerDown="{{ scrubDown }}" onPointerMove="{{ scrubMove }}" onPointerUp="{{ scrubUp }}" style="flex:1;height:100%;position:relative;cursor:ew-resize;touch-action:none">
+            <div style="position:absolute;left:0;right:0;top:6px;height:10px;border-radius:4px;background:linear-gradient(90deg,#f1eee5 0%,#f1eee5 20%,#d8dad3 42%,#d8dad3 100%)"></div>
+            <div style="position:absolute;top:1px;height:20px;width:2px;margin-left:-1px;background:#1e4d2b;left:{{ curLeft }}"><div style="position:absolute;top:4px;left:-5px;width:12px;height:12px;border-radius:50%;background:#1e4d2b;border:2px solid #fffdf8"></div></div>
+            <div style="position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;font-size:11px;color:#5f6b63;font-variant-numeric:tabular-nums"><span>16:00</span><span>18:00</span><span>20:00</span><span>22:00</span><span>00:00</span><span>02:00</span><span>04:00</span></div>
+          </div>
+          <span style="flex:none;font-size:12px;color:#5f6b63">Drag to read any minute</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="3b" style="display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;align-items:baseline;gap:8px;font-size:13px;color:#5f6b63"><a href="#3b" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#10231a;border-radius:5px;text-decoration:none">3b</a>Strip-chart wall: every signal on one evening axis, this run over the no-battery baseline, values at the cursor on the right</div>
+    <div data-screen-label="3b Result wall" style="width:1600px;height:900px;background:#f7f4ec;display:flex;flex-direction:column;border-radius:8px;overflow:hidden;border:1px solid rgba(0,0,0,.08)">
+      <div style="height:60px;flex:none;display:flex;align-items:center;gap:18px;padding:0 24px;border-bottom:1px solid #e3dfd3">
+        <div style="flex:none;white-space:nowrap;font-weight:700;font-size:21px;letter-spacing:-0.02em;color:#1e4d2b">Hugging Base</div>
+        <div style="width:1px;height:24px;background:#e3dfd3"></div>
+        <div title="23 Aug 2026, 16:00 → 04:00" style="flex:none;white-space:nowrap;font-size:16px">Heat-wave evening <span style="color:#5f6b63">· 23 Aug</span></div>
+        <nav style="flex:none;white-space:nowrap;display:flex;gap:2px;padding:3px;border:1px solid #e3dfd3;border-radius:8px;font-size:13px;margin-left:12px">
+          <a href="Story%201%20Levers.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">1 Set the levers</a>
+          <a href="Story%202%20Watch.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">2 Watch it play</a>
+          <a href="Story%203%20Results.dc.html" style="padding:5px 10px;border-radius:6px;background:#e4efe6;color:#1e4d2b;font-weight:700;text-decoration:none">3 Read the result</a>
+          <a href="Story%204%20Room%20to%20grow.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">4 Room to grow</a>
+        </nav>
+        <div style="flex:1"></div>
+        <a href="Story%201%20Levers.dc.html" title="{{ runPill.title }}" style="flex:none;white-space:nowrap;display:flex;align-items:center;gap:9px;font-size:13px;padding:5px 6px 5px 11px;border:1px solid #e3dfd3;border-radius:8px;color:#10231a;text-decoration:none;background:#fffdf8" style-hover="border-color:#1e4d2b"><span style="width:8px;height:8px;border-radius:50%;background:{{ runPill.dot }}"></span><b>{{ runPill.label }}</b><span style="color:#5f6b63">{{ runPill.summary }}</span><span style="padding:4px 9px;border-radius:6px;background:#e4efe6;color:#1e4d2b;font-weight:700">Change levers →</span></a>
+        
+      </div>
+      <div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 320px;grid-template-rows:minmax(0,1fr)">
+        <div style="min-width:0;display:flex;flex-direction:column;gap:10px;padding:16px 20px 12px">
+          <div style="display:flex;align-items:baseline;gap:16px">
+            <div style="font-size:26px;font-weight:700">{{ verdict.title }}</div>
+            <div style="margin-left:auto;display:flex;gap:14px;font-size:12px;color:#5f6b63"><span style="display:flex;align-items:center;gap:6px"><span style="width:16px;border-top:2px solid #10231a"></span>{{ runPill.label }}</span><span style="display:flex;align-items:center;gap:6px"><span style="width:16px;border-top:1.5px dashed #8f8b7f"></span>No batteries</span></div>
+          </div>
+          <div style="flex:1;min-height:0;display:grid;grid-template-columns:170px minmax(0,1fr);grid-template-rows:repeat(3,minmax(0,1.25fr)) repeat(5,minmax(0,1fr)) 18px;column-gap:12px;position:relative">
+            <div style="display:flex;flex-direction:column;justify-content:center;gap:2px;border-bottom:1px solid #e3dfd3"><span style="font-size:13px;font-weight:700">Worst transformer</span><span style="font-size:11px;color:#5f6b63">% · 40–210 · SIM</span></div>
+            <div style="position:relative;border-bottom:1px solid #e3dfd3"><svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:4px 0;width:100%;height:calc(100% - 8px);overflow:visible"><rect width="1000" height="100" fill="#f6f3ea"></rect><line x1="0" x2="1000" y1="58.12" y2="58.12" stroke="#c7962b" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"></line><line x1="0" x2="1000" y1="36.47" y2="36.47" stroke="#b23a2f" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"></line><path d="{{ p.worstBase }}" fill="none" stroke="#8f8b7f" stroke-width="1.3" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"></path><path d="{{ p.worst }}" fill="none" stroke="#10231a" stroke-width="1.6" vector-effect="non-scaling-stroke"></path></svg><span style="position:absolute;right:3px;top:calc(4px + 58.12% * 0.9 - 12px);font-size:10px;font-weight:700;color:#8a6a1e">110%</span></div>
+            <div style="display:flex;flex-direction:column;justify-content:center;gap:2px;border-bottom:1px solid #e3dfd3"><span style="font-size:13px;font-weight:700">Lowest home voltage</span><span style="font-size:11px;color:#5f6b63">pu · 0.95–1.00 · SIM</span></div>
+            <div style="position:relative;border-bottom:1px solid #e3dfd3"><svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:4px 0;width:100%;height:calc(100% - 8px);overflow:visible"><rect width="1000" height="100" fill="#f6f3ea"></rect><path d="{{ p.vminBase }}" fill="none" stroke="#8f8b7f" stroke-width="1.3" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"></path><path d="{{ p.vmin }}" fill="none" stroke="#10231a" stroke-width="1.6" vector-effect="non-scaling-stroke"></path></svg></div>
+            <div style="display:flex;flex-direction:column;justify-content:center;gap:2px;border-bottom:1px solid #e3dfd3"><span style="font-size:13px;font-weight:700">Voltage by bus</span><span style="font-size:11px;color:#5f6b63">379 buses, near → far · ASSUMPTION shape</span></div>
+            <div style="position:relative;border-bottom:1px solid #e3dfd3"><canvas ref="{{ heatRef }}" width="720" height="379" style="position:absolute;inset:4px 0;width:100%;height:calc(100% - 8px);display:block;border-radius:3px"></canvas></div>
+            <sc-for list="{{ sys }}" as="g" hint-placeholder-count="5">
+              <div style="display:flex;flex-direction:column;justify-content:center;gap:2px;border-bottom:1px solid #e3dfd3"><span style="font-size:13px;font-weight:700">{{ g.title }}</span><span style="font-size:11px;color:#5f6b63">{{ g.unit }} · ERCOT · {{ g.tag }}</span></div>
+              <div style="position:relative;border-bottom:1px solid #e3dfd3"><svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:4px 0;width:100%;height:calc(100% - 8px);overflow:visible"><rect width="1000" height="100" fill="#f6f3ea"></rect><sc-for list="{{ g.refs }}" as="r" hint-placeholder-count="0"><line x1="0" x2="1000" y1="{{ r.y }}" y2="{{ r.y }}" stroke="{{ r.color }}" stroke-opacity="{{ r.op }}" stroke-dasharray="{{ r.dash }}" vector-effect="non-scaling-stroke"></line></sc-for><sc-if value="{{ g.fill }}"><path d="{{ g.area }}" fill="#dfe3da"></path></sc-if><path d="{{ g.d }}" fill="none" stroke="#10231a" stroke-width="1.3" vector-effect="non-scaling-stroke"></path></svg></div>
+            </sc-for>
+            <div></div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-end;font-size:11px;color:#5f6b63;font-variant-numeric:tabular-nums"><span>16:00</span><span>18:00</span><span>20:00</span><span>22:00</span><span>00:00</span><span>02:00</span><span>04:00</span></div>
+            <div onPointerDown="{{ scrubDown }}" onPointerMove="{{ scrubMove }}" onPointerUp="{{ scrubUp }}" style="grid-column:2;grid-row:1 / 10;position:absolute;inset:0;cursor:ew-resize;touch-action:none">
+              <div style="position:absolute;left:{{ onsetLeft }};top:0;bottom:18px;border-left:1px dashed #a9a497;pointer-events:none"><span style="position:absolute;left:4px;top:-2px;font-size:10.5px;color:#5f6b63;white-space:nowrap;background:#f7f4ec;padding:0 3px">22:00 charge onset</span></div>
+              <div style="position:absolute;left:{{ tripLeft }};top:0;bottom:18px;border-left:1px dashed #b23a2f;pointer-events:none"><span style="position:absolute;left:4px;top:-2px;font-size:10.5px;font-weight:700;color:#b23a2f;white-space:nowrap;background:#f7f4ec;padding:0 3px">18:20 unit trip</span></div>
+              <div style="position:absolute;top:0;bottom:14px;width:2px;margin-left:-1px;background:#1e4d2b;left:{{ curLeft }};pointer-events:none"></div>
+            </div>
+          </div>
+        </div>
+        <aside style="border-left:1px solid #e3dfd3;background:#fffdf8;padding:18px 18px;display:flex;flex-direction:column;gap:10px;min-height:0">
+          <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">AT CURSOR</span><span style="margin-left:auto;font-size:30px;font-weight:700;font-variant-numeric:tabular-nums">{{ clock }}</span></div>
+          <sc-for list="{{ readout }}" as="r" hint-placeholder-count="10"><div style="display:flex;align-items:baseline;gap:8px;font-size:13px;padding:5px 0;border-bottom:1px solid #efece3;font-variant-numeric:tabular-nums"><span style="color:#34443a">{{ r.k }}</span><b style="margin-left:auto">{{ r.v }}</b><span style="width:42px;text-align:right;font-size:11.5px;color:#5f6b63">{{ r.base }}</span></div></sc-for>
+          <div style="font-size:11px;color:#5f6b63">Right column: no batteries, same minute</div>
+          <div style="margin-top:auto;display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:1px solid #e3dfd3">
+            <div style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">WHOLE EVENING</div>
+            <sc-for list="{{ evening }}" as="r" hint-placeholder-count="4"><div style="display:flex;gap:8px;font-size:13px;font-variant-numeric:tabular-nums"><span style="color:#34443a">{{ r.k }}</span><b style="margin-left:auto">{{ r.v }}</b></div></sc-for>
+            <a href="Story%201%20Levers.dc.html" style="margin-top:8px;display:flex;justify-content:center;padding:11px 16px;border-radius:8px;border:1px solid #cfcabd;color:#10231a;font-size:14px;font-weight:700;text-decoration:none" style-hover="background:#e4efe6">Change the levers and compare</a>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { k: 0, run: null, base: null, res: null };
+  heatRef = React.createRef();
+  async componentDidMount() {
+    try {
+      const S = this.S = await import(new URL('ui/story.js', document.baseURI).href);
+      const rr = S.getRun(); const res = S.resolve(rr ? rr.levers : S.getLevers()); res.id = rr ? rr.id : null; res.run = rr;
+      const [run, base] = await Promise.all([S.loadRun(res.branch), S.loadRun('none')]);
+      this.bus = S.buses(run.topology);
+      this.sysS = S.sysSeries(run.s.n);
+      this.paths = this.buildPaths(run, base);
+      let k = run.s.worst.indexOf(Math.max(...run.s.worst));
+      try { const v = localStorage.getItem('hb-story-k'); if (v != null && Number.isFinite(+v) && +v >= 0 && +v < run.s.n) k = +v; } catch (e) { /* ignore */ }
+      this.setState({ run, base, res, k }, () => this.drawHeat());
+    } catch (e) { console.error('[story results]', e); }
+  }
+  drawHeat() {
+    const c = this.heatRef.current, run = this.state.run; if (!c || !run) return;
+    const S = this.S, x = c.getContext('2d'), n = run.s.n, B = this.bus;
+    const img = x.createImageData(n, B.length);
+    const mix = (a, b, t) => a.map((x, i) => Math.round(x + (b[i] - x) * t));
+    const col = (v) => {
+      if (v > 1.05) return [110, 29, 23]; if (v < 0.95) return [178, 58, 47]; if (v < 0.96) return [199, 150, 43];
+      if (v < 0.975) return mix([199, 150, 43], [138, 165, 143], (v - 0.96) / 0.015);
+      const t = Math.max(0, Math.min(1, (1.03 - v) / 0.055));
+      return t < 0.5 ? mix([241, 238, 229], [185, 201, 186], t * 2) : mix([185, 201, 186], [110, 140, 116], (t - 0.5) * 2);
+    };
+    for (let k = 0; k < n; k++) { const vm = run.s.vmin[k]; for (const b of B) { const [r, g, bl] = col(S.busV(b, vm)); const o = (b.j * n + k) * 4; img.data[o] = r; img.data[o + 1] = g; img.data[o + 2] = bl; img.data[o + 3] = 255; } }
+    x.putImageData(img, 0, 0);
+  }
+  buildPaths(run, base) {
+    const S = this.S, sy = this.sysS;
+    return {
+      worst: S.path(run.s.worst, 40, 210), worstBase: S.path(base.s.worst, 40, 210),
+      vmin: S.path(run.s.vmin, 0.95, 1.0), vminBase: S.path(base.s.vmin, 0.95, 1.0),
+      qdem: S.path(sy.qdem, 0, 2.2), qcap: S.area(sy.qcap, 0, 2.2),
+      sys: S.SYS_DEF.map((d) => ({ d: S.path(sy[d.key], d.lo, d.hi), area: S.area(sy[d.key], d.lo, d.hi) })),
+    };
+  }
+  seek(k) {
+    const run = this.state.run; if (!run) return;
+    k = Math.max(0, Math.min(run.s.n - 1, Math.round(k)));
+    try { localStorage.setItem('hb-story-k', String(k)); } catch (e) { /* ignore */ }
+    this.setState({ k });
+  }
+  kFromEvent(e) { const r = e.currentTarget.getBoundingClientRect(); return (e.clientX - r.left) / r.width * ((this.state.run ? this.state.run.s.n : 720) - 1); }
+  renderVals() {
+    const st = this.state, run = st.run, base = st.base, S = this.S, k = st.k;
+    const NAMES = { none: 'No batteries', naive: 'Naive split', aware: 'Feeder-aware', aware_faults: 'Feeder-aware + failures' };
+    const res = st.res || { matches: true, branch: 'aware' };
+    const rrun = res.run, L = rrun ? rrun.levers : null;
+    const runPill = rrun
+      ? { label: `Run #${rrun.id}`, dot: rrun.status === 'done' ? '#8aa58f' : rrun.status === 'running' ? '#c7962b' : '#b23a2f', upper: `RUN #${rrun.id}`,
+          summary: `${({ none: 'No batteries', naive: 'Naive split', aware: 'Feeder-aware' })[L.controller]}${L.controller !== 'none' && L.failures ? ' + failures' : ''}${L.controller === 'none' ? '' : ` · ${L.fleetSize} ${L.cls === 'core' ? 'Core' : 'Legacy'} · ${L.reserve}% reserve`}`,
+          title: rrun.connected ? 'Results from the simulator' : `No simulator connected in this prototype: showing the committed run nearest these settings (${NAMES[res.branch]})` }
+      : { label: 'No run yet', dot: '#cfcabd', upper: NAMES[res.branch].toUpperCase(), summary: `showing ${NAMES[res.branch]}`, title: 'Set the levers and run the simulator' };
+    const scrub = {
+      scrubDown: (e) => { this.drag = true; try { e.currentTarget.setPointerCapture(e.pointerId); } catch (x) { /* ignore */ } this.seek(this.kFromEvent(e)); },
+      scrubMove: (e) => { if (this.drag) this.seek(this.kFromEvent(e)); },
+      scrubUp: () => { this.drag = false; },
+    };
+    if (!run) return { ...scrub, runPill, verdict: { title: 'Loading the run…', sub: '' }, tiles: [], vbus: [], sys: [], p: {}, now: {}, readout: [], evening: [], clock: '—', curLeft: '0%', onsetLeft: '0%', tripLeft: '0%', heatRef: this.heatRef };
+    const fmt = S.fmtNum, n = run.s.n, meta = run.meta, SM = meta.summary, b = run.branch, sm = SM[b];
+    const ok = sm.normalEvents.v === 0 && sm.emergencyTfs.v === 0;
+    const verdict = b === 'none'
+      ? { title: `Homes alone push one transformer to ${sm.maxLoading.v}%`, sub: 'OpenDSS, 720 one-minute steps' }
+      : ok ? { title: 'No service transformer passed its limit this evening', sub: 'normal rating and emergency, OpenDSS every minute' }
+        : { title: `${sm.normalEvents.v} normal-rating events and ${sm.emergencyTfs.v} transformers in emergency`, sub: 'OpenDSS, 720 one-minute steps' };
+    const order = ['none', 'naive', 'aware', 'aware_faults'];
+    const cmp = (get) => order.filter((x) => x !== b).map((x) => ({ name: NAMES[x], v: get(SM[x]), color: '#5f6b63', weight: 400 }));
+    const g = (o, key, f) => (o && o[key] && o[key].v != null ? f(o[key].v) : '—');
+    const tiles = [
+      { title: 'Worst transformer', tag: 'SIM', big: `${fmt(sm.maxLoading.v, 1)}%`, cmp: cmp((o) => g(o, 'maxLoading', (v) => `${fmt(v, 1)}%`)) },
+      { title: 'Normal-rating events', tag: 'SIM', big: fmt(sm.normalEvents.v), cmp: cmp((o) => g(o, 'normalEvents', (v) => fmt(v))) },
+      { title: 'Lowest home voltage', tag: 'SIM', big: `${fmt(sm.vMinHome.v, 3)}`, cmp: cmp((o) => g(o, 'vMinHome', (v) => `${fmt(v, 3)} pu`)) },
+      { title: 'Fleet charged by 04:00', tag: 'SIM', big: b === 'none' ? '—' : `${fmt(sm.chargedPctBy0400.v, 1)}%`, cmp: cmp((o) => g(o, 'chargedPctBy0400', (v) => `${fmt(v, 1)}%`)) },
+    ];
+    const Y = (v) => +(96 - (Math.max(0.94, Math.min(1.06, v)) - 0.94) / 0.12 * 92).toFixed(2);
+    const vm = run.s.vmin[k], B = this.bus;
+    const vbus = B.map((bb) => { const v = S.busV(bb, vm); return { x: +(4 + bb.j / (B.length - 1) * 992).toFixed(1), y: Y(v), c: S.vColor(v) }; });
+    const sy = this.sysS;
+    const sys = S.SYS_DEF.map((d, i) => ({
+      title: d.title, unit: d.unit, tag: d.tag, note: d.note, fill: !!d.fill, d: this.paths.sys[i].d, area: this.paths.sys[i].area,
+      now: fmt(sy[d.key][k], d.digits),
+      refs: d.refs.map((r) => ({ y: S.yOf(r.v, d.lo, d.hi), color: r.color || (r.solid ? '#10231a' : '#5f6b63'), op: r.solid ? 0.25 : r.color ? 1 : 0.6, dash: r.solid ? '' : r.color ? '4 3' : '3 3' })),
+      labels: d.refs.filter((r) => r.label).map((r) => ({ label: r.label, top: r.below ? `${S.yOf(r.v, d.lo, d.hi)}%` : `calc(${S.yOf(r.v, d.lo, d.hi)}% - 13px)`, tc: r.color === '#c7962b' ? '#8a6a1e' : r.color || '#5f6b63' })),
+    }));
+    const hasFleet = b !== 'none';
+    const readout = [
+      { k: 'Worst transformer', v: `${fmt(run.s.worst[k], 1)}%`, base: `${fmt(base.s.worst[k], 0)}%` },
+      { k: 'Lowest home voltage', v: `${fmt(vm, 4)}`, base: fmt(base.s.vmin[k], 3) },
+      { k: 'Fleet charge', v: hasFleet ? `${fmt(run.s.soc[k], 0)}%` : '—', base: '—' },
+      { k: 'Fleet power', v: hasFleet ? `${fmt(run.s.kw[k] / 1000, 2)} MW` : '—', base: '—' },
+      { k: 'Price', v: `$${fmt(run.s.price[k], 2)}`, base: '' },
+      { k: 'Reactive demand', v: `${fmt(sy.qdem[k], 2)} MVAr`, base: '' },
+      ...S.SYS_DEF.map((d) => ({ k: d.title, v: `${fmt(sy[d.key][k], d.digits)} ${d.unit}`, base: '' })),
+    ];
+    const evening = [
+      { k: 'Worst transformer', v: `${fmt(sm.maxLoading.v, 1)}% at ${sm.maxLoading.t}` },
+      { k: 'Normal-rating events', v: fmt(sm.normalEvents.v) },
+      { k: 'Emergency transformers', v: fmt(sm.emergencyTfs.v) },
+      { k: '20% reserve breaches', v: fmt(sm.reserveBreaches.v) },
+      ...(hasFleet ? [{ k: 'Energy value, gross', v: `$${fmt(sm.energyValueUSD.v, 2)}` }] : []),
+    ];
+    const onsetK = meta.plan && meta.plan.onset ? S.H.fmt.timeToStep(meta, meta.plan.onset) : 360;
+    return {
+      ...scrub, runPill, verdict, tiles, vbus, sys, p: this.paths, readout, evening, heatRef: this.heatRef,
+      now: { vmin: `${fmt(vm, 4)} pu`, qdem: `${fmt(sy.qdem[k], 2)}` },
+      clock: S.timeOf(k), curLeft: S.xPct(k, n), onsetLeft: S.xPct(onsetK, n), tripLeft: S.xPct(140, n),
+    };
+  }
+}
+</script>
+</body>
+</html>

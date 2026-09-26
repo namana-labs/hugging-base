@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Hugging Base · Story 2 · Watch it play</title>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;700&amp;display=swap" rel="stylesheet">
+<script src="ui/vendor/deck-9.4.0.min.js"></script>
+<style>html,body{margin:0;background:#e6e2d7;color:#10231a;font-family:'Hanken Grotesk',system-ui,sans-serif}*{box-sizing:border-box}a{color:#1e4d2b}a:hover{color:#2a6a3b}</style>
+</helmet>
+<section id="t2r" style="padding:48px 56px 8px;display:flex;flex-direction:column;gap:22px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+    <span style="font:600 11px ui-monospace,Menlo,monospace;padding:3px 7px;background:#10231a;color:#fff;border-radius:4px">STEP 2 · ROUND 2</span>
+    <span style="font-size:18px;font-weight:700">Three replacements for the "This evening" card in 2b</span>
+    <span style="font-size:14px;color:#5f6b63">Each one builds itself from what every run writes, so none of them needs hand-written sentences.</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px;max-width:1140px;padding:10px 14px;background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px">
+    <button onClick="{{ togglePlay }}" style="width:36px;height:36px;flex:none;border-radius:50%;border:0;background:#1e4d2b;color:#fffdf8;font-size:13px;cursor:pointer">{{ playIcon }}</button>
+    <span style="flex:none;width:60px;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums">{{ clock }}</span>
+    <div onPointerDown="{{ scrubDown }}" onPointerMove="{{ scrubMove }}" onPointerUp="{{ scrubUp }}" style="flex:1;height:28px;position:relative;cursor:ew-resize;touch-action:none">
+      <div style="position:absolute;left:0;right:0;top:4px;height:10px;border-radius:4px;background:linear-gradient(90deg,#f1eee5 0%,#f1eee5 20%,#d8dad3 42%,#d8dad3 100%)"></div>
+      <div style="position:absolute;top:0;height:18px;width:2px;margin-left:-1px;background:#1e4d2b;left:{{ curLeft }}"></div>
+      <div style="position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;font-size:10.5px;color:#5f6b63"><span>16:00</span><span>22:00</span><span>04:00</span></div>
+    </div>
+    <span style="flex:none;font-size:12px;color:#5f6b63">Shared clock with 2a and 2b</span>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+
+    <div id="2c" style="display:flex;flex-direction:column;gap:10px;width:340px">
+      <div style="display:flex;align-items:baseline;gap:8px;font-size:13px;color:#5f6b63"><a href="#2c" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#10231a;border-radius:5px;text-decoration:none">2c</a>Threshold log: fixed rules watch the series and write a line when one fires</div>
+      <div style="height:470px;background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;overflow:hidden">
+        <div style="display:flex;align-items:baseline;gap:6px"><span style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">THIS EVENING</span><span style="margin-left:auto;font-size:11px;color:#5f6b63">{{ rulesFired }} of {{ rulesTotal }} rules fired</span></div>
+        <sc-for list="{{ ruleList }}" as="s" hint-placeholder-count="7"><button onClick="{{ s.onClick }}" style="font:inherit;text-align:left;border:0;background:none;padding:0;cursor:pointer;display:grid;grid-template-columns:44px minmax(0,1fr);gap:2px 8px;align-items:baseline;color:{{ s.color }}"><b style="font-size:12.5px;font-variant-numeric:tabular-nums">{{ s.t }}</b><span style="font-size:12.5px;line-height:1.35;text-wrap:pretty;font-weight:{{ s.weight }}">{{ s.text }}</span><span></span><span style="font:10.5px ui-monospace,Menlo,monospace;color:#8f8b7f">{{ s.rule }}</span></button></sc-for>
+      </div>
+      <div style="font-size:12.5px;color:#5f6b63;text-wrap:pretty">Works for any run. The wording is fixed per rule, and the numbers come from the run. Lines for rules that haven't fired yet stay grey.</div>
+    </div>
+
+    <div id="2d" style="display:flex;flex-direction:column;gap:10px;width:340px">
+      <div style="display:flex;align-items:baseline;gap:8px;font-size:13px;color:#5f6b63"><a href="#2d" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#10231a;border-radius:5px;text-decoration:none">2d</a>Right now: every transformer and every battery, counted at this minute</div>
+      <div style="height:470px;background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:baseline;gap:6px"><span style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">RIGHT NOW · {{ clock }}</span><span style="margin-left:auto;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">SIM</span></div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="font-size:13px;font-weight:700">379 transformers</div>
+          <div style="display:flex;height:16px;border-radius:4px;overflow:hidden;background:#0ca30c"><sc-for list="{{ tierBar }}" as="b" hint-placeholder-count="0"><div style="width:{{ b.w }};background:{{ b.c }}"></div></sc-for></div>
+          <sc-for list="{{ tierRows }}" as="r" hint-placeholder-count="4"><div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:{{ r.fg }}"><span style="width:10px;height:10px;border-radius:2px;background:{{ r.c }}"></span>{{ r.name }}<b style="margin-left:auto;font-variant-numeric:tabular-nums">{{ r.n }}</b></div></sc-for>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="font-size:13px;font-weight:700">{{ fleetN }} batteries</div>
+          <div style="display:grid;grid-template-columns:repeat(16,1fr);gap:2px"><sc-for list="{{ batCells }}" as="b" hint-placeholder-count="0"><div style="aspect-ratio:1;border-radius:2px;background:{{ b.c }}"></div></sc-for></div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:#34443a;font-variant-numeric:tabular-nums"><sc-for list="{{ batRows }}" as="r" hint-placeholder-count="4"><span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:{{ r.c }}"></span>{{ r.name }} <b>{{ r.n }}</b></span></sc-for></div>
+        </div>
+        <div style="margin-top:auto;display:flex;flex-direction:column;gap:4px;padding-top:10px;border-top:1px solid #efece3;font-size:12.5px;font-variant-numeric:tabular-nums">
+          <div style="display:flex"><span style="color:#34443a">Transformer-minutes over nameplate so far</span><b style="margin-left:auto">{{ soFar.over }}</b></div>
+          <div style="display:flex"><span style="color:#34443a">Energy discharged so far</span><b style="margin-left:auto">{{ soFar.dis }}</b></div>
+        </div>
+      </div>
+      <div style="font-size:12.5px;color:#5f6b63;text-wrap:pretty">No text at all: counts from the run's tier and battery-state arrays at the cursor. The card changes every minute rather than on events.</div>
+    </div>
+
+    <div id="2e" style="display:flex;flex-direction:column;gap:10px;width:340px">
+      <div style="display:flex;align-items:baseline;gap:8px;font-size:13px;color:#5f6b63"><a href="#2e" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#10231a;border-radius:5px;text-decoration:none">2e</a>Controller log: the orchestrator's own decisions, as the simulator writes them</div>
+      <div style="height:470px;background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;overflow:hidden">
+        <div style="display:flex;align-items:baseline;gap:6px"><span style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">WHAT THE CONTROLLER DID</span><span style="margin-left:auto;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">SIM</span></div>
+        <div style="font-size:12px;color:#5f6b63;font-variant-numeric:tabular-nums">{{ tickCount }} decisions so far · deterministic rule, no model in the loop</div>
+        <ol style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px;font:12px/1.45 ui-monospace,Menlo,monospace">
+          <sc-for list="{{ tickList }}" as="t" hint-placeholder-count="8"><li style="padding:3px 6px;border-radius:4px;background:{{ t.bg }};color:{{ t.color }};text-wrap:pretty">{{ t.text }}</li></sc-for>
+        </ol>
+        <sc-if value="{{ noTicks }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#5f6b63">Nothing sent yet.</div></sc-if>
+      </div>
+      <div style="font-size:12.5px;color:#5f6b63;text-wrap:pretty">The most literal choice: the ticker every run already writes (sim.orchestrator). It's dense, and it answers "why did that battery do that?"</div>
+    </div>
+
+  </div>
+</section>
+<section id="t2" style="padding:48px 56px 64px;display:flex;flex-direction:column;gap:22px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+    <span style="font:600 11px ui-monospace,Menlo,monospace;padding:3px 7px;background:#10231a;color:#fff;border-radius:4px">STEP 2</span>
+    <span style="font-size:18px;font-weight:700">Watch it play</span>
+    <span style="font-size:14px;color:#5f6b63">Story: where the feeder gets tight this evening, and what the fleet does about it. <a href="Story%201%20Levers.dc.html">← Step 1 · Set the levers</a> · <a href="Story%203%20Results.dc.html">Step 3 · Read the result →</a></span>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+
+  <div id="2a" style="display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;align-items:baseline;gap:8px;font-size:13px;color:#5f6b63"><a href="#2a" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#10231a;border-radius:5px;text-decoration:none">2a</a>3D neighbourhood with the number on it, five signal cards docked underneath, scrubber below</div>
+    <div data-screen-label="2a Watch cards" style="width:1600px;height:900px;background:#f7f4ec;display:flex;flex-direction:column;border-radius:8px;overflow:hidden;border:1px solid rgba(0,0,0,.08)">
+      <div style="height:60px;flex:none;display:flex;align-items:center;gap:18px;padding:0 24px;border-bottom:1px solid #e3dfd3">
+        <div style="flex:none;white-space:nowrap;font-weight:700;font-size:21px;letter-spacing:-0.02em;color:#1e4d2b">Hugging Base</div>
+        <div style="width:1px;height:24px;background:#e3dfd3"></div>
+        <div title="23 Aug 2026, 16:00 → 04:00" style="flex:none;white-space:nowrap;font-size:16px">Heat-wave evening <span style="color:#5f6b63">· 23 Aug</span></div>
+        <nav style="flex:none;white-space:nowrap;display:flex;gap:2px;padding:3px;border:1px solid #e3dfd3;border-radius:8px;font-size:13px;margin-left:12px">
+          <a href="Story%201%20Levers.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">1 Set the levers</a>
+          <a href="Story%202%20Watch.dc.html" style="padding:5px 10px;border-radius:6px;background:#e4efe6;color:#1e4d2b;font-weight:700;text-decoration:none">2 Watch it play</a>
+          <a href="Story%203%20Results.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">3 Read the result</a>
+          <a href="Story%204%20Room%20to%20grow.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">4 Room to grow</a>
+        </nav>
+        <div style="flex:1"></div>
+        <a href="Story%201%20Levers.dc.html" title="{{ runPill.title }}" style="flex:none;white-space:nowrap;display:flex;align-items:center;gap:9px;font-size:13px;padding:5px 6px 5px 11px;border:1px solid #e3dfd3;border-radius:8px;color:#10231a;text-decoration:none;background:#fffdf8" style-hover="border-color:#1e4d2b"><span style="width:8px;height:8px;border-radius:50%;background:{{ runPill.dot }}"></span><b>{{ runPill.label }}</b><span style="color:#5f6b63">{{ runPill.summary }}</span><span style="padding:4px 9px;border-radius:6px;background:#e4efe6;color:#1e4d2b;font-weight:700">Change levers →</span></a>
+        
+      </div>
+      <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:12px;padding:14px 18px 14px">
+        <div style="flex:1;min-height:0;position:relative;border:1px solid #e3dfd3;border-radius:10px;overflow:hidden;background:#E9EDE7">
+          <div ref="{{ sceneA }}" style="position:absolute;inset:0"></div>
+          <sc-if value="{{ loading }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#5f6b63;font-size:14px">Loading the feeder…</div></sc-if>
+          <div style="position:absolute;top:12px;left:12px;display:flex;flex-direction:column;gap:8px;width:430px;pointer-events:none">
+            <div style="background:rgba(255,253,248,.96);border:1px solid #e3dfd3;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">WORST SERVICE TRANSFORMER NOW</div>
+              <div style="display:flex;align-items:center;gap:12px"><span style="font-size:64px;font-weight:700;line-height:1;letter-spacing:-0.03em;font-variant-numeric:tabular-nums">{{ now.worst }}</span><span style="width:18px;height:18px;border-radius:4px;background:{{ now.tierColor }};border:1.5px solid #fffdf8;outline:1px solid #cfcabd"></span><span style="display:flex;flex-direction:column;gap:2px;font-size:13px"><b>{{ now.tfName }}</b><span style="color:#5f6b63">{{ now.tierName }}</span></span><span style="margin-left:auto;align-self:flex-start;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">SIM</span></div>
+              <div style="font-size:12.5px;color:#5f6b63;font-variant-numeric:tabular-nums">{{ now.countsText }}</div>
+            </div>
+            <div style="display:flex;gap:10px;padding:9px 12px;background:rgba(255,253,248,.96);border:1px solid #e3dfd3;border-radius:8px;font-size:13.5px;line-height:1.35"><b style="font-variant-numeric:tabular-nums">{{ story.t }}</b><span style="text-wrap:pretty">{{ story.text }}</span></div>
+          </div>
+          <div style="position:absolute;top:12px;right:12px;display:flex;gap:2px;padding:3px;background:#fffdf8;border:1px solid #e3dfd3;border-radius:8px">
+            <sc-for list="{{ camsA }}" as="c" hint-placeholder-count="3"><button onClick="{{ c.onClick }}" style="border:0;padding:7px 12px;border-radius:6px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;background:{{ c.bg }};color:{{ c.fg }}">{{ c.text }}</button></sc-for>
+          </div>
+          <div style="position:absolute;left:12px;bottom:40px;display:flex;flex-direction:column;gap:5px;padding:9px 12px;background:rgba(255,253,248,.96);border:1px solid #e3dfd3;border-radius:8px;font-size:12px">
+            <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#5f6b63">CANS · TRANSFORMER LOADING</div>
+            <div style="display:grid;grid-template-columns:auto auto;gap:4px 14px">
+              <span style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:2px;background:#0ca30c"></span>within nameplate</span>
+              <span style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:2px;background:#fab219"></span>over nameplate</span>
+              <span style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:2px;background:#ec835a"></span>above 110%</span>
+              <span style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:2px;background:#d03b3b"></span>emergency (150%)</span>
+              <span style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:2px;background:#0B6B6F"></span>battery charging</span>
+              <span style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:2px;background:#ec835a"></span>battery discharging</span>
+            </div>
+          </div>
+          <div style="position:absolute;left:0;right:0;bottom:0;height:28px;display:flex;align-items:center;gap:16px;padding:0 12px;background:rgba(255,253,248,.9);border-top:1px solid #e3dfd3;font-size:11.5px;color:#5f6b63"><span style="font-weight:700;color:#10231a">NREL SMART-DS 2018 AUS P1U · CC BY 4.0</span><span>Buildings © OpenStreetMap contributors, ODbL 1.0</span><span>Loading: OpenDSS, every minute</span><span style="margin-left:auto">3D scene in the Atlas palette</span></div>
+        </div>
+
+        <div style="flex:none;height:150px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px">
+          <div style="background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:10px 12px 8px;display:flex;flex-direction:column;gap:6px;min-width:0">
+            <div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:13.5px;font-weight:700">Worst transformer</span><span style="font-size:11.5px;color:#5f6b63">%</span><span style="margin-left:auto;font-size:11.5px;color:#5f6b63;font-variant-numeric:tabular-nums">now <b style="color:#10231a">{{ now.worst }}</b></span></div>
+            <div onPointerDown="{{ scrubDown }}" onPointerMove="{{ scrubMove }}" onPointerUp="{{ scrubUp }}" style="flex:1;min-height:0;position:relative;cursor:ew-resize;touch-action:none">
+              <svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible"><rect width="1000" height="100" fill="#f6f3ea"></rect><line x1="0" x2="1000" y1="63.53" y2="63.53" stroke="#5f6b63" stroke-opacity=".6" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"></line><line x1="0" x2="1000" y1="58.12" y2="58.12" stroke="#c7962b" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"></line><line x1="0" x2="1000" y1="36.47" y2="36.47" stroke="#b23a2f" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"></line><defs><clipPath id="c2a1"><rect x="0" y="-10" width="{{ clipW }}" height="120"></rect></clipPath></defs><g clip-path="url(#c2a1)"><path d="{{ p.worst }}" fill="none" stroke="#10231a" stroke-width="1.5" vector-effect="non-scaling-stroke"></path></g></svg>
+              <span style="position:absolute;right:3px;top:calc(58.12% - 13px);font-size:10px;font-weight:700;color:#8a6a1e;pointer-events:none">110%</span><span style="position:absolute;right:3px;top:calc(36.47% - 13px);font-size:10px;font-weight:700;color:#b23a2f;pointer-events:none">150%</span>
+              <div style="position:absolute;top:0;bottom:0;width:1.5px;margin-left:-.75px;background:#1e4d2b;left:{{ curLeft }};pointer-events:none"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#5f6b63;white-space:nowrap;overflow:hidden"><span style="flex:none;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em">SIM</span>Any of 379 · dashed 100%</div>
+          </div>
+          <div style="background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:10px 12px 8px;display:flex;flex-direction:column;gap:6px;min-width:0">
+            <div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:13.5px;font-weight:700">Street A–D, T-240</span><span style="font-size:11.5px;color:#5f6b63">%</span><span style="margin-left:auto;font-size:11.5px;color:#5f6b63;font-variant-numeric:tabular-nums">top <b style="color:#10231a">{{ now.focusTop }}</b></span></div>
+            <div onPointerDown="{{ scrubDown }}" onPointerMove="{{ scrubMove }}" onPointerUp="{{ scrubUp }}" style="flex:1;min-height:0;position:relative;cursor:ew-resize;touch-action:none">
+              <svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible"><rect width="1000" height="100" fill="#f6f3ea"></rect><line x1="0" x2="1000" y1="52.19" y2="52.19" stroke="#5f6b63" stroke-opacity=".6" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"></line><line x1="0" x2="1000" y1="47.81" y2="47.81" stroke="#c7962b" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"></line><defs><clipPath id="c2a2"><rect x="0" y="-10" width="{{ clipW }}" height="120"></rect></clipPath></defs><g clip-path="url(#c2a2)"><sc-for list="{{ p.focus }}" as="f" hint-placeholder-count="5"><path d="{{ f.d }}" fill="none" stroke="#10231a" stroke-opacity="{{ f.op }}" stroke-width="1.2" stroke-dasharray="{{ f.dash }}" vector-effect="non-scaling-stroke"></path></sc-for></g></svg>
+              <div style="position:absolute;top:0;bottom:0;width:1.5px;margin-left:-.75px;background:#1e4d2b;left:{{ curLeft }};pointer-events:none"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:#5f6b63;white-space:nowrap;overflow:hidden;font-variant-numeric:tabular-nums"><span style="flex:none;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em">SIM</span><sc-for list="{{ now.focus }}" as="f" hint-placeholder-count="5"><span>{{ f.key }} <b style="color:#10231a">{{ f.v }}</b></span></sc-for></div>
+          </div>
+          <div style="background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:10px 12px 8px;display:flex;flex-direction:column;gap:6px;min-width:0">
+            <div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:13.5px;font-weight:700">Price</span><span style="font-size:11.5px;color:#5f6b63">$/MWh</span><span style="margin-left:auto;font-size:11.5px;color:#5f6b63;font-variant-numeric:tabular-nums">now <b style="color:#10231a">{{ now.price }}</b></span></div>
+            <div onPointerDown="{{ scrubDown }}" onPointerMove="{{ scrubMove }}" onPointerUp="{{ scrubUp }}" style="flex:1;min-height:0;position:relative;cursor:ew-resize;touch-action:none">
+              <svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible"><rect width="1000" height="100" fill="#f6f3ea"></rect><sc-for list="{{ p.bands }}" as="b" hint-placeholder-count="0"><rect x="{{ b.x }}" y="0" width="{{ b.w }}" height="100" fill="#e9dfbb"></rect></sc-for><defs><clipPath id="c2a3"><rect x="0" y="-10" width="{{ clipW }}" height="120"></rect></clipPath></defs><g clip-path="url(#c2a3)"><path d="{{ p.price }}" fill="none" stroke="#10231a" stroke-width="1.5" vector-effect="non-scaling-stroke"></path></g></svg>
+              <div style="position:absolute;top:0;bottom:0;width:1.5px;margin-left:-.75px;background:#1e4d2b;left:{{ curLeft }};pointer-events:none"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#5f6b63;white-space:nowrap;overflow:hidden"><span style="flex:none;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em">REAL</span>ERCOT LZ_NORTH · <span style="width:10px;height:8px;background:#e9dfbb"></span>market discharge</div>
+          </div>
+          <div style="background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:10px 12px 8px;display:flex;flex-direction:column;gap:6px;min-width:0">
+            <div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:13.5px;font-weight:700">Fleet charge</span><span style="font-size:11.5px;color:#5f6b63">%</span><span style="margin-left:auto;font-size:11.5px;color:#5f6b63;font-variant-numeric:tabular-nums">now <b style="color:#10231a">{{ now.soc }}</b></span></div>
+            <div onPointerDown="{{ scrubDown }}" onPointerMove="{{ scrubMove }}" onPointerUp="{{ scrubUp }}" style="flex:1;min-height:0;position:relative;cursor:ew-resize;touch-action:none">
+              <svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible"><rect width="1000" height="100" fill="#f6f3ea"></rect><line x1="0" x2="1000" y1="77.6" y2="77.6" stroke="#1e4d2b" stroke-dasharray="2 3" vector-effect="non-scaling-stroke"></line><defs><clipPath id="c2a4"><rect x="0" y="-10" width="{{ clipW }}" height="120"></rect></clipPath></defs><g clip-path="url(#c2a4)"><path d="{{ p.socArea }}" fill="#1e4d2b" fill-opacity=".14"></path><path d="{{ p.soc }}" fill="none" stroke="#1e4d2b" stroke-width="2.4" vector-effect="non-scaling-stroke"></path></g></svg>
+              <span style="position:absolute;left:4px;top:calc(77.6% + 1px);font-size:10px;font-weight:700;color:#1e4d2b;pointer-events:none">20% reserve</span>
+              <sc-if value="{{ noFleet }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12.5px;color:#5f6b63;background:rgba(246,243,234,.8)">No batteries in this run</div></sc-if>
+              <div style="position:absolute;top:0;bottom:0;width:1.5px;margin-left:-.75px;background:#1e4d2b;left:{{ curLeft }};pointer-events:none"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#5f6b63;white-space:nowrap;overflow:hidden"><span style="flex:none;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em">SIM</span>Mean of {{ fleetN }} batteries</div>
+          </div>
+          <div style="background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:10px 12px 8px;display:flex;flex-direction:column;gap:6px;min-width:0">
+            <div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:13.5px;font-weight:700">Fleet power</span><span style="font-size:11.5px;color:#5f6b63">MW</span><span style="margin-left:auto;font-size:11.5px;color:#5f6b63;font-variant-numeric:tabular-nums">now <b style="color:#10231a">{{ now.kw }}</b></span></div>
+            <div onPointerDown="{{ scrubDown }}" onPointerMove="{{ scrubMove }}" onPointerUp="{{ scrubUp }}" style="flex:1;min-height:0;position:relative;cursor:ew-resize;touch-action:none">
+              <svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible"><rect width="1000" height="100" fill="#f6f3ea"></rect><line x1="0" x2="1000" y1="50" y2="50" stroke="#10231a" stroke-opacity=".25" vector-effect="non-scaling-stroke"></line><defs><clipPath id="c2a5"><rect x="0" y="-10" width="{{ clipW }}" height="120"></rect></clipPath></defs><g clip-path="url(#c2a5)"><path d="{{ p.kwPos }}" fill="#1e4d2b" fill-opacity=".5"></path><path d="{{ p.kwNeg }}" fill="#10231a" fill-opacity=".22"></path></g></svg>
+              <span style="position:absolute;left:4px;top:2px;font-size:10px;font-weight:700;color:#1e4d2b;pointer-events:none">charging ↑</span><span style="position:absolute;left:4px;bottom:2px;font-size:10px;font-weight:700;color:#34443a;pointer-events:none">discharging ↓</span>
+              <sc-if value="{{ noFleet }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12.5px;color:#5f6b63;background:rgba(246,243,234,.8)">No batteries in this run</div></sc-if>
+              <div style="position:absolute;top:0;bottom:0;width:1.5px;margin-left:-.75px;background:#1e4d2b;left:{{ curLeft }};pointer-events:none"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#5f6b63;white-space:nowrap;overflow:hidden"><span style="flex:none;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em">SIM</span>Sum of battery kW · ±2 MW</div>
+          </div>
+        </div>
+
+        <div style="flex:none;height:76px;background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:8px 18px;display:flex;align-items:center;gap:18px">
+          <button onClick="{{ togglePlay }}" style="width:48px;height:48px;flex:none;border-radius:50%;border:0;background:#1e4d2b;color:#fffdf8;font-size:15px;cursor:pointer" style-hover="background:#2a6a3b">{{ playIcon }}</button>
+          <div style="flex:none;width:112px;display:flex;flex-direction:column;gap:2px"><span style="font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1">{{ clock }}</span><span style="font-size:11.5px;color:#5f6b63;font-variant-numeric:tabular-nums">Step {{ stepNo }} of 720</span></div>
+          <div onPointerDown="{{ scrubDown }}" onPointerMove="{{ scrubMove }}" onPointerUp="{{ scrubUp }}" style="flex:1;min-width:0;height:100%;position:relative;cursor:ew-resize;touch-action:none">
+            <div style="position:absolute;left:0;right:0;top:18px;height:14px;border-radius:4px;background:linear-gradient(90deg,#f1eee5 0%,#f1eee5 20%,#d8dad3 42%,#d8dad3 100%)"></div>
+            <div style="position:absolute;left:0;top:18px;height:14px;border-radius:4px 0 0 4px;background:#1e4d2b;opacity:.22;width:{{ curLeft }}"></div>
+            <sc-for list="{{ marks }}" as="m" hint-placeholder-count="0"><div style="position:absolute;left:{{ m.left }};top:0;height:34px;border-left:1px dashed {{ m.color }};pointer-events:none"><sc-if value="{{ m.hasLabel }}"><span style="position:absolute;left:4px;top:0;font-size:11px;white-space:nowrap;color:{{ m.color }};font-weight:{{ m.weight }}">{{ m.short }}</span></sc-if></div></sc-for>
+            <div style="position:absolute;top:12px;height:26px;width:2px;margin-left:-1px;background:#1e4d2b;left:{{ curLeft }};pointer-events:none"><div style="position:absolute;top:7px;left:-5px;width:12px;height:12px;border-radius:50%;background:#1e4d2b;border:2px solid #fffdf8"></div></div>
+            <div style="position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;font-size:11px;color:#5f6b63;font-variant-numeric:tabular-nums"><span>16:00</span><span>18:00</span><span>20:00</span><span>22:00</span><span>00:00</span><span>02:00</span><span>04:00</span></div>
+          </div>
+          <div style="flex:none;display:flex;flex-direction:column;gap:6px;align-items:flex-end"><div style="display:flex;gap:2px;padding:3px;border:1px solid #e3dfd3;border-radius:8px;font-size:12.5px"><sc-for list="{{ speeds }}" as="s" hint-placeholder-count="3"><button onClick="{{ s.onClick }}" style="border:0;padding:5px 8px;border-radius:6px;font:inherit;font-size:12.5px;cursor:pointer;background:{{ s.bg }};color:{{ s.fg }};font-weight:{{ s.weight }}">{{ s.text }}</button></sc-for></div><span style="font-size:11.5px;color:#5f6b63">12 h evening = {{ evSec }} s</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="2b" style="display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;align-items:baseline;gap:8px;font-size:13px;color:#5f6b63"><a href="#2b" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#10231a;border-radius:5px;text-decoration:none">2b</a>3D over a strip-chart wall: five lanes on one axis, one cursor through all. Beside it: fleet battery and a "Right now" card (2d) that lists failures and marks them red on the lanes and the scene</div>
+    <div data-screen-label="2b Watch lanes" style="width:1600px;height:900px;background:#f7f4ec;display:flex;flex-direction:column;border-radius:8px;overflow:hidden;border:1px solid rgba(0,0,0,.08)">
+      <div style="height:60px;flex:none;display:flex;align-items:center;gap:18px;padding:0 24px;border-bottom:1px solid #e3dfd3">
+        <div style="flex:none;white-space:nowrap;font-weight:700;font-size:21px;letter-spacing:-0.02em;color:#1e4d2b">Hugging Base</div>
+        <div style="width:1px;height:24px;background:#e3dfd3"></div>
+        <div title="23 Aug 2026, 16:00 → 04:00" style="flex:none;white-space:nowrap;font-size:16px">Heat-wave evening <span style="color:#5f6b63">· 23 Aug</span></div>
+        <nav style="flex:none;white-space:nowrap;display:flex;gap:2px;padding:3px;border:1px solid #e3dfd3;border-radius:8px;font-size:13px;margin-left:12px">
+          <a href="Story%201%20Levers.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">1 Set the levers</a>
+          <a href="Story%202%20Watch.dc.html" style="padding:5px 10px;border-radius:6px;background:#e4efe6;color:#1e4d2b;font-weight:700;text-decoration:none">2 Watch it play</a>
+          <a href="Story%203%20Results.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">3 Read the result</a>
+          <a href="Story%204%20Room%20to%20grow.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">4 Room to grow</a>
+        </nav>
+        <div style="flex:1"></div>
+        <a href="Story%201%20Levers.dc.html" title="{{ runPill.title }}" style="flex:none;white-space:nowrap;display:flex;align-items:center;gap:9px;font-size:13px;padding:5px 6px 5px 11px;border:1px solid #e3dfd3;border-radius:8px;color:#10231a;text-decoration:none;background:#fffdf8" style-hover="border-color:#1e4d2b"><span style="width:8px;height:8px;border-radius:50%;background:{{ runPill.dot }}"></span><b>{{ runPill.label }}</b><span style="color:#5f6b63">{{ runPill.summary }}</span><span style="padding:4px 9px;border-radius:6px;background:#e4efe6;color:#1e4d2b;font-weight:700">Change levers →</span></a>
+        
+      </div>
+      <div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 340px;grid-template-rows:minmax(0,1fr);gap:14px;padding:14px 18px">
+        <div style="min-width:0;display:flex;flex-direction:column;gap:12px;min-height:0">
+          <div style="flex:1;min-height:0;position:relative;border:1px solid #e3dfd3;border-radius:10px;overflow:hidden;background:#E9EDE7">
+            <div ref="{{ sceneB }}" style="position:absolute;inset:0"></div>
+            <sc-if value="{{ loading }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#5f6b63;font-size:14px">Loading the feeder…</div></sc-if>
+            <div style="position:absolute;top:12px;left:12px;max-width:560px;display:flex;flex-direction:column;gap:6px;pointer-events:none"><div style="display:flex;gap:10px;padding:9px 12px;background:rgba(255,253,248,.96);border:1px solid #e3dfd3;border-radius:8px;font-size:13.5px;line-height:1.35"><b style="font-variant-numeric:tabular-nums">{{ ruleNow.t }}</b><span style="text-wrap:pretty">{{ ruleNow.text }}</span></div><sc-if value="{{ fx.anyNow }}" hint-placeholder-val="{{ false }}"><div style="align-self:flex-start;display:flex;align-items:center;gap:8px;padding:7px 11px;background:#b23a2f;color:#fffdf8;border-radius:8px;font-size:13px;font-weight:700"><span style="width:18px;height:18px;border-radius:50%;background:#fffdf8;color:#b23a2f;display:flex;align-items:center;justify-content:center;font-size:12px">!</span>{{ fx.banner }}</div></sc-if></div>
+            <div style="position:absolute;top:12px;right:12px;display:flex;gap:2px;padding:3px;background:#fffdf8;border:1px solid #e3dfd3;border-radius:8px">
+              <sc-for list="{{ camsB }}" as="c" hint-placeholder-count="3"><button onClick="{{ c.onClick }}" style="border:0;padding:7px 12px;border-radius:6px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;background:{{ c.bg }};color:{{ c.fg }}">{{ c.text }}</button></sc-for>
+            </div>
+            <div style="position:absolute;left:12px;bottom:12px;display:flex;flex-wrap:wrap;gap:4px 14px;padding:7px 11px;background:rgba(255,253,248,.96);border:1px solid #e3dfd3;border-radius:8px;font-size:12px;max-width:640px">
+              <span style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:2px;background:#0ca30c"></span>within nameplate</span>
+              <span style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:2px;background:#fab219"></span>over nameplate</span>
+              <span style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:2px;background:#ec835a"></span>above 110%</span>
+              <span style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:2px;background:#d03b3b"></span>emergency</span>
+              <span style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:2px;background:#0B6B6F"></span>battery charging</span>
+            </div>
+          </div>
+
+          <div style="flex:none;height:330px;background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:10px 14px 8px;display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;align-items:center;gap:14px">
+              <button onClick="{{ togglePlay }}" style="width:38px;height:38px;flex:none;border-radius:50%;border:0;background:#1e4d2b;color:#fffdf8;font-size:13px;cursor:pointer" style-hover="background:#2a6a3b">{{ playIcon }}</button>
+              <span style="font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1">{{ clock }}</span>
+              <span style="font-size:11.5px;color:#5f6b63;font-variant-numeric:tabular-nums">Step {{ stepNo }} of 720</span>
+              <div style="margin-left:auto;display:flex;gap:2px;padding:3px;border:1px solid #e3dfd3;border-radius:8px"><sc-for list="{{ speeds }}" as="s" hint-placeholder-count="3"><button onClick="{{ s.onClick }}" style="border:0;padding:4px 8px;border-radius:6px;font:inherit;font-size:12.5px;cursor:pointer;background:{{ s.bg }};color:{{ s.fg }};font-weight:{{ s.weight }}">{{ s.text }}</button></sc-for></div>
+            </div>
+            <div style="flex:1;min-height:0;display:grid;grid-template-columns:180px minmax(0,1fr);grid-template-rows:repeat(5,minmax(0,1fr)) 16px;column-gap:10px;position:relative">
+              <div style="display:flex;flex-direction:column;justify-content:center;gap:1px;border-bottom:1px solid #efece3"><span style="font-size:12.5px;font-weight:700">Worst transformer</span><span style="font-size:11.5px;color:#5f6b63;font-variant-numeric:tabular-nums"><b style="color:#10231a">{{ now.worst }}</b> · SIM</span></div>
+              <div style="position:relative;border-bottom:1px solid #efece3"><svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:3px 0;width:100%;height:calc(100% - 6px);overflow:visible"><rect width="1000" height="100" fill="#f6f3ea"></rect><line x1="0" x2="1000" y1="58.12" y2="58.12" stroke="#c7962b" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"></line><line x1="0" x2="1000" y1="36.47" y2="36.47" stroke="#b23a2f" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"></line><defs><clipPath id="c2b1"><rect x="0" y="-10" width="{{ clipW }}" height="120"></rect></clipPath></defs><g clip-path="url(#c2b1)"><path d="{{ p.worst }}" fill="none" stroke="#10231a" stroke-width="1.4" vector-effect="non-scaling-stroke"></path></g></svg></div>
+              <div style="display:flex;flex-direction:column;justify-content:center;gap:1px;border-bottom:1px solid #efece3"><span style="font-size:12.5px;font-weight:700">Street A–D, T-240</span><span style="font-size:11.5px;color:#5f6b63;font-variant-numeric:tabular-nums">top <b style="color:#10231a">{{ now.focusTop }}</b> · SIM</span></div>
+              <div style="position:relative;border-bottom:1px solid #efece3"><svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:3px 0;width:100%;height:calc(100% - 6px);overflow:visible"><rect width="1000" height="100" fill="#f6f3ea"></rect><line x1="0" x2="1000" y1="47.81" y2="47.81" stroke="#c7962b" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"></line><defs><clipPath id="c2b2"><rect x="0" y="-10" width="{{ clipW }}" height="120"></rect></clipPath></defs><g clip-path="url(#c2b2)"><sc-for list="{{ p.focus }}" as="f" hint-placeholder-count="5"><path d="{{ f.d }}" fill="none" stroke="#10231a" stroke-opacity="{{ f.op }}" stroke-width="1.1" stroke-dasharray="{{ f.dash }}" vector-effect="non-scaling-stroke"></path></sc-for></g></svg></div>
+              <div style="display:flex;flex-direction:column;justify-content:center;gap:1px;border-bottom:1px solid #efece3"><span style="font-size:12.5px;font-weight:700">Price $/MWh</span><span style="font-size:11.5px;color:#5f6b63;font-variant-numeric:tabular-nums"><b style="color:#10231a">{{ now.price }}</b> · REAL</span></div>
+              <div style="position:relative;border-bottom:1px solid #efece3"><svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:3px 0;width:100%;height:calc(100% - 6px);overflow:visible"><rect width="1000" height="100" fill="#f6f3ea"></rect><sc-for list="{{ p.bands }}" as="b" hint-placeholder-count="0"><rect x="{{ b.x }}" y="0" width="{{ b.w }}" height="100" fill="#e9dfbb"></rect></sc-for><defs><clipPath id="c2b3"><rect x="0" y="-10" width="{{ clipW }}" height="120"></rect></clipPath></defs><g clip-path="url(#c2b3)"><path d="{{ p.price }}" fill="none" stroke="#10231a" stroke-width="1.4" vector-effect="non-scaling-stroke"></path></g></svg></div>
+              <div style="display:flex;flex-direction:column;justify-content:center;gap:1px;border-bottom:1px solid #efece3"><span style="font-size:12.5px;font-weight:700">Fleet charge %</span><span style="font-size:11.5px;color:#5f6b63;font-variant-numeric:tabular-nums"><b style="color:#10231a">{{ now.soc }}</b> · SIM · 20% reserve</span></div>
+              <div style="position:relative;border-bottom:1px solid #efece3"><svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:3px 0;width:100%;height:calc(100% - 6px);overflow:visible"><rect width="1000" height="100" fill="#f6f3ea"></rect><line x1="0" x2="1000" y1="77.6" y2="77.6" stroke="#1e4d2b" stroke-dasharray="2 3" vector-effect="non-scaling-stroke"></line><defs><clipPath id="c2b4"><rect x="0" y="-10" width="{{ clipW }}" height="120"></rect></clipPath></defs><g clip-path="url(#c2b4)"><path d="{{ p.socArea }}" fill="#1e4d2b" fill-opacity=".14"></path><path d="{{ p.soc }}" fill="none" stroke="#1e4d2b" stroke-width="2.2" vector-effect="non-scaling-stroke"></path></g></svg></div>
+              <div style="display:flex;flex-direction:column;justify-content:center;gap:1px;border-bottom:1px solid #efece3"><span style="font-size:12.5px;font-weight:700">Fleet power MW</span><span style="font-size:11.5px;color:#5f6b63;font-variant-numeric:tabular-nums"><b style="color:#10231a">{{ now.kw }}</b> · SIM · ±2 MW</span></div>
+              <div style="position:relative;border-bottom:1px solid #efece3"><svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:3px 0;width:100%;height:calc(100% - 6px);overflow:visible"><rect width="1000" height="100" fill="#f6f3ea"></rect><line x1="0" x2="1000" y1="50" y2="50" stroke="#10231a" stroke-opacity=".25" vector-effect="non-scaling-stroke"></line><defs><clipPath id="c2b5"><rect x="0" y="-10" width="{{ clipW }}" height="120"></rect></clipPath></defs><g clip-path="url(#c2b5)"><path d="{{ p.kwPos }}" fill="#1e4d2b" fill-opacity=".5"></path><path d="{{ p.kwNeg }}" fill="#10231a" fill-opacity=".22"></path></g></svg></div>
+              <div></div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:#5f6b63;font-variant-numeric:tabular-nums;align-items:flex-end"><span>16:00</span><span>18:00</span><span>20:00</span><span>22:00</span><span>00:00</span><span>02:00</span><span>04:00</span></div>
+              <div onPointerDown="{{ scrubDown }}" onPointerMove="{{ scrubMove }}" onPointerUp="{{ scrubUp }}" style="grid-column:2;grid-row:1 / 7;position:absolute;inset:0;cursor:ew-resize;touch-action:none">
+                <sc-for list="{{ fx.bands }}" as="b" hint-placeholder-count="0"><div style="position:absolute;left:{{ b.left }};width:{{ b.w }};top:0;bottom:16px;background:rgba(178,58,47,.10);border-left:1.5px solid rgba(178,58,47,.7);pointer-events:none"></div></sc-for>
+                <div style="position:absolute;top:0;bottom:12px;width:2px;margin-left:-1px;background:#1e4d2b;left:{{ curLeft }};pointer-events:none"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside style="display:flex;flex-direction:column;gap:10px;min-height:0">
+          <div style="background:#fffdf8;border:1.5px solid #10231a;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;align-items:center;gap:6px"><span style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">WORST TRANSFORMER NOW</span><span style="margin-left:auto;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">SIM</span></div>
+            <div style="font-size:84px;font-weight:700;line-height:.95;letter-spacing:-0.04em;font-variant-numeric:tabular-nums">{{ now.worst }}</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:13.5px"><span style="width:14px;height:14px;border-radius:3px;background:{{ now.tierColor }}"></span><b>{{ now.tfName }}</b><span style="color:#5f6b63">{{ now.tierName }}</span></div>
+            <div style="font-size:12.5px;color:#5f6b63;font-variant-numeric:tabular-nums">{{ now.countsText }}</div>
+          </div>
+          <div style="background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:10px 14px 9px;display:flex;flex-direction:column;gap:7px">
+            <div style="display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span style="font-size:13.5px;font-weight:700">Fleet charge</span><span style="font-size:11.5px;color:#5f6b63">{{ fleetN }} batteries</span><span style="margin-left:auto;font-size:12px;font-weight:700;color:#1e4d2b">{{ now.flow }}</span></div>
+            <div style="display:flex;align-items:center">
+              <div style="flex:1;height:62px;border:3px solid #10231a;border-radius:11px;padding:4px">
+                <div style="position:relative;height:100%;border-radius:6px;overflow:hidden;background:#f1eee5">
+                  <div style="position:absolute;left:0;top:0;bottom:0;width:{{ now.socW }};background:#1e4d2b;transition:width .3s cubic-bezier(.3,.7,.2,1)"></div>
+                  <div style="position:absolute;left:0;top:0;bottom:0;width:{{ now.socW }};background:repeating-linear-gradient(-60deg,rgba(255,253,248,.16) 0 7px,transparent 7px 16px);transition:width .3s cubic-bezier(.3,.7,.2,1)"></div>
+                  <div style="position:absolute;left:20%;top:0;bottom:0;border-left:2px dashed #fffdf8"></div>
+                  <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:26px;font-weight:700;color:#fffdf8;font-variant-numeric:tabular-nums;letter-spacing:-0.02em">{{ now.soc }}</span>
+                </div>
+              </div>
+              <div style="width:8px;height:24px;background:#10231a;border-radius:0 4px 4px 0"></div>
+            </div>
+            <div style="position:relative;height:14px;font-size:11px;color:#5f6b63"><span style="position:absolute;left:calc(20% - 4px);top:0;white-space:nowrap">↑ 20% member reserve, never used</span></div>
+          </div>
+          <div style="flex:1;min-height:0;background:#fffdf8;border:1px solid {{ fx.border }};border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;overflow:hidden">
+            <div style="display:flex;align-items:baseline;gap:6px"><span style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">RIGHT NOW · {{ clock }}</span><span style="margin-left:auto;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">SIM</span></div>
+            <sc-if value="{{ fx.anyNow }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:6px;padding:9px 10px;border-radius:8px;background:#f7e9e6;border:1px solid #d9a39c">
+                <div style="font-size:11.5px;font-weight:700;letter-spacing:.08em;color:#9a2f25">FAILING NOW · {{ fx.nowCount }}</div>
+                <sc-for list="{{ fx.now }}" as="f" hint-placeholder-count="1"><button onClick="{{ f.onClick }}" style="font:inherit;text-align:left;border:0;background:none;padding:0;cursor:pointer;display:flex;flex-direction:column;gap:1px;color:#10231a"><span style="display:flex;gap:8px;font-size:13px"><b>{{ f.kind }}</b><span style="margin-left:auto;font-size:11.5px;color:#5f6b63;font-variant-numeric:tabular-nums">{{ f.span }}</span></span><span style="font-size:12px;line-height:1.35;color:#34443a;text-wrap:pretty">{{ f.text }}</span></button></sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ fx.noneNow }}" hint-placeholder-val="{{ true }}"><div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#34443a;padding:2px 0"><span style="width:9px;height:9px;border-radius:50%;background:#8aa58f"></span>No failures right now</div></sc-if>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <div style="display:flex;align-items:baseline;font-size:12.5px"><b>379 transformers</b><span style="margin-left:auto;color:#5f6b63;font-variant-numeric:tabular-nums">{{ fx.within }} within nameplate</span></div>
+              <div style="display:flex;height:12px;border-radius:3px;overflow:hidden;background:#0ca30c"><sc-for list="{{ tierBar }}" as="b" hint-placeholder-count="0"><div style="width:{{ b.w }};background:{{ b.c }}"></div></sc-for></div>
+              <div style="display:flex;flex-wrap:wrap;gap:3px 10px;font-size:11.5px;font-variant-numeric:tabular-nums"><sc-for list="{{ fx.tiers }}" as="r" hint-placeholder-count="4"><span style="display:flex;align-items:center;gap:4px;color:{{ r.fg }};font-weight:{{ r.weight }}"><span style="width:9px;height:9px;border-radius:2px;background:{{ r.c }}"></span>{{ r.name }} {{ r.n }}</span></sc-for></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <div style="display:flex;align-items:baseline;font-size:12.5px"><b>{{ fleetN }} batteries</b><span style="margin-left:auto;color:#5f6b63;font-variant-numeric:tabular-nums">{{ fx.batText }}</span></div>
+              <div style="display:grid;grid-template-columns:repeat(24,1fr);gap:2px"><sc-for list="{{ fx.cells }}" as="b" hint-placeholder-count="0"><div style="aspect-ratio:1;border-radius:2px;background:{{ b.c }};box-shadow:{{ b.ring }}"></div></sc-for></div>
+            </div>
+            <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:4px;padding-top:8px;border-top:1px solid #efece3;overflow:hidden">
+              <div style="display:flex;align-items:baseline;font-size:11.5px;font-weight:700;letter-spacing:.08em;color:#5f6b63">FAILURES THIS EVENING<span style="margin-left:auto;letter-spacing:0;font-variant-numeric:tabular-nums">{{ fx.total }}</span></div>
+              <sc-if value="{{ fx.noneAll }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#5f6b63">None in this run.</div></sc-if>
+              <sc-for list="{{ fx.all }}" as="f" hint-placeholder-count="3"><button onClick="{{ f.onClick }}" style="font:inherit;text-align:left;border:0;background:{{ f.bg }};border-radius:5px;padding:3px 5px;cursor:pointer;display:grid;grid-template-columns:9px 82px minmax(0,1fr);gap:7px;align-items:center;font-size:12px;color:{{ f.color }}"><span style="width:8px;height:8px;border-radius:50%;background:{{ f.dot }}"></span><span style="font-variant-numeric:tabular-nums">{{ f.span }}</span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:{{ f.weight }}">{{ f.kind }} · {{ f.where }}</span></button></sc-for>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { loading: true, k: 0, playing: false, speed: 1, camA: 'street', camB: 'feeder', run: null, res: null };
+  sceneA = React.createRef();
+  sceneB = React.createRef();
+
+  async componentDidMount() {
+    try {
+      const S = this.S = await import(new URL('ui/story.js', document.baseURI).href);
+      const rr = S.getRun(); const res = S.resolve(rr ? rr.levers : S.getLevers()); res.id = rr ? rr.id : null; res.run = rr;
+      const run = await S.loadRun(res.branch);
+      this.paths = this.buildPaths(run);
+      this.storyItems = this.buildStory(run);
+      this.rules = this.buildRules(run);
+      this.failures = this.buildFailures(run);
+      this.cumOver = []; this.cumDis = []; let co = 0, cd = 0;
+      for (let i = 0; i < run.s.n; i++) { const c = run.s.counts[i]; co += c[0] + c[1] + c[2] + c[3]; cd += Math.max(0, -run.s.kw[i]) / 60; this.cumOver.push(co); this.cumDis.push(cd); }
+      let k = 45; try { const v = Number(localStorage.getItem('hb-story-k')); if (Number.isFinite(v) && v >= 0 && v < run.s.n) k = v; } catch (e) { /* ignore */ }
+      this.setState({ loading: false, run, res, k });
+      const H = S.H;
+      this.scenes = [];
+      for (const [ref, cam] of [[this.sceneA, this.state.camA], [this.sceneB, this.state.camB]]) {
+        if (!ref.current) continue;
+        const sc = await H.createScene(ref.current, run.topology, (e) => console.error('[hb scene]', e));
+        sc.camera && sc.camera(cam); this.scenes.push(sc);
+      }
+      this.updateScene();
+    } catch (e) { console.error('[story watch]', e); }
+  }
+  componentWillUnmount() { cancelAnimationFrame(this.raf); (this.scenes || []).forEach((s) => s.dispose && s.dispose()); }
+  componentDidUpdate(pp, ps) { if (ps.k !== this.state.k) this.updateScene(); }
+  updateScene() {
+    const run = this.state.run; if (!run || !this.scenes || !this.scenes.length) return;
+    const SM = this.S.H.SM;
+    const model = SM.buildSceneModel({ topology: run.topology, footprints: run.footprints, frame: SM.frameFromP1(run.doc, this.state.k), view: 'p1', theme: 'light', hideBatteries: run.branch === 'none' });
+    this.scenes.forEach((s) => s.update(model));
+  }
+  buildPaths(run) {
+    const S = this.S, s = run.s, n = s.n;
+    const kwPos = s.kw.map((v) => Math.max(0, v)), kwNeg = s.kw.map((v) => Math.min(0, v));
+    const keys = Object.keys(s.focus);
+    const bands = ((run.meta.plan && run.meta.plan.discharge) || []).map(([t, mins]) => {
+      const k0 = S.H.fmt.timeToStep(run.meta, t); if (k0 == null) return null;
+      return { x: +(k0 / (n - 1) * 1000).toFixed(1), w: +(mins / (n - 1) * 1000).toFixed(1) };
+    }).filter(Boolean);
+    return {
+      worst: S.path(s.worst, 40, 210), price: S.path(s.price, 0, 600), soc: S.path(s.soc, 0, 100), socArea: S.area(s.soc, 0, 100),
+      kwPos: S.area(kwPos, -2000, 2000, 0), kwNeg: S.area(kwNeg, -2000, 2000, 0), bands,
+      focus: keys.map((key) => ({ key, d: S.path(s.focus[key].pct, 0, 210), op: key === '240' ? 0.9 : 0.55, dash: key === '240' ? '4 3' : '' })),
+    };
+  }
+  tfName(run, tf) {
+    const f = (run.topology.focus || []).find((x) => x.tf === tf); if (f) return `Street ${f.key}`;
+    const b = (run.topology.bridge || []).find((x) => x.tf === tf); if (b) return 'T-240';
+    return `T-${tf}`;
+  }
+  buildStory(run) {
+    const S = this.S, { meta, s, branch } = run, n = s.n, out = [];
+    const step = (t) => S.H.fmt.timeToStep(meta, t);
+    out.push({ k: 0, text: branch === 'none' ? 'No batteries in this run. The homes alone set every transformer’s load.' : `The fleet starts at ${Math.round(s.soc[0])}% charge. Evening home load is climbing.` });
+    const r = meta.relief;
+    if (r && branch === 'none') out.push({ k: r.step, text: `Street A peaks at ${r.none.v}%: one home’s 15-minute spike, no battery to absorb it.` });
+    if (r && (branch === 'aware' || branch === 'aware_faults')) out.push({ k: r.step, text: `Street A would reach ${r.none.v}% without batteries. Its batteries discharge ${r.reliefKW ? r.reliefKW.v + ' kW' : ''} and hold it at ${r.aware.v}%.` });
+    if (branch !== 'none') {
+      const d = (meta.plan && meta.plan.discharge) || []; const ks = d.map(([t]) => step(t)).filter((x) => x != null).sort((a, b) => a - b);
+      if (ks.length) out.push({ k: ks[0], text: 'The price peaks. The fleet discharges into it in 15-minute blocks (perfect-foresight plan, DERIVED).' });
+      const on = meta.plan && meta.plan.onset ? step(meta.plan.onset) : null;
+      if (on != null) out.push({ k: on, text: branch === 'naive' ? 'Prices fall. Every battery starts charging at once, with no feeder check.' : 'Prices fall. Charge goes out only where each transformer has room.' });
+    }
+    const first = (fn) => { for (let k = 0; k < n; k++) if (fn(s.counts[k])) return k; return -1; };
+    const kNorm = first((c) => c[2] > 0), kEm = first((c) => c[3] > 0);
+    if (branch !== 'none' && kNorm >= 0) out.push({ k: kNorm, text: `${this.tfName(run, s.wtf[kNorm])} passes its normal rating: above 110% for 30 minutes.` });
+    if (branch !== 'none' && kEm >= 0) out.push({ k: kEm, text: `A transformer goes above emergency (150%). Worst this evening: ${meta.summary[branch].maxLoading.v}%.` });
+    for (const e of (meta.events && meta.events[branch]) || []) out.push({ k: e.step, text: e.text || e.kind, fault: true });
+    const sm = meta.summary[branch];
+    const endText = branch === 'none' ? `04:00. Worst transformer this evening: ${sm.maxLoading.v}%.`
+      : `04:00. The fleet is at ${Math.round(s.soc[n - 1])}%. ${sm.normalEvents.v === 0 && sm.emergencyTfs.v === 0 ? 'No transformer passed its limit.' : `${sm.normalEvents.v} normal-rating events, ${sm.emergencyTfs.v} emergencies.`}`;
+    out.push({ k: n - 1, text: endText });
+    out.sort((a, b) => a.k - b.k);
+    return out.map((x) => ({ ...x, t: S.timeOf(x.k) }));
+  }
+  buildRules(run) {
+    const S = this.S, { s, meta, branch } = run, n = s.n, out = [], fleet = branch !== 'none';
+    const tot = (c) => c[0] + c[1] + c[2] + c[3]; const MW = (v) => `${S.fmtNum(Math.abs(v) / 1000, 2)} MW`;
+    const push = (rule, k, text) => { if (k >= 0) out.push({ rule, k, text }); };
+    const first = (fn, from = 0) => { for (let k = from; k < n; k++) if (fn(k)) return k; return -1; };
+    let k = first((i) => tot(s.counts[i]) > 0); push('first over 100%', k, k >= 0 ? `${this.tfName(run, s.wtf[k])} goes over nameplate.` : '');
+    let best = -1, bk = -1; s.counts.forEach((c, i) => { if (tot(c) > best) { best = tot(c); bk = i; } });
+    if (best > 1) push('most over 100% at once', bk, `${best} transformers over nameplate at once, the most this evening.`);
+    k = first((i) => s.counts[i][2] > 0); push('first normal-rating event', k, k >= 0 ? `${this.tfName(run, s.wtf[k])} passes its normal rating (110% for 30 min).` : '');
+    k = first((i) => s.counts[i][3] > 0); push('first above 150%', k, 'A transformer goes above emergency (150%).');
+    k = first((i) => s.counts[i][4] > 0); push('first protection open', k, k >= 0 ? `Protection opens on ${this.tfName(run, s.wtf[k])}.` : '');
+    let kd = -1;
+    if (fleet) {
+      kd = first((i) => s.kw[i] < -50); push('fleet starts discharging', kd, kd >= 0 ? `Fleet starts discharging: ${MW(s.kw[kd])}.` : '');
+      let mn = 1e9, mk = -1; s.soc.forEach((v, i) => { if (v < mn) { mn = v; mk = i; } }); push('fleet charge lowest', mk, `Fleet at its lowest: ${Math.round(mn)}%.`);
+      k = first((i) => s.kw[i] > 50, Math.max(0, mk)); push('fleet starts recharging', k, k >= 0 ? `Fleet starts recharging: +${MW(s.kw[k])}.` : '');
+    }
+    for (const e of (meta.events && meta.events[branch]) || []) push(`fault · ${e.kind}`, e.step, e.text || e.kind);
+    const wmax = Math.max(...s.worst);
+    push('end of run', n - 1, fleet ? `Fleet ends at ${Math.round(s.soc[n - 1])}%. Worst transformer all evening: ${S.fmtNum(wmax, 1)}%.` : `Worst transformer all evening: ${S.fmtNum(wmax, 1)}%.`);
+    out.sort((a, b) => a.k - b.k);
+    this.rulesTotal = fleet ? 9 : 6;
+    return out.map((x) => ({ ...x, t: S.timeOf(x.k) }));
+  }
+  buildFailures(run) {
+    const S = this.S, { s, meta, branch, doc, topology } = run, n = s.n, out = [];
+    const home = (h) => (topology.homes[h] ? topology.homes[h].label : `home ${h}`);
+    const ranges = (fn, gap = 5) => { const r = []; let st = -1, last = -99; for (let k = 0; k < n; k++) { if (fn(k)) { if (st < 0 || k - last > gap) { if (st >= 0) r.push([st, last]); st = k; } last = k; } } if (st >= 0) r.push([st, last]); return r; };
+    for (const e of (meta.events && meta.events[branch]) || []) {
+      if (e.kind === 'comms_lost') out.push({ kind: 'Battery silent', where: home(e.home), k0: e.step, k1: e.coveredStep || e.expiredStep || e.step + 5, text: `${home(e.home)} stops answering after its ${e.t} command. Marked stale, then its command expires and others cover it.` });
+      else if (e.kind === 'hot') out.push({ kind: 'Load spike', where: this.tfName(run, e.tf), k0: e.step, k1: e.step + (e.minutes || 60), text: e.text || 'A transformer runs hot.' });
+      else if (e.kind === 'stall') out.push({ kind: 'Controller stalled', where: 'orchestrator', k0: e.step, k1: e.resumeStep || e.step + (e.minutes || 8), text: `Our controller sends nothing for ${e.minutes} min, longer than the 300 s command expiry.` });
+      else out.push({ kind: e.kind, where: '', k0: e.step, k1: e.step + 5, text: e.text || e.kind });
+    }
+    for (const [a, b] of ranges((k) => s.counts[k][4] > 0)) out.push({ kind: 'Protection open', where: this.tfName(run, s.wtf[a]), k0: a, k1: b, text: 'The fuse rule opens a transformer. Homes without a battery behind it go dark.' });
+    for (const [a, b] of ranges((k) => s.counts[k][3] > 0)) out.push({ kind: 'Emergency', where: this.tfName(run, s.wtf[a]), k0: a, k1: b, text: 'A transformer is above 150% of nameplate.' });
+    for (const [a, b] of ranges((k) => s.counts[k][2] > 0)) out.push({ kind: 'Normal rating exceeded', where: this.tfName(run, s.wtf[a]), k0: a, k1: b, text: 'Above 110% for 30 minutes or more.' });
+    if (branch !== 'none') for (const [a, b] of ranges((k) => /[SX]/.test(doc.state[k] || ''), 2)) out.push({ kind: 'Stale battery', where: 'fleet', k0: a, k1: b, text: 'A battery has stopped reporting or its last command expired.' });
+    out.sort((x, y) => x.k0 - y.k0);
+    return out;
+  }
+  fxVals(run, k) {
+    const S = this.S, s = run.s, n = s.n, c = s.counts[k], TC = S.TIER_COLOR, F = this.failures || [];
+    const span = (f) => `${S.timeOf(f.k0)}–${S.timeOf(f.k1)}`;
+    const nowF = F.filter((f) => f.k0 <= k && k <= f.k1);
+    const within = 379 - (c[0] + c[1] + c[2] + c[3] + c[4]);
+    const tiers = [['over nameplate', c[0], TC[1], false], ['above 110%', c[1] + c[2], TC[2], c[2] > 0], ['emergency', c[3], TC[4], c[3] > 0], ['open', c[4], TC[5], c[4] > 0]]
+      .map(([name, v, col, bad]) => ({ name, n: v, c: col, fg: bad ? '#9a2f25' : v ? '#10231a' : '#8f8b7f', weight: bad ? 700 : 400 }));
+    const SC = { C: '#1e4d2b', D: '#c7962b', I: '#e3dfd3', S: '#8f8b7f', X: '#8f8b7f', B: '#8fcf9f' };
+    const st = run.branch === 'none' ? '' : (run.doc.state[k] || ''); const cnt = { C: 0, D: 0, I: 0, F: 0 };
+    const cells = Array.from(st).map((ch) => { const bad = ch === 'S' || ch === 'X'; if (bad) cnt.F += 1; else if (ch in cnt) cnt[ch] += 1; return { c: SC[ch] || '#e3dfd3', ring: bad ? '0 0 0 1.5px #b23a2f' : 'none' }; });
+    return {
+      border: nowF.length ? '#d9a39c' : '#e3dfd3', anyNow: nowF.length > 0, noneNow: nowF.length === 0, nowCount: nowF.length,
+      now: nowF.map((f) => ({ kind: `${f.kind}${f.where ? ' · ' + f.where : ''}`, text: f.text, span: span(f), onClick: () => this.seek(f.k0) })),
+      banner: nowF.map((f) => `${f.kind}${f.where ? ' · ' + f.where : ''}`).join('  ·  '),
+      within, tiers, cells, batText: run.branch === 'none' ? 'none in this run' : `charging ${cnt.C} · discharging ${cnt.D} · idle ${cnt.I}${cnt.F ? ` · failing ${cnt.F}` : ''}`,
+      total: F.length, noneAll: F.length === 0,
+      all: F.map((f) => { const act = f.k0 <= k && k <= f.k1, past = f.k1 < k; return { kind: f.kind, where: f.where, span: span(f), dot: act ? '#b23a2f' : past ? '#d9a39c' : '#e3dfd3', color: act || past ? '#10231a' : '#8f8b7f', weight: act ? 700 : 400, bg: act ? '#f7e9e6' : 'transparent', onClick: () => this.seek(f.k0) }; }),
+      bands: F.map((f) => ({ left: S.xPct(f.k0, n), w: `${Math.max(0.25, (f.k1 - f.k0 + 1) / (n - 1) * 100).toFixed(2)}%` })),
+    };
+  }
+  seek(k) {
+    const run = this.state.run; if (!run) return;
+    k = Math.max(0, Math.min(run.s.n - 1, Math.round(k)));
+    try { localStorage.setItem('hb-story-k', String(k)); } catch (e) { /* ignore */ }
+    this.setState({ k });
+  }
+  play() {
+    let last = performance.now(), acc = 0;
+    const tick = (t) => {
+      if (!this.state.playing) return;
+      acc += (t - last) * this.state.speed / 100; last = t;
+      if (acc >= 1) {
+        const st = Math.floor(acc); acc -= st; const nk = this.state.k + st;
+        if (nk >= this.state.run.s.n - 1) { this.seek(this.state.run.s.n - 1); this.setState({ playing: false }); return; }
+        this.seek(nk);
+      }
+      this.raf = requestAnimationFrame(tick);
+    };
+    this.raf = requestAnimationFrame(tick);
+  }
+  cardVals(run, k) {
+    const S = this.S, s = run.s, fmt = S.fmtNum, c = s.counts[k];
+    const rules = this.rules || []; let curIdx = -1; rules.forEach((r, i) => { if (r.k <= k) curIdx = i; });
+    const ruleList = rules.map((r, i) => ({ t: r.t, text: r.text, rule: `rule: ${r.rule}`, color: r.k <= k ? '#10231a' : '#b3ae9f', weight: i === curIdx ? 700 : 400, onClick: () => this.seek(r.k) }));
+    const within = 379 - (c[0] + c[1] + c[2] + c[3] + c[4]);
+    const TC = S.TIER_COLOR;
+    const tierRowsRaw = [['over nameplate', c[0], TC[1]], ['above 110%', c[1] + c[2], TC[2]], ['emergency, above 150%', c[3], TC[4]], ['protection open', c[4], TC[5]]];
+    const tierBar = tierRowsRaw.filter((r) => r[1] > 0).map((r) => ({ w: `${(r[1] / 379 * 100).toFixed(2)}%`, c: r[2] }));
+    const tierBarFull = [{ w: `${(within / 379 * 100).toFixed(2)}%`, c: TC[0] }, ...tierBar];
+    const tierRows = [{ name: 'within nameplate', n: within, c: TC[0], fg: '#34443a' }, ...tierRowsRaw.map(([name, n, col]) => ({ name, n, c: col, fg: n ? '#10231a' : '#8f8b7f' }))];
+    const SC = { C: '#1e4d2b', D: '#c7962b', I: '#e3dfd3', S: '#8f8b7f', X: '#8f8b7f', B: '#8fcf9f' };
+    const st = run.doc.state[k] || ''; const cnt = { C: 0, D: 0, I: 0, S: 0 };
+    const batCells = run.branch === 'none' ? [] : Array.from(st).map((ch) => { const key = ch === 'X' ? 'S' : ch; if (key in cnt) cnt[key] += 1; return { c: SC[ch] || '#e3dfd3' }; });
+    const batRows = [['charging', cnt.C, SC.C], ['discharging', cnt.D, SC.D], ['idle', cnt.I, SC.I], ['stale', cnt.S, SC.S]].map(([name, n, col]) => ({ name, n, c: col }));
+    const tl = (run.doc.ticker || []).filter((t) => t[0] <= k);
+    const tickList = tl.slice(-9).reverse().map((t, i) => ({ text: t[1], color: i === 0 ? '#10231a' : '#5f6b63', bg: i === 0 ? '#e4efe6' : 'transparent' }));
+    return {
+      ruleList, rulesFired: rules.filter((r) => r.k <= k).length, rulesTotal: this.rulesTotal || 9, tierBar: tierBarFull, tierRows, batCells, batRows,
+      soFar: { over: fmt(this.cumOver ? this.cumOver[k] : 0), dis: `${fmt(this.cumDis ? this.cumDis[k] : 0, 0)} kWh` },
+      tickList, tickCount: tl.length, noTicks: tl.length === 0,
+    };
+  }
+  kFromEvent(e) { const r = e.currentTarget.getBoundingClientRect(); return (e.clientX - r.left) / r.width * ((this.state.run ? this.state.run.s.n : 720) - 1); }
+  renderVals() {
+    const st = this.state, run = st.run, S = this.S, k = st.k;
+    const NAMES = { none: 'No batteries', naive: 'Naive split', aware: 'Feeder-aware', aware_faults: 'Feeder-aware + failures' };
+    const res = st.res || { matches: true, branch: 'aware' };
+    const rrun = res.run, L = rrun ? rrun.levers : null;
+    const runPill = rrun
+      ? { label: `Run #${rrun.id}`, dot: rrun.status === 'done' ? '#8aa58f' : rrun.status === 'running' ? '#c7962b' : '#b23a2f', upper: `RUN #${rrun.id}`,
+          summary: `${({ none: 'No batteries', naive: 'Naive split', aware: 'Feeder-aware' })[L.controller]}${L.controller !== 'none' && L.failures ? ' + failures' : ''}${L.controller === 'none' ? '' : ` · ${L.fleetSize} ${L.cls === 'core' ? 'Core' : 'Legacy'} · ${L.reserve}% reserve`}`,
+          title: rrun.connected ? 'Results from the simulator' : `No simulator connected in this prototype: showing the committed run nearest these settings (${NAMES[res.branch]})` }
+      : { label: 'No run yet', dot: '#cfcabd', upper: NAMES[res.branch].toUpperCase(), summary: `showing ${NAMES[res.branch]}`, title: 'Set the levers and run the simulator' };
+    const cams = (key) => [['feeder', 'Whole feeder'], ['street', 'Street A–D'], ['t240', 'T-240']].map(([id, text], i) => {
+      const on = st[key] === id;
+      return { text, bg: on ? '#1e4d2b' : 'transparent', fg: on ? '#fffdf8' : '#10231a',
+        onClick: () => { this.setState({ [key]: id }); const sc = this.scenes && this.scenes[key === 'camA' ? 0 : 1]; if (sc && sc.camera) sc.camera(id); } };
+    });
+    const speeds = [1, 2, 4].map((x) => ({ text: `${x}×`, bg: st.speed === x ? '#e4efe6' : 'transparent', fg: st.speed === x ? '#1e4d2b' : '#10231a', weight: st.speed === x ? 700 : 400, onClick: () => this.setState({ speed: x }) }));
+    const base = {
+      loading: st.loading, runPill, camsA: cams('camA'), camsB: cams('camB'), speeds, evSec: Math.round(72 / st.speed), sceneA: this.sceneA, sceneB: this.sceneB,
+      playIcon: st.playing ? '❚❚' : '▶',
+      togglePlay: () => { if (!run) return; const p = !st.playing; if (p && k >= run.s.n - 1) this.seek(0); this.setState({ playing: p }, () => { if (p) this.play(); }); },
+      scrubDown: (e) => { this.drag = true; try { e.currentTarget.setPointerCapture(e.pointerId); } catch (x) { /* ignore */ } this.seek(this.kFromEvent(e)); },
+      scrubMove: (e) => { if (this.drag) this.seek(this.kFromEvent(e)); },
+      scrubUp: () => { this.drag = false; },
+    };
+    if (!run) return { ...base, fx: { tiers: [], cells: [], now: [], all: [], bands: [], noneNow: true }, ruleNow: { t: '', text: '' }, ruleList: [], rulesFired: 0, rulesTotal: 9, tierBar: [], tierRows: [], batCells: [], batRows: [], soFar: {}, tickList: [], tickCount: 0, noTicks: false, p: { focus: [], bands: [] }, now: { focus: [] }, story: { t: '', text: '' }, storyList: [], marks: [], clipW: 0, curLeft: '0%', clock: '16:00', stepNo: 1, fleetN: 96, noFleet: false };
+    const s = run.s, n = s.n, fmt = S.fmtNum;
+    const c = s.counts[k], code = s.wtier[k];
+    const TN = ['within nameplate', 'over nameplate', 'above 110%, counting', 'normal rating exceeded', 'emergency', 'protection open'];
+    const focusNow = Object.keys(s.focus).map((key) => ({ key: key === '240' ? 'T-240' : key, v: fmt(s.focus[key].pct[k], 0) }));
+    const kw = s.kw[k];
+    const now = {
+      worst: `${fmt(s.worst[k], 1)}%`, tfName: this.tfName(run, s.wtf[k]), tierName: TN[code] || '', tierColor: S.TIER_COLOR[code] || '#0ca30c',
+      countsText: `Over nameplate ${c[0] + c[1] + c[2] + c[3]} · above 110% ${c[1] + c[2] + c[3]} · emergency ${c[3]} · open ${c[4]}`,
+      focus: focusNow, focusTop: `${fmt(Math.max(...Object.keys(s.focus).map((key) => s.focus[key].pct[k])), 0)}%`,
+      price: `$${fmt(s.price[k], 2)}`, soc: `${fmt(s.soc[k], 0)}%`, socW: `${Math.max(0, Math.min(100, s.soc[k])).toFixed(1)}%`,
+      kw: `${kw >= 0 ? '+' : '−'}${fmt(Math.abs(kw) / 1000, 2)}`,
+      flow: run.branch === 'none' ? 'No batteries' : Math.abs(kw) < 5 ? 'Holding' : kw > 0 ? `Charging +${fmt(kw / 1000, 2)} MW` : `Discharging −${fmt(-kw / 1000, 2)} MW`,
+    };
+    const items = this.storyItems || []; let cur = items[0] || { t: '', text: '' };
+    for (const it of items) if (it.k <= k) cur = it;
+    const storyList = items.map((it) => ({ t: it.t, text: it.text, color: it.k <= k ? '#10231a' : '#8f8b7f', weight: it === cur ? 700 : 400,
+      dot: it === cur ? '#1e4d2b' : it.fault ? '#b23a2f' : it.k <= k ? '#8aa58f' : '#e3dfd3', onClick: () => this.seek(it.k) }));
+    const marks = items.slice(1, -1).map((it, i) => ({ left: S.xPct(it.k, n), color: it.fault ? '#b23a2f' : '#a9a497', weight: it.fault ? 700 : 400, hasLabel: false, short: it.t }));
+    return {
+      ...base, p: this.paths, now, story: cur, storyList, marks,
+      clipW: +(k / (n - 1) * 1000).toFixed(1), curLeft: S.xPct(k, n), clock: S.timeOf(k), stepNo: k + 1,
+      fleetN: (run.topology.fleet || []).length, noFleet: run.branch === 'none',
+      ...this.cardVals(run, k), fx: this.fxVals(run, k),
+      ruleNow: (() => { let r = (this.rules || [])[0] || { t: '', text: '' }; for (const x of this.rules || []) if (x.k <= k) r = x; return r; })(),
+    };
+  }
+}
+</script>
+</body>
+</html>
