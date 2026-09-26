@@ -346,6 +346,18 @@ function deeplinks() {
 }
 const param = (q, k) => new URLSearchParams(q).get(k);
 
+test('deeplinks: history dates are derived from p1/days/index.json; 2026-01-01 is the not-simulated probe', () => {
+  const dated = deeplinks().map((d) => d.query).filter((q) => param(q, 'date'));
+  assert.ok(dated.includes('view=p1&date=2026-01-01'), 'the not-simulated probe');
+  assert.ok(dated.some((q) => param(q, 'branch') === 'aware_faults'), 'a history-day aware_faults probe');
+  const idx = readJSON(path.join(UI, 'data', 'p1', 'days', 'index.json'));
+  if (idx) {
+    const sim = new Set(idx.days.map((d) => d.date));
+    assert.ok(!sim.has('2026-01-01'), 'the probe date must stay not simulated');
+    for (const q of dated) if (param(q, 'date') !== '2026-01-01') assert.ok(sim.has(param(q, 'date')), `${q}: date not in p1/days/index.json`);
+  }
+});
+
 test('deeplinks: exactly three canaries, one P1, one P2 (the default combo) and view=more', () => {
   const c = deeplinks().filter((d) => d.tags.includes('canary'));
   assert.deepEqual(c.map((d) => param(d.query, 'view')), ['p1', 'p2', 'more']);
@@ -375,7 +387,8 @@ test('deeplinks: every P2 combo in p2/index.json, the home= link at its measured
   }
   const meta = readJSON(path.join(UI, 'data', 'p1', 'meta.json'));
   if (meta && meta.tc) {
-    const f = links.filter((q) => param(q, 'branch') === 'aware_faults');
+    // the 23 Aug failure links (a history-day aware_faults link is the notice probe: failures are scripted for 23 Aug only)
+    const f = links.filter((q) => param(q, 'branch') === 'aware_faults' && !param(q, 'date'));
     assert.ok(f.length >= 1, 'an aware_faults link');
     for (const q of f) assert.equal(param(q, 't'), minToHHMM(hhmmToMin(meta.tc.t) + 16), 'aware_faults t = Tc + 16 (meta.tc)');
   }
