@@ -12,6 +12,8 @@ Read in this order. Each file has one job; do not duplicate content between them
 | [headroom/](headroom/README.md) | The Headroom PRD, five design proposals, two critiques, and the research notes behind the report. | Supporting material. | Depth for adopted pieces: device acceptance rules (PRD §7.5), detector definitions (§6.4), metrics (§9), Track 1 methods (§9.5), risks (§12) |
 | [../headroom-gridspine-dossier.html](../headroom-gridspine-dossier.html) | GridSpine Atlas v0.2. | Supporting material. | The stretch transmission layer and the CIM vocabulary |
 
+The root app built overnight on 26 Sep 2026 documents its simulator-to-UI data contracts in [contracts.md](contracts.md).
+
 The working prototype in [demos/grid-stories/](../demos/grid-stories/README.md) has its own runbook and an honest list of limitations. It is the spine the main app is promoted from.
 
 ## How they relate

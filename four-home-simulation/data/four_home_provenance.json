@@ -1,0 +1,33 @@
+{
+ "fetchedAt": "2026-09-26T03:48:59.821279+00:00",
+ "license_note": "ERCOT data may be redistributed in analyses; windows pre extracted per repo CLAUDE.md",
+ "zone_framing": "LZ_NORTH per PRD R-3 Oncor suburb stand in",
+ "files": {
+  "spp_2026-09-25.csv": {
+   "source": "https://www.ercot.com/api/1/services/read/dashboards/system-wide-prices.json",
+   "emil": "NP6-905-CD",
+   "publishedAt": "2026-09-25 22:47:00-0500",
+   "label": "interval ending, 15 min"
+  },
+  "freq_2026-09-25.csv": {
+   "source": "https://www.ercot.com/api/1/services/read/dashboards/dc-tie-flows.json",
+   "publishedAt": "2026-09-25 22:46:00-0500",
+   "label": "system frequency Hz (3 decimals, 1 mHz resolution) and system inertia MW s"
+  },
+  "demand_2026-09-25.csv": {
+   "source": "https://www.ercot.com/api/1/services/read/dashboards/supply-demand.json",
+   "publishedAt": "2026-09-25 22:45:00-0500",
+   "label": "ERCOT demand, 5 min"
+  },
+  "storage_2026-09-25.csv": {
+   "source": "https://www.ercot.com/api/1/services/read/dashboards/energy-storage-resources.json",
+   "publishedAt": "2026-09-25 22:46:01-0500",
+   "label": "ERCOT energy storage resources, charging negative, 5 min"
+  },
+  "smartds/": {
+   "source": "NREL SMART-DS AUS P1U",
+   "license": "CC BY 4.0",
+   "label": "transformer, triplex and primary parameters used verbatim"
+  }
+ }
+}
