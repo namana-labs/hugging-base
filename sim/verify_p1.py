@@ -23,7 +23,7 @@ from .constants import (CORE_POWER_KW, CORE_USABLE_KWH, CORE_RTE, SOC0, RESERVE_
                         COMMAND_TTL_S, STALL_MIN, FAULT_COMMS_AFTER_MIN, FAULT_HOT_AFTER_MIN, FAULT_STALL_AFTER_MIN,
                         HEAD_RATING_KVA, LEGACY_POWER_KW, LABELS)
 from .contracts import UI_DATA, audit_labels
-from .money import ercot_demand, pct_text, scale_ladder, sig
+from .money import ercot_demand, pct_text, scale_ladder, sig, head_kva_per_phase
 from .orchestrator import handoffs
 from .prices import onset_d26, discharge_plan
 from .tiers import normal_events
@@ -354,7 +354,7 @@ def check_scale_ladder(meta, topo, a_tf):
     tf = topo["transformers"][a_tf]
     if pmax is None:
         return False, f"scale  : batteries on A are not one class ({sorted(map(str, cls))})"
-    want = scale_ladder(len(on_a), pmax, "A", tf["id"], float(tf["kva"]), HEAD_RATING_KVA, ercot_demand())
+    want = scale_ladder(len(on_a), pmax, "A", tf["id"], float(tf["kva"]), head_kva_per_phase(), ercot_demand())
     kw = sl["kw"]["v"]
     arith = all(abs(r["sharePct"]["v"] - sig(kw / (r["base"]["v"] * (1000.0 if r["base"]["unit"] == "MW" else 1.0)) * 100))
                 <= 1e-12 * max(1.0, abs(r["sharePct"]["v"])) for r in sl["rungs"])
@@ -362,8 +362,8 @@ def check_scale_ladder(meta, topo, a_tf):
     ok = sl == want and arith and not bare and [r["scale"] for r in sl["rungs"]] == ["can", "feeder", "ercot"]
     r = {x["scale"]: x for x in sl["rungs"]}
     txt = (f"scale  : {kw:g} kW ({len(on_a)} batteries on A) = {pct_text(r['can']['sharePct']['v'])} of A's "
-           f"{r['can']['base']['v']:g} kVA can ; {pct_text(r['feeder']['sharePct']['v'])} of the feeder head "
-           f"({r['feeder']['base']['v']:,.1f} kVA) ; {pct_text(r['ercot']['sharePct']['v'])} of ERCOT "
+           f"{r['can']['base']['v']:g} kVA can ; {pct_text(r['feeder']['sharePct']['v'])} of one head-cable conductor "
+           f"({r['feeder']['base']['v']:,.1f} kVA per phase) ; {pct_text(r['ercot']['sharePct']['v'])} of ERCOT "
            f"({r['ercot']['base']['v']:,.0f} MW peak demand, {r['ercot']['base'].get('at')}) "
            f"(DERIVED){'' if sl == want else ' ; differs from the re-derivation'}{'' if arith else ' ; share != kW / base'}"
            f"{(' ; bare numbers: ' + ', '.join(bare[:3])) if bare else ''}")
