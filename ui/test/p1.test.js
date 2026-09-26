@@ -16,8 +16,9 @@ import {
   faultText, seriesLabel, optsFor, humanKey, NAIVE_FRAMING, BRANCH_NAMES, SPEEDS, DEFAULT_SPEED, MS_PER_STEP, moneyHTML, isLabelledRecord,
   spikeDriverAt, driverLineHTML, DRIVER_WINDOW_MIN, ladderHTML, pctOpts, ladderFrac, reliefPeakAt, storyCues, cueText, chainValue, activeCue,
   CHAINS, HOLD_STEPS, SELL_SHARE, ALL_SHARE, DONE_SOC, dayLabel, dayOffsetAt, whoPhrase, ratioWord, priceLevel, isBare, meanSoc, tfTipHTML,
-  batteryTipHTML, homeTipHTML, nowWhy, tiersPresent, BEAT_SECTIONS, SPEED_TIPS, cashAt,
+  batteryTipHTML, homeTipHTML, nowWhy, tiersPresent, BEAT_SECTIONS, SPEED_TIPS, cashAt, supportsDates, ALL_BRANCHES,
 } from '../panels/p1.js';
+import zlib from 'node:zlib';
 
 const UI = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const readJSON = (rel) => JSON.parse(fs.readFileSync(path.join(UI, 'data', rel), 'utf8'));
@@ -384,4 +385,32 @@ test('scale ladder: rungs with their words + base tag, shares below 0.1% to 2 si
   const html = ladderHTML(fmt, ladder);
   assert.equal((html.match(/class="p1-rung p1-rung-/g) || []).length, ladder.rungs.length);
   assert.ok(!/>0\.0%</.test(html));
+});
+
+test('history days (checkpoint b): the panel reads &date=; every simulated evening tells its own story from its own data', () => {
+  assert.equal(supportsDates, true);
+  assert.deepEqual(ALL_BRANCHES, ['none', 'naive', 'aware', 'aware_faults']);
+  // the spike cue (and the relief section) only on an evening where A went over its nameplate with no batteries
+  const flat = { ...meta, relief: { ...meta.relief, minutesOver100: { ...(meta.relief || {}).minutesOver100, none: 0 } } };
+  assert.ok(!storyCues(flat, docs.none, 'none', topology, fmt).some((c) => c.id === 'spike'));
+  const idxPath = path.join(UI, 'data', 'p1', 'days', 'index.json');
+  if (!fs.existsSync(idxPath)) return;   // before l2's history build lands: nothing more to check
+  const index = JSON.parse(fs.readFileSync(idxPath, 'utf8'));
+  for (const row of index.days || []) {
+    if (!row.date || row.date === meta.day) continue;
+    const dir = path.join(UI, 'data', 'p1', 'days', row.date);
+    const m = JSON.parse(fs.readFileSync(path.join(dir, 'meta.json'), 'utf8'));
+    assert.equal(m.day, row.date);
+    assert.ok(!m.branches.includes('aware_faults'), 'failures are scripted for 23 Aug only');
+    const namesD = { tf: tfName, home: homeLabel, time: (st) => fmt.stepToTime(m, st) };
+    for (const b of m.branches) {
+      const d = JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(dir, `${b}.json.gz`))).toString('utf8'));
+      const cs = storyCues(m, d, b, topology, fmt);
+      for (const c of cs) assert.deepEqual(bareDigits(cueText(c, fmt, namesD, b)), [], `${row.date} ${b} ${c.id}`);
+      const at = Object.fromEntries(cs.map((c) => [c.id, c]));
+      if (b === 'naive' && at.overload) assert.ok(at.drop.k <= at.overload.k);
+      if (b === 'aware') for (const id of ['overload', 'allcharge', 'backfeed']) assert.ok(!at[id], `${row.date} aware has no ${id}`);
+      if (m.cash && m.cash[b]) assert.equal(cashAt(m, b, m.steps - 1).v, m.summary[b].energyValueUSD.v, `${row.date} ${b}: the money meter ends at the evening's value`);
+    }
+  }
 });

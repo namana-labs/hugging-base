@@ -15,6 +15,9 @@
 // label. Tiers, runs and protection come from the JSON; nothing here re-derives them. No label is invented in the UI.
 import { svg, TIER_WORDS, TIER_TIPS, STATE_WORDS, STATE_RGB, TIER_RGB } from '../lib/icons.js';
 
+export const ALL_BRANCHES = ['none', 'naive', 'aware', 'aware_faults'];
+/** The panel reads `&date=` itself (app.js routes a simulated history day here only when this is true). */
+export const supportsDates = true;
 export const BRANCH_NAMES = { none: 'no batteries', naive: 'naive', aware: 'feeder-aware', aware_faults: 'aware + failures' };
 export const TAB_NAMES = { none: 'No batteries', naive: 'Naive', aware: 'Feeder-aware', aware_faults: '+ Failures' };
 export const TAB_ICONS = { none: 'house', naive: 'battery', aware: 'turns', aware_faults: 'warn' };
@@ -262,6 +265,8 @@ export const CHAINS = {
 const CUE_ICON = { spike: 'house', unrelieved: 'arrowRight', sell: 'out', backfeed: 'warn', sellcap: 'check', peak: 'priceUp', drop: 'priceDown',
   allcharge: 'bolt', overload: 'warn', worst: 'warn', clear: 'check', check: 'check', turns: 'turns', charged: 'ok', comms_lost: 'silent',
   hot: 'hot', stall: 'stall', resume: 'play', nothing: 'priceDown' };
+const TIE = { unrelieved: 0, spike: 1, sell: 2, backfeed: 3, sellcap: 3, peak: 4, drop: 5, nothing: 6, overload: 6, worst: 7, clear: 8,
+  allcharge: 9, check: 9, turns: 10, charged: 11, comms_lost: 12, hot: 12, stall: 12, resume: 13 };
 const CUE_TONE = { backfeed: 'bad', overload: 'bad', worst: 'bad', allcharge: 'bad', comms_lost: 'bad', hot: 'bad', stall: 'bad',
   sellcap: 'ok', clear: 'info', check: 'ok', turns: 'ok', charged: 'ok', resume: 'ok', peak: 'money' };
 
@@ -397,7 +402,9 @@ export function storyCues(meta, doc, branch, topology, fmt) {
   }
   // chain membership
   for (const [i, [id]] of (CHAINS[branch] || []).entries()) { const c = out.find((x) => x.id === id); if (c) c.chain = i; }
-  const order = (c) => out.indexOf(c);
+  // ties at one step: the more telling line comes last and wins (at the naive onset "every battery charges at once"
+  // carries the overload count; the aware onset says "room checked first")
+  const order = (c) => (TIE[c.id] ?? 50) * 1000 + out.indexOf(c);
   return out.slice().sort((a, b) => a.k - b.k || order(a) - order(b));
 }
 
@@ -878,11 +885,14 @@ export async function mount(el, ctx) {
   const search = typeof location !== 'undefined' ? location.search : '';
   const q = new URLSearchParams(search);
   const bare = isBare(link, search);
-  const meta = await data.loadP1Meta();
+  // checkpoint (b): the evening of `&date=` (app.js resolves it first: an unknown date is a notice + 23 Aug, and
+  // aware_faults on a history day opens aware). 23 Aug reads p1/*.json; other days p1/days/<date>/, never a fixture.
+  const date = link.date && data.DEFAULT_DATE && link.date !== data.DEFAULT_DATE ? link.date : null;
+  const meta = await (date && data.loadP1MetaFor ? data.loadP1MetaFor(date) : data.loadP1Meta());
   const branches = meta.branches;
   let branch = bare ? 'naive' : (branches.includes(link.branch) ? link.branch : branches[0]);
   const docs = {};
-  const loadDoc = async (b) => (docs[b] || (docs[b] = await data.loadP1Branch(b)));
+  const loadDoc = async (b) => (docs[b] || (docs[b] = await (date && data.loadP1BranchFor ? data.loadP1BranchFor(date, b) : data.loadP1Branch(b))));
   let doc = await loadDoc(branch);
   let k = initialStep(meta, link, fmt, bare);
   const linkSpeed = Number(link.speed || q.get('speed'));
@@ -919,7 +929,7 @@ export async function mount(el, ctx) {
   el.innerHTML = `
     <section class="p1-card p1-daycard">
       <div class="p1-day" id="p1-day"></div>
-      <nav class="p1-scn" role="tablist">${branches.map((b) => `<a href="${ctx.href({ branch: b, t: fmt.stepToTime(meta, k) })}" data-branch="${b}" aria-current="${b === branch}" data-tip="${esc(TAB_LINES[b] || '')}">${svg(TAB_ICONS[b] || 'info', { size: 16, level: 0.7, state: 'I' })}<span>${esc(TAB_NAMES[b] || b)}</span>${b === 'naive' ? fmt.chip('ASSUMPTION', NAIVE_FRAMING) : ''}<span class="scn-out" id="scn-out-${b}"></span></a>`).join('')}</nav>
+      <nav class="p1-scn" role="tablist">${ALL_BRANCHES.map((b) => `<a href="${ctx.href({ branch: b, t: fmt.stepToTime(meta, k) })}" data-branch="${b}" aria-current="${b === branch}"${branches.includes(b) ? '' : ' aria-disabled="true"'} data-tip="${esc(branches.includes(b) ? TAB_LINES[b] || '' : `${TAB_LINES[b] || ''} Failures are scripted for ${dayLabel(data.DEFAULT_DATE || '2026-08-23')} only.`)}">${svg(TAB_ICONS[b] || 'info', { size: 16, level: 0.7, state: 'I' })}<span>${esc(TAB_NAMES[b] || b)}</span>${b === 'naive' ? fmt.chip('ASSUMPTION', NAIVE_FRAMING) : ''}<span class="scn-out" id="scn-out-${b}"></span></a>`).join('')}</nav>
       <p class="p1-scn-sub" id="p1-scn-sub"></p>
     </section>
     <section class="p1-card p1-now" id="p1-now" aria-live="polite"></section>
@@ -936,6 +946,20 @@ export async function mount(el, ctx) {
     ${sec('log', 'log', 'Controller log')}
     ${sec('sources', 'book', 'Sources and assumptions')}`;
   const $ = (id) => el.querySelector('#' + id);
+  // the day picker (l0's days.js, checkpoint b): real ERCOT evenings from p1/days/index.json (+ the money calendar);
+  // picking one keeps branch, cam, t and speed, and pauses. Before l2 builds the index it shows the date alone.
+  let dayPicker = null;
+  try {
+    const days = await import('../lib/days.js');
+    const [index, calendar] = await Promise.all([
+      data.loadP1Days ? data.loadP1Days().catch(() => null) : null,
+      data.loadCalendar ? data.loadCalendar().catch(() => null) : null,
+    ]);
+    dayPicker = days.mountDayPicker($('p1-day'), { index, calendar, date: meta.day, onPick: (d) => {
+      if (playing) setPlaying(false);
+      ctx.go({ date: d, branch, t: fmt.stepToTime(meta, k), cam: link.cam || (bare ? 'street' : null), speed: speed === DEFAULT_SPEED ? null : speed });
+    } });
+  } catch (e) { dayPicker = null; }
   // A closed section holds its HTML aside and renders it only when opened: what is not visible is not in the page (the
   // clutter metric and the reader see the same thing), and a playing clock never rebuilds hidden tables.
   const pendingBody = {};
@@ -996,6 +1020,7 @@ export async function mount(el, ctx) {
     for (const a of el.querySelectorAll('.p1-scn a')) {
       const b = a.dataset.branch;
       a.setAttribute('aria-current', String(b === branch));
+      if (!branches.includes(b)) continue;
       a.href = ctx.href({ branch: b, t: fmt.stepToTime(meta, k) });
       const s = meta.summary && meta.summary[b];
       const out = $('scn-out-' + b);
@@ -1009,7 +1034,9 @@ export async function mount(el, ctx) {
       out.innerHTML = svg(bad > 0 ? 'warn' : 'check', { size: 14 });
     }
     $('p1-scn-sub').textContent = TAB_LINES[branch] || '';
-    $('p1-day').innerHTML = `<span class="p1-daychip" data-tip="A real Texas day: ERCOT prices (REAL); home loads are the same calendar date in the 2018 SMART-DS year (ASSUMPTION).">${svg('calendar', { size: 16 })} ${esc(dayLabel(meta.day))} ${fmt.chip(priceLabel, 'ERCOT RTM SPP LZ_NORTH, recorded; the loads are the same calendar date in 2018 (ASSUMPTION)')}</span>`;
+    if (!dayPicker) {
+      $('p1-day').innerHTML = `<span class="p1-daychip" data-tip="A real Texas day: ERCOT prices (REAL); home loads are the same calendar date in the 2018 SMART-DS year (ASSUMPTION).">${svg('calendar', { size: 16 })} ${esc(dayLabel(meta.day))} ${fmt.chip(priceLabel, 'ERCOT RTM SPP LZ_NORTH, recorded; the loads are the same calendar date in 2018 (ASSUMPTION)')}</span>`;
+    }
     cues = storyCues(meta, doc, branch, topology, fmt);
     renderSections();
     renderLegend();
@@ -1037,7 +1064,10 @@ export async function mount(el, ctx) {
     set('faults', evs.length ? `${evs.length === 3 ? 'three' : evs.length} failures: ${evs.map((e) => (e.kind === 'comms_lost' ? 'silent battery' : e.kind === 'hot' ? 'EV' : e.kind === 'stall' ? 'controller freeze' : e.kind)).join(' · ')}` : '');
     // relief (the feeder-aware branches)
     const r = meta.relief;
-    const showRelief = !!r && (branch === 'aware' || branch === 'aware_faults');
+    // only on an evening where A went over its nameplate with no batteries (HIST-R2 3.1: the relief is derived, never assumed)
+    const mo = r && r.minutesOver100;
+    const overNone = mo && typeof mo === 'object' ? (typeof mo.none === 'number' ? mo.none : (mo.none && mo.none.v) || 0) : 0;
+    const showRelief = !!r && overNone > 0 && (branch === 'aware' || branch === 'aware_faults');
     hideSec('relief', !showRelief);
     if (r) {
       $('sec-relief-t').textContent = `Batteries helped at ${r.t || ''}`;
@@ -1497,6 +1527,7 @@ export async function mount(el, ctx) {
     const a = ev.target.closest('a[data-branch]');
     if (!a) return;
     ev.preventDefault();
+    if (a.getAttribute('aria-disabled') === 'true') return;
     switchBranch(a.dataset.branch);
   });
   $('p1-streetcols').addEventListener('click', (ev) => {
