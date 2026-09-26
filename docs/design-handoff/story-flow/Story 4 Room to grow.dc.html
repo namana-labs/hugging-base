@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Hugging Base · Story 4 · Room to grow</title>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>html,body{margin:0;background:#e6e2d7;color:#10231a;font-family:'Hanken Grotesk',system-ui,sans-serif}*{box-sizing:border-box}a{color:#1e4d2b}a:hover{color:#2a6a3b}input[type=range]{accent-color:#1e4d2b}</style>
+</helmet>
+<section id="t4" style="padding:48px 56px 64px;display:flex;flex-direction:column;gap:22px">
+  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+    <span style="font:600 11px ui-monospace,Menlo,monospace;padding:3px 7px;background:#10231a;color:#fff;border-radius:4px">STEP 4</span>
+    <span style="font-size:18px;font-weight:700">Room to grow</span>
+    <span style="font-size:14px;color:#5f6b63">Story: feeder-aware charging fits more batteries on the same equipment. Which transformers have room, how many fit on one, which are worth upgrading. <a href="Story%203%20Results.dc.html">← Step 3 · Read the result</a></span>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+
+  <div id="4a" style="display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;align-items:baseline;gap:8px;font-size:13px;color:#5f6b63"><a href="#4a" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#10231a;border-radius:5px;text-decoration:none">4a</a>All three answers on one screen: naive and feeder-aware maps side by side, one transformer and the upgrade list below</div>
+    <div data-screen-label="4a Room to grow overview" style="width:1600px;height:900px;background:#f7f4ec;display:flex;flex-direction:column;border-radius:8px;overflow:hidden;border:1px solid rgba(0,0,0,.08)">
+      <div style="height:60px;flex:none;display:flex;align-items:center;gap:18px;padding:0 24px;border-bottom:1px solid #e3dfd3">
+        <div style="flex:none;white-space:nowrap;font-weight:700;font-size:21px;letter-spacing:-0.02em;color:#1e4d2b">Hugging Base</div>
+        <div style="width:1px;height:24px;background:#e3dfd3"></div>
+        <div style="flex:none;white-space:nowrap;font-size:16px">Room to grow <span style="color:#5f6b63">· August 2026</span></div>
+        <nav style="flex:none;white-space:nowrap;display:flex;gap:2px;padding:3px;border:1px solid #e3dfd3;border-radius:8px;font-size:13px;margin-left:12px">
+          <a href="Story%201%20Levers.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">1 Set the levers</a>
+          <a href="Story%202%20Watch.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">2 Watch it play</a>
+          <a href="Story%203%20Results.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">3 Read the result</a>
+          <a href="Story%204%20Room%20to%20grow.dc.html" style="padding:5px 10px;border-radius:6px;background:#e4efe6;color:#1e4d2b;font-weight:700;text-decoration:none">4 Room to grow</a>
+        </nav>
+        <div style="flex:1"></div>
+        <div style="flex:none;white-space:nowrap;font-size:13px;color:#5f6b63">Core batteries · D-26 onset · today's load</div>
+      </div>
+      <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:12px;padding:16px 20px">
+        <div style="flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:minmax(0,1fr);gap:12px">
+          <sc-for list="{{ maps }}" as="m" hint-placeholder-count="2">
+            <div style="background:#fffdf8;border:1px solid {{ m.border }};border-radius:10px;padding:12px 14px 10px;display:flex;flex-direction:column;gap:8px;min-height:0">
+              <div style="display:flex;align-items:baseline;gap:10px">
+                <span style="font-size:15px;font-weight:700">{{ m.title }}</span><span style="font-size:12.5px;color:#5f6b63">{{ m.sub }}</span>
+                <span style="margin-left:auto;font-size:12.5px;color:#5f6b63">full or over <b style="color:#10231a;font-variant-numeric:tabular-nums">{{ m.full }}</b> of 379</span>
+              </div>
+              <div style="flex:1;min-height:0;position:relative;background:#efece3;border-radius:8px;overflow:hidden">
+                <svg viewBox="{{ geo.vb }}" preserveAspectRatio="xMidYMid meet" style="position:absolute;inset:0;width:100%;height:100%">
+                  <path d="{{ geo.edges }}" fill="none" stroke="#c3c9bf" stroke-width="{{ geo.ew }}" stroke-linecap="round"></path>
+                  <sc-for list="{{ m.dots }}" as="d" hint-placeholder-count="0"><circle cx="{{ d.x }}" cy="{{ d.y }}" r="{{ geo.r }}" fill="{{ d.c }}" stroke="#fffdf8" stroke-width="{{ geo.sw }}" onClick="{{ d.onClick }}" style="cursor:pointer"></circle></sc-for>
+                  <circle cx="{{ sel.x }}" cy="{{ sel.y }}" r="{{ geo.rr }}" fill="none" stroke="#10231a" stroke-width="{{ geo.sw2 }}"></circle>
+                </svg>
+                <div style="position:absolute;left:10px;top:10px;display:flex;flex-direction:column;gap:2px;padding:9px 12px;background:rgba(255,253,248,.95);border:1px solid #e3dfd3;border-radius:8px">
+                  <span style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#5f6b63">USEFUL CAPACITY</span>
+                  <span style="font-size:40px;font-weight:700;line-height:1;letter-spacing:-0.02em;font-variant-numeric:tabular-nums">{{ m.cap }}</span>
+                  <span style="font-size:12px;color:#5f6b63">batteries before the first one causes a problem</span>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;font-size:12px;color:#34443a;flex-wrap:wrap">
+                <sc-for list="{{ legend }}" as="l" hint-placeholder-count="4"><span style="display:flex;align-items:center;gap:5px"><span style="width:11px;height:11px;border-radius:50%;background:{{ l.c }}"></span>{{ l.name }} <b style="font-variant-numeric:tabular-nums">{{ l.n }}</b></span></sc-for>
+                <span style="margin-left:auto;display:flex;align-items:center;gap:6px;color:#5f6b63"><span style="padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em">SIM</span>{{ m.cite }}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="flex:none;height:330px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:12px">
+          <div style="background:#fffdf8;border:1.5px solid #10231a;border-radius:10px;padding:12px 16px;display:flex;flex-direction:column;gap:10px;min-width:0">
+            <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">HOW MANY FIT ON ONE TRANSFORMER</span><span style="margin-left:auto;padding:1px 5px;border:1px dashed #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">SCREENING</span></div>
+            <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:20px;font-weight:700">{{ one.name }}</span><span style="font-size:13px;color:#5f6b63">{{ one.sub }}</span><span style="margin-left:auto;font-size:12px;color:#5f6b63">click any dot to pick another</span></div>
+            <div style="display:flex;align-items:center;gap:14px"><span style="flex:none;font-size:13px;color:#34443a">Batteries on it</span><input type="range" min="0" max="50" step="1" value="{{ n }}" onChange="{{ onN }}" style="flex:1"><span style="flex:none;width:44px;text-align:right;font-size:26px;font-weight:700;font-variant-numeric:tabular-nums">{{ n }}</span></div>
+            <div style="display:grid;grid-template-columns:110px minmax(0,1fr) 170px;gap:6px 10px;align-items:center">
+              <sc-for list="{{ one.rows }}" as="r" hint-placeholder-count="2">
+                <span style="font-size:13px;font-weight:700">{{ r.name }}</span>
+                <div style="position:relative;display:grid;grid-template-columns:repeat(51,1fr);gap:1px;height:22px"><sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="0"><div style="background:{{ c.c }};opacity:{{ c.op }};border-radius:1px"></div></sc-for><div style="position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;background:#10231a;left:{{ one.curLeft }}"></div></div>
+                <span style="font-size:12.5px;font-variant-numeric:tabular-nums;color:#34443a">fits <b style="color:#10231a;font-size:15px">{{ r.fit }}</b> · {{ r.at }}</span>
+              </sc-for>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:10.5px;color:#5f6b63;margin-left:120px;margin-right:180px;font-variant-numeric:tabular-nums"><span>0</span><span>10</span><span>20</span><span>30</span><span>40</span><span>50</span></div>
+            <div style="font-size:12.5px;line-height:1.45;color:#34443a;text-wrap:pretty">{{ one.answer }}</div>
+            <div style="margin-top:auto;display:flex;align-items:center;gap:10px">
+              <button onClick="{{ doCheck }}" style="flex:none;font:inherit;font-size:13px;font-weight:700;padding:8px 13px;border-radius:8px;border:1px solid #1e4d2b;background:{{ check.bg }};color:{{ check.fg }};cursor:pointer">{{ check.label }}</button>
+              <span style="font-size:11.5px;color:#5f6b63;text-wrap:pretty">{{ check.note }}</span>
+            </div>
+          </div>
+
+          <div style="background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:12px 16px;display:flex;flex-direction:column;gap:8px;min-width:0">
+            <div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">WHICH ARE WORTH UPGRADING</span>
+              <div style="margin-left:auto;display:flex;gap:2px;padding:3px;border:1px solid #e3dfd3;border-radius:8px"><sc-for list="{{ rankOpts }}" as="o" hint-placeholder-count="2"><button onClick="{{ o.onClick }}" style="border:0;padding:4px 9px;border-radius:6px;font:inherit;font-size:12.5px;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }};font-weight:{{ o.weight }}">{{ o.text }}</button></sc-for></div>
+            </div>
+            <div style="font-size:14px;font-weight:700;text-wrap:pretty">{{ up.headline }}</div>
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) 90px 60px 100px 100px 90px 110px;gap:0 10px;font-size:11.5px;font-weight:700;color:#5f6b63;padding:4px 0;border-bottom:1px solid #e3dfd3"><span>Transformer</span><span>kVA</span><span>Homes</span><span>Fits now</span><span>After upgrade</span><span>Aug h over 100%</span><span>$ per added battery</span></div>
+            <sc-if value="{{ up.empty }}" hint-placeholder-val="{{ false }}"><div style="padding:14px 0;font-size:13.5px;color:#34443a;text-wrap:pretty">{{ up.emptyText }}</div></sc-if><sc-for list="{{ up.rows }}" as="r" hint-placeholder-count="6"><div onClick="{{ r.onClick }}" style="display:grid;grid-template-columns:minmax(0,1fr) 90px 60px 100px 100px 90px 110px;gap:0 10px;font-size:12.5px;padding:4px 0;border-bottom:1px solid #efece3;font-variant-numeric:tabular-nums;cursor:pointer;background:{{ r.bg }}"><span style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span><span>{{ r.kva }}</span><span>{{ r.homes }}</span><span>{{ r.now }}</span><span>{{ r.after }}</span><span>{{ r.h100 }}</span><span>{{ r.per }}</span></div></sc-for>
+            <div style="margin-top:auto;display:flex;align-items:center;gap:8px;font-size:12px;color:#5f6b63">
+              <span style="flex:none">Upgrade cost per transformer</span>
+              <input type="text" value="{{ costStr }}" onChange="{{ onCost }}" placeholder="not sourced · enter $" style="width:150px;font:inherit;font-size:12.5px;padding:5px 8px;border:1px solid #cfcabd;border-radius:6px;background:#fffdf8;color:#10231a">
+              <span style="text-wrap:pretty">No figure is sourced (TRANSFORMER_REPLACEMENT_USD), so the $ column stays empty until you enter one.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="4b" style="display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;align-items:baseline;gap:8px;font-size:13px;color:#5f6b63"><a href="#4b" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#10231a;border-radius:5px;text-decoration:none">4b</a>Key takeaways: 1 is the A/B of naive vs feeder-aware; 2 to 4 assume feeder-aware only</div>
+    <div data-screen-label="4b Room to grow questions" style="width:1600px;height:900px;background:#f7f4ec;display:flex;flex-direction:column;border-radius:8px;overflow:hidden;border:1px solid rgba(0,0,0,.08)">
+      <div style="height:60px;flex:none;display:flex;align-items:center;gap:18px;padding:0 24px;border-bottom:1px solid #e3dfd3">
+        <div style="flex:none;white-space:nowrap;font-weight:700;font-size:21px;letter-spacing:-0.02em;color:#1e4d2b">Hugging Base</div>
+        <div style="width:1px;height:24px;background:#e3dfd3"></div>
+        <div style="flex:none;white-space:nowrap;font-size:16px">Room to grow <span style="color:#5f6b63">· August 2026</span></div>
+        <nav style="flex:none;white-space:nowrap;display:flex;gap:2px;padding:3px;border:1px solid #e3dfd3;border-radius:8px;font-size:13px;margin-left:12px">
+          <a href="Story%201%20Levers.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">1 Set the levers</a>
+          <a href="Story%202%20Watch.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">2 Watch it play</a>
+          <a href="Story%203%20Results.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">3 Read the result</a>
+          <a href="Story%204%20Room%20to%20grow.dc.html" style="padding:5px 10px;border-radius:6px;background:#e4efe6;color:#1e4d2b;font-weight:700;text-decoration:none">4 Room to grow</a>
+        </nav>
+        <div style="flex:1"></div>
+        <div style="flex:none;white-space:nowrap;font-size:13px;color:#5f6b63">Core batteries · D-26 onset · today's load</div>
+      </div>
+      <div style="flex:1;min-height:0;display:grid;grid-template-columns:260px minmax(0,1fr) 480px;grid-template-rows:minmax(0,1fr)">
+        <div style="border-right:1px solid #e3dfd3;padding:22px 14px;display:flex;flex-direction:column;gap:4px">
+          <div style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63;padding:0 10px 10px">KEY TAKEAWAYS</div>
+          <sc-for list="{{ qs }}" as="q" hint-placeholder-count="4"><button onClick="{{ q.onClick }}" style="font:inherit;text-align:left;border:0;display:flex;gap:12px;padding:10px;border-radius:8px;cursor:pointer;background:{{ q.bg }};color:#10231a"><span style="width:26px;height:26px;flex:none;border-radius:50%;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;background:{{ q.dotBg }};color:{{ q.dotFg }};border:1.5px solid {{ q.dotBorder }}">{{ q.i }}</span><span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:{{ q.weight }}">{{ q.title }}</span><span style="font-size:12.5px;color:#5f6b63">{{ q.sub }}</span></span></button></sc-for>
+          <div style="margin-top:auto;padding:10px;font-size:12px;color:#5f6b63;text-wrap:pretty">Where to charge and what happens when things fail are steps 2 and 3.</div>
+        </div>
+        <div style="min-width:0;padding:16px 18px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <sc-if value="{{ q1 }}" hint-placeholder-val="{{ true }}"><div style="display:flex;gap:2px;padding:3px;border:1px solid #e3dfd3;border-radius:8px;background:#fffdf8"><sc-for list="{{ viewOpts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.onClick }}" style="border:0;padding:6px 12px;border-radius:6px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.text }}</button></sc-for></div></sc-if><sc-if value="{{ notQ1 }}" hint-placeholder-val="{{ false }}"><span style="font-size:13px;font-weight:700;padding:6px 12px;border-radius:6px;background:#e4efe6;color:#1e4d2b">Feeder-aware</span></sc-if>
+            <span style="margin-left:auto;font-size:12.5px;color:#5f6b63">{{ bigMap.caption }}</span>
+          </div>
+          <div style="flex:1;min-height:0;position:relative;background:#efece3;border:1px solid #e3dfd3;border-radius:10px;overflow:hidden">
+            <svg viewBox="{{ geo.vb }}" preserveAspectRatio="xMidYMid meet" style="position:absolute;inset:0;width:100%;height:100%">
+              <path d="{{ geo.edges }}" fill="none" stroke="#c3c9bf" stroke-width="{{ geo.ew }}" stroke-linecap="round"></path>
+              <sc-for list="{{ bigMap.dots }}" as="d" hint-placeholder-count="0"><circle cx="{{ d.x }}" cy="{{ d.y }}" r="{{ geo.rBig }}" fill="{{ d.c }}" stroke="#fffdf8" stroke-width="{{ geo.sw }}" onClick="{{ d.onClick }}" style="cursor:pointer"></circle></sc-for>
+              <circle cx="{{ sel.x }}" cy="{{ sel.y }}" r="{{ geo.rrBig }}" fill="none" stroke="#10231a" stroke-width="{{ geo.sw2 }}"></circle>
+            </svg>
+            <div style="position:absolute;left:12px;bottom:12px;display:flex;flex-direction:column;gap:5px;padding:9px 12px;background:rgba(255,253,248,.96);border:1px solid #e3dfd3;border-radius:8px;font-size:12.5px">
+              <sc-for list="{{ bigMap.legend }}" as="l" hint-placeholder-count="4"><span style="display:flex;align-items:center;gap:7px"><span style="width:11px;height:11px;border-radius:50%;background:{{ l.c }}"></span>{{ l.name }}<b style="margin-left:auto;padding-left:14px;font-variant-numeric:tabular-nums">{{ l.n }}</b></span></sc-for>
+            </div>
+            <div style="position:absolute;right:12px;bottom:12px;display:flex;align-items:center;gap:6px;padding:4px 8px;background:rgba(255,253,248,.9);border-radius:6px;font-size:11px;color:#5f6b63"><span style="padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em">{{ bigMap.tag }}</span>{{ bigMap.source }}</div>
+          </div>
+        </div>
+        <aside style="border-left:1px solid #e3dfd3;background:#fffdf8;padding:20px 20px;display:flex;flex-direction:column;gap:12px;min-height:0">
+          <sc-if value="{{ q1 }}" hint-placeholder-val="{{ true }}">
+            <div style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">WHICH TRANSFORMERS HAVE ROOM</div>
+            <div style="font-size:24px;font-weight:700;line-height:1.2;text-wrap:pretty">The same feeder holds {{ capAware }} batteries with feeder-aware charging, and {{ capNaive }} with a naive split.</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <sc-for list="{{ maps }}" as="m" hint-placeholder-count="2"><div style="border:1px solid {{ m.border }};border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px"><span style="font-size:13px;font-weight:700">{{ m.title }}</span><span style="font-size:40px;font-weight:700;line-height:1;letter-spacing:-0.02em;font-variant-numeric:tabular-nums">{{ m.cap }}</span><span style="font-size:12px;color:#5f6b63">useful capacity · full or over {{ m.full }}</span></div></sc-for>
+            </div>
+            <div style="font-size:13px;line-height:1.5;color:#34443a;text-wrap:pretty">Useful capacity is how many batteries fit, placed one at a time, before the next one causes a problem. For naive that is a transformer over its normal rating. For feeder-aware it is losing more than 10% of the charge. Both builds were checked in OpenDSS for every 15 minutes of August.</div>
+            <div style="font-size:12px;color:#5f6b63">{{ capCite }}</div>
+          </sc-if>
+          <sc-if value="{{ q2 }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">HOW MANY FIT ON ONE TRANSFORMER</span><span style="margin-left:auto;padding:1px 5px;border:1px dashed #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">SCREENING</span></div>
+            <div style="font-size:24px;font-weight:700">{{ one.name }}</div>
+            <div style="font-size:13px;color:#5f6b63">{{ one.sub }}</div>
+            <div style="display:flex;align-items:center;gap:12px"><input type="range" min="0" max="50" step="1" value="{{ n }}" onChange="{{ onN }}" style="flex:1"><span style="flex:none;width:52px;text-align:right;font-size:34px;font-weight:700;font-variant-numeric:tabular-nums">{{ n }}</span></div>
+            <sc-for list="{{ one.awareRows }}" as="r" hint-placeholder-count="1"><div style="display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid #e3dfd3;border-radius:10px"><div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:14px;font-weight:700">{{ r.name }}</span><span style="margin-left:auto;font-size:13px;color:#34443a">fits <b style="font-size:26px;color:#10231a;font-variant-numeric:tabular-nums">{{ r.fit }}</b></span></div><div style="position:relative;display:grid;grid-template-columns:repeat(51,1fr);gap:1px;height:18px"><sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="0"><div style="background:{{ c.c }};opacity:{{ c.op }};border-radius:1px"></div></sc-for><div style="position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;background:#10231a;left:{{ one.curLeft }}"></div></div><span style="font-size:12.5px;color:#5f6b63;font-variant-numeric:tabular-nums">at {{ n }}: {{ r.at }}</span></div></sc-for>
+            <div style="font-size:13px;line-height:1.5;color:#34443a;text-wrap:pretty">{{ one.awareAnswer }}</div>
+            <div style="margin-top:auto;font-size:11.5px;color:#5f6b63;text-wrap:pretty">Screening estimate from the 23 Aug no-battery evening at this transformer (SIM).</div>
+          </sc-if>
+          <sc-if value="{{ q3 }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">WHICH ARE WORTH UPGRADING</span><span style="margin-left:auto;padding:1px 5px;border:1px dashed #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">SCREENING</span></div>
+            <div style="font-size:20px;font-weight:700;line-height:1.25;text-wrap:pretty">{{ up3.headline }}</div>
+            <div style="display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid #e3dfd3;border-radius:10px">
+              <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:700">Home load growth</span><span style="font-size:12px;color:#5f6b63">EVs, heat pumps</span><span style="margin-left:auto;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">ASSUMPTION</span></div>
+              <div style="display:flex;align-items:center;gap:12px"><input type="range" min="0" max="150" step="10" value="{{ growth }}" onChange="{{ onGrowth }}" style="flex:1"><span style="flex:none;width:64px;text-align:right;font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">+{{ growth }}%</span></div>
+              <div style="font-size:11.5px;color:#5f6b63">P2 uses +20% (GROWTH). Higher values are what-ifs.</div>
+            </div>
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) 70px 70px 80px;gap:0 10px;font-size:11.5px;font-weight:700;color:#5f6b63;padding:2px 8px;border-bottom:1px solid #e3dfd3"><span>Tightest transformers</span><span>Homes</span><span>Spare now</span><span>After upgrade</span></div>
+            <sc-for list="{{ up3.rows }}" as="r" hint-placeholder-count="7"><div onClick="{{ r.onClick }}" style="display:grid;grid-template-columns:minmax(0,1fr) 70px 70px 80px;gap:1px 10px;padding:6px 8px;border-radius:8px;cursor:pointer;background:{{ r.bg }};font-variant-numeric:tabular-nums;align-items:baseline"><span style="font-size:13.5px;font-weight:700">{{ r.name }} <span style="font-weight:400;font-size:12px;color:#5f6b63">{{ r.kva }}</span></span><span style="font-size:13px">{{ r.homes }}</span><span style="font-size:13px;font-weight:700;color:{{ r.spareColor }}">{{ r.spare }}</span><span style="font-size:13px">{{ r.after }}</span></div></sc-for>
+            <div style="margin-top:auto;display:flex;flex-direction:column;gap:6px;font-size:12px;color:#5f6b63">
+              <div style="display:flex;align-items:center;gap:8px"><span>Upgrade cost per transformer</span><input type="text" value="{{ costStr }}" onChange="{{ onCost }}" placeholder="not sourced · enter $" style="flex:1;font:inherit;font-size:12.5px;padding:5px 8px;border:1px solid #cfcabd;border-radius:6px;background:#fffdf8;color:#10231a"></div>
+              <span>{{ up3.costNote }}</span>
+            </div>
+          </sc-if>
+          <sc-if value="{{ q4 }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">WHERE A BATTERY HELPS MOST</span><span style="margin-left:auto;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">SIM</span></div>
+            <div style="font-size:20px;font-weight:700;line-height:1.25;text-wrap:pretty">{{ nb.headline }}</div>
+            <div style="font-size:12.5px;color:#5f6b63;text-wrap:pretty">Ranked by transformer stress it removes, then energy value, for August with feeder-aware charging. Each pick adds no new violation.</div>
+            <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:2px;margin:0 -8px;padding:0 8px"><sc-for list="{{ nb.rows }}" as="r" hint-placeholder-count="10"><div onClick="{{ r.onClick }}" style="display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:1px 10px;padding:6px 8px;border-radius:8px;cursor:pointer;background:{{ r.bg }};align-items:baseline;font-variant-numeric:tabular-nums"><span style="font-size:13px;font-weight:700;color:#1e4d2b">{{ r.rank }}</span><span style="font-size:13.5px;font-weight:700">{{ r.home }} <span style="font-weight:400;font-size:12px;color:#5f6b63">on {{ r.tf }}</span></span><span style="font-size:13px;font-weight:700">{{ r.value }}</span><span></span><span style="font-size:12px;color:#5f6b63">{{ r.detail }}</span><span style="font-size:11.5px;color:#5f6b63">energy value</span></div></sc-for></div>
+            <div style="flex:none;font-size:11.5px;color:#5f6b63">sim.p2_build ranking, aware-core-d26-g0 · stress hours SIM (surrogate, calibrated to OpenDSS) · energy value DERIVED from REAL prices</div>
+          </sc-if>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { ready: false, sel: 150, n: 10, growth: 20, rankBy: 'naive', cost: '', q: 1, view: 'diff', check: null };
+  async componentDidMount() {
+    try {
+      const S = this.S = await import(new URL('ui/story.js', document.baseURI).href);
+      const H = S.H;
+      const [none, aware, pA, pN, idx] = await Promise.all([S.loadRun('none'), S.loadRun('aware'), H.getJSON('p2/aware-core-d26-g0.json'), H.getJSON('p2/naive-core-d26-g0.json'), H.getJSON('p2/index.json')]);
+      Object.assign(this, { none, aware, pA, pN, idx });
+      const topo = none.topology; this.topo = topo;
+      const src = topo.meta.source, cos = Math.cos(src[1] * Math.PI / 180), SC = 100000;
+      const P = (ll) => [(ll[0] - src[0]) * cos * SC, -(ll[1] - src[1]) * SC];
+      let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; let d = '';
+      for (const e of topo.edges) { const a = P([e[0], e[1]]), b = P([e[2], e[3]]); d += `M${a[0].toFixed(0)},${a[1].toFixed(0)}L${b[0].toFixed(0)},${b[1].toFixed(0)}`; for (const q of [a, b]) { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); } }
+      const span = Math.max(x1 - x0, y1 - y0), pad = span * 0.04;
+      this.geo = { vb: `${(x0 - pad).toFixed(0)} ${(y0 - pad).toFixed(0)} ${(x1 - x0 + 2 * pad).toFixed(0)} ${(y1 - y0 + 2 * pad).toFixed(0)}`, edges: d,
+        ew: +(span / 700).toFixed(1), r: +(span / 150).toFixed(1), rr: +(span / 70).toFixed(1), rBig: +(span / 120).toFixed(1), rrBig: +(span / 55).toFixed(1), sw: +(span / 900).toFixed(1), sw2: +(span / 350).toFixed(1) };
+      this.pts = topo.transformers.map((t) => P(t.lonlat).map((v) => +v.toFixed(0)));
+      this.existing = new Array(topo.transformers.length).fill(0); for (const h of topo.fleet || []) this.existing[topo.homes[h].tf] += 1;
+      this.fits = topo.transformers.map((t, tf) => { const now = S.fitModel(none, aware, tf); const up = S.fitModel(none, aware, tf, S.nextKva(t.kva)); return { now, up }; });
+      this.setState({ ready: true });
+    } catch (e) { console.error('[story room]', e); }
+  }
+  tfName(tf) {
+    const f = (this.topo.focus || []).find((x) => x.tf === tf); if (f) return `Street ${f.key}`;
+    if ((this.topo.bridge || []).some((x) => x.tf === tf)) return 'T-240';
+    return `T-${tf}`;
+  }
+  static bucket(p) { return p >= 110 ? 3 : p >= 100 ? 2 : p >= 85 ? 1 : 0; }
+  renderVals() {
+    const st = this.state, S = this.S;
+    const COL = ['#8aa58f', '#d9d4c3', '#c7962b', '#b23a2f'], NAMES = ['room (under 85%)', 'tight (85–100%)', 'full (over nameplate)', 'over normal rating'];
+    const pickSeg = (on) => ({ bg: on ? '#e4efe6' : 'transparent', fg: on ? '#1e4d2b' : '#10231a', weight: on ? 700 : 400 });
+    const base = {
+      n: st.n, onN: (e) => this.setState({ n: Number(e.target.value) }),
+      costStr: st.cost, onCost: (e) => this.setState({ cost: e.target.value }),
+      rankOpts: [['aware', 'Feeder-aware'], ['naive', 'Naive']].map(([v, text]) => ({ text, ...pickSeg(st.rankBy === v), onClick: () => this.setState({ rankBy: v }) })),
+      qs: [['Compare charging algorithms', 'A/B: same feeder, naive vs feeder-aware'], ['How many more can we deploy?', 'One transformer, 0 to 50 batteries'], ['Which transformers should we upgrade?', 'The tightest as home load grows'], ['Where does a battery help most?', 'The next 10 homes, ranked']].map(([title, sub], i) => {
+        const on = st.q === i + 1; return { i: i + 1, title, sub, bg: on ? '#e4efe6' : 'transparent', weight: on ? 700 : 400, dotBg: on ? '#1e4d2b' : 'transparent', dotFg: on ? '#fffdf8' : '#10231a', dotBorder: on ? '#1e4d2b' : '#cfcabd', onClick: () => this.setState({ q: i + 1 }) };
+      }),
+      q1: st.q === 1, q2: st.q === 2, q3: st.q === 3, q4: st.q === 4,
+      notQ1: st.q !== 1, growth: st.growth, onGrowth: (e) => this.setState({ growth: Number(e.target.value) }),
+      viewOpts: [['naive', 'A · Naive split'], ['aware', 'B · Feeder-aware'], ['diff', 'What B adds']].map(([v, text]) => { const on = st.view === v; return { text, bg: on ? '#1e4d2b' : 'transparent', fg: on ? '#fffdf8' : '#10231a', onClick: () => this.setState({ view: v }) }; }),
+    };
+    if (!st.ready) return { ...base, geo: { vb: '0 0 100 100' }, maps: [], legend: [], sel: { x: -999, y: -999 }, one: { rows: [], awareRows: [] }, up: { rows: [] }, up3: { rows: [] }, nb: { rows: [] }, check: {}, bigMap: { dots: [], legend: [] }, capAware: '—', capNaive: '—', capCite: '' };
+    const fmt = S.fmtNum, pts = this.pts, NT = pts.length;
+    const peakA = this.pA.baseline.peak.map((v) => v / 10), peakN = this.pN.baseline.peak.map((v) => v / 10);
+    const bA = peakA.map(Component.bucket), bN = peakN.map(Component.bucket);
+    const pick = (tf) => () => this.setState({ sel: tf, check: null });
+    const cnt = (b) => [0, 1, 2, 3].map((i) => b.filter((x) => x === i).length);
+    const cA = cnt(bA), cN = cnt(bN);
+    const uc = this.idx.usefulCapacity;
+    const maps = [
+      { title: 'Naive split', sub: 'all batteries charge at the onset', full: cN[2] + cN[3], cap: fmt(uc.naive.v), border: '#e3dfd3', cite: 'naive-core-d26-g0', dots: pts.map((p, tf) => ({ x: p[0], y: p[1], c: COL[bN[tf]], onClick: pick(tf) })) },
+      { title: 'Feeder-aware', sub: 'charge only where it fits', full: cA[2] + cA[3], cap: fmt(uc.aware.v), border: '#1e4d2b', cite: 'aware-core-d26-g0', dots: pts.map((p, tf) => ({ x: p[0], y: p[1], c: COL[bA[tf]], onClick: pick(tf) })) },
+    ];
+    const legend = NAMES.map((name, i) => ({ name, c: COL[i], n: '' }));
+    // big map (4b)
+    let bigMap;
+    const g = st.growth / 100;
+    const spareOf = (tf) => { const m = g ? S.fitModel(this.none, this.aware, tf, null, g) : this.fits[tf].now; return m.nAware - m.homes; };
+    const spares = st.q === 3 ? pts.map((p, tf) => spareOf(tf)) : null;
+    const rank = (this.pA.ranking || []).slice(0, 10); const rankTf = new Map(); rank.forEach((r) => { if (!rankTf.has(r.tf)) rankTf.set(r.tf, r.rank); });
+    if (st.q === 4) {
+      bigMap = { caption: 'Feeder-aware · where the next 10 batteries go', dots: pts.map((p, tf) => ({ x: p[0], y: p[1], c: rankTf.has(tf) ? '#1e4d2b' : '#d9d4c3', onClick: pick(tf) })),
+        legend: [{ name: 'a top-10 next-battery home', c: '#1e4d2b', n: rankTf.size }, { name: 'other transformers', c: '#d9d4c3', n: NT - rankTf.size }] };
+    } else if (st.q === 2) {
+      bigMap = { caption: 'Feeder-aware · month peak with our 96 batteries · pick a transformer', dots: pts.map((p, tf) => ({ x: p[0], y: p[1], c: COL[bA[tf]], onClick: pick(tf) })), legend: NAMES.map((name, i) => ({ name, c: COL[i], n: cA[i] })) };
+    } else if (st.q === 3) {
+      const SB = (v) => (v < 0 ? 0 : v === 0 ? 1 : v <= 2 ? 2 : 3); const SCOL = ['#b23a2f', '#c7962b', '#d9d4c3', '#8aa58f'];
+      const sb = spares.map(SB); const sc = [0, 1, 2, 3].map((i) => sb.filter((x) => x === i).length);
+      bigMap = { caption: `Feeder-aware · spare batteries after one at every home · load +${st.growth}%`, dots: pts.map((p, tf) => ({ x: p[0], y: p[1], c: SCOL[sb[tf]], onClick: pick(tf) })),
+        legend: [['needs an upgrade', 0], ['no spare', 1], ['1–2 spare', 2], ['3 or more spare', 3]].map(([name, i]) => ({ name, c: SCOL[i], n: sc[i] })) };
+    } else if (st.view === 'diff') {
+      const gained = [], cls = pts.map((p, tf) => { const g = bN[tf] >= 2 && bA[tf] < 2; if (g) gained.push(tf); return g ? 'g' : bA[tf] >= 2 ? 'f' : 'o'; });
+      const DC = { g: '#1e4d2b', f: '#c7962b', o: '#d9d4c3' };
+      bigMap = { caption: 'Full under naive, room under feeder-aware: the case for our controller', dots: pts.map((p, tf) => ({ x: p[0], y: p[1], c: DC[cls[tf]], onClick: pick(tf) })),
+        legend: [{ name: 'full under naive, room with feeder-aware', c: DC.g, n: gained.length }, { name: 'full under both', c: DC.f, n: cls.filter((x) => x === 'f').length }, { name: 'room under both', c: DC.o, n: cls.filter((x) => x === 'o').length }] };
+    } else {
+      const b = st.view === 'aware' ? bA : bN, c = st.view === 'aware' ? cA : cN;
+      bigMap = { caption: st.view === 'aware' ? 'Feeder-aware · month peak with our 96 batteries' : 'Naive split · month peak with our 96 batteries', dots: pts.map((p, tf) => ({ x: p[0], y: p[1], c: COL[b[tf]], onClick: pick(tf) })), legend: NAMES.map((name, i) => ({ name, c: COL[i], n: c[i] })) };
+    }
+    // one transformer
+    const tf = st.sel, F = this.fits[tf].now, t = this.topo.transformers[tf], n = st.n;
+    const cells = (limit, homes) => Array.from({ length: 51 }, (_, i) => ({ c: i <= limit ? '#8aa58f' : '#e3c6c0', op: i <= homes ? 1 : 0.45 }));
+    const pk = F.naivePeak(n), back = F.awareBack(n);
+    const one = {
+      name: this.tfName(tf), sub: `${t.kva} kVA · ${t.homes.length} home${t.homes.length === 1 ? '' : 's'} · ${this.existing[tf]} of our batteries today · naive month peak ${fmt(peakN[tf], 0)}%, feeder-aware ${fmt(peakA[tf], 0)}%`,
+      curLeft: `${((n + 0.5) / 51 * 100).toFixed(2)}%`,
+      rows: [
+        { name: 'Naive', fit: F.nNaive, at: `peak ${fmt(pk, 0)}% · ${pk > F.lim ? 'over its rating' : 'inside its rating'}` },
+        { name: 'Feeder-aware', fit: F.nAware, at: `${fmt(back, 0)}% recharged by 04:00` },
+      ].map((r, i) => ({ ...r, cells: cells(i === 0 ? F.nNaive : F.nAware, t.homes.length) })),
+      answer: n <= F.nAware
+        ? `${n} batteries fit here with feeder-aware charging${n > F.nNaive ? `, but not with a naive split, which tops out at ${F.nNaive}` : ''}. Each battery needs about ${fmt(F.need, 0)} kWh back overnight, and this transformer has about ${fmt(F.roomKWh, 0)} kWh of room between 22:00 and 04:00.`
+        : `${n} is too many: feeder-aware gets only ${fmt(back, 0)}% of the charge back by 04:00, under the 90% line, and naive would run it at ${fmt(pk, 0)}%. It has ${t.homes.length} home${t.homes.length === 1 ? '' : 's'} today, so more than that means new services too.`,
+    };
+    one.awareRows = [one.rows[1]];
+    one.awareAnswer = n <= F.nAware
+      ? `${n} batteries fit here. Each needs about ${fmt(F.need, 0)} kWh back overnight, and this transformer has about ${fmt(F.roomKWh, 0)} kWh of room under 95% of nameplate between 22:00 and 04:00. Feeder-aware keeps it under nameplate the whole time.`
+      : `${n} is too many: only ${fmt(back, 0)}% of the charge gets back by 04:00, under the 90% line. Up to ${F.nAware} fit. It has ${t.homes.length} home${t.homes.length === 1 ? '' : 's'} today, so more than that also means new services.`;
+    bigMap.tag = st.q === 3 ? 'SCREENING' : 'SIM';
+    bigMap.source = st.q === 3 ? 'Spare batteries from the 23 Aug no-battery evening (SIM), scaled by the growth slider' : st.q === 4 ? 'sim.p2_build ranking, August, feeder-aware' : 'Month peak with our 96 batteries · sim.surrogate, calibrated to OpenDSS';
+    const r0 = rank[0];
+    const nb = { headline: r0 ? `The next battery goes to ${r0.label} on ${this.tfName(r0.tf)}: it ${String(r0.reason || '').split(';')[0].replace(/ \(SIM\)/g, '')}.` : 'No ranking in this run.',
+      rows: rank.map((r) => ({ rank: r.rank, home: r.label, tf: this.tfName(r.tf), value: r.revenueUSD ? `$${fmt(r.revenueUSD.v, 2)}` : '—',
+        detail: `removes ${fmt(r.stressAvoidedH ? r.stressAvoidedH.v : 0, 2)} h over nameplate · month peak ${fmt(r.peakWithPct ? r.peakWithPct.v : 0, 1)}% with it`, bg: r.tf === tf ? '#e4efe6' : 'transparent', onClick: pick(r.tf) })) };
+    let up3 = { rows: [] };
+    if (st.q === 3) {
+      const cost3 = Number(String(st.cost).replace(/[^0-9.]/g, '')) || 0;
+      const list = pts.map((p, tf) => ({ tf, spare: spares[tf] })).sort((x, y) => x.spare - y.spare || this.topo.transformers[x.tf].kva - this.topo.transformers[y.tf].kva).slice(0, 8);
+      const need = spares.filter((v) => v < 0).length;
+      up3 = {
+        headline: need ? `At +${st.growth}% home load, ${need} transformer${need === 1 ? '' : 's'} can't take a battery at every home, even with feeder-aware charging.` : `At +${st.growth}% home load, feeder-aware fits a battery at every home on all 379. These are the tightest.`,
+        costNote: cost3 ? `At $${fmt(cost3, 0)} per upgrade: $${need ? fmt(cost3 * need, 0) : 0} to clear every shortfall above.` : 'No figure is sourced (TRANSFORMER_REPLACEMENT_USD). Enter one to price the shortfalls.',
+        rows: list.map((r) => { const tt = this.topo.transformers[r.tf]; const upm = S.fitModel(this.none, this.aware, r.tf, S.nextKva(tt.kva), g); const after = upm.nAware - upm.homes;
+          return { name: this.tfName(r.tf), kva: `${tt.kva} kVA → ${S.nextKva(tt.kva)}`, homes: tt.homes.length, spare: r.spare > 0 ? `+${r.spare}` : String(r.spare), spareColor: r.spare < 0 ? '#9a2f25' : '#10231a', after: after > 0 ? `+${after}` : String(after), bg: r.tf === tf ? '#e4efe6' : 'transparent', onClick: pick(r.tf) }; }),
+      };
+    }
+    const ck = st.check;
+    const check = !ck ? { label: 'Check with OpenDSS', bg: '#fffdf8', fg: '#1e4d2b', note: `Screening estimate from the 23 Aug no-battery evening at this transformer (SIM). Checking runs the ${n}-battery case in OpenDSS in the background.` }
+      : ck.status === 'running' ? { label: `Checking… ${Math.round(ck.step / 7.2)}%`, bg: '#e4efe6', fg: '#1e4d2b', note: ck.stage }
+        : { label: 'Check again', bg: '#fffdf8', fg: '#1e4d2b', note: ck.connected ? 'Checked in OpenDSS.' : 'No simulator connected in this prototype, so the numbers above are still the screening estimate.' };
+    // upgrades
+    const pol = st.rankBy, cost = Number(String(st.cost).replace(/[^0-9.]/g, '')) || 0;
+    const rows = this.fits.map(({ now, up }, i) => {
+      const H = now.homes, a = pol === 'aware' ? now.nAware : now.nNaive, b = pol === 'aware' ? up.nAware : up.nNaive;
+      return { tf: i, H, a, b, short: Math.max(0, H - a), extra: Math.min(H, b) - Math.min(H, a), kva: now.kva0, kva2: up.kva, h: (pol === 'aware' ? this.pA : this.pN).baseline.h100[i] };
+    });
+    const needUp = (p) => this.fits.filter(({ now }) => now.homes > (p === 'aware' ? now.nAware : now.nNaive)).length;
+    const ranked = rows.filter((r) => r.extra > 0).sort((x, y) => y.extra - x.extra || y.short - x.short || y.h - x.h).slice(0, 7);
+    const up = {
+      headline: `A battery at every home needs an upgrade on ${needUp('naive')} transformers with a naive split, and on ${needUp('aware')} with feeder-aware.`,
+      empty: ranked.length === 0,
+      emptyText: pol === 'aware' ? `Feeder-aware fits a battery at every home on all ${NT} transformers, so no upgrade adds one. Switch to Naive to see where a naive split would need new kVA.` : 'No upgrade adds a battery under a naive split.',
+      rows: ranked.map((r) => ({ name: this.tfName(r.tf), kva: `${r.kva} → ${r.kva2}`, homes: r.H, now: Math.min(r.H, r.a), after: Math.min(r.H, r.b), extra: r.extra, h100: fmt(r.h, 2),
+        per: cost ? `$${fmt(cost / r.extra, 0)}` : '—', bg: r.tf === tf ? '#e4efe6' : 'transparent', onClick: pick(r.tf) })),
+    };
+    return {
+      ...base, geo: this.geo, maps, legend, bigMap, one, check, up, up3, nb,
+      sel: { x: pts[tf][0], y: pts[tf][1] },
+      capAware: fmt(uc.aware.v), capNaive: fmt(uc.naive.v), capCite: 'sim.p2_build usefulCapacity, greedy placement from an empty feeder, August 2026',
+      doCheck: () => {
+        if (ck && ck.status === 'running') return;
+        const t0 = performance.now(); const rec = { status: 'running', step: 0, stage: 'Loading the month at 15-minute steps', connected: false };
+        this.setState({ check: rec });
+        const iv = setInterval(() => {
+          const el = performance.now() - t0; rec.step = Math.min(720, Math.floor(el / 3));
+          rec.stage = el < 400 ? 'Loading the month at 15-minute steps' : 'OpenDSS power flow';
+          if (el > 2600) { rec.status = 'done'; clearInterval(iv); }
+          this.setState({ check: { ...rec } });
+        }, 80);
+      },
+    };
+  }
+}
+</script>
+</body>
+</html>
