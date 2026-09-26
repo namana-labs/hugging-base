@@ -138,6 +138,10 @@ export function createScene(el, opts = {}) {
     const mSize = near ? 44 : 30, bSize = near ? 34 : 22;
     for (const mt of m.meters) { const c = icon(mt.icon, mt.position, mSize); hits.push({ layer: 'meters', object: mt, at: c, r: mSize * dpr / 2 }); }
     for (const b of m.batteries) { const c = icon(b.icon, b.position, bSize); hits.push({ layer: 'battery-icons', object: b, at: c, r: bSize * dpr / 2 }); }
+    for (const b of m.badges || []) {
+      const a = P(b.position), sz = near ? 26 : 20, mp = atlas && atlas.mapping[b.icon];
+      if (mp) ctx.drawImage(atlas.canvas, mp.x, mp.y, mp.width, mp.height, a[0] + (near ? 16 : 11) * dpr - sz * dpr / 2, a[1] - ((near ? 34 : 24) + sz) * dpr, sz * dpr, sz * dpr);
+    }
     const font = `800 ${14 * dpr}px Inter, "Helvetica Neue", Helvetica, Arial, sans-serif`;
     ctx.font = font;
     for (const t of m.labels) {

@@ -154,16 +154,69 @@ function unitNormal(a, b, c) {
 export const lambert = (n) => 0.62 + 0.5 * Math.max(0, n[0] * SUN[0] + n[1] * SUN[1] + n[2] * SUN[2]);
 const shadeRGB = (col, f) => [Math.min(255, col[0] * f) | 0, Math.min(255, col[1] * f) | 0, Math.min(255, col[2] * f) | 0, 255];
 
-/**
- * Hip roof over a footprint ring ([lon, lat] points), in local metres about the ring's centroid:
- *   ridge = c +- u * max(0, (L - W) / 2) of the minimum-area box, at wallH + min(3.2, 0.42 * W / 2);
- *   every eave vertex joins its clamped projection on the ridge; edge (pi, pj) -> triangles (pi, pj, rj), (pi, rj, ri).
- * The roof covers the exact footprint (no overhang on L-shapes). Returns {faces:[{m:[[x,y,z] x3], n}], rise, box, o}.
- */
-export function hipRoof(ring, wallH) {
-  const o = ring.reduce((s, p) => [s[0] + p[0] / ring.length, s[1] + p[1] / ring.length], [0, 0]);
-  const P = ring.map((p) => toM(p, o));
-  if (P.length > 3 && Math.hypot(P[0][0] - P[P.length - 1][0], P[0][1] - P[P.length - 1][1]) < 0.01) P.pop();
+const cross3 = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+const signedArea = (P) => { let a = 0; for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length]; a += p[0] * q[1] - q[0] * p[1]; } return a / 2; };
+const triAreaXY = (t) => Math.abs((t[1][0] - t[0][0]) * (t[2][1] - t[0][1]) - (t[2][0] - t[0][0]) * (t[1][1] - t[0][1])) / 2;
+
+/** Ear-clipping triangulation of a simple CCW polygon (local metres): [[i, j, k]] index triples. */
+export function earClip(P) {
+  const idx = P.map((_, i) => i);
+  const tris = [];
+  const inTri = (p, a, b, c) => cross3(a, b, p) > 1e-9 && cross3(b, c, p) > 1e-9 && cross3(c, a, p) > 1e-9;
+  let guard = 0;
+  while (idx.length > 3 && guard++ < 4 * P.length * P.length) {
+    let clipped = false;
+    for (let a = 0; a < idx.length; a++) {
+      const i0 = idx[(a + idx.length - 1) % idx.length], i1 = idx[a], i2 = idx[(a + 1) % idx.length];
+      if (cross3(P[i0], P[i1], P[i2]) <= 1e-9) continue;
+      if (idx.some((j) => j !== i0 && j !== i1 && j !== i2 && inTri(P[j], P[i0], P[i1], P[i2]))) continue;
+      tris.push([i0, i1, i2]);
+      idx.splice(a, 1);
+      clipped = true;
+      break;
+    }
+    if (!clipped) {   // only degenerate (collinear) corners left: drop the flattest one
+      let best = 0, bv = Infinity;
+      for (let a = 0; a < idx.length; a++) { const v = Math.abs(cross3(P[idx[(a + idx.length - 1) % idx.length]], P[idx[a]], P[idx[(a + 1) % idx.length]])); if (v < bv) { bv = v; best = a; } }
+      idx.splice(best, 1);
+    }
+  }
+  if (idx.length === 3) tris.push(idx.slice());
+  return tris;
+}
+
+/** Hertel-Mehlhorn: merge ear-clip triangles across shared edges while the union stays convex. CCW index lists. */
+export function convexPieces(P) {
+  let pieces = earClip(P).map((t) => t.slice());
+  const convex = (Q) => Q.every((_, i) => cross3(P[Q[i]], P[Q[(i + 1) % Q.length]], P[Q[(i + 2) % Q.length]]) >= -1e-6);
+  const merge = (A, B) => {
+    for (let i = 0; i < A.length; i++) {
+      const u = A[i], v = A[(i + 1) % A.length], j = B.indexOf(v);
+      if (j >= 0 && B[(j + 1) % B.length] === u) {
+        const out = [];
+        for (let t = 0; t < A.length; t++) out.push(A[(i + 1 + t) % A.length]);
+        for (let t = 2; t < B.length; t++) out.push(B[(j + t) % B.length]);
+        return out;
+      }
+    }
+    return null;
+  };
+  let changed = true;
+  while (changed) {
+    changed = false;
+    outer: for (let a = 0; a < pieces.length; a++) {
+      for (let b = a + 1; b < pieces.length; b++) {
+        const m = merge(pieces[a], pieces[b]);
+        if (m && convex(m)) { pieces[a] = m; pieces.splice(b, 1); changed = true; break outer; }
+      }
+    }
+  }
+  return pieces;
+}
+
+/** Hip faces over one CCW ring (local metres): the ridge on the minimum-area box's long axis, every eave vertex joined to
+ *  its clamped projection on the ridge. Returns {faces, rise, box, folded} (folded: the faces over-cover the ring). */
+function hipFaces(P, wallH) {
   const box = obb(P);
   const h = Math.max(0, (box.L - box.W) / 2), rise = Math.min(ROOF_RISE_MAX_M, ROOF_PITCH * box.W / 2);
   const R = P.map((p) => {
@@ -171,16 +224,67 @@ export function hipRoof(ring, wallH) {
     return [box.c[0] + box.u[0] * t, box.c[1] + box.u[1] * t];
   });
   const faces = [];
+  let cover = 0;
   for (let i = 0; i < P.length; i++) {
     const j = (i + 1) % P.length;
     const a = [P[i][0], P[i][1], wallH], b = [P[j][0], P[j][1], wallH], rj = [R[j][0], R[j][1], wallH + rise], ri = [R[i][0], R[i][1], wallH + rise];
     for (const t of [[a, b, rj], [a, rj, ri]]) {
-      const e1 = [t[1][0] - t[0][0], t[1][1] - t[0][1]], e2 = [t[2][0] - t[0][0], t[2][1] - t[0][1]];
-      if (Math.abs(e1[0] * e2[1] - e1[1] * e2[0]) < 1e-3) continue;   // degenerate in plan: skip
+      const ar = triAreaXY(t);
+      if (ar < 5e-4) continue;   // degenerate in plan: skip
+      cover += ar;
       faces.push({ m: t, n: unitNormal(...t) });
     }
   }
-  return { faces, rise, box, o, P };
+  const area = Math.abs(signedArea(P));
+  return { faces, rise, box, folded: cover > area * 1.001 + 0.01 };
+}
+
+/** A pyramid over a convex ring (never folds): every edge joined to the centroid at wallH + rise. */
+function pyramidFaces(P, wallH) {
+  const box = obb(P), rise = Math.min(ROOF_RISE_MAX_M, ROOF_PITCH * box.W / 2);
+  const c = P.reduce((s, p) => [s[0] + p[0] / P.length, s[1] + p[1] / P.length], [0, 0]);
+  const top = [c[0], c[1], wallH + rise];
+  const faces = [];
+  for (let i = 0; i < P.length; i++) {
+    const j = (i + 1) % P.length, t = [[P[i][0], P[i][1], wallH], [P[j][0], P[j][1], wallH], top];
+    if (triAreaXY(t) >= 5e-4) faces.push({ m: t, n: unitNormal(...t) });
+  }
+  return faces;
+}
+
+/**
+ * Hip roof over a footprint ring ([lon, lat] points), in local metres about the ring's centroid (UX-R2-scene 3.1):
+ *   ridge = c +- u * max(0, (L - W) / 2) of the minimum-area box, at wallH + min(3.2, 0.42 * W / 2); every eave vertex
+ *   joins its clamped projection on the ridge; edge (pi, pj) -> triangles (pi, pj, rj), (pi, rj, ri).
+ * On a concave footprint that single ridge can fold (triangles over-cover the ring, so they z-fight or overhang); there
+ * the footprint is split into convex pieces (ear clipping + Hertel-Mehlhorn) and each piece gets its own hip (a pyramid
+ * if even that folds), so the roof covers the exact footprint with no overlap. Returns {faces:[{m:[[x,y,z] x3], n}],
+ * rise, box, o, P, pieces}.
+ */
+export function hipRoof(ring, wallH) {
+  const o = ring.reduce((s, p) => [s[0] + p[0] / ring.length, s[1] + p[1] / ring.length], [0, 0]);
+  let P = ring.map((p) => toM(p, o));
+  if (P.length > 3 && Math.hypot(P[0][0] - P[P.length - 1][0], P[0][1] - P[P.length - 1][1]) < 0.01) P.pop();
+  // drop repeated and flat corners (OSM rings carry some), then orient counter-clockwise
+  P = P.filter((p, i) => Math.hypot(p[0] - P[(i + 1) % P.length][0], p[1] - P[(i + 1) % P.length][1]) > 0.05);
+  for (let changed = true; changed && P.length > 3;) {
+    changed = false;
+    for (let i = 0; i < P.length && P.length > 3; i++) {
+      const a = P[(i + P.length - 1) % P.length], b = P[i], c = P[(i + 1) % P.length];
+      if (Math.abs(cross3(a, b, c)) < 0.02 * Math.hypot(c[0] - a[0], c[1] - a[1])) { P.splice(i, 1); changed = true; break; }
+    }
+  }
+  if (signedArea(P) < 0) P.reverse();
+  const whole = hipFaces(P, wallH);
+  if (!whole.folded) return { faces: whole.faces, rise: whole.rise, box: whole.box, o, P, pieces: 1 };
+  const faces = [];
+  const pieces = convexPieces(P);
+  for (const idx of pieces) {
+    const Q = idx.map((i) => P[i]);
+    const hf = hipFaces(Q, wallH);
+    faces.push(...(hf.folded ? pyramidFaces(Q, wallH) : hf.faces));
+  }
+  return { faces, rise: whole.rise, box: whole.box, o, P, pieces: pieces.length };
 }
 
 /** Area of a ring in local metres (shoelace), for tests. */
@@ -500,6 +604,6 @@ export function buildSceneModel({ topology, footprints = null, frame = null, vie
     homeGeom: st.walls, walls: st.walls, homes, homeKey, roofs: st.roofs, tier, tierKey: frame ? (frame.tierKey || tier.join('')) : '',
     drops: st.drops, context: st.context, lines: st.lines,
     tfs: tfState, pads: st.pads, plinths: st.plinths, poles: st.poles, cans: st.cans, arms: st.arms, colors: st.colors,
-    cabinets, caps, batteries, pulses, meters, halos, worst, labels, ink, accent,
+    cabinets, caps, batteries, pulses, meters, halos, worst, labels, badges: [], ink, accent,
   };
 }

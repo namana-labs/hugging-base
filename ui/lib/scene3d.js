@@ -21,7 +21,7 @@ import { cameraPreset, roofColor, dropStyle, TIER_RGB } from './scene-model.js';
 import { buildAtlas } from './icons.js';
 
 export const LABEL_FULL_ZOOM = 16.2;          // the near/far bucket (UX-R2-scene 3.5)
-export const PICKABLE = ['walls', 'roofs', 'pads', 'poles', 'cans', 'cabinets', 'caps', 'meters', 'battery-icons'];
+export const PICKABLE = ['walls', 'roofs', 'pads', 'poles', 'cans', 'cabinets', 'caps', 'meters', 'battery-icons', 'badges'];
 const FONT = 'Inter, "Helvetica Neue", Helvetica, Arial, sans-serif';
 
 export function webgl2Available() {
@@ -114,11 +114,14 @@ export function createScene(el, opts = {}) {
       new D.IconLayer({ id: 'battery-icons', data: m.batteries, iconAtlas: atlas.canvas, iconMapping: atlas.mapping, pickable: true,
         getIcon: (d) => d.icon, getPosition: (d) => d.position, getSize: near ? 34 : 22, sizeUnits: 'pixels', billboard: true,
         updateTriggers: { getSize: near } }),
+      new D.IconLayer({ id: 'badges', data: m.badges || [], iconAtlas: atlas.canvas, iconMapping: atlas.mapping, pickable: true,
+        getIcon: (d) => d.icon, getPosition: (d) => d.position, getSize: near ? 26 : 20, sizeUnits: 'pixels', billboard: true,
+        getPixelOffset: [near ? 16 : 11, near ? -34 : -24], updateTriggers: { getSize: near, getPixelOffset: near } }),
       new D.TextLayer({ id: 'labels', data: m.labels, getPosition: (d) => d.position, getText: (d) => d.text,
         getColor: (d) => d.color, getSize: (d) => (d.pin ? 13 : 16), fontWeight: 800, characterSet: 'auto', fontFamily: FONT,
         background: true, getBackgroundColor: paperBg, backgroundPadding: [5, 2, 5, 2],
         getPixelOffset: (d) => (d.pin ? [0, -4] : [near ? 30 : 22, near ? -30 : -22]), updateTriggers: { getPixelOffset: near }, billboard: true }),
-      new D.TextLayer({ id: 'worst', data: m.worst, getPosition: (d) => d.position, getText: (d) => d.text, getSize: 15, fontWeight: 800,
+      new D.TextLayer({ id: 'worst', data: m.worst, getPosition: (d) => d.position, getText: (d) => d.text, getSize: 15, fontWeight: 800, pickable: true,
         getColor: [255, 255, 255, 255], background: true, getBackgroundColor: (d) => trgb(d.code, 245), backgroundPadding: [6, 3, 6, 3],
         getPixelOffset: [0, near ? -62 : -46], updateTriggers: { getPixelOffset: near }, billboard: true, fontFamily: FONT, characterSet: 'auto' }),
       // the worst number's label tag (a compact letter, UX_SPEC_R2 2.5), right of the callout
