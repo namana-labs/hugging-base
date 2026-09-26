@@ -7,9 +7,15 @@
 - **Counts:** kW 254/254, kvar 254/254.
 - **Slice:** `smartds_2018_aug.npz`, float32, 3000 steps x 15 min from 2018 index 20352 (2018-08-01 00:00) to 2018-09-01 06:00. The reported month is the first 2,976 steps; the last 24 exist only so the 31 Aug night can charge to 06:00 (those loads are 1 Sep 2018 SMART-DS, SIM).
 - **Time alignment (ASSUMPTION):** 2018 profile index k is paired with 2026 local time by calendar date (2018-08-23, a Thursday, stands in for 2026-08-23, a Sunday); index k = the interval starting k x 15 min local. The SMART-DS timestamp convention and DST handling are UNVERIFIED (build prompt section 12 Q8).
-- **Load kW** = Loads.dss kW x kW shape; **load kvar** = Loads.dss kvar x kvar shape (the SMART-DS convention). 1 -> 15 min only; `sim.loads.Loads.at_minute` interpolates 15 -> 1 min linearly (DERIVED).
+- **Load kW** = Loads.dss kW x kW shape; **load kvar** = Loads.dss kvar x kvar shape (the SMART-DS convention). The data are 15-min only; `sim.loads.Loads.at_minute` interpolates 15 -> 1 min linearly (DERIVED).
+- **Convention checked** against SMART-DS's own `LoadShapes.dss` for this feeder (same bucket, `SMART-DS/v1.0/2018/AUS/P1U/scenarios/base_timeseries/opendss/p1uhs19_1247/p1uhs19_1247--p1udt17263/LoadShapes.dss`), which declares each shape as `mult=(file=res_kw_<id>_pu.csv) qmult=(file=res_kvar_<id>_pu.csv)`: OpenDSS multiplies the load's kW by `mult` and its kvar by `qmult`.
+- **kvar shapes are not capped at 1.0:** 151 of 254 exceed 1.0 per unit in the slice. Feeder kvar/kW over the slice (SIM): min 0.344, median 0.381, max 0.456 (power factor about 0.934), against the static Loads.dss median kvar/kW 0.250.
 - **kvar fallback:** none (every kvar shape fetched)
-- **Surrogate calibration:** see `data/profiles/surrogate.json` (written by `python -m sim.calibrate`).
+- **Surrogate calibration:** `data/profiles/surrogate.json`, written by `python -m sim.calibrate`, which also fills the section below.
+
+<!-- calibrate:begin -->
+(not calibrated yet: run `python -m sim.calibrate`)
+<!-- calibrate:end -->
 
 ## sha256 manifest (raw CSVs as fetched)
 

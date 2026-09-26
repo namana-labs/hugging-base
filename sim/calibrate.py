@@ -227,6 +227,16 @@ def longest_run(mask):
     return best
 
 
+def write_source_section(body):
+    src = ROOT / 'data' / 'profiles' / 'SOURCE.md'
+    begin, end = '<!-- calibrate:begin -->', '<!-- calibrate:end -->'
+    text = src.read_text()
+    if begin not in text or end not in text:
+        text = text.rstrip('\n') + f'\n\n{begin}\n{end}\n'
+    text = text[:text.index(begin) + len(begin)] + '\n' + body + '\n' + text[text.index(end):]
+    src.write_text(text)
+
+
 def expect(ok, text):
     return f'ok {text}' if ok else f'REFUTED: {text}'
 
@@ -349,7 +359,16 @@ def main(argv=None):
         }
         out = surrogate.COEFFS
         out.write_text(json.dumps(doc, indent=0, separators=(',', ':')) + '\n')
-        print(f'wrote {out.relative_to(ROOT)} (surrogate_trusted {str(ok99).lower()})      [report]')
+        section = [
+            f'- **surrogate_trusted: {str(ok99).lower()}** (held-out p99 {"<=" if ok99 else ">"} {P99_BOUND} points; build prompt 7.2).',
+            f'- Held-out error vs OpenDSS, {len(evl)} frames (none, naive charge at +20 kW, naive discharge at -20 kW; seed {EVAL_SEED}), '
+            f'all 379 transformers: max {mx:.2f} pts, p99 {p99:.2f} pts (SIM).',
+            f'- Same frames with the Transformers.dss physics prior alone: max {np.abs(prior_err).max():.2f}, '
+            f'p99 {np.percentile(np.abs(prior_err), 99):.2f}; with no losses: max {np.abs(err0).max():.2f}, p99 {np.percentile(np.abs(err0), 99):.2f}.',
+            f'- Fitted per transformer on {len(train)} separate OpenDSS frames (seed {TRAIN_SEED}; each battery at an independent level); feeder: {feeder_src}.',
+        ]
+        write_source_section('\n'.join(section))
+        print(f'wrote {out.relative_to(ROOT)} and the SOURCE.md calibration section (surrogate_trusted {str(ok99).lower()})      [report]')
 
     for r in refuted:
         print(f'REFUTED -> NOTES.md: {r}')

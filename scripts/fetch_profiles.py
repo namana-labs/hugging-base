@@ -34,6 +34,7 @@ YEAR_STEPS = 35040            # 365 days x 96 intervals, 2018
 AUG1_STEP = 212 * 96          # 2018-08-01 00:00 = day-of-year 213 (Jan..Jul = 212 days)
 N_STEPS = 3000                # 1 Aug 00:00 -> 1 Sep 06:00 (2,976 reported + 24 for the 31 Aug night)
 LOAD_RE = re.compile(r'(?i)^New Load\.(\S+)\s')
+CAL_BEGIN, CAL_END = '<!-- calibrate:begin -->', '<!-- calibrate:end -->'
 
 
 def default_dss():
@@ -157,7 +158,15 @@ def build(dss_path, cache, allow_missing_kw=False):
     )
     # np.savez_compressed writes zip timestamps from the clock; normalise them so a rebuild is byte-identical.
     _normalise_zip(OUT)
-    write_source(dss_path, rows, kw_names, kvar_names, kw_ok, kvar_ok, manifest)
+    # Feeder-level kvar/kW over the slice, for SOURCE.md (the qmult shapes are not capped at 1.0 per unit).
+    lk = np.array([r[2] for r in rows])
+    lq = np.array([r[3] for r in rows])
+    shp = np.array([name_to_idx[r[4]] for r in rows])
+    kvar_eff = np.where(kvar_ok[:, None], kvar, kw)
+    ratio = (lq[:, None] * kvar_eff[shp]).sum(0) / (lk[:, None] * kw[shp]).sum(0)
+    stats = {'kvar_over_1': int((kvar.max(1) > 1.0001).sum()), 'static': float(np.median(lq / lk)),
+             'ratio': (float(ratio.min()), float(np.median(ratio)), float(ratio.max()))}
+    write_source(dss_path, rows, kw_names, kvar_names, kw_ok, kvar_ok, manifest, stats)
     return kw_ok, kvar_ok
 
 
@@ -174,7 +183,7 @@ def _normalise_zip(path):
     os.replace(tmp, path)
 
 
-def write_source(dss_path, rows, kw_names, kvar_names, kw_ok, kvar_ok, manifest):
+def write_source(dss_path, rows, kw_names, kvar_names, kw_ok, kvar_ok, manifest, stats):
     rel = os.path.relpath(dss_path, ROOT)
     kvar_fallback = [n for n, ok in zip(kvar_names, kvar_ok) if not ok]
     lines = [
@@ -194,9 +203,21 @@ def write_source(dss_path, rows, kw_names, kvar_names, kw_ok, kvar_ok, manifest)
         '(2018-08-23, a Thursday, stands in for 2026-08-23, a Sunday); index k = the interval starting k x 15 min local. '
         'The SMART-DS timestamp convention and DST handling are UNVERIFIED (build prompt section 12 Q8).',
         '- **Load kW** = Loads.dss kW x kW shape; **load kvar** = Loads.dss kvar x kvar shape (the SMART-DS convention). '
-        '1 -> 15 min only; `sim.loads.Loads.at_minute` interpolates 15 -> 1 min linearly (DERIVED).',
+        'The data are 15-min only; `sim.loads.Loads.at_minute` interpolates 15 -> 1 min linearly (DERIVED).',
+        '- **Convention checked** against SMART-DS\'s own `LoadShapes.dss` for this feeder (same bucket, '
+        '`SMART-DS/v1.0/2018/AUS/P1U/scenarios/base_timeseries/opendss/p1uhs19_1247/p1uhs19_1247--p1udt17263/LoadShapes.dss`), '
+        'which declares each shape as `mult=(file=res_kw_<id>_pu.csv) qmult=(file=res_kvar_<id>_pu.csv)`: OpenDSS multiplies '
+        'the load\'s kW by `mult` and its kvar by `qmult`.',
+        f'- **kvar shapes are not capped at 1.0:** {stats["kvar_over_1"]} of {len(kvar_names)} exceed 1.0 per unit in the slice. '
+        f'Feeder kvar/kW over the slice (SIM): min {stats["ratio"][0]:.3f}, median {stats["ratio"][1]:.3f}, max {stats["ratio"][2]:.3f} '
+        f'(power factor about {1 / (1 + stats["ratio"][1] ** 2) ** 0.5:.3f}), against the static Loads.dss median kvar/kW '
+        f'{stats["static"]:.3f}.',
         f'- **kvar fallback:** {"none (every kvar shape fetched)" if not kvar_fallback else str(len(kvar_fallback)) + " shapes missing; loads on them use constant Loads.dss kvar/kW (ASSUMPTION: constant kvar/kW from Loads.dss): " + ", ".join(kvar_fallback)}',
-        '- **Surrogate calibration:** see `data/profiles/surrogate.json` (written by `python -m sim.calibrate`).',
+        '- **Surrogate calibration:** `data/profiles/surrogate.json`, written by `python -m sim.calibrate`, which also fills the section below.',
+        '',
+        CAL_BEGIN,
+        '(not calibrated yet: run `python -m sim.calibrate`)',
+        CAL_END,
         '',
         '## sha256 manifest (raw CSVs as fetched)',
         '',
@@ -205,7 +226,13 @@ def write_source(dss_path, rows, kw_names, kvar_names, kw_ok, kvar_ok, manifest)
     ]
     for name, digest, mx in manifest:
         lines.append(f'| {name} | {digest or "MISSING"} | {"" if mx is None else f"{mx:.6f}"} |')
-    SOURCE_MD.write_text('\n'.join(lines) + '\n')
+    text = '\n'.join(lines) + '\n'
+    if SOURCE_MD.exists():
+        old = SOURCE_MD.read_text()
+        if CAL_BEGIN in old and CAL_END in old:
+            keep = old[old.index(CAL_BEGIN):old.index(CAL_END) + len(CAL_END)]
+            text = text[:text.index(CAL_BEGIN)] + keep + text[text.index(CAL_END) + len(CAL_END):]
+    SOURCE_MD.write_text(text)
 
 
 def main(argv=None):
