@@ -11,7 +11,7 @@ Hackathon project (Base Power & AITX, Sep 2026). A feeder-aware simulator for a 
 3. `docs/plan.md` for the stack, the work streams, and which milestone is open. Start from the prototype in `demos/grid-stories/`; do not rebuild `sim/` from zero.
 4. `docs/reconciliation.md` when you want to know why a decision went the way it did.
 5. `docs/research-report.md` when you need a number. Every figure carries a label; keep it.
-6. `docs/design-handoff/README.md` before any UI work. It is the authoritative design source (use the `hugging-base-design` skill). The newer story-flow spec (levers → watch → result → room to grow) is `docs/design-handoff/story-flow/README.md`.
+6. `docs/design-handoff/README.md` before any UI work. It is the authoritative design source (use the `hugging-base-design` skill). The newer story-flow spec v2 (Configure → Run → Results → Learnings) is `docs/design-handoff/story-flow/README.md`.
 
 ## Non-negotiables
 

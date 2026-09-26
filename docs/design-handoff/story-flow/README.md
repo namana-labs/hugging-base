@@ -1,23 +1,27 @@
-# Handoff: Hugging Base story flow (levers → watch → result → room to grow)
+# Handoff: Hugging Base story flow v2 (Configure → Run → Results → Learnings)
+
+**v2 changes:** stages renamed; one chosen screen per step (other options removed); new Running loading screen between Configure and Run; scenario presets on Configure; single "Start the sim →" button replaces the run bar; Replay + "Continue to …" buttons on Run and Results; secondary scenario headers removed; Q2 location dropdown on Learnings.
 
 ## Overview
 Hugging Base simulates one Austin-like distribution feeder (NREL SMART-DS 2018 AUS P1U, 379 service transformers, 1,010 homes) with a fleet of home batteries. This handoff combines two earlier designs into one guided sequence:
 
-1. **Set the levers**: configure a simulation and run it in the background.
-2. **Watch it play**: the 3D neighbourhood (deck.gl, "Atlas" palette) with signal lanes docked underneath.
-3. **Read the result**: verdict, comparisons against every run, voltage, reactive power, ERCOT context.
-4. **Room to grow**: key takeaways about capacity: the naive vs feeder-aware A/B, how many more batteries fit, which transformers to upgrade, where the next battery helps most.
+1. **Configure**: pick a scenario or set the levers, then start the sim.
+   - **Running** (1b): a loading screen shown while the sim runs; it advances to Run automatically.
+2. **Run**: the 3D neighbourhood (deck.gl, "Atlas" palette) with signal lanes docked underneath. Replay as often as wanted.
+3. **Results**: verdict, comparisons against every run, voltage, reactive power, ERCOT context.
+4. **Learnings**: key takeaways about capacity: the naive vs feeder-aware A/B, how many more batteries fit, which transformers to upgrade, where the next battery helps most.
 
 Principle: **one story per view.** Each view answers one question; add views rather than overloading one.
 
 ## About the design files
 The `.dc.html` files are **design references built in HTML**. They are prototypes that show the intended look and behaviour; they are not production code to copy. Rebuild them in the target codebase (the existing plain-JS app in `hugging-base/ui/` or whatever framework you choose), reading the same JSON contracts in `ui/data/`.
 
-Each file is a canvas that holds one or more options. **Chosen options** (build these):
-- Step 1: **1a** (`Story 1 Levers.dc.html`)
-- Step 2: **2b** (`Story 2 Watch.dc.html`, the lower section). Its right-hand "Right now" card is the chosen **2d** design extended with failures. 2a and the 2c/2e card options are kept for reference only.
-- Step 3: **3a** (`Story 3 Results.dc.html`). 3b is reference only.
-- Step 4: **4b** (`Story 4 Room to grow.dc.html`). 4a is reference only.
+Each file holds exactly one screen to build (the unchosen options were removed in v2):
+- Configure: **1a** (`Story 1 Levers.dc.html`)
+- Running: **1b** (`Story 1b Running.dc.html`)
+- Run: **2b** (`Story 2 Watch.dc.html`, lower section; the upper "Round 2" section is a reference card study). Its right-hand "Right now" card is the chosen 2d design extended with failures.
+- Results: **3a** (`Story 3 Results.dc.html`)
+- Learnings: **4b** (`Story 4 Room to grow.dc.html`)
 
 To open: serve this folder over HTTP (for example `python -m http.server`) and open a `.dc.html` file. `support.js` must sit next to the files. Data loads by `fetch` from `ui/data/`.
 
@@ -40,16 +44,23 @@ Heartbeat chrome (all pages):
 
 ## Shared chrome (every view)
 - **Header**, 60px, padding 0 24, gap 18, bottom hairline. Every child is `flex:none; white-space:nowrap`.
-  - Wordmark "Hugging Base", then a 1px divider.
-  - Scenario: "Heat-wave evening · 23 Aug". The full date and time range is in a `title` tooltip. Step 4 reads "Room to grow · August 2026".
-  - Step nav: a segmented control, 3px padding, with 1 Set the levers / 2 Watch it play / 3 Read the result / 4 Room to grow. The active step uses the tint background, brand text, 700 weight.
+  - Wordmark "Hugging Base", then the step nav directly after it. (v2: the scenario/date secondary header was removed.)
+  - Step nav: a segmented control, 3px padding: **1 Configure / 2 Run / 3 Results / 4 Learnings**. Active step = tint bg, brand text, 700.
   - Right side:
-    - Steps 2–3: the **run card**. It is a link to step 1 with an 8px status dot (sage when done, amber when running, red when failed), then "Run #N" in bold, then a muted summary ("Feeder-aware · 96 Core · 20% reserve"), then a tint "Change levers →" chip.
-    - Step 1: the framing label "Oncor-suburb stand-in · LZ_NORTH".
-    - Step 4: "Core batteries · D-26 onset · today's load".
+    - Configure: framing label "Oncor-suburb stand-in · LZ_NORTH".
+    - Run and Results: a plain (non-link) **run pill** — 8px status dot (sage done, amber running, red failed), "Run #N" bold, muted settings summary — followed by a primary button: "Continue to Results →" (Run) / "Continue to Learnings →" (Results). Primary button: brand bg, `#fffdf8` text, 14/700, padding 8 16, radius 8, hover `#2a6a3b`.
+    - Learnings: "Core batteries · D-26 onset · today's load".
 
-## Screen 1 · Set the levers (1a)
-Purpose: configure simulation parameters, press Run, and the simulator runs in the background.
+## Screen 1 · Configure (1a)
+Purpose: pick a scenario or set simulation parameters, then start the sim.
+- **Scenario bar** (new), 56px, directly under the header, panel bg, bottom hairline, padding 0 24, gap 14:
+  - Eyebrow "SCENARIO" (12/700, 0.08em, muted).
+  - A segmented control (3px padding, `#cfcabd` border, radius 9, `#f1eee5` track): **Stable network / Uneven fleet / Custom**. Active = brand bg + `#fffdf8` text; 13.5/700; 200 ms transition.
+  - A one-line muted description of the selected scenario (ellipsis on overflow).
+  - Presets set all six levers at once:
+    - Stable network = the defaults: feeder-aware, no failures, 96 Core, 20% reserve, 90% start.
+    - Uneven fleet = feeder-aware, failures on, 160 Legacy, 30% reserve, 60% start. **Placeholder values — confirm with product.**
+  - Any manual lever change switches to Custom. On load, the active preset is derived by matching the saved levers; no match = Custom. "Reset to defaults" selects Stable network.
 - Title row: "What you can change" (26/700), with the subline "Set six levers, then run the simulator…". A "Reset to defaults" ghost button sits on the right.
 - Grid `1fr 2fr 1fr`, gap 14:
   - **Controller** column:
@@ -65,12 +76,17 @@ Purpose: configure simulation parameters, press Run, and the simulator runs in t
   - Title plus tag.
   - A "changed" tint badge when the value differs from the last run's settings.
   - A description, the control, and a "Changes → …" line.
-- **Run bar**, 96px tall, 1.5px ink border. Its states:
-  - *Ready / changed since run #N*: shows a summary of the settings and "▶ Run simulation" (primary). If an earlier run exists, a "Watch run #N" link also appears.
-  - *Running*: shows the stage label ("Loading feeder, loads and prices" → "OpenDSS power flow" → "Writing results"), "step n of 720", and a 10px progress bar. The button is disabled and reads "Running…".
-  - *Finished (settings unchanged)*: the title reads "Done in X s", and the primary button is "Watch it play →".
+- **Start button** (v2 replaces the old run bar): a single right-aligned primary button "Start the sim →" (16/700, padding 11 28, radius 8, brand bg, hover `#2a6a3b`). It saves the levers and navigates to Running (1b).
+- Body gap 14, padding 18 24 (tightened to fit the scenario bar within 900px).
 
-## Screen 2 · Watch it play (2b)
+## Screen 1b · Running (new)
+Purpose: a holding screen while the simulator runs.
+- Same header; nav shows "2 Run" active, 3 and 4 disabled (`#9aa39c`, not links).
+- Centred: a 72px spinner (5px `#e3dfd3` ring, brand top segment, 0.9 s linear rotation), then "Running the simulation" (28/700) and a muted line "Solving the evening, 16:00 → 04:00" that pulses opacity .35→1 over 1.6 s.
+- On mount it calls `startRun(levers)`. When status = done it shows "Done / Opening the run" and after 500 ms navigates to Run. On failure: "The run didn’t finish", the error stage, and "← Back to Configure".
+- No progress bar or step count by design; keep it a simple animation.
+
+## Screen 2 · Run (2b)
 Purpose: watch the evening (16:00 → 04:00, 720 one-minute steps) in 3D with the signals underneath.
 - Body grid `1fr 340px`, padding 14 18.
 - **Left column: 3D scene** (flex 1). This is the deck.gl scene from `ui/lib/scene3d.js`, unchanged.
@@ -79,7 +95,7 @@ Purpose: watch the evening (16:00 → 04:00, 720 one-minute steps) in 3D with th
   - Top-right: camera presets Whole feeder / Street A–D / T-240. The active preset is filled brand.
   - Bottom-left: a legend in the Atlas colours.
 - **Left column: lanes card**, 330px tall.
-  - Header row: play button (38px), clock, step counter and speed control (1× / 2× / 4×; 1× = 10 steps/s).
+  - Header row: play button (38px), clock, **"↺ Replay"** ghost button (32px tall, 1px `#cfcabd` border, radius 8, 13/700, hover `#f1eee5`; seeks to 0 and plays), step counter and speed control (1× / 2× / 4×; 1× = 10 steps/s). Play at the end also restarts from 0; replay is unlimited.
   - Five lanes on one shared x-axis, each a 180px label column plus the plot:
     - Worst transformer %: range 40–210, dashed lines at 110 (amber) and 150 (red).
     - Street A–D + T-240: range 0–210. T-240 is dashed.
@@ -101,7 +117,7 @@ Purpose: watch the evening (16:00 → 04:00, 720 one-minute steps) in 3D with th
   - Network limits from the counts series: normal rating exceeded (code 3), emergency (code 4), protection open (code 5), merged when gaps are 5 minutes or less.
   - Stale batteries: state S or X.
 
-## Screen 3 · Read the result (3a)
+## Screen 3 · Results (3a)
 - **Verdict row**, 170px tall:
   - Verdict card, 420px, 1.5px ink border. The eyebrow reads "RUN #N". The claim is 26/700, for example "No service transformer passed its limit this evening".
   - Four tiles: worst transformer, normal-rating events, lowest home voltage, fleet charged by 04:00. Each shows this run's value large and every other committed run listed underneath.
@@ -111,7 +127,7 @@ Purpose: watch the evening (16:00 → 04:00, 720 one-minute steps) in 3D with th
 - **ERCOT-wide context**: five cards for frequency, RoCoF, time error, PRC and inertia. These are scripted and tagged ASSUMPTION or UNVERIFIED; they are the same in every run.
 - **Bottom**: a 40px scrubber. The cursor position is shared with step 2 through `localStorage['hb-story-k']`.
 
-## Screen 4 · Room to grow (4b)
+## Screen 4 · Learnings (4b)
 - Grid `260px | 1fr | 480px`.
 - **Left rail**: the eyebrow "KEY TAKEAWAYS" and four numbered items (26px circle, 15px title, 12.5px subtitle). The active item has a tint background and a filled brand circle.
   1. **Compare charging algorithms**: "A/B: same feeder, naive vs feeder-aware"
@@ -126,7 +142,7 @@ Purpose: watch the evening (16:00 → 04:00, 720 one-minute steps) in 3D with th
 - **Right panel**, one per question:
   - **Q1**: headline "The same feeder holds 1,007 batteries with feeder-aware charging, and 383 with a naive split.", two capacity tiles, and an explanation. Source: `p2/index.json` `usefulCapacity`, OpenDSS-checked.
   - **Q2**:
-    - Shows the selected transformer's name, kVA, homes and existing batteries.
+    - The location title is a **dropdown** (24/700, 1px `#cfcabd` border, radius 8, panel bg, custom chevron) listing the focus streets (Street A–D) and T-240; a transformer picked on the map is added to the list. Changing it updates the panel and the map selection. Below it: kVA, homes and existing batteries.
     - A 0–50 slider with a 51-cell fit strip: sage while it fits, light red when it doesn't, faded beyond the home count.
     - The answer sentence, tagged SCREENING.
     - The estimate works like this: feeder-aware can charge between 22:00 and 04:00 into room under 95% of nameplate, and a battery "fits" while at least 90% of the energy it needs gets back (`fitModel` in `ui/story.js`).
@@ -138,6 +154,8 @@ Purpose: watch the evening (16:00 → 04:00, 720 one-minute steps) in 3D with th
   - **Q4**: a headline naming the #1 home and why, plus a scrollable list of the top 10 from `p2/aware-core-d26-g0.json` `ranking`, showing rank, home, transformer, hours over nameplate removed, peak with it, and energy value. The top-10 transformers are shown in brand green on the map.
 
 ## Interactions and behaviour
+- **Flow**: Configure → "Start the sim →" → Running (1b) → auto-advance to Run → "Continue to Results →" → Results → "Continue to Learnings →" → Learnings. The nav links allow jumping back at any time.
+- **Run gate**: Run only renders when a finished run exists whose levers match the saved levers; otherwise it redirects (`location.replace`) to Running. While the run data loads, a panel-coloured overlay covers the body and the run pill is hidden. No "No run yet" state exists.
 - **Running a simulation** (`startRun` in `ui/story.js`):
   - The run record is kept in `localStorage['hb-story-run']` with id, levers, status, stage, step and timestamps. Levers are in `localStorage['hb-story-levers']`.
   - If `window.HB_SIM_URL` is set, the levers are POSTed there as JSON; **wire this to the real simulator.** Stream or poll progress (stage, step of 720), then load the run's P1-shaped JSON.
@@ -147,10 +165,11 @@ Purpose: watch the evening (16:00 → 04:00, 720 one-minute steps) in 3D with th
 - **Rule log** (story line and 2c): fixed rules generate the text, so no hand-written copy is needed per run: first transformer over 100%, most over 100% at once, first normal-rating event, first above 150%, first protection open, fleet starts discharging, fleet at its lowest, fleet starts recharging, faults, end of run.
 
 ## State
-- Step 1: `levers {controller, failures, fleetSize, cls, reserve, soc0}` and `run`.
+- Step 1: `levers {controller, failures, fleetSize, cls, reserve, soc0}`, `scn` (stable | uneven | custom).
+- Step 1b: the live run record.
 - Step 2: `k` (0–719), `playing`, `speed`, the camera per scene, and the loaded run with derived series. Derived series come from `loadRun()`: soc, kw, worst, wtier, wtf, vmin, counts, focus, price.
 - Step 3: `k`, plus the run and the no-battery baseline.
-- Step 4: `q` (1–4), `view` (naive | aware | diff), `sel` (transformer index), `n` (0–50), `growth` (0–150), `cost`.
+- Step 4: `q` (1–4), `view` (naive | aware | diff), `sel` (transformer index, shared by the map and the Q2 dropdown), `n` (0–50), `growth` (0–150), `cost`.
 
 ## Data contracts used
 - `ui/data/topology.json`: homes, transformers (kVA, lonlat, homes), edges, fleet, focus, bridge.
@@ -165,8 +184,8 @@ Purpose: watch the evening (16:00 → 04:00, 720 one-minute steps) in 3D with th
 - Glyphs are Unicode only: ▶ ❚❚ → ↑ ↓ !
 
 ## Files
-- `screenshots/`: one PNG per chosen view at 1600 × 900: `1a-set-the-levers`, `2b-watch-it-play`, `3a-read-the-result`, and `4b-1` to `4b-4` for the four key takeaways. The 2b capture shows the default feeder-aware run, which has no failures; run with "Inject failures" on to see the failure states.
-- `Story 1 Levers.dc.html`, `Story 2 Watch.dc.html`, `Story 3 Results.dc.html`, `Story 4 Room to grow.dc.html`: the design references. Template markup plus a `class Component` logic block at the bottom of each.
+- `Story 1 Levers.dc.html` (Configure), `Story 1b Running.dc.html` (Running), `Story 2 Watch.dc.html` (Run), `Story 3 Results.dc.html` (Results), `Story 4 Room to grow.dc.html` (Learnings): the design references. Template markup plus a `class Component` logic block at the bottom of each. File names keep their v1 names for continuity.
 - `ui/story.js`: shared view logic (runs, series, scripted ERCOT signals, bus voltage shape, the fit model, rules).
 - `ui/hb-views.js`, `ui/lib/*`, `ui/panels/more.js`: existing view models and the 3D scene, ported from hugging-base/ui.
 - `support.js`: the runtime that opens the prototypes in a browser. It is not needed in production.
+- No screenshots are included in v2; the v1 screenshots in `design_handoff_story_flow/` predate these changes.

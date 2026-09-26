@@ -8,7 +8,7 @@
 <body>
 <x-dc>
 <helmet>
-<title>Hugging Base · Story 1 · Set the levers</title>
+<title>Hugging Base · Story 1 · Configure</title>
 <meta name="design_doc_mode" content="canvas">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;700&amp;display=swap" rel="stylesheet">
@@ -17,8 +17,8 @@
 <section id="t1" style="padding:48px 56px 64px;display:flex;flex-direction:column;gap:22px">
   <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
     <span style="font:600 11px ui-monospace,Menlo,monospace;padding:3px 7px;background:#10231a;color:#fff;border-radius:4px">STEP 1</span>
-    <span style="font-size:18px;font-weight:700">Set the levers</span>
-    <span style="font-size:14px;color:#5f6b63">Story: what you can change in the simulator, and what stays fixed. Next: <a href="Story%202%20Watch.dc.html">Step 2 · Watch it play</a> · <a href="Story%203%20Results.dc.html">Step 3 · Read the result</a></span>
+    <span style="font-size:18px;font-weight:700">Configure</span>
+    <span style="font-size:14px;color:#5f6b63">Story: what you can change in the simulator, and what stays fixed. Next: <a href="Story%202%20Watch.dc.html">Step 2 · Run</a> · <a href="Story%203%20Results.dc.html">Step 3 · Results</a></span>
   </div>
   <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
 
@@ -27,18 +27,23 @@
     <div data-screen-label="1a Levers sheet" style="width:1600px;height:900px;background:#f7f4ec;display:flex;flex-direction:column;border-radius:8px;overflow:hidden;border:1px solid rgba(0,0,0,.08)">
       <div style="height:60px;flex:none;display:flex;align-items:center;gap:18px;padding:0 24px;border-bottom:1px solid #e3dfd3">
         <div style="flex:none;white-space:nowrap;font-weight:700;font-size:21px;letter-spacing:-0.02em;color:#1e4d2b">Hugging Base</div>
-        <div style="width:1px;height:24px;background:#e3dfd3"></div>
-        <div title="23 Aug 2026, 16:00 → 04:00" style="flex:none;white-space:nowrap;font-size:16px">Heat-wave evening <span style="color:#5f6b63">· 23 Aug</span></div>
-        <nav style="flex:none;white-space:nowrap;display:flex;gap:2px;padding:3px;border:1px solid #e3dfd3;border-radius:8px;font-size:13px;margin-left:12px">
-          <a href="Story%201%20Levers.dc.html" style="padding:5px 10px;border-radius:6px;background:#e4efe6;color:#1e4d2b;font-weight:700;text-decoration:none">1 Set the levers</a>
-          <a href="Story%202%20Watch.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">2 Watch it play</a>
-          <a href="Story%203%20Results.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">3 Read the result</a>
-          <a href="Story%204%20Room%20to%20grow.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">4 Room to grow</a>
+        <nav style="flex:none;white-space:nowrap;display:flex;gap:2px;padding:3px;border:1px solid #e3dfd3;border-radius:8px;font-size:13px">
+          <a href="Story%201%20Levers.dc.html" style="padding:5px 10px;border-radius:6px;background:#e4efe6;color:#1e4d2b;font-weight:700;text-decoration:none">1 Configure</a>
+          <a href="Story%202%20Watch.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">2 Run</a>
+          <a href="Story%203%20Results.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">3 Results</a>
+          <a href="Story%204%20Room%20to%20grow.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">4 Learnings</a>
         </nav>
         <div style="flex:1"></div>
         <div style="flex:none;white-space:nowrap;font-size:13px;color:#5f6b63">Oncor-suburb stand-in · LZ_NORTH</div>
       </div>
-      <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:18px;padding:22px 24px">
+      <div style="height:56px;flex:none;display:flex;align-items:center;gap:14px;padding:0 24px;border-bottom:1px solid #e3dfd3;background:#fffdf8">
+        <span style="flex:none;font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">SCENARIO</span>
+        <div style="flex:none;display:flex;gap:2px;padding:3px;border:1px solid #cfcabd;border-radius:9px;background:#f1eee5">
+          <sc-for list="{{ scnOpts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.onClick }}" style="font:inherit;font-size:13.5px;font-weight:700;padding:6px 14px;border:0;border-radius:7px;cursor:pointer;white-space:nowrap;background:{{ o.bg }};color:{{ o.fg }};transition:background .2s cubic-bezier(.3,.7,.2,1)">{{ o.text }}</button></sc-for>
+        </div>
+        <span style="min-width:0;font-size:13px;color:#34443a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ scnNote }}</span>
+      </div>
+      <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;padding:18px 24px">
         <div style="display:flex;align-items:flex-end;gap:24px">
           <div style="display:flex;flex-direction:column;gap:6px">
             <div style="font-size:26px;font-weight:700;letter-spacing:-0.01em">What you can change</div>
@@ -53,7 +58,7 @@
             <div style="background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px">
               <div style="display:flex;align-items:center;gap:8px"><span style="font-size:15px;font-weight:700">Dispatch policy</span><span style="padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">ASSUMPTION</span><sc-if value="{{ ch.controller }}" hint-placeholder-val="{{ false }}"><span style="margin-left:auto;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;background:#e4efe6;color:#1e4d2b">changed</span></sc-if></div>
               <div style="display:flex;flex-direction:column;gap:4px">
-                <sc-for list="{{ ctlOpts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.onClick }}" style="text-align:left;font:inherit;display:flex;flex-direction:column;gap:2px;padding:9px 11px;border-radius:8px;cursor:pointer;border:1px solid {{ o.border }};background:{{ o.bg }}"><span style="font-size:14px;font-weight:700;color:{{ o.fg }}">{{ o.text }}</span><span style="font-size:12.5px;color:#5f6b63;text-wrap:pretty">{{ o.sub }}</span></button></sc-for>
+                <sc-for list="{{ ctlOpts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.onClick }}" style="text-align:left;font:inherit;display:flex;flex-direction:column;gap:1px;padding:6px 11px;border-radius:8px;cursor:pointer;border:1px solid {{ o.border }};background:{{ o.bg }}"><span style="font-size:14px;font-weight:700;color:{{ o.fg }}">{{ o.text }}</span><span style="font-size:12.5px;color:#5f6b63;text-wrap:pretty">{{ o.sub }}</span></button></sc-for>
               </div>
               <div style="font-size:12.5px;color:#34443a">Changes → transformer loading, fleet charge, energy value</div>
             </div>
@@ -104,32 +109,17 @@
 
           <div style="display:flex;flex-direction:column;gap:10px;min-height:0">
             <div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">FIXED IN THIS RUN</div><div style="font-size:12.5px;color:#5f6b63">Grid and market inputs the result depends on</div></div>
-            <div style="flex:1;min-height:0;background:#f1eee5;border:1px solid #e3dfd3;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:12px;font-size:13px">
+            <div style="flex:1;min-height:0;background:#f1eee5;border:1px solid #e3dfd3;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;font-size:13px">
               <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#5f6b63">GRID</div>
-              <sc-for list="{{ fixedGrid }}" as="f" hint-placeholder-count="4"><div style="display:flex;flex-direction:column;gap:2px;padding-bottom:10px;border-bottom:1px solid #e3dfd3"><div style="display:flex;align-items:baseline;gap:6px"><span style="font-weight:700">{{ f.k }}</span><span style="margin-left:auto;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">{{ f.tag }}</span></div><div style="color:#34443a;font-variant-numeric:tabular-nums">{{ f.v }}</div></div></sc-for>
+              <sc-for list="{{ fixedGrid }}" as="f" hint-placeholder-count="4"><div style="display:flex;flex-direction:column;gap:2px;padding-bottom:7px;border-bottom:1px solid #e3dfd3"><div style="display:flex;align-items:baseline;gap:6px"><span style="font-weight:700">{{ f.k }}</span><span style="margin-left:auto;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">{{ f.tag }}</span></div><div style="color:#34443a;font-variant-numeric:tabular-nums">{{ f.v }}</div></div></sc-for>
               <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#5f6b63;margin-top:4px">MARKET</div>
-              <sc-for list="{{ fixedMarket }}" as="f" hint-placeholder-count="3"><div style="display:flex;flex-direction:column;gap:2px;padding-bottom:10px;border-bottom:1px solid #e3dfd3"><div style="display:flex;align-items:baseline;gap:6px"><span style="font-weight:700">{{ f.k }}</span><span style="margin-left:auto;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">{{ f.tag }}</span></div><div style="color:#34443a;font-variant-numeric:tabular-nums">{{ f.v }}</div></div></sc-for>
+              <sc-for list="{{ fixedMarket }}" as="f" hint-placeholder-count="3"><div style="display:flex;flex-direction:column;gap:2px;padding-bottom:7px;border-bottom:1px solid #e3dfd3"><div style="display:flex;align-items:baseline;gap:6px"><span style="font-weight:700">{{ f.k }}</span><span style="margin-left:auto;padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">{{ f.tag }}</span></div><div style="color:#34443a;font-variant-numeric:tabular-nums">{{ f.v }}</div></div></sc-for>
             </div>
           </div>
         </div>
 
-        <div style="flex:none;height:96px;background:#fffdf8;border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:22px;border:1.5px solid #10231a">
-          <div style="flex:none;display:flex;flex-direction:column;gap:3px;width:300px">
-            <div style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">{{ run.eyebrow }}</div>
-            <div style="font-size:22px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ run.title }}</div>
-          </div>
-          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:7px">
-            <sc-if value="{{ run.isRunning }}" hint-placeholder-val="{{ false }}">
-              <div style="display:flex;gap:10px;font-size:13.5px"><span style="font-weight:700">{{ run.stage }}</span><span style="margin-left:auto;font-variant-numeric:tabular-nums;color:#34443a">{{ run.stepText }}</span></div>
-              <div style="height:10px;border-radius:5px;background:#f1eee5;overflow:hidden"><div style="height:100%;width:{{ run.pct }};background:#1e4d2b;transition:width .3s cubic-bezier(.3,.7,.2,1)"></div></div>
-            </sc-if>
-            <sc-if value="{{ run.notRunning }}" hint-placeholder-val="{{ true }}"><div style="font-size:13.5px;color:#34443a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ run.summary }}</div></sc-if>
-            <div style="font-size:12px;color:#5f6b63;text-wrap:pretty">{{ run.note }}</div>
-          </div>
-          <sc-if value="{{ run.showLast }}" hint-placeholder-val="{{ false }}"><a href="Story%202%20Watch.dc.html" style="flex:none;font-size:13.5px;font-weight:700;color:#1e4d2b;white-space:nowrap">Watch run #{{ run.lastId }}</a></sc-if>
-          <sc-if value="{{ run.showRun }}" hint-placeholder-val="{{ true }}"><button onClick="{{ doRun }}" style="flex:none;font:inherit;display:flex;align-items:center;gap:8px;padding:13px 20px;border-radius:8px;border:0;background:#1e4d2b;color:#fffdf8;font-size:15px;font-weight:700;cursor:pointer" style-hover="background:#2a6a3b">▶ Run simulation</button></sc-if>
-          <sc-if value="{{ run.isRunning }}" hint-placeholder-val="{{ false }}"><button disabled="{{ true }}" style="flex:none;font:inherit;padding:13px 20px;border-radius:8px;border:0;background:#e4efe6;color:#1e4d2b;font-size:15px;font-weight:700">Running…</button></sc-if>
-          <sc-if value="{{ run.showWatch }}" hint-placeholder-val="{{ false }}"><a href="Story%202%20Watch.dc.html" style="flex:none;display:flex;align-items:center;gap:8px;padding:13px 20px;border-radius:8px;background:#1e4d2b;color:#fffdf8;font-size:15px;font-weight:700;text-decoration:none;white-space:nowrap" style-hover="background:#2a6a3b">Watch it play →</a></sc-if>
+        <div style="flex:none;display:flex;justify-content:flex-end">
+          <button onClick="{{ doRun }}" style="flex:none;font:inherit;display:flex;align-items:center;gap:8px;padding:11px 28px;border-radius:8px;border:0;background:#1e4d2b;color:#fffdf8;font-size:16px;font-weight:700;cursor:pointer" style-hover="background:#2a6a3b">Start the sim →</button>
         </div>
       </div>
     </div>
@@ -140,13 +130,17 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { l: null, run: null };
+  state = { l: null, run: null, scn: null };
+  static SCN = [
+    { id: 'stable', text: 'Stable network', note: 'Feeder-aware control, 96 Core batteries charged to 90%, no failures.', l: { controller: 'aware', failures: false, fleetSize: 96, cls: 'core', reserve: 20, soc0: 90 } },
+    { id: 'uneven', text: 'Uneven fleet', note: '160 Legacy batteries starting at 60%, 30% reserve, with the three failure events.', l: { controller: 'aware', failures: true, fleetSize: 160, cls: 'legacy', reserve: 30, soc0: 60 } },
+  ];
   static D = { controller: 'aware', failures: false, fleetSize: 96, cls: 'core', reserve: 20, soc0: 90 };
   async componentDidMount() {
     this.S = await import(new URL('ui/story.js', document.baseURI).href);
     this.setState({ l: this.S.getLevers(), run: this.S.getRun() });
   }
-  set(p) { const l = { ...(this.state.l || Component.D), ...p }; if (this.S) this.S.setLevers(l); this.setState({ l }); }
+  set(p, scn = 'custom') { const l = { ...(this.state.l || Component.D), ...p }; if (this.S) this.S.setLevers(l); this.setState({ l, scn }); }
   renderVals() {
     const D = Component.D, l = this.state.l || D, S = this.S, last = this.state.run;
     const NAMES = { none: 'No batteries', naive: 'Naive split', aware: 'Feeder-aware' };
@@ -157,6 +151,12 @@ class Component extends DCLogic {
       .map(([v, text, sub]) => ({ text, sub, ...pick(l.controller === v), onClick: () => this.set({ controller: v }) }));
     const clsOpts = [['core', 'Core', '20 kW · 37 kWh'], ['legacy', 'Legacy', '11.4 kW · 22.5 kWh']]
       .map(([v, text, sub]) => ({ text, sub, ...pick(l.cls === v), onClick: () => this.set({ cls: v }) }));
+    const match = Component.SCN.find((s) => Object.keys(D).every((k) => s.l[k] === l[k]));
+    const scn = this.state.scn || (match ? match.id : 'custom');
+    const segOn = (on) => ({ bg: on ? '#1e4d2b' : 'transparent', fg: on ? '#fffdf8' : '#10231a' });
+    const scnOpts = [...Component.SCN.map((s) => ({ text: s.text, ...segOn(scn === s.id), onClick: () => this.set({ ...s.l }, s.id) })),
+      { text: 'Custom', ...segOn(scn === 'custom'), onClick: () => this.setState({ scn: 'custom' }) }];
+    const scnNote = scn === 'custom' ? 'Your own lever settings below.' : Component.SCN.find((s) => s.id === scn).note;
     const failOn = l.controller !== 'none' && l.failures, failDisabled = l.controller === 'none';
     const ref = last ? last.levers : D;
     const ch = {}; for (const k of Object.keys(D)) ch[k] = l[k] !== ref[k];
@@ -184,7 +184,7 @@ class Component extends DCLogic {
       { k: 'What the controller sees', v: 'total transformer load, 60 s late', tag: 'ASSUMPTION' },
     ];
     return {
-      l, ch, ctlOpts, clsOpts, run, fixedGrid, fixedMarket,
+      l, ch, scnOpts, scnNote, ctlOpts, clsOpts, run, fixedGrid, fixedMarket,
       failText: failDisabled ? 'Needs a controller' : failOn ? 'On · three events' : 'Off',
       failTrack: failOn ? '#1e4d2b' : '#cfcabd', failJustify: failOn ? 'flex-end' : 'flex-start', failCursor: failDisabled ? 'not-allowed' : 'pointer',
       toggleFail: () => { if (!failDisabled) this.set({ failures: !l.failures }); },
@@ -192,8 +192,8 @@ class Component extends DCLogic {
       onFleet: (e) => this.set({ fleetSize: Number(e.target.value) }),
       onReserve: (e) => this.set({ reserve: Number(e.target.value) }),
       onSoc0: (e) => this.set({ soc0: Number(e.target.value) }),
-      resetDefaults: () => this.set({ ...D }),
-      doRun: () => { if (!S || running) return; S.startRun(l, (r) => this.setState({ run: r })); },
+      resetDefaults: () => this.set({ ...D }, 'stable'),
+      doRun: () => { if (!S) return; S.setLevers(l); location.href = 'Story%201b%20Running.dc.html'; },
     };
   }
 }

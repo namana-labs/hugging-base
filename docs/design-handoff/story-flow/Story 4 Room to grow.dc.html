@@ -8,7 +8,7 @@
 <body>
 <x-dc>
 <helmet>
-<title>Hugging Base · Story 4 · Room to grow</title>
+<title>Hugging Base · Story 4 · Learnings</title>
 <meta name="design_doc_mode" content="canvas">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;700&amp;display=swap" rel="stylesheet">
@@ -17,105 +17,21 @@
 <section id="t4" style="padding:48px 56px 64px;display:flex;flex-direction:column;gap:22px">
   <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
     <span style="font:600 11px ui-monospace,Menlo,monospace;padding:3px 7px;background:#10231a;color:#fff;border-radius:4px">STEP 4</span>
-    <span style="font-size:18px;font-weight:700">Room to grow</span>
-    <span style="font-size:14px;color:#5f6b63">Story: feeder-aware charging fits more batteries on the same equipment. Which transformers have room, how many fit on one, which are worth upgrading. <a href="Story%203%20Results.dc.html">← Step 3 · Read the result</a></span>
+    <span style="font-size:18px;font-weight:700">Learnings</span>
+    <span style="font-size:14px;color:#5f6b63">Story: feeder-aware charging fits more batteries on the same equipment. Which transformers have room, how many fit on one, which are worth upgrading. <a href="Story%203%20Results.dc.html">← Step 3 · Results</a></span>
   </div>
   <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
 
-  <div id="4a" style="display:flex;flex-direction:column;gap:10px">
-    <div style="display:flex;align-items:baseline;gap:8px;font-size:13px;color:#5f6b63"><a href="#4a" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#10231a;border-radius:5px;text-decoration:none">4a</a>All three answers on one screen: naive and feeder-aware maps side by side, one transformer and the upgrade list below</div>
-    <div data-screen-label="4a Room to grow overview" style="width:1600px;height:900px;background:#f7f4ec;display:flex;flex-direction:column;border-radius:8px;overflow:hidden;border:1px solid rgba(0,0,0,.08)">
-      <div style="height:60px;flex:none;display:flex;align-items:center;gap:18px;padding:0 24px;border-bottom:1px solid #e3dfd3">
-        <div style="flex:none;white-space:nowrap;font-weight:700;font-size:21px;letter-spacing:-0.02em;color:#1e4d2b">Hugging Base</div>
-        <div style="width:1px;height:24px;background:#e3dfd3"></div>
-        <div style="flex:none;white-space:nowrap;font-size:16px">Room to grow <span style="color:#5f6b63">· August 2026</span></div>
-        <nav style="flex:none;white-space:nowrap;display:flex;gap:2px;padding:3px;border:1px solid #e3dfd3;border-radius:8px;font-size:13px;margin-left:12px">
-          <a href="Story%201%20Levers.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">1 Set the levers</a>
-          <a href="Story%202%20Watch.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">2 Watch it play</a>
-          <a href="Story%203%20Results.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">3 Read the result</a>
-          <a href="Story%204%20Room%20to%20grow.dc.html" style="padding:5px 10px;border-radius:6px;background:#e4efe6;color:#1e4d2b;font-weight:700;text-decoration:none">4 Room to grow</a>
-        </nav>
-        <div style="flex:1"></div>
-        <div style="flex:none;white-space:nowrap;font-size:13px;color:#5f6b63">Core batteries · D-26 onset · today's load</div>
-      </div>
-      <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:12px;padding:16px 20px">
-        <div style="flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:minmax(0,1fr);gap:12px">
-          <sc-for list="{{ maps }}" as="m" hint-placeholder-count="2">
-            <div style="background:#fffdf8;border:1px solid {{ m.border }};border-radius:10px;padding:12px 14px 10px;display:flex;flex-direction:column;gap:8px;min-height:0">
-              <div style="display:flex;align-items:baseline;gap:10px">
-                <span style="font-size:15px;font-weight:700">{{ m.title }}</span><span style="font-size:12.5px;color:#5f6b63">{{ m.sub }}</span>
-                <span style="margin-left:auto;font-size:12.5px;color:#5f6b63">full or over <b style="color:#10231a;font-variant-numeric:tabular-nums">{{ m.full }}</b> of 379</span>
-              </div>
-              <div style="flex:1;min-height:0;position:relative;background:#efece3;border-radius:8px;overflow:hidden">
-                <svg viewBox="{{ geo.vb }}" preserveAspectRatio="xMidYMid meet" style="position:absolute;inset:0;width:100%;height:100%">
-                  <path d="{{ geo.edges }}" fill="none" stroke="#c3c9bf" stroke-width="{{ geo.ew }}" stroke-linecap="round"></path>
-                  <sc-for list="{{ m.dots }}" as="d" hint-placeholder-count="0"><circle cx="{{ d.x }}" cy="{{ d.y }}" r="{{ geo.r }}" fill="{{ d.c }}" stroke="#fffdf8" stroke-width="{{ geo.sw }}" onClick="{{ d.onClick }}" style="cursor:pointer"></circle></sc-for>
-                  <circle cx="{{ sel.x }}" cy="{{ sel.y }}" r="{{ geo.rr }}" fill="none" stroke="#10231a" stroke-width="{{ geo.sw2 }}"></circle>
-                </svg>
-                <div style="position:absolute;left:10px;top:10px;display:flex;flex-direction:column;gap:2px;padding:9px 12px;background:rgba(255,253,248,.95);border:1px solid #e3dfd3;border-radius:8px">
-                  <span style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#5f6b63">USEFUL CAPACITY</span>
-                  <span style="font-size:40px;font-weight:700;line-height:1;letter-spacing:-0.02em;font-variant-numeric:tabular-nums">{{ m.cap }}</span>
-                  <span style="font-size:12px;color:#5f6b63">batteries before the first one causes a problem</span>
-                </div>
-              </div>
-              <div style="display:flex;align-items:center;gap:12px;font-size:12px;color:#34443a;flex-wrap:wrap">
-                <sc-for list="{{ legend }}" as="l" hint-placeholder-count="4"><span style="display:flex;align-items:center;gap:5px"><span style="width:11px;height:11px;border-radius:50%;background:{{ l.c }}"></span>{{ l.name }} <b style="font-variant-numeric:tabular-nums">{{ l.n }}</b></span></sc-for>
-                <span style="margin-left:auto;display:flex;align-items:center;gap:6px;color:#5f6b63"><span style="padding:1px 5px;border:1px solid #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em">SIM</span>{{ m.cite }}</span>
-              </div>
-            </div>
-          </sc-for>
-        </div>
-
-        <div style="flex:none;height:330px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:12px">
-          <div style="background:#fffdf8;border:1.5px solid #10231a;border-radius:10px;padding:12px 16px;display:flex;flex-direction:column;gap:10px;min-width:0">
-            <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">HOW MANY FIT ON ONE TRANSFORMER</span><span style="margin-left:auto;padding:1px 5px;border:1px dashed #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">SCREENING</span></div>
-            <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:20px;font-weight:700">{{ one.name }}</span><span style="font-size:13px;color:#5f6b63">{{ one.sub }}</span><span style="margin-left:auto;font-size:12px;color:#5f6b63">click any dot to pick another</span></div>
-            <div style="display:flex;align-items:center;gap:14px"><span style="flex:none;font-size:13px;color:#34443a">Batteries on it</span><input type="range" min="0" max="50" step="1" value="{{ n }}" onChange="{{ onN }}" style="flex:1"><span style="flex:none;width:44px;text-align:right;font-size:26px;font-weight:700;font-variant-numeric:tabular-nums">{{ n }}</span></div>
-            <div style="display:grid;grid-template-columns:110px minmax(0,1fr) 170px;gap:6px 10px;align-items:center">
-              <sc-for list="{{ one.rows }}" as="r" hint-placeholder-count="2">
-                <span style="font-size:13px;font-weight:700">{{ r.name }}</span>
-                <div style="position:relative;display:grid;grid-template-columns:repeat(51,1fr);gap:1px;height:22px"><sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="0"><div style="background:{{ c.c }};opacity:{{ c.op }};border-radius:1px"></div></sc-for><div style="position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;background:#10231a;left:{{ one.curLeft }}"></div></div>
-                <span style="font-size:12.5px;font-variant-numeric:tabular-nums;color:#34443a">fits <b style="color:#10231a;font-size:15px">{{ r.fit }}</b> · {{ r.at }}</span>
-              </sc-for>
-            </div>
-            <div style="display:flex;justify-content:space-between;font-size:10.5px;color:#5f6b63;margin-left:120px;margin-right:180px;font-variant-numeric:tabular-nums"><span>0</span><span>10</span><span>20</span><span>30</span><span>40</span><span>50</span></div>
-            <div style="font-size:12.5px;line-height:1.45;color:#34443a;text-wrap:pretty">{{ one.answer }}</div>
-            <div style="margin-top:auto;display:flex;align-items:center;gap:10px">
-              <button onClick="{{ doCheck }}" style="flex:none;font:inherit;font-size:13px;font-weight:700;padding:8px 13px;border-radius:8px;border:1px solid #1e4d2b;background:{{ check.bg }};color:{{ check.fg }};cursor:pointer">{{ check.label }}</button>
-              <span style="font-size:11.5px;color:#5f6b63;text-wrap:pretty">{{ check.note }}</span>
-            </div>
-          </div>
-
-          <div style="background:#fffdf8;border:1px solid #e3dfd3;border-radius:10px;padding:12px 16px;display:flex;flex-direction:column;gap:8px;min-width:0">
-            <div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">WHICH ARE WORTH UPGRADING</span>
-              <div style="margin-left:auto;display:flex;gap:2px;padding:3px;border:1px solid #e3dfd3;border-radius:8px"><sc-for list="{{ rankOpts }}" as="o" hint-placeholder-count="2"><button onClick="{{ o.onClick }}" style="border:0;padding:4px 9px;border-radius:6px;font:inherit;font-size:12.5px;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }};font-weight:{{ o.weight }}">{{ o.text }}</button></sc-for></div>
-            </div>
-            <div style="font-size:14px;font-weight:700;text-wrap:pretty">{{ up.headline }}</div>
-            <div style="display:grid;grid-template-columns:minmax(0,1fr) 90px 60px 100px 100px 90px 110px;gap:0 10px;font-size:11.5px;font-weight:700;color:#5f6b63;padding:4px 0;border-bottom:1px solid #e3dfd3"><span>Transformer</span><span>kVA</span><span>Homes</span><span>Fits now</span><span>After upgrade</span><span>Aug h over 100%</span><span>$ per added battery</span></div>
-            <sc-if value="{{ up.empty }}" hint-placeholder-val="{{ false }}"><div style="padding:14px 0;font-size:13.5px;color:#34443a;text-wrap:pretty">{{ up.emptyText }}</div></sc-if><sc-for list="{{ up.rows }}" as="r" hint-placeholder-count="6"><div onClick="{{ r.onClick }}" style="display:grid;grid-template-columns:minmax(0,1fr) 90px 60px 100px 100px 90px 110px;gap:0 10px;font-size:12.5px;padding:4px 0;border-bottom:1px solid #efece3;font-variant-numeric:tabular-nums;cursor:pointer;background:{{ r.bg }}"><span style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span><span>{{ r.kva }}</span><span>{{ r.homes }}</span><span>{{ r.now }}</span><span>{{ r.after }}</span><span>{{ r.h100 }}</span><span>{{ r.per }}</span></div></sc-for>
-            <div style="margin-top:auto;display:flex;align-items:center;gap:8px;font-size:12px;color:#5f6b63">
-              <span style="flex:none">Upgrade cost per transformer</span>
-              <input type="text" value="{{ costStr }}" onChange="{{ onCost }}" placeholder="not sourced · enter $" style="width:150px;font:inherit;font-size:12.5px;padding:5px 8px;border:1px solid #cfcabd;border-radius:6px;background:#fffdf8;color:#10231a">
-              <span style="text-wrap:pretty">No figure is sourced (TRANSFORMER_REPLACEMENT_USD), so the $ column stays empty until you enter one.</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <div id="4b" style="display:flex;flex-direction:column;gap:10px">
     <div style="display:flex;align-items:baseline;gap:8px;font-size:13px;color:#5f6b63"><a href="#4b" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#10231a;border-radius:5px;text-decoration:none">4b</a>Key takeaways: 1 is the A/B of naive vs feeder-aware; 2 to 4 assume feeder-aware only</div>
-    <div data-screen-label="4b Room to grow questions" style="width:1600px;height:900px;background:#f7f4ec;display:flex;flex-direction:column;border-radius:8px;overflow:hidden;border:1px solid rgba(0,0,0,.08)">
+    <div data-screen-label="4b Learnings" style="width:1600px;height:900px;background:#f7f4ec;display:flex;flex-direction:column;border-radius:8px;overflow:hidden;border:1px solid rgba(0,0,0,.08)">
       <div style="height:60px;flex:none;display:flex;align-items:center;gap:18px;padding:0 24px;border-bottom:1px solid #e3dfd3">
         <div style="flex:none;white-space:nowrap;font-weight:700;font-size:21px;letter-spacing:-0.02em;color:#1e4d2b">Hugging Base</div>
-        <div style="width:1px;height:24px;background:#e3dfd3"></div>
-        <div style="flex:none;white-space:nowrap;font-size:16px">Room to grow <span style="color:#5f6b63">· August 2026</span></div>
-        <nav style="flex:none;white-space:nowrap;display:flex;gap:2px;padding:3px;border:1px solid #e3dfd3;border-radius:8px;font-size:13px;margin-left:12px">
-          <a href="Story%201%20Levers.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">1 Set the levers</a>
-          <a href="Story%202%20Watch.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">2 Watch it play</a>
-          <a href="Story%203%20Results.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">3 Read the result</a>
-          <a href="Story%204%20Room%20to%20grow.dc.html" style="padding:5px 10px;border-radius:6px;background:#e4efe6;color:#1e4d2b;font-weight:700;text-decoration:none">4 Room to grow</a>
+        <nav style="flex:none;white-space:nowrap;display:flex;gap:2px;padding:3px;border:1px solid #e3dfd3;border-radius:8px;font-size:13px">
+          <a href="Story%201%20Levers.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">1 Configure</a>
+          <a href="Story%202%20Watch.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">2 Run</a>
+          <a href="Story%203%20Results.dc.html" style="padding:5px 10px;border-radius:6px;color:#10231a;text-decoration:none">3 Results</a>
+          <a href="Story%204%20Room%20to%20grow.dc.html" style="padding:5px 10px;border-radius:6px;background:#e4efe6;color:#1e4d2b;font-weight:700;text-decoration:none">4 Learnings</a>
         </nav>
         <div style="flex:1"></div>
         <div style="flex:none;white-space:nowrap;font-size:13px;color:#5f6b63">Core batteries · D-26 onset · today's load</div>
@@ -124,7 +40,6 @@
         <div style="border-right:1px solid #e3dfd3;padding:22px 14px;display:flex;flex-direction:column;gap:4px">
           <div style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63;padding:0 10px 10px">KEY TAKEAWAYS</div>
           <sc-for list="{{ qs }}" as="q" hint-placeholder-count="4"><button onClick="{{ q.onClick }}" style="font:inherit;text-align:left;border:0;display:flex;gap:12px;padding:10px;border-radius:8px;cursor:pointer;background:{{ q.bg }};color:#10231a"><span style="width:26px;height:26px;flex:none;border-radius:50%;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;background:{{ q.dotBg }};color:{{ q.dotFg }};border:1.5px solid {{ q.dotBorder }}">{{ q.i }}</span><span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:{{ q.weight }}">{{ q.title }}</span><span style="font-size:12.5px;color:#5f6b63">{{ q.sub }}</span></span></button></sc-for>
-          <div style="margin-top:auto;padding:10px;font-size:12px;color:#5f6b63;text-wrap:pretty">Where to charge and what happens when things fail are steps 2 and 3.</div>
         </div>
         <div style="min-width:0;padding:16px 18px;display:flex;flex-direction:column;gap:10px">
           <div style="display:flex;align-items:center;gap:10px">
@@ -155,7 +70,7 @@
           </sc-if>
           <sc-if value="{{ q2 }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#5f6b63">HOW MANY FIT ON ONE TRANSFORMER</span><span style="margin-left:auto;padding:1px 5px;border:1px dashed #cfcabd;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#5f6b63">SCREENING</span></div>
-            <div style="font-size:24px;font-weight:700">{{ one.name }}</div>
+            <select value="{{ sel.tf }}" onChange="{{ onLoc }}" style="align-self:flex-start;font:inherit;font-size:24px;font-weight:700;color:#10231a;padding:4px 36px 4px 10px;margin-left:-10px;border:1px solid #cfcabd;border-radius:8px;background:#fffdf8 url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%2310231a' stroke-width='2'/%3E%3C/svg%3E&quot;) no-repeat right 12px center;appearance:none;-webkit-appearance:none;cursor:pointer"><sc-for list="{{ locOpts }}" as="o" hint-placeholder-count="0"><option value="{{ o.tf }}">{{ o.name }}</option></sc-for></select>
             <div style="font-size:13px;color:#5f6b63">{{ one.sub }}</div>
             <div style="display:flex;align-items:center;gap:12px"><input type="range" min="0" max="50" step="1" value="{{ n }}" onChange="{{ onN }}" style="flex:1"><span style="flex:none;width:52px;text-align:right;font-size:34px;font-weight:700;font-variant-numeric:tabular-nums">{{ n }}</span></div>
             <sc-for list="{{ one.awareRows }}" as="r" hint-placeholder-count="1"><div style="display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid #e3dfd3;border-radius:10px"><div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:14px;font-weight:700">{{ r.name }}</span><span style="margin-left:auto;font-size:13px;color:#34443a">fits <b style="font-size:26px;color:#10231a;font-variant-numeric:tabular-nums">{{ r.fit }}</b></span></div><div style="position:relative;display:grid;grid-template-columns:repeat(51,1fr);gap:1px;height:18px"><sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="0"><div style="background:{{ c.c }};opacity:{{ c.op }};border-radius:1px"></div></sc-for><div style="position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;background:#10231a;left:{{ one.curLeft }}"></div></div><span style="font-size:12.5px;color:#5f6b63;font-variant-numeric:tabular-nums">at {{ n }}: {{ r.at }}</span></div></sc-for>
@@ -278,6 +193,10 @@ class Component extends DCLogic {
     const tf = st.sel, F = this.fits[tf].now, t = this.topo.transformers[tf], n = st.n;
     const cells = (limit, homes) => Array.from({ length: 51 }, (_, i) => ({ c: i <= limit ? '#8aa58f' : '#e3c6c0', op: i <= homes ? 1 : 0.45 }));
     const pk = F.naivePeak(n), back = F.awareBack(n);
+    const locSet = [...(this.topo.focus || []).map((x) => x.tf), ...(this.topo.bridge || []).slice(0, 1).map((x) => x.tf)];
+    if (!locSet.includes(tf)) locSet.push(tf);
+    base.locOpts = [...new Set(locSet)].map((v) => ({ tf: v, name: this.tfName(v) }));
+    base.onLoc = (e) => this.setState({ sel: Number(e.target.value), check: null });
     const one = {
       name: this.tfName(tf), sub: `${t.kva} kVA · ${t.homes.length} home${t.homes.length === 1 ? '' : 's'} · ${this.existing[tf]} of our batteries today · naive month peak ${fmt(peakN[tf], 0)}%, feeder-aware ${fmt(peakA[tf], 0)}%`,
       curLeft: `${((n + 0.5) / 51 * 100).toFixed(2)}%`,
@@ -332,7 +251,7 @@ class Component extends DCLogic {
     };
     return {
       ...base, geo: this.geo, maps, legend, bigMap, one, check, up, up3, nb,
-      sel: { x: pts[tf][0], y: pts[tf][1] },
+      sel: { x: pts[tf][0], y: pts[tf][1], tf },
       capAware: fmt(uc.aware.v), capNaive: fmt(uc.naive.v), capCite: 'sim.p2_build usefulCapacity, greedy placement from an empty feeder, August 2026',
       doCheck: () => {
         if (ck && ck.status === 'running') return;
