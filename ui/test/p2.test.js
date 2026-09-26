@@ -255,3 +255,18 @@ test('docs/demo-script.md lists every beat with its exact deep link (same ids as
   }
   assert.equal((doc.match(/^\| \d:\d\d–\d:\d\d \|/gm) || []).length, beats.length);
 });
+
+test('driver.sharedWith as real objects ({home, label, tf}) reads as names with their transformer', () => {
+  const doc = fx('p2/aware-core-d26-g0.json');
+  const e = stressedEntry(doc);
+  e.driver.sharedWith = [{ home: 211, label: 'Home 0212', tf: 150 }, { home: 503, label: 'Home 0504', tf: 103 }];
+  const txt = counterfactualText({ entry: e, doc, index, topology, combo: 'aware-core-d26-g0' }, fmt);
+  assert.match(txt, /the same profile as Home 0212 on T-150, Home 0504 on T-103: one shape/);
+  assert.ok(!/object Object/.test(txt));
+  const meta = JSON.parse(JSON.stringify(fx('p1/meta.json')));
+  meta.relief.driver.sharedWith = [{ home: 408, label: 'Home 0409', tf: 240 }];
+  assert.equal(resolveCaption('{{reliefDriverShared}}', { topology, p1meta: meta }, fmt, { html: false }), 'Home 0409 on T-240');
+  // minutesOver100 with none/aware siblings (the real P1 shape)
+  meta.relief.minutesOver100 = { v: 17, label: 'SIM', none: 17, aware: 0 };
+  assert.equal(resolveCaption('{{reliefMinutesNone}} -> {{reliefMinutesAware}}', { topology, p1meta: meta }, fmt, { html: false }), '17 min SIM -> 0 min SIM');
+});

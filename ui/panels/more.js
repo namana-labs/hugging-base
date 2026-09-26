@@ -46,6 +46,10 @@ function modeHour(hist) {
   return bi;
 }
 function relief(S) { return S.p1meta && S.p1meta.relief; }
+/** driver.sharedWith: strings ("Home 0409") in fixtures, {home, label, tf} objects in real data. */
+export function sharedNames(list) {
+  return (list || []).map((x) => (typeof x === 'string' ? x : x && x.label ? `${x.label}${x.tf != null ? ` on T-${x.tf}` : ''}` : null)).filter(Boolean);
+}
 function minutesOver100(S, which) {
   const m = relief(S) && relief(S).minutesOver100;
   if (!m) return null;
@@ -87,7 +91,8 @@ function scanEngine(eng, re) {
 }
 
 /**
- * FACTS: name -> [sources, fn(S) -> null | string | labelled (with optional .o format opts) | parts[]].
+ * FACTS: name -> [sources, fn(S) -> null | string | labelled (with optional .o format opts) | parts[], optionalSources?].
+ * A fact runs only when every source in `sources` loaded; `optionalSources` are loaded too but may be null.
  * Sources: topology, p1meta, p1:<branch>, p2index, p2:<combo>, engine. A null result renders "(not built yet)".
  */
 export const FACTS = {
@@ -106,7 +111,8 @@ export const FACTS = {
   reliefDriverShared: [['p1meta'], (S) => {
     const d = get(S, 'p1meta.relief.driver');
     if (!d) return null;
-    return (d.sharedWith || []).length ? d.sharedWith.join(', ') : 'no other home on this feeder';
+    const names = sharedNames(d.sharedWith);
+    return names.length ? names.join(', ') : 'no other home on this feeder';
   }],
   unrelievedTf: [['p1meta', 'topology'], (S) => {
     const u = S.p1meta && S.p1meta.unrelieved;
@@ -179,11 +185,15 @@ export const FACTS = {
   energyNaive: [['p1meta'], (S) => withO(get(S, 'p1meta.money.energyValueUSD.naive') || get(S, 'p1meta.summary.naive.energyValueUSD'), { money: true, digits: 0 })],
   energyAware: [['p1meta'], (S) => withO(get(S, 'p1meta.money.energyValueUSD.aware') || get(S, 'p1meta.summary.aware.energyValueUSD'), { money: true, digits: 0 })],
   costOfAwareness: [['p1meta'], (S) => withO(get(S, 'p1meta.money.costOfAwareness'), { money: true, digits: 0 })],
-  capacityLow: [['topology'], (S) => constOf(S.p1meta, 'CAPACITY_BENCHMARK_USD_KW_MONTH', { money: true, digits: 2 }) || L(3.12, 'REAL', "Modo Apr 2026 ERCOT storage market benchmark (third party); docs/headroom/research_notes/grid_physics_orchestration_and_attacks.md:229", { money: true, digits: 2 })],
-  capacityHigh: [['topology'], (S) => constOf(S.p1meta, 'CAPACITY_HIGH_USD_KW_MONTH', { money: true, digits: 2 }) || L(8.5, 'DERIVED', 'implied from an UNVERIFIED Austin Energy figure; docs/research-report.md:246, docs/design.md:160-161', { money: true, digits: 2 })],
+  capacityLow: [['topology'], (S) => constOf(S.p1meta, 'CAPACITY_BENCHMARK_USD_KW_MONTH', { money: true, digits: 2 }) || L(3.12, 'REAL', "Modo Apr 2026 ERCOT storage market benchmark (third party); docs/headroom/research_notes/grid_physics_orchestration_and_attacks.md:229", { money: true, digits: 2 }), ['p1meta']],
+  capacityHigh: [['topology'], (S) => constOf(S.p1meta, 'CAPACITY_HIGH_USD_KW_MONTH', { money: true, digits: 2 }) || L(8.5, 'DERIVED', 'implied from an UNVERIFIED Austin Energy figure; docs/research-report.md:246, docs/design.md:160-161', { money: true, digits: 2 }), ['p1meta']],
   controllerView: [['p1meta'], (S) => { const c = get(S, 'p1meta.controllerView'); return c && c.text ? L(c.text, c.label || 'ASSUMPTION', c.cite) : null; }],
-  msPerSolve: [['p1meta', 'engine'], (S) => withO(get(S, 'p1meta.engine.msPerSolve') || scanEngine(S.engine, /solve/i), { unit: ' ms', digits: 1 })],
-  allocateLargest: [['engine'], (S) => { const h = scanEngine(S.engine, /100k|100000|1e5/i) || scanEngine(S.engine, /alloc/i); return h ? { ...h, o: { unit: ' µs', digits: 0 } } : null; }],
+  msPerSolve: [['topology'], (S) => {
+    const m = get(S, 'p1meta.engine.msPerSolve');
+    const x = isL(m) && typeof m.v === 'number' ? m : scanEngine(S.engine, /solve/i);
+    return x ? { ...x, o: { unit: ' ms', digits: 1 } } : null;
+  }, ['p1meta', 'engine']],
+  allocateLargest: [['topology'], (S) => { const h = scanEngine(S.engine, /100k|100000|1e5/i) || scanEngine(S.engine, /alloc/i); return h ? { ...h, o: { unit: ' µs', digits: 0 } } : null; }, ['engine']],
   candidates: [['p2index'], (S) => { const t = get(S, 'p2index.ties'); return t && typeof t.of === 'number' ? L(t.of, 'DERIVED', 'eligible homes without a battery') : null; }],
   refereeRuns: [['p2index'], (S) => { const r = get(S, 'p2index.referee'); return r && typeof r.runs === 'number' ? L(r.runs, 'SIM', 'sim.referee OpenDSS month runs') : null; }],
   refereeP99: [['p2index'], (S) => { const x = withO(get(S, 'p2index.referee.errorPts.p99'), { unit: ' pts', digits: 2 }); return x ? ['p99 ', x] : null; }],
@@ -235,7 +245,7 @@ export const stripPlaceholders = (tpl) => String(tpl || '').replace(PLACEHOLDER,
 /** Sources a set of templates needs. */
 export function sourcesFor(templates) {
   const need = new Set();
-  for (const t of templates) for (const p of placeholders(t)) if (p.name && FACTS[p.name]) for (const s of FACTS[p.name][0]) need.add(s);
+  for (const t of templates) for (const p of placeholders(t)) if (p.name && FACTS[p.name]) for (const s of [...FACTS[p.name][0], ...(FACTS[p.name][2] || [])]) need.add(s);
   return [...need];
 }
 

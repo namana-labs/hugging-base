@@ -6,7 +6,7 @@
 //
 // Pure helpers are exported for ui/test/p2.test.js (no DOM at import time).
 import { chartHTML, modeIndex } from '../lib/charts.js';
-import { beatBarHTML } from './more.js';
+import { beatBarHTML, sharedNames } from './more.js';
 
 export const POLICIES = [['aware', 'feeder-aware'], ['naive', 'naive']];
 export const CLASSES = [['core', 'Core'], ['legacy', 'Legacy']];
@@ -101,7 +101,7 @@ export function fleetTotals(fc) {
 
 function driverParts(driver) {
   if (!driver || !driver.profile) return null;
-  const shared = (driver.sharedWith || []).filter(Boolean);
+  const shared = sharedNames(driver.sharedWith);
   return { home: driver.label || null, profile: driver.profile, shared, kw: driver.kwAtPeak || null };
 }
 
@@ -396,7 +396,7 @@ function handoffBlock(ctx, st) {
   const items = un.map((u) => {
     const best = (st.doc.ranking || []).find((e) => e.tf === u.tf);
     const d = u.driver || {};
-    const drv = d.profile ? ` Driver: ${esc(d.label || '')} (SMART-DS profile ${esc(d.profile)}${(d.sharedWith || []).length ? `, the same profile as ${esc(d.sharedWith.join(', '))}` : ''})${d.kwAtPeak ? `, ${fmt.fmtHTML(d.kwAtPeak, { unit: ' kW', digits: 1 })} at the peak` : ''}.` : '';
+    const drv = d.profile ? ` Driver: ${esc(d.label || '')} (SMART-DS profile ${esc(d.profile)}${sharedNames(d.sharedWith).length ? `, the same profile as ${esc(sharedNames(d.sharedWith).join(', '))}` : ''})${d.kwAtPeak ? `, ${fmt.fmtHTML(d.kwAtPeak, { unit: ' kW', digits: 1 })} at the peak` : ''}.` : '';
     const link = best ? ` Best candidate here: <a href="${ctx.href({ view: 'p2', combo: st.combo, home: topology.homes[best.home].id })}">#${esc(best.rank)} ${esc(homeLabel(topology, best.home))}</a>.` : ' No candidate on it in this combo\'s top 50.';
     return `<li><b>${esc(tfName(topology, u.tf))}</b>: ${esc(u.reason || 'unrelieved')}.${drv}${link}</li>`;
   }).join('');
