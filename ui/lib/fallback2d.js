@@ -24,8 +24,13 @@ export function createScene(el, opts = {}) {
   if (!ctx) throw new Error('2D canvas unavailable');
   let model = null;
   let pick = null;
-  let view = { ...cameraPreset(topology, 'feeder') };
-  view.zoom -= 0.35;   // no pitch in 2D: pull back a little so the whole feeder fits
+  // no pitch in 2D: undo the preset's pitch offset and fit the whole feeder
+  const flat = (preset) => {
+    const v = { ...cameraPreset(topology, preset) };
+    if (preset === 'feeder') { v.latitude += 0.002; v.zoom -= 0.2; }
+    return v;
+  };
+  let view = flat('feeder');
 
   function projector() {
     const dpr = window.devicePixelRatio || 1;
@@ -109,14 +114,16 @@ export function createScene(el, opts = {}) {
       ctx.fillText(a.text, p[0] - 1 * dpr, p[1] - bH - 4 * dpr);
     }
     ctx.font = `700 ${13 * dpr}px Inter, "Helvetica Neue", Helvetica, Arial, sans-serif`;
+    const full = view.zoom >= 16.2;
     for (const t of model.labels) {
       const p = P(t.position);
-      const w = ctx.measureText(t.text).width;
+      const text = full ? t.text : (t.short || t.text);
+      const w = ctx.measureText(text).width;
       const x = p[0] + 8 * dpr, y = p[1] - 14 * dpr;
       ctx.fillStyle = model.theme === 'dark' ? 'rgba(17,24,21,0.88)' : 'rgba(247,249,245,0.92)';
       ctx.fillRect(x - 4 * dpr, y - 13 * dpr, w + 8 * dpr, 18 * dpr);
       ctx.fillStyle = rgba(t.color);
-      ctx.fillText(t.text, x, y);
+      ctx.fillText(text, x, y);
     }
   }
 
@@ -153,7 +160,7 @@ export function createScene(el, opts = {}) {
   return {
     kind: 'fallback',
     update(m) { model = m; draw(); },
-    camera(preset) { view = { ...cameraPreset(topology, preset) }; if (preset === 'feeder') view.zoom -= 0.35; draw(); },
+    camera(preset) { view = flat(preset); draw(); },
     onPick(cb) { pick = cb; },
     dispose() { window.removeEventListener('resize', onResize); canvas.remove(); },
     whenRendered() { return new Promise((res) => requestAnimationFrame(() => { draw(); res(); })); },

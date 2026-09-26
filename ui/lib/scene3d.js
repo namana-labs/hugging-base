@@ -17,6 +17,8 @@
 // command, '!' on stale/expired units, and TextLayer labels.
 import { cameraPreset, BAT_R_M } from './scene-model.js';
 
+export const LABEL_FULL_ZOOM = 16.2;
+
 export function webgl2Available() {
   try {
     const c = document.createElement('canvas');
@@ -45,10 +47,16 @@ export function createScene(el, opts = {}) {
   let pick = null;
   let model = null;
   let version = 0;
+  const initial = opts.viewState || cameraPreset(topology, 'feeder');
+  let zoomBucket = initial.zoom >= LABEL_FULL_ZOOM ? 1 : 0;   // labels shorten when zoomed out (A, B, C, D, T-240)
   const deck = new D.Deck({
     parent: el,
     views: [new D.MapView({ repeat: false })],
-    initialViewState: opts.viewState || cameraPreset(topology, 'feeder'),
+    initialViewState: initial,
+    onViewStateChange: ({ viewState }) => {
+      const b = viewState.zoom >= LABEL_FULL_ZOOM ? 1 : 0;
+      if (b !== zoomBucket) { zoomBucket = b; if (model) deck.setProps({ layers: layers(model, version) }); }
+    },
     controller: { dragRotate: true, touchRotate: true, scrollZoom: true, doubleClickZoom: true, keyboard: true },
     layers: [],
     useDevicePixels: true,
@@ -75,9 +83,9 @@ export function createScene(el, opts = {}) {
     // transformer cans, one set of ColumnLayers per radius (kVA class)
     const ghostsBy = groupBy(m.canGhosts, (d) => d.radius);
     for (const [r, g] of ghostsBy) {
-      out.push(new D.ColumnLayer({ id: `can-ghost-${r.toFixed(3)}`, data: g, radius: r, diskResolution: 24, extruded: true,
+      out.push(new D.ColumnLayer({ id: `can-ghost-${r.toFixed(3)}`, data: g, radius: r, diskResolution: 14, extruded: true,
         filled: true, wireframe: true, getPosition: (d) => d.position, getElevation: (d) => d.height,
-        getFillColor: [ink[0], ink[1], ink[2], 18], getLineColor: [ink[0], ink[1], ink[2], 90], pickable: false }));
+        getFillColor: [ink[0], ink[1], ink[2], 16], getLineColor: [ink[0], ink[1], ink[2], 70], pickable: false }));
     }
     for (const [r, g] of groupBy(m.cans, (d) => d.radius)) {
       out.push(new D.ColumnLayer({ id: `can-fill-${r.toFixed(3)}`, data: g, radius: r * 0.8, diskResolution: 24, extruded: true,
@@ -89,7 +97,7 @@ export function createScene(el, opts = {}) {
     }
     for (const [r, g] of groupBy(m.canCaps, (d) => d.radius)) {
       out.push(new D.ColumnLayer({ id: `can-cap150-${r.toFixed(3)}`, data: g, radius: r, diskResolution: 24, extruded: true,
-        getPosition: (d) => d.position, getElevation: 0.6, getFillColor: [208, 59, 59, 210], pickable: false }));
+        getPosition: (d) => d.position, getElevation: 0.6, getFillColor: [208, 59, 59, 150], pickable: false }));
     }
     out.push(
       new D.ColumnLayer({ id: 'battery-ghost', data: m.batteryGhosts, radius: BAT_R_M, diskResolution: 12, extruded: true,
@@ -104,7 +112,8 @@ export function createScene(el, opts = {}) {
       new D.TextLayer({ id: 'alerts', data: m.alerts, getPosition: (d) => d.position, getText: (d) => d.text, getSize: 20,
         getColor: [255, 255, 255, 255], fontWeight: 800, background: true, getBackgroundColor: [110, 114, 111, 235],
         backgroundPadding: [5, 1, 5, 1], billboard: true }),
-      new D.TextLayer({ id: 'labels', data: m.labels, getPosition: (d) => d.position, getText: (d) => d.text,
+      new D.TextLayer({ id: 'labels', data: m.labels, getPosition: (d) => d.position,
+        getText: (d) => (zoomBucket ? d.text : (d.short || d.text)), updateTriggers: { getText: zoomBucket },
         getColor: (d) => d.color, getSize: (d) => (d.pin ? 13 : 15), fontWeight: 700, characterSet: 'auto',
         fontFamily: 'Inter, "Helvetica Neue", Helvetica, Arial, sans-serif',
         background: true, getBackgroundColor: m.theme === 'dark' ? [17, 24, 21, 225] : [247, 249, 245, 230],

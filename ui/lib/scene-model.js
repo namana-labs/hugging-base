@@ -14,7 +14,7 @@
 //     model.canRings[379]    {i, position, radius, pct:110}                 ring at 110% (normal rating)
 //     model.canCaps[379]     {i, position, radius, pct:150}                 red cap at 150% (emergency rating)
 //     model.lines[2531]      {path, color}                                  stable identity per topology+theme
-//     model.labels[]         {text, position:[lon,lat,z], color, key}       A-D (with room), T-240, pins
+//     model.labels[]         {text, short, position:[lon,lat,z], color, key} A-D (with room), T-240, pins; short at low zoom
 //     model.pulses[]         {position, color}                              batteries whose command changed
 //     model.alerts[]         {position, text:'!'}                           stale / expired batteries
 //     model.staticKey        string: the home/context geometry is unchanged while this is unchanged
@@ -54,7 +54,7 @@ export const BACKUP_GLOW = [255, 214, 120];                                  // 
 export const BATTERY_RGB = { C: null /* accent */, D: [236, 131, 90], I: [140, 164, 146], S: [150, 150, 150], X: [150, 150, 150], B: [255, 196, 92] };
 
 // display scales (metres in the 3D scene; not data)
-export const CAN_H_M = 26;            // a can's ghost is this tall: 100% of nameplate
+export const CAN_H_M = 22;            // a can's ghost is this tall: 100% of nameplate
 export const CAN_R_PER_SQRT_KVA = 0.95;
 export const BAT_H_M = 12;            // a battery's ghost: full capacity
 export const BAT_R_M = 1.7;
@@ -155,7 +155,7 @@ export function cameraPreset(topology, name) {
     const pts = (topology.focus || []).map((f) => tfs[f.tf].lonlat);
     const lon = pts.reduce((s, p) => s + p[0], 0) / (pts.length || 1);
     const lat = pts.reduce((s, p) => s + p[1], 0) / (pts.length || 1);
-    return { longitude: lon, latitude: lat - 0.00035, zoom: 18, pitch: 55, bearing: -20 };
+    return { longitude: lon, latitude: lat - 0.00022, zoom: 18, pitch: 55, bearing: -20 };
   }
   if (name === 't240') {
     const b = (topology.bridge || [])[0];
@@ -258,6 +258,7 @@ export function buildSceneModel({ topology, footprints = null, frame = null, vie
   }
 
   const cans = [], canGhosts = [], canRings = [], canCaps = [];
+  const bridgeTf = new Set((topology.bridge || []).map((b) => b.tf));
   tfs.forEach((t, i) => {
     const code = tier[i] | 0;
     const radius = st.canRadius[i];
@@ -267,28 +268,29 @@ export function buildSceneModel({ topology, footprints = null, frame = null, vie
     cans.push({ i, id: t.id, kva: t.kva, position: t.lonlat, radius, pct: p, code, open, focus: t.focus || null,
       height: open ? 0.4 : Math.max(0.4, CAN_H_M * p / 100), color: withAlpha(c, 255) });
     canGhosts.push({ i, position: t.lonlat, radius, height: CAN_H_M });
-    canRings.push({ i, position: [t.lonlat[0], t.lonlat[1], CAN_H_M * 1.1], radius: radius * 1.18, pct: 110 });
-    canCaps.push({ i, position: [t.lonlat[0], t.lonlat[1], CAN_H_M * 1.5], radius: radius * 1.05, pct: 150 });
+    // the 110% ring and the 150% cap only where they matter (named cans, or over nameplate now): less clutter
+    if (t.focus || bridgeTf.has(i) || p > 100) {
+      canRings.push({ i, position: [t.lonlat[0], t.lonlat[1], CAN_H_M * 1.1], radius: radius * 1.18, pct: 110 });
+      canCaps.push({ i, position: [t.lonlat[0], t.lonlat[1], CAN_H_M * 1.5], radius: radius * 1.05, pct: 150 });
+    }
   });
 
   const labels = [];
-  const focusByTf = {};
-  for (const f of topology.focus || []) focusByTf[f.tf] = f.key;
-  for (const [tfIdx, key] of Object.entries(focusByTf)) {
-    const i = +tfIdx, t = tfs[i];
+  for (const { key, tf: i } of topology.focus || []) {
+    const t = tfs[i];
     const fd = frame && frame.focus ? frame.focus[key] : null;
     const pKW = fd ? fd.homeKW + fd.batKW : null;
     const room = roomKW(t.kva, pct[i] || 0, pKW);
     const roomTxt = !frame ? '' : room >= 0 ? ` · room ${room.toFixed(1)} kW` : ` · over by ${(-room).toFixed(1)} kW`;
-    labels.push({ key, text: `${key} · ${t.kva} kVA${roomTxt}`, position: [t.lonlat[0], t.lonlat[1], CAN_H_M * Math.max(1.55, (pct[i] || 0) / 100) + 6], color: ink, room });
+    labels.push({ key, short: key, text: `${key} · ${t.kva} kVA${roomTxt}`, position: [t.lonlat[0], t.lonlat[1], CAN_H_M * Math.max(1.55, (pct[i] || 0) / 100) + 6], color: ink, room });
   }
   for (const b of topology.bridge || []) {
     const t = tfs[b.tf];
-    labels.push({ key: '240', text: `T-240 · ${t.kva} kVA · no battery`, position: [t.lonlat[0], t.lonlat[1], CAN_H_M * Math.max(1.55, (pct[b.tf] || 0) / 100) + 6], color: ink });
+    labels.push({ key: '240', short: 'T-240', text: `T-240 · ${t.kva} kVA · no battery`, position: [t.lonlat[0], t.lonlat[1], CAN_H_M * Math.max(1.55, (pct[b.tf] || 0) / 100) + 6], color: ink });
   }
   for (const p of pins || []) {
     const h = topology.homes[p.home];
-    if (h) labels.push({ key: 'pin', text: String(p.text), position: [h.lonlat[0], h.lonlat[1], 16], color: ink, pin: true });
+    if (h) labels.push({ key: 'pin', short: String(p.text), text: String(p.text), position: [h.lonlat[0], h.lonlat[1], 16], color: ink, pin: true });
   }
 
   return {
