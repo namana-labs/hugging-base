@@ -413,6 +413,9 @@ def summarize(sc, run, loads_driver=None):
     kv, hv = np.unravel_index(int(np.nanargmin(v)), v.shape)
     below = int((np.nanmin(v, axis=0) < 0.95).sum())
     kh = int(np.argmax(run["head"]))
+    ko = next((k for k in range(n) if sc.modes[k] == "charge"), None)
+    if ko is not None:
+        kh2 = ko + int(np.argmax(run["head"][ko:]))
     socs = run["soc"]
     islanded = np.array([[c == "B" for c in s] for s in run["state"]])
     breaches = int(((socs < RESERVE_FLOOR - 1e-9) & ~islanded).sum())
@@ -440,7 +443,10 @@ def summarize(sc, run, loads_driver=None):
         "feederHead": labelled(round(float(run["head"][kh]) / HEAD_RATING_A * 100, 1), "SIM",
                                "OpenDSS current in the head cable as % of its rating", amps=round(float(run["head"][kh]), 1),
                                t=hhmm(win.time(kh)),
-                               ratingA=labelled(HEAD_RATING_A, "DERIVED", "site/ems/flow-spec.md (SMART-DS NormAmps)")),
+                               ratingA=labelled(HEAD_RATING_A, "DERIVED", "site/ems/flow-spec.md (SMART-DS NormAmps)"),
+                               **({"afterOnset": labelled(round(float(run["head"][kh2]) / HEAD_RATING_A * 100, 1), "SIM",
+                                                          "head-cable maximum from the D-26 onset on", amps=round(float(run["head"][kh2]), 1),
+                                                          t=hhmm(win.time(kh2)))} if ko is not None else {})),
         "fuseMargin": _fuse_margin(win, pct),
         "commands": labelled(run["stats"]["issued"], "SIM", "commands issued by the controller (seq + expiry)"),
         "seqRejected": labelled(run["stats"]["rejected"], "SIM", "deliveries a device refused for a non-increasing seq"),

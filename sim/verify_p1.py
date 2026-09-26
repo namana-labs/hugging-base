@@ -212,9 +212,12 @@ def main(argv=None):
             s0 = e["step"]
             back = next((k - s0 for k in range(s0, min(n, s0 + 10)) if c[k] <= TIER_AMBER_PCT), None)
             peak = float(c[s0:s0 + 3].max())
+            cb = [af["focus"]["C"]["batKW"][k] / 10 for k in (s0 - 1, s0, min(n - 1, s0 + 1))]
+            note = (f"C's batteries {cb[0]:+.1f} -> {cb[1]:+.1f} -> {cb[2]:+.1f} kW at Tc+{s0 - tc - 1}..+{s0 - tc + 1}"
+                    + (" (not charging when the EV arrives: the throttle is not exercised)" if cb[0] <= MIN_GRANT_KW else ""))
             v.exp(back is not None and back <= 2, "hot-c",
-                  f"         hot C Tc+{s0 - tc} (+{e['deltaKW']} kW EV): excursion {peak:.1f}% ; back <= 100% after "
-                  f"{back if back is not None else '>10'} steps", "back <= 100% within 2 steps")
+                  f"         hot C Tc+{s0 - tc} (+{e['deltaKW']} kW EV): max {peak:.1f}% ; back <= 100% after "
+                  f"{back if back is not None else '>10'} steps ; {note}", "back <= 100% within 2 steps")
     else:
         v.inv(False, "faults", "faults : aware_faults or Tc missing")
 
@@ -292,8 +295,10 @@ def main(argv=None):
         s = meta["summary"][b]
         vm = s["vMinHome"]
         fh = s["feederHead"]
+        inrange = "voltage stays in range at unity pf (SIM)" if s["homesBelow095"]["v"] == 0 else f"homes < 0.95 pu {s['homesBelow095']['v']}"
         v.rep(f"grid   : {b}: min service voltage {vm['v']:.4f} pu = {vm['volts']:.1f} V ({labels[vm['home']]}, {vm['t']}) ; "
-              f"homes < 0.95 pu {s['homesBelow095']['v']} ; feeder head max {fh['v']:.1f}% of {fh['ratingA']['v']:.0f} A at {fh['t']}")
+              f"{inrange} ; feeder head max {fh['v']:.1f}% of {fh['ratingA']['v']:.0f} A at {fh['t']}"
+              + (f" ; after the onset max {fh['afterOnset']['v']:.1f}% at {fh['afterOnset']['t']}" if 'afterOnset' in fh else ""))
     mo = meta["money"]["energyValueUSD"]
     ca = meta["money"]["costOfAwareness"]
     v.rep(f"money  : energy value naive ${mo['naive']['v']:.2f} / aware ${mo['aware']['v']:.2f} / aware_faults "
