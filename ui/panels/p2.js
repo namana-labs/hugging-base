@@ -208,6 +208,9 @@ const METRIC_NAMES = {
   protectionWith: ['protection operates (ASSUMPTION rule)', {}],
 };
 
+/** Candidate metrics computed on the surrogate loading whatever their cite says (5.6.5: kWh shaved above nameplate). */
+const SURROGATE_METRICS = new Set(['reliefKWh']);
+
 const OPENDSS_NAMES = {
   peakPct: ['peak', { unit: '%', digits: 1 }],
   h100: ['above nameplate', { unit: ' h', digits: 2 }],
@@ -284,9 +287,11 @@ function candidateCard(ctx, st) {
     ? '<span class="p2-badge ok" title="sim.referee: OpenDSS month run">OpenDSS-checked</span>'
     : '<span class="p2-badge screen" title="surrogate only (sim.surrogate); not yet refereed by OpenDSS">screening</span>';
   // The peak with the battery: OpenDSS's number when the referee ran this candidate, the surrogate kept as screening.
+  // reliefKWh (energy above nameplate shaved) is a loading number from the surrogate month even where its cite does
+  // not say so: it carries the chip too.
   const metricHTML = (k, v) => (k === 'peakWithPct' && checkedByOpenDSS(e) && e.opendss.after.peakPct
     ? `${numHTML(fmt, e.opendss.after.peakPct, METRIC_NAMES[k][1])} OpenDSS · ${numHTML(fmt, v, METRIC_NAMES[k][1])}`
-    : numHTML(fmt, v, METRIC_NAMES[k][1]));
+    : numHTML(fmt, v, METRIC_NAMES[k][1]) + (SURROGATE_METRICS.has(k) && !isScreening(v) ? SCREEN_CHIP : ''));
   const metrics = labelledPairs(e, fmt.isLabelled).filter(([k]) => METRIC_NAMES[k])
     .map(([k, v]) => `<div class="p2-m"><span>${esc(METRIC_NAMES[k][0])}</span><b>${metricHTML(k, v)}</b></div>`).join('');
   const odss = checkedByOpenDSS(e) ? `<div class="p2-odss"><b>OpenDSS month run</b>${['before', 'after'].map((w) => {
@@ -343,6 +348,8 @@ function rankingTable(ctx, st) {
   }).join('');
   const lab = (k, fallback) => {
     const e = (doc.ranking || [])[0];
+    // the peak column mixes OpenDSS (●) and screening (○) rows, so its header chip names both; other columns are one kind
+    if (k === 'peakWithPct') return fmt.chip(e && e[k] && e[k].label ? e[k].label : fallback, 'month peak with the battery: OpenDSS month run on ● rows, surrogate screening on ○ rows');
     return e && e[k] && e[k].label ? fmt.chip(e[k].label, e[k].cite) + (isScreening(e[k]) ? SCREEN_CHIP : '') : fmt.chip(fallback);
   };
   return `<table class="p2-rank"><thead><tr><th>#</th><th>home</th><th>transformer</th><th>peak with, % (● OpenDSS, ○ screening)${lab('peakWithPct', 'SIM')}</th><th>stress avoided, h${lab('stressAvoidedH', 'SIM')}</th><th>August value${lab('revenueUSD', 'DERIVED')}</th><th></th></tr></thead><tbody>${rows}</tbody></table>

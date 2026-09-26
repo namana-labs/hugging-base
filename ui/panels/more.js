@@ -11,6 +11,8 @@
 //   {{name}}                a fact from FACTS
 //   {{chip:LABEL}}          a label chip for a prose claim; {{chip:LABEL:cite text}} adds the cite as its title
 
+import { chartHTML } from '../lib/charts.js';
+
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const LABELS = ['REAL', 'SIM', 'DERIVED', 'ASSUMPTION'];
 const isL = (x) => x !== null && typeof x === 'object' && !Array.isArray(x) && 'v' in x && LABELS.includes(x.label);
@@ -700,13 +702,133 @@ async function chaosCard(ctx) {
   return `<div class="hb-card"><h3>Chaos sweep</h3><div class="hb-sub">The P1 evening, seeded failures; battery-caused violations only.</div>${head}${counts.length ? `<div class="hb-sub">Runs: ${fmt.fmtHTML({ v: counts.length, label: 'SIM' })}; with any battery-caused violation: ${fmt.fmtHTML({ v: counts.filter((c) => c > 0).length, label: 'SIM' })}</div>` : ''}</div>`;
 }
 
+// ---------------------------------------------------------------------------------------------------------------
+// P3: the ERCOT console (build prompt 5.7.3). Four REAL system cards for one recorded day, computed at view time from a
+// byte-for-byte snapshot of site/ems (ui/data/ems/index.json lists the sha256s). site/ems/SYNTHESIS.md picks the
+// panels: frequency, PRC reserves, net load and its ramp, SCED congestion. Each number carries the status the EMS
+// bundle gives its field (real5.fields; UNVERIFIED maps to ASSUMPTION with "unverified" in the cite).
+const EMS_LABEL = (st) => (/^REAL/.test(String(st || '')) ? 'REAL' : /^DERIVED/.test(String(st || '')) ? 'DERIVED' : /^SIM/.test(String(st || '')) ? 'SIM' : 'ASSUMPTION');
+
+/** argmin/argmax over a numeric array (nulls skipped): {i, v} or null. */
+function extreme(a, dir) {
+  let bi = -1;
+  (a || []).forEach((v, i) => { if (typeof v === 'number' && Number.isFinite(v) && (bi < 0 || (dir > 0 ? v > a[bi] : v < a[bi]))) bi = i; });
+  return bi < 0 ? null : { i: bi, v: a[bi] };
+}
+
+/**
+ * The console cards as data (pure; ui/test/p2.test.js reads it): [{key, title, label, stats: [{name, x, o}], chart, text}].
+ * synth = synth-console.json, freq = freq-series.json (constants and 10-s stats), manifest = ems/index.json.
+ * Null when the snapshot is missing.
+ */
+export function emsModel(synth, freq, manifest) {
+  const r = synth && synth.real5;
+  if (!r || !Array.isArray(r.t)) return null;
+  const F = r.fields || {};
+  const lab = (k) => EMS_LABEL(F[k] && F[k].status);
+  const cite = (k, extra) => `site/ems synth-console.json real5.${k} (${(F[k] && F[k].from) || 'EMS bundle'})${extra ? `; ${extra}` : ''}`;
+  const at = (k, e, o, extra) => (e ? [{ v: e.v, label: lab(k), cite: cite(k, extra), o }, { v: r.t[e.i], label: lab(k), cite: `5-min bin start, ${r.tz || 'CDT'}` }] : null);
+  const ticks = r.t.map((t, i) => (/^(00|06|12|18):00$/.test(t) ? { i, text: t } : null)).filter(Boolean);
+  const C = (freq && freq.constants) || {};
+  const fsrc = 'site/ems freq-series.json constants (ERCOT Nodal Operating Guide; see its sources)';
+  const sc = synth.scale || {};
+  const scLab = EMS_LABEL(sc.status);
+  const cards = [];
+
+  // 1. Frequency
+  const fs = freq && freq.stats && freq.stats.frequency;
+  const fLo = extreme(r.fMinHz, -1), fHi = extreme(r.fMaxHz, 1);
+  const f = { key: 'frequency', title: 'Frequency', label: lab('fMinHz'), stats: [] };
+  if (fs && typeof fs.min_hz === 'number') {
+    f.stats.push({ name: 'lowest ten-second sample', parts: [{ v: fs.min_hz, label: 'REAL', cite: 'freq-series.json stats.frequency.min_hz, 8,289 ten-second samples', o: { unit: ' Hz', digits: 3 } }, ' at ', { v: fs.min_time_cdt, label: 'REAL', cite: 'CDT' }] });
+    f.stats.push({ name: 'highest ten-second sample', parts: [{ v: fs.max_hz, label: 'REAL', cite: 'freq-series.json stats.frequency.max_hz', o: { unit: ' Hz', digits: 3 } }, ' at ', { v: fs.max_time_cdt, label: 'REAL', cite: 'CDT' }] });
+    if (typeof fs.sigma_mhz === 'number') f.stats.push({ name: 'day\'s wander (σ)', parts: [{ v: fs.sigma_mhz, label: 'DERIVED', cite: 'freq-series.json stats.frequency.sigma_mhz', o: { unit: ' mHz', digits: 1 } }] });
+    if (typeof fs.clock_minutes_avg_below_59_91 === 'number') f.stats.push({ name: 'clock minutes below the EEA frequency trigger', parts: [{ v: fs.clock_minutes_avg_below_59_91, label: 'DERIVED', cite: 'freq-series.json stats.frequency.clock_minutes_avg_below_59_91' }] });
+  } else if (fLo && fHi) {
+    f.stats.push({ name: 'lowest (five-minute bins)', parts: at('fMinHz', fLo, { unit: ' Hz', digits: 3 }) }, { name: 'highest', parts: at('fMaxHz', fHi, { unit: ' Hz', digits: 3 }) });
+  }
+  const f0 = typeof C.f0_hz === 'number' ? C.f0_hz : null, db = typeof C.governor_deadband_hz === 'number' ? C.governor_deadband_hz : null;
+  // y range from the data (and the deadband when known), so the band is visible around nominal
+  const fyLo = Math.min(...[fLo && fLo.v, f0 !== null && db !== null ? f0 - db : null].filter((x) => typeof x === 'number'));
+  const fyHi = Math.max(...[fHi && fHi.v, f0 !== null && db !== null ? f0 + db : null].filter((x) => typeof x === 'number'));
+  f.chart = { series: [{ name: 'min', values: r.fMinHz, cls: 's-without' }, { name: 'max', values: r.fMaxHz, cls: 's-with' }], label: lab('fMinHz'),
+    ...(Number.isFinite(fyLo) && Number.isFinite(fyHi) ? { yMin: fyLo - (fyHi - fyLo) * 0.1, yMax: fyHi + (fyHi - fyLo) * 0.1 } : {}),
+    refs: f0 !== null && db !== null ? [{ y: f0 + db, text: 'deadband', cls: 'r-amber' }, { y: f0 - db, text: '', cls: 'r-amber' }] : [], xTicks: ticks, height: 90,
+    caption: `Frequency, min and max per 5-min bin, ${r.day}${db !== null ? '; the governor deadband dashed' : ''}`, title: 'ercot frequency' };
+  if (Array.isArray(sc.fleetNameplate_mHz) && sc.inputs && sc.inputs.fleetNameplateMW) {
+    const [lo, mid, hi] = sc.fleetNameplate_mHz;
+    f.thread = ['Swinging Base\'s whole fleet (', { v: sc.inputs.fleetNameplateMW.value, label: 'REAL', cite: `Base-published; ${sc.inputs.fleetNameplateMW.source || ''}`, o: { unit: ' MW', digits: 1 } },
+      ') one way would move settling frequency by about ', { v: lo, label: scLab, cite: sc.formula || 'synth scale', o: { digits: 1 } }, ' to ', { v: hi, label: scLab, cite: sc.formula || 'synth scale', o: { unit: ' mHz', digits: 1 } },
+      ' (median ', { v: mid, label: scLab, cite: sc.formula || 'synth scale', o: { unit: ' mHz', digits: 1 } }, '): context, not a frequency actor.'];
+  }
+  cards.push(f);
+
+  // 2. PRC reserves
+  const pLo = extreme(r.prcMinMW, -1);
+  const T = C.prc_thresholds_mw || {};
+  const p = { key: 'prc', title: 'Physical responsive capability (reserves)', label: lab('prcMinMW'), stats: [] };
+  if (pLo) p.stats.push({ name: 'lowest PRC', parts: at('prcMinMW', pLo, { unit: ' MW', digits: 0 }) });
+  if (typeof T.watch === 'number') p.stats.push({ name: 'watch trigger', parts: [{ v: T.watch, label: 'REAL', cite: fsrc, o: { unit: ' MW', digits: 0 } }] });
+  if (pLo && typeof T.watch === 'number') p.verdict = pLo.v >= T.watch ? 'PRC stayed above the watch trigger all day.' : 'PRC fell below the watch trigger.';
+  p.chart = { series: [{ name: 'PRC min', values: r.prcMinMW, cls: 's-with' }], label: lab('prcMinMW'), yMin: 0,
+    refs: ['watch', 'eea1'].filter((k) => typeof T[k] === 'number').map((k) => ({ y: T[k], text: k === 'watch' ? 'watch' : 'EEA1', cls: 'r-normal' })),
+    xTicks: ticks, height: 90, unit: '', caption: `PRC, lowest per 5-min bin (MW), ${r.day}`, title: 'ercot prc' };
+  cards.push(p);
+
+  // 3. Net load and its ramp
+  const nHi = extreme(r.netLoadMW, 1);
+  const rAbs = (r.ramp15MWperMin || []).map((v) => (typeof v === 'number' ? Math.abs(v) : null));
+  const rHi = extreme(rAbs, 1);
+  const n = { key: 'netload', title: 'Net load and its ramp', label: lab('netLoadMW'), stats: [] };
+  if (nHi) n.stats.push({ name: 'net-load peak (demand − wind − solar)', parts: at('netLoadMW', nHi, { unit: ' MW', digits: 0 }) });
+  if (rHi) n.stats.push({ name: 'steepest quarter-hour ramp', parts: at('ramp15MWperMin', { i: rHi.i, v: r.ramp15MWperMin[rHi.i] }, { unit: ' MW/min', digits: 1, signed: true }) });
+  n.chart = { series: [{ name: 'net load', values: r.netLoadMW, cls: 's-with' }, ...(Array.isArray(r.demandMW) ? [{ name: 'demand', values: r.demandMW, cls: 's-without' }] : [])],
+    label: lab('netLoadMW'), xTicks: ticks, height: 90,
+    ...(extreme(r.netLoadMW, -1) ? { yMin: extreme(r.netLoadMW, -1).v * 0.9 } : {}), caption: `Net load (accent) and demand (grey), MW, ${r.day}`, title: 'ercot net load' };
+  if (typeof sc.fleetShareOfNetLoadPeakPct === 'number') {
+    n.thread = ['Base\'s whole fleet is ', { v: sc.fleetShareOfNetLoadPeakPct, label: scLab, cite: 'synth scale.fleetShareOfNetLoadPeakPct', o: { unit: '%', digits: 2 } }, ' of the net-load peak',
+      ...(typeof sc.fleetSecondsOfSteepestRamp15 === 'number' ? [' and covers ', { v: sc.fleetSecondsOfSteepestRamp15, label: scLab, cite: 'synth scale.fleetSecondsOfSteepestRamp15', o: { unit: ' s', digits: 0 } }, ' of the steepest ramp'] : []), '.'];
+  }
+  cards.push(n);
+
+  // 4. Congestion (SCED) and the zone price
+  const bHi = extreme(r.scedBinding, 1);
+  const viol = (r.scedViolated || []).filter((v) => typeof v === 'number' && v > 0).length;
+  const lzHi = extreme(r.lzNorthUSD, 1);
+  const g = { key: 'congestion', title: 'Congestion: binding transmission constraints', label: lab('scedBinding'), stats: [] };
+  if (bHi) g.stats.push({ name: 'most binding constraints in one bin', parts: at('scedBinding', bHi, { digits: 0 }) });
+  if (Array.isArray(r.scedViolated)) g.stats.push({ name: 'five-minute bins with a violated constraint', parts: [{ v: viol, label: lab('scedViolated'), cite: cite('scedViolated') }] });
+  if (lzHi) g.stats.push({ name: 'highest LZ_NORTH real-time price', parts: at('lzNorthUSD', lzHi, { money: true, digits: 2 }) });
+  g.chart = { series: [{ name: 'binding', values: r.scedBinding, cls: 's-with' }], label: lab('scedBinding'), yMin: 0, xTicks: ticks, height: 90,
+    caption: `SCED binding constraints per 5-min bin, ${r.day}`, title: 'ercot sced' };
+  g.thread = ['These are transmission constraints. ERCOT dispatches one number per load zone and checks no feeder or service transformer: that gap is what P1 and P2 fill.'];
+  cards.push(g);
+
+  const ends = r.coverageEnds || {};
+  const snap = manifest && Array.isArray(manifest.files) ? manifest.files.map((x) => `${x.name} sha256 ${String(x.sha256 || '').slice(0, 12)}…`).join(', ') : null;
+  return { day: r.day, tz: r.tz, cards,
+    caveat: `Recorded ${r.day}, not live; the data ends at ${Object.entries(ends).map(([k, v]) => `${k} ${v}`).join(', ')}. A different day from P1 (the 23 Aug replay).`,
+    source: `site/ems (snapshot: ${snap || 'no manifest'})` };
+}
+
+function partsHTML(parts, fmt) {
+  return (parts || []).map((x) => (typeof x === 'string' ? esc(x) : isL(x) ? numHTML(fmt, x, x.o || {}) : esc(String(x)))).join('');
+}
+
 async function emsCards(ctx) {
-  const idx = await ctx.data.getOptional('ems/index.json').catch(() => null);
-  if (!idx || !Array.isArray(idx.cards)) return '';
+  const [manifest, synth, freq] = await Promise.all(['ems/index.json', 'ems/synth-console.json', 'ems/freq-series.json']
+    .map((p) => ctx.data.getOptional(p).catch(() => null)));
+  const m = emsModel(synth, freq, manifest);
+  if (!m) return '';
   const { fmt } = ctx;
-  return idx.cards.map((c) => `<div class="hb-card ems"><h3>${esc(c.title)}</h3>
-    ${(c.stats || []).map((s) => (isL(s) ? `<div class="ems-stat"><span>${esc(s.name || '')}</span><b>${fmt.fmtHTML(s, s.o || {})}</b></div>` : '')).join('')}
-    <div class="hb-sub">${esc(c.text || '')}</div><div class="hb-sub">Source: <code>${esc(c.source || '')}</code></div></div>`).join('');
+  const cards = m.cards.map((c) => `<div class="hb-card ems" data-ems="${esc(c.key)}"><h3>${esc(c.title)} ${fmt.chip(c.label)}</h3>
+    ${c.stats.filter((s) => s.parts).map((s) => `<div class="ems-stat"><span>${esc(s.name)}</span><b>${partsHTML(s.parts, fmt)}</b></div>`).join('')}
+    ${c.verdict ? `<div class="hb-sub">${esc(c.verdict)} ${fmt.chip('DERIVED', 'lowest PRC vs the watch trigger')}</div>` : ''}
+    ${c.chart ? chartHTML('line', c.chart) : ''}
+    ${c.thread ? `<div class="hb-sub ems-thread">${partsHTML(c.thread, fmt)}</div>` : ''}</div>`).join('');
+  return `<h2 class="more-h" data-beat="ercot">ERCOT console: the system day, ${esc(m.day)} ${fmt.chip('REAL', 'ERCOT public dashboards and MIS reports, recorded by the EMS workflow (site/ems)')}</h2>
+    <div class="hb-sub more-sub">${esc(m.caveat)} Source: <code>${esc(m.source)}</code>; panels picked by <code>site/ems/SYNTHESIS.md</code>.</div>
+    <div class="hb-cards ems-cards">${cards}</div>`;
 }
 
 export async function mount(el, ctx) {
@@ -733,8 +855,8 @@ export async function mount(el, ctx) {
       ${STORIES.map(([t, d]) => `<div class="hb-card"><h3><a href="../demos/grid-stories/ui/dist/">${esc(t)}</a></h3><div class="hb-sub">${esc(d)} Pick it in the prototype's story menu. Connor's prototype, unchanged; its prices and loads are scripted.</div></div>`).join('')}
       <div class="hb-card"><h3><a href="../four-home-simulation/four-home.html">Four-home simulation</a></h3><div class="hb-sub">Michael's four-home model on real prices, unchanged.</div></div>
       ${await chaosCard(ctx)}
-      ${await emsCards(ctx)}
-    </div></div>`;
+    </div>
+    ${await emsCards(ctx)}</div>`;
   if (ctx.link.beat) {
     const t = el.querySelector(`[data-beat="${typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(ctx.link.beat) : ctx.link.beat}"]`);
     const bar = el.querySelector('.beat-bar');

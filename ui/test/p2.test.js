@@ -602,3 +602,64 @@ test('F9: engine.json rows carry their unit ("µs per call" for allocate)', () =
   const eng = realJSON('engine.json');
   if (eng && eng.allocate) for (const [k, v] of Object.entries(eng.allocate)) if (/^\d+$/.test(k)) assert.equal(engineUnit(`allocate · ${k}`, v).unit, ' µs per call', k);
 });
+
+// ------------------------------------------------------------------------------------ P3: the ERCOT console (5.7.3)
+import crypto from 'node:crypto';
+import { emsModel, mount as mountMore } from '../panels/more.js';
+
+const emsManifest = realJSON('ems/index.json');
+test('P3 ERCOT console: the snapshot is byte-identical to what its manifest lists (sha256)', { skip: !emsManifest && 'no ems snapshot' }, () => {
+  assert.ok(emsManifest.files.length >= 1);
+  for (const f of emsManifest.files) {
+    const buf = fs.readFileSync(path.join(UI, 'data', 'ems', f.name));
+    assert.equal(crypto.createHash('sha256').update(buf).digest('hex'), f.sha256, f.name);
+    assert.equal(buf.length, f.bytes, f.name);
+    const listed = emsManifest.siteEms.find((x) => x.name === f.name);
+    assert.ok(listed && listed.sha256 === f.sha256, `${f.name} is not the site/ems file the manifest hashed`);
+  }
+});
+
+test('P3 ERCOT console: four REAL-system cards whose numbers equal the snapshot (computed independently here)', { skip: !emsManifest && 'no ems snapshot' }, () => {
+  const synth = realJSON('ems/synth-console.json'), freq = realJSON('ems/freq-series.json');
+  const m = emsModel(synth, freq, emsManifest);
+  assert.deepEqual(m.cards.map((c) => c.key), ['frequency', 'prc', 'netload', 'congestion']);
+  const r = synth.real5;
+  const num = (a) => a.filter((x) => typeof x === 'number');
+  const stat = (key, name) => m.cards.find((c) => c.key === key).stats.find((s) => s.name === name);
+  // every part is prose or a labelled value; prose carries no digits of its own
+  for (const c of m.cards) {
+    assert.ok(['REAL', 'SIM', 'DERIVED', 'ASSUMPTION'].includes(c.label), c.key);
+    for (const s of c.stats) {
+      assert.ok(!/\d/.test(s.name), `${c.key}: digit in a stat name: ${s.name}`);
+      for (const x of s.parts || []) if (typeof x !== 'string') assert.ok(fmt.isLabelled(x), `${c.key}/${s.name}: ${JSON.stringify(x)}`);
+    }
+    for (const x of c.thread || []) if (typeof x !== 'string') assert.ok(fmt.isLabelled(x), `${c.key} thread: ${JSON.stringify(x)}`);
+  }
+  assert.equal(stat('frequency', 'lowest ten-second sample').parts[0].v, freq.stats.frequency.min_hz);
+  assert.equal(stat('prc', 'lowest PRC').parts[0].v, Math.min(...num(r.prcMinMW)));
+  assert.equal(stat('prc', 'lowest PRC').parts[0].label, r.fields.prcMinMW.status);
+  assert.equal(stat('netload', 'net-load peak (demand − wind − solar)').parts[0].v, Math.max(...num(r.netLoadMW)));
+  assert.equal(Math.abs(stat('netload', 'steepest quarter-hour ramp').parts[0].v), Math.max(...num(r.ramp15MWperMin).map(Math.abs)));
+  assert.equal(stat('congestion', 'most binding constraints in one bin').parts[0].v, Math.max(...num(r.scedBinding)));
+  assert.equal(stat('congestion', 'highest LZ_NORTH real-time price').parts[0].v, Math.max(...num(r.lzNorthUSD)));
+  // the time printed is the bin of that extreme
+  const i = r.prcMinMW.indexOf(Math.min(...num(r.prcMinMW)));
+  assert.equal(stat('prc', 'lowest PRC').parts[1].v, r.t[i]);
+  assert.match(m.caveat, /not live/);
+  assert.equal(emsModel(null, null, null), null);
+});
+
+test('P3: the More view renders the console and the rest of More, with every screening number chipped', async () => {
+  const link = parseLink('?view=more');
+  const el = { classList: { add() {} }, innerHTML: '', querySelector: () => null };
+  const ctx = { topology, footprints: null, link, data: dataMod, fmt, sceneModel, theme: 'light', scene: { update() {} },
+    href: (patch) => dataMod.linkQuery({ ...link, ...patch }), go() {}, reportError: (e) => { throw e; } };
+  await mountMore(el, ctx);
+  assert.match(el.innerHTML, /Performance/);
+  assert.match(el.innerHTML, /µs per call/);
+  assert.deepEqual(unscreenedChips(el.innerHTML), []);
+  if (emsManifest) {
+    assert.match(el.innerHTML, /ERCOT console/);
+    assert.equal((el.innerHTML.match(/data-ems="/g) || []).length, 4);
+  }
+});
