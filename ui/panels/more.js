@@ -18,6 +18,28 @@ const L = (v, label, cite, o) => (v === null || v === undefined ? null : { v, la
 const withO = (x, o) => (isL(x) ? { ...x, o } : null);
 const get = (obj, path) => path.split('.').reduce((a, k) => (a == null ? a : a[k]), obj);
 
+// Surrogate-only numbers carry a "screening" chip (build prompt 5.6.11, 3.4). L3 ends the cite of every number the
+// OpenDSS referee did not check with "not OpenDSS-checked"; a bulk series with `by: "surrogate"` is the same thing.
+export const SCREEN_CITE = /not OpenDSS-checked/i;
+export function isScreening(x) { return !!(isL(x) && typeof x.cite === 'string' && SCREEN_CITE.test(x.cite)); }
+export const SCREEN_CHIP = '<span class="p2-badge screen sm" title="surrogate screening number (sim.surrogate); not refereed by OpenDSS">screening</span>';
+/** fmtHTML, plus the screening chip on a surrogate-only value. */
+export function numHTML(fmt, x, opts = {}) { return fmt.fmtHTML(x, opts) + (isScreening(x) ? SCREEN_CHIP : ''); }
+/** fmt (text), plus "screening" on a surrogate-only value. */
+export function numText(fmt, x, opts = {}) { return fmt.fmt(x, opts) + (isScreening(x) ? ' screening' : ''); }
+/** Chips in rendered HTML whose cite says "not OpenDSS-checked" but that are not followed by the screening chip
+ *  (ui/test/p2.test.js gates on this returning []). */
+export function unscreenedChips(html) {
+  const out = [];
+  const re = /<span class="chip chip-[A-Z]+" title="([^"]*)">[A-Z]+<\/span>/g;
+  for (const m of String(html).matchAll(re)) {
+    if (!SCREEN_CITE.test(m[1])) continue;
+    const next = String(html).slice(m.index + m[0].length, m.index + m[0].length + 40);
+    if (!next.startsWith('<span class="p2-badge screen')) out.push(String(html).slice(Math.max(0, m.index - 80), m.index + m[0].length));
+  }
+  return out;
+}
+
 export const DEFAULT_AWARE = 'aware-core-d26-g0';
 export const DEFAULT_NAIVE = 'naive-core-d26-g0';
 
@@ -153,6 +175,34 @@ export function chargeOrder(meta, doc, topology) {
   return out.sort((a, b) => a.step - b.step || String(a.key).localeCompare(String(b.key)));
 }
 
+/**
+ * A's relief discharge at its largest, measured in the feeder-aware branch (the series the gauge draws): the run of
+ * steps around meta.relief.step in which A's batteries discharge, its largest discharge and the minute it happens.
+ * meta.relief.reliefKW is that peak but carries no time, and it is not the kW at the relief step (judge R1 F7:
+ * -6.2 kW at 16:45, -6.9 kW at 16:46). Null when A's batteries are not discharging at the relief step.
+ */
+export function reliefPeak(meta, doc, topology) {
+  const r = meta && meta.relief;
+  if (!r || typeof r.step !== 'number' || !doc || !doc.focus || !topology) return null;
+  const fk = (topology.focus || []).find((f) => f.tf === r.tf);
+  const kw = fk && doc.focus[fk.key] && doc.focus[fk.key].batKW;
+  if (!Array.isArray(kw) || !(kw[r.step] < 0)) return null;
+  let a = r.step, b = r.step;
+  while (a > 0 && kw[a - 1] < 0) a -= 1;
+  while (b < kw.length - 1 && kw[b + 1] < 0) b += 1;
+  let k = a;
+  for (let i = a; i <= b; i++) if (kw[i] < kw[k]) k = i;
+  return { key: fk.key, tf: r.tf, step: k, kw: -kw[k] / 10, from: a, to: b, label: (doc.series && doc.series.batKW && doc.series.batKW.label) || 'SIM' };
+}
+
+/** Digits for a share-of-scale percent: whole above 10%, one place above 1%, two significant figures below 1% (the
+ *  ERCOT rung is 0.000049%; a fixed 1 digit printed 0.0%, judge R1 F2). */
+export function shareDigits(v) {
+  if (!(v > 0) || v >= 10) return 0;
+  if (v >= 1) return 1;
+  return Math.max(1, 1 - Math.floor(Math.log10(v)));
+}
+
 function scanEngine(eng, re) {
   let hit = null;
   const walk = (o, path) => {
@@ -183,6 +233,29 @@ export const FACTS = {
   reliefMinutesAware: [['p1meta'], (S) => minutesOver100(S, 'aware')],
   reliefKW: [['p1meta'], (S) => withO(relief(S) && relief(S).reliefKW, { unit: ' kW', digits: 1 })],
   reliefKWh: [['p1meta'], (S) => withO(relief(S) && relief(S).reliefKWh, { unit: ' kWh', digits: 1 })],
+  // The scale ladder (build prompt 3.4, DERIVED): meta.scaleLadder's kW and its rungs, each share with its base.
+  scaleLadderKW: [['p1meta'], (S) => withO(get(S, 'p1meta.scaleLadder.kw'), { unit: ' kW', digits: 0 })],
+  scaleLadder: [['p1meta'], (S) => {
+    const rungs = get(S, 'p1meta.scaleLadder.rungs');
+    if (!Array.isArray(rungs)) return null;
+    const parts = [];
+    for (const r of rungs) {
+      if (!r || !isL(r.sharePct) || !isL(r.base)) continue;
+      if (parts.length) parts.push('; ');
+      const head = String(r.name || r.scale || '').split(':')[0].trim();
+      parts.push({ ...r.sharePct, o: { unit: '%', digits: shareDigits(r.sharePct.v) } }, ` of ${head} (`,
+        { v: r.base.v, label: r.base.label, cite: r.base.cite, o: { unit: r.base.unit ? ` ${r.base.unit}` : '', digits: Number.isInteger(r.base.v) ? 0 : 1 } },
+        r.base.at ? ` on ${String(r.base.at).slice(0, 10)}` : '', ')');
+    }
+    return parts.length ? parts : null;
+  }],
+  // "up to X kW (HH:MM)": the largest relief discharge and its minute, from the aware branch (reliefPeak)
+  reliefKWPeak: [['p1meta', 'p1:aware', 'topology'], (S) => {
+    const p = reliefPeak(S.p1meta, S['p1:aware'], S.topology);
+    if (!p) return null;
+    return [L(Math.round(p.kw * 10) / 10, p.label, `largest discharge of ${p.key}'s batteries in the relief event (feeder-aware branch, focus.${p.key}.batKW)`, { unit: ' kW', digits: 1 }),
+      ' (', L(stepTime(S.p1meta, p.step), 'SIM', 'the minute of that largest discharge'), ')'];
+  }],
   reliefDriverHome: [['p1meta'], (S) => get(S, 'p1meta.relief.driver.label') || null],
   reliefDriverProfile: [['p1meta'], (S) => get(S, 'p1meta.relief.driver.profile') || null],
   reliefDriverShared: [['p1meta'], (S) => {
@@ -332,7 +405,7 @@ export const FACTS = {
       const sizes = Object.keys(a).filter((k) => /^\d+$/.test(k) && isL(a[k]) && typeof a[k].v === 'number').map(Number).sort((x, y) => x - y);
       if (sizes.length) {
         const big = sizes[sizes.length - 1], x = a[String(big)];
-        return [{ ...x, v: Math.round(x.v / 100) / 10, o: { unit: ' ms', digits: 1 } }, ' for ', L(big, 'ASSUMPTION', 'synthetic scale test fleet (sim.bench)'), ' batteries'];
+        return [{ ...x, v: Math.round(x.v / 100) / 10, cite: `${x.cite || 'sim.bench'}; shown here in ms`, o: { unit: ' ms', digits: 1 } }, ' per call for ', L(big, 'ASSUMPTION', 'synthetic scale test fleet (sim.bench)'), ' batteries'];
       }
     }
     const h = scanEngine(S.engine, /100k|100000|1e5/i) || scanEngine(S.engine, /alloc/i);
@@ -480,7 +553,7 @@ export function evalFact(name, S) {
 
 function renderPart(p, fmt, html) {
   if (typeof p === 'string') return html ? esc(p) : p;
-  if (isL(p)) return html ? fmt.fmtHTML(p, p.o || {}) : fmt.fmt(p, p.o || {});
+  if (isL(p)) return html ? numHTML(fmt, p, p.o || {}) : numText(fmt, p, p.o || {});
   return html ? esc(String(p)) : String(p);
 }
 
@@ -564,14 +637,32 @@ function moneyCard(ctx, S) {
     <p class="hb-sub"><b>Local transformer relief and upgrade deferral</b> have no sourced price anywhere in our material: an opportunity for Base and the wires company, not revenue ${fmt.chip('ASSUMPTION', 'build prompt 5.4.6')}.</p></div>`;
 }
 
+/** The unit of an engine.json number, read from its key and cite (judge R1 F9: the unit was only in the chip's title).
+ *  allocate.<n>: "microseconds per stateless allocate() call" -> "µs per call"; ms*, *Seconds; counts and the load
+ *  average have none. Returns {name, unit}: the row name says what the number is. */
+export function engineUnit(path, v) {
+  const cite = String((v && v.cite) || '');
+  const keys = path.split(' · ');
+  const last = keys[keys.length - 1];
+  if (/^microseconds per\b/i.test(cite)) {
+    const n = /^\d+$/.test(last) ? Number(last).toLocaleString('en-US') : null;
+    return { name: `${keys[0]}()${n ? `, ${n} batteries` : ''}`, unit: ' µs per call' };
+  }
+  if (/^ms/i.test(last) || /\bms per\b/i.test(cite)) return { name: path, unit: ' ms' };
+  if (/seconds$/i.test(last) || /\bwall time\b|\bseconds\b/i.test(cite)) return { name: path, unit: ' s' };
+  return { name: path, unit: '' };
+}
+
 function engineCard(ctx, S) {
   const { fmt } = ctx;
   const rows = [];
   const walk = (o, path) => {
     for (const [k, v] of Object.entries(o || {})) {
       const p = path ? `${path} · ${k}` : k;
-      if (isL(v) && typeof v.v === 'number') rows.push(`<tr><td>${esc(p)}</td><td class="n">${fmt.fmtHTML(v, { digits: v.v < 10 ? 2 : 0 })}</td></tr>`);
-      else if (v && typeof v === 'object' && !Array.isArray(v) && !['constants', 'sources', 'series', 'inputs'].includes(k)) walk(v, p);
+      if (isL(v) && typeof v.v === 'number') {
+        const u = engineUnit(p, v);
+        rows.push(`<tr><td>${esc(u.name)}</td><td class="n">${fmt.fmtHTML(v, { digits: v.v < 10 ? 2 : v.v < 100 ? 1 : 0, unit: u.unit })}</td></tr>`);
+      } else if (v && typeof v === 'object' && !Array.isArray(v) && !['constants', 'sources', 'series', 'inputs'].includes(k)) walk(v, p);
     }
   };
   if (S.engine) walk(S.engine, '');
