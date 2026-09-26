@@ -38,7 +38,7 @@ Written by L0 (the lead) on 26 Sep 2026 for the overnight build. Two halves: **P
             "referee":{"label":"SIM","text":"OpenDSSDirect.py 0.9.4 AC power flow"}},
  "series":{"loading":{"label":"SIM","unit":"pct x10","by":"OpenDSS"}}}
 ```
-- `schema` matches `hb.<name>.v<N>`; `producer` matches `sim.<module>`.
+- `schema` matches `hb.<name>.v<N>`; `producer` matches `sim.<module>`, or `scripts.<name>` for a fetcher in `scripts/` (`footprints.json`: `scripts.fetch_footprints`).
 - `inputs`: sha256 strings or `null` when the file does not depend on that input. `sim.contracts.inputs_sha()` computes them: prices = `data/ercot/lz_north_2026.csv`; loads = `data/profiles/smartds_2018_aug.npz`; topology = `data/smartds/*.dss` + `data/fleet.json`.
 - `constants`: `sim.constants.export(*names)` gives `{NAME: {value, label, cite}}`.
 - `sources` / `series`: each value needs `label` (and `text` for sources).
