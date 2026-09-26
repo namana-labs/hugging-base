@@ -45,7 +45,7 @@
       "title": "The price collapse: naive rebound",
       "label": "SIM",
       "link": "view=p1&branch=naive&t=22:30&cam=street",
-      "caption": "The price falls from {{eveningPeakPrice}} at {{eveningPeakT}} to {{onsetPrice}} at {{onsetT}}, the charge onset. Naive: every battery charges at once, and the worst service transformer reaches {{naiveMax}} ({{naiveMaxTf}} at {{naiveMaxT}}): {{naiveNormalEvents}} normal-tier events and {{naiveEmergencyTfs}} transformers past the emergency rating. This rule's fuse opens above {{fusePct}} for {{fuseMinutes}} {{chip:ASSUMPTION:team round-1 world-sim Protection paragraph}}; it operated on {{naiveProtection}} transformers. Grid check: minimum service voltage {{naiveVmin}}; feeder head {{naiveHead}} of its rating."
+      "caption": "The price falls from {{eveningPeakPrice}} at {{eveningPeakT}} to {{onsetPrice}} at {{onsetT}}, the charge onset. Naive: every battery charges at once, and the worst service transformer reaches {{naiveMax}} ({{naiveMaxTf}} at {{naiveMaxT}}): {{naiveNormalEvents}} normal-tier events and {{naiveEmergencyTfs}} transformers past the emergency rating. This rule's fuse opens above {{fusePct}} for {{fuseMinutes}}; it operated on {{naiveProtection}} transformers. Grid check: minimum service voltage {{naiveVmin}}; feeder head {{naiveHead}} of its rating."
     },
     {
       "id": "rebound-aware",
@@ -93,7 +93,7 @@
       "title": "Money, labelled",
       "label": "DERIVED",
       "link": "view=more",
-      "caption": "Energy value, naive {{energyNaive}} vs feeder-aware {{energyAware}}: the cost of awareness is {{costOfAwareness}}. Fleet kW at the system peak is worth {{capacityLow}} to {{capacityHigh}} per kW-month; local relief is never priced with it. CoServ, GVEC and Austin Energy pay for system peak, coincident peaks and arbitrage, not local relief {{chip:REAL:docs/research-report.md:215-224}}: local relief is an unpriced opportunity {{chip:ASSUMPTION:no sourced price in our material}}."
+      "caption": "Energy value, naive {{energyNaive}} vs feeder-aware {{energyAware}}: the cost of awareness is {{costOfAwareness}}. Feeder-aware, the fleet delivers {{fleetKWPeakAware}} at the price peak: at {{capacityLow}} to {{capacityHigh}} per kW-month that is {{capMonthAwareLow}} to {{capMonthAwareHigh}} a month of system-capacity value. A's local relief would have earned at most {{reliefOpportunity}} at the price peak, and it is never priced with the capacity band. CoServ, GVEC and Austin Energy pay for system peak, coincident peaks and arbitrage, not local relief {{chip:REAL:docs/research-report.md:215-224}}: local relief is an unpriced opportunity {{chip:ASSUMPTION:no sourced price in our material}}."
     },
     {
       "id": "plug-in",

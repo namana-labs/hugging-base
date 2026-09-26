@@ -185,6 +185,10 @@ export const FACTS = {
   energyNaive: [['p1meta'], (S) => withO(get(S, 'p1meta.money.energyValueUSD.naive') || get(S, 'p1meta.summary.naive.energyValueUSD'), { money: true, digits: 0 })],
   energyAware: [['p1meta'], (S) => withO(get(S, 'p1meta.money.energyValueUSD.aware') || get(S, 'p1meta.summary.aware.energyValueUSD'), { money: true, digits: 0 })],
   costOfAwareness: [['p1meta'], (S) => withO(get(S, 'p1meta.money.costOfAwareness'), { money: true, digits: 0 })],
+  fleetKWPeakAware: [['p1meta'], (S) => withO(get(S, 'p1meta.money.systemCapacityPerMonth.aware.fleetKW'), { unit: ' kW', digits: 0 })],
+  capMonthAwareLow: [['p1meta'], (S) => withO(get(S, 'p1meta.money.systemCapacityPerMonth.aware.low'), { money: true, digits: 0 })],
+  capMonthAwareHigh: [['p1meta'], (S) => withO(get(S, 'p1meta.money.systemCapacityPerMonth.aware.high'), { money: true, digits: 0 })],
+  reliefOpportunity: [['p1meta'], (S) => withO(get(S, 'p1meta.money.relief.opportunityUpperUSD'), { money: true, digits: 2 })],
   capacityLow: [['topology'], (S) => constOf(S.p1meta, 'CAPACITY_BENCHMARK_USD_KW_MONTH', { money: true, digits: 2 }) || L(3.12, 'REAL', "Modo Apr 2026 ERCOT storage market benchmark (third party); docs/headroom/research_notes/grid_physics_orchestration_and_attacks.md:229", { money: true, digits: 2 }), ['p1meta']],
   capacityHigh: [['topology'], (S) => constOf(S.p1meta, 'CAPACITY_HIGH_USD_KW_MONTH', { money: true, digits: 2 }) || L(8.5, 'DERIVED', 'implied from an UNVERIFIED Austin Energy figure; docs/research-report.md:246, docs/design.md:160-161', { money: true, digits: 2 }), ['p1meta']],
   controllerView: [['p1meta'], (S) => { const c = get(S, 'p1meta.controllerView'); return c && c.text ? L(c.text, c.label || 'ASSUMPTION', c.cite) : null; }],
@@ -353,9 +357,18 @@ function moneyCard(ctx, S) {
     for (const k of ['naive', 'aware', 'aware_faults']) if (isL(m.energyValueUSD[k])) lines.push(`<tr><td>energy value, ${esc(k.replace('_', ' + '))}</td><td class="n">${fmt.fmtHTML(m.energyValueUSD[k], { money: true, digits: 0 })}</td></tr>`);
   }
   if (m && isL(m.costOfAwareness)) lines.push(`<tr><td>cost of awareness (naive − aware; may be negative)</td><td class="n">${fmt.fmtHTML(m.costOfAwareness, { money: true, digits: 0 })}</td></tr>`);
-  for (const [k, v] of Object.entries(m || {})) {
-    if (k === 'energyValueUSD' || k === 'costOfAwareness' || !isL(v) || typeof v.v !== 'number') continue;
-    lines.push(`<tr><td>${esc(k)}</td><td class="n">${fmt.fmtHTML(v, { digits: 2 })}</td></tr>`);
+  const sc = m && m.systemCapacityPerMonth;
+  for (const k of ['naive', 'aware']) {
+    const x = sc && sc[k];
+    if (x && isL(x.fleetKW) && isL(x.low) && isL(x.high)) {
+      lines.push(`<tr><td>system-capacity value, ${esc(k)}: fleet ${fmt.fmtHTML(x.fleetKW, { unit: ' kW', digits: 0 })} at the price peak</td><td class="n">${fmt.fmtHTML(x.low, { money: true, digits: 0 })} to ${fmt.fmtHTML(x.high, { money: true, digits: 0 })} a month</td></tr>`);
+    }
+  }
+  const r = m && m.relief;
+  if (r && isL(r.kwh)) {
+    lines.push(`<tr><td>A's local relief (one home's spike; see the driver)</td><td class="n">${fmt.fmtHTML(r.kwh, { unit: ' kWh', digits: 2 })}</td></tr>`);
+    if (isL(r.opportunityUpperUSD)) lines.push(`<tr><td>what that energy would have earned at the price peak (upper bound)</td><td class="n">${fmt.fmtHTML(r.opportunityUpperUSD, { money: true, digits: 2 })}</td></tr>`);
+    if (isL(r.priced)) lines.push(`<tr><td>local relief priced?</td><td class="n">${fmt.fmtHTML(r.priced)}</td></tr>`);
   }
   return `<div class="hb-card more-money" data-beat="money"><h3>Money, labelled</h3>
     <table class="p2-rank">${lines.join('') || `<tr><td colspan="2"><span class="beat-na">P1 money not built yet</span></td></tr>`}</table>
