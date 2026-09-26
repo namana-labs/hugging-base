@@ -12,7 +12,7 @@ every step solved by OpenDSS with the per-load SMART-DS kW and kvar):
 It reports the surrogate's error against OpenDSS on the shortlisted transformers (the transformers of both default
 combos' top-5 entries; max and p99, in points) and the tier agreement, and gives every shortlist card OpenDSS
 `before` (baseline run) and `after` (top-5 build run) numbers. Every run also reads the feeder-head current
-(370 A, site/ems/flow-spec.md) and compares it with P2's lossless head estimate.
+(370 A, site/ems/flow-spec.md) and compares it with P2's per-phase head estimate (siting.head_phase_pct).
 
 Then two more OpenDSS months check the useful-capacity counts (5.6 step 8), which the surrogate screen found:
   capacity naive   the first n1 homes of naive's greedy order from an empty feeder (n1 = usefulCapacity.naive)
@@ -33,7 +33,7 @@ import numpy as np
 from . import p2_build as pb
 from .constants import HEAD_RATING_A, HEAD_RATING_KVA, TIER_NORMAL_PCT, TIER_EMERGENCY_PCT
 from .contracts import dumps
-from .siting import month_metrics, runs_above, REPORTED, STEPS, stamp, growth_factor
+from .siting import month_metrics, runs_above, head_phase_pct, REPORTED, STEPS, stamp, growth_factor
 from .tiers import tier_codes
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -96,13 +96,22 @@ def solve_month(feeder, ctx, g, kw_home, steps):
 
 
 def head_doc(sol, ctx, g, kw_home, steps):
-    """OpenDSS head current vs P2's lossless estimate (|sum P + j sum Q| of the homes' load + batteries / 7,991.5 kVA)."""
+    """OpenDSS head current (max phase) vs P2's per-phase estimate (siting.head_phase_pct), and vs the balanced
+    three-phase total (|sum P + j sum Q| / 7,991.5 kVA) that P2 used before it was checked here."""
     f = growth_factor(g)
     dss = sol["head"] / HEAD_RATING_A * 100.0
-    est = np.hypot(ctx.P[:steps].sum(axis=1) * f + kw_home.sum(axis=1), ctx.Q[:steps].sum(axis=1) * f) / HEAD_RATING_KVA * 100.0
+    onto_tf = np.zeros((len(ctx.home_ids), ctx.n_tf))
+    onto_tf[np.arange(len(ctx.home_ids)), ctx.home_tf] = 1.0
+    p_tf = ctx.P[:steps] * f + kw_home @ onto_tf
+    q_tf = ctx.Q[:steps] * f
+    est = head_phase_pct(p_tf, q_tf, ctx.phase_w, HEAD_RATING_KVA)
+    bal = np.hypot(p_tf.sum(axis=1), q_tf.sum(axis=1)) / HEAD_RATING_KVA * 100.0
     k = int(np.argmax(dss))
+    d = dss - est
     return {"maxPct": round(float(dss[k]), 1), "amps": round(float(sol["head"][k]), 1), "t": stamp(k),
-            "estMaxPct": round(float(est.max()), 1), "underReadMaxPts": round(float((dss - est).max()), 2),
+            "estMaxPct": round(float(est.max()), 1), "estAtMaxPct": round(float(est[k]), 1),
+            "underReadMaxPts": round(float(d.max()), 2), "overReadMaxPts": round(float(-d.min()), 2),
+            "balancedMaxPct": round(float(bal.max()), 1), "balancedUnderReadMaxPts": round(float((dss - bal).max()), 2),
             "stepsOver100": int((dss > 100.0).sum())}
 
 
@@ -203,7 +212,8 @@ def run(steps=REPORTED, runs=RUNS, write=True, out=print, capacity=True):
         h = heads[f"{kind} {combo}"]
         out(f"referee {kind:8s} {combo}: {steps} steps, {ms[-1]:.1f} ms/step; shortlist err max {err_s[-1].max():.2f} pts; "
             f"normal events {int(M['normalEvents'].sum())} (battery-caused {n_caused}); placed {sum(kplaced)}; "
-            f"head max {h['maxPct']}% of 370 A at {h['t']} (estimate {h['estMaxPct']}%, reads low by up to {h['underReadMaxPts']} pts)")
+            f"head max {h['maxPct']}% of 370 A at {h['t']} (per-phase estimate {h['estAtMaxPct']}% there; estimate - OpenDSS "
+            f"-{h['underReadMaxPts']}..+{h['overReadMaxPts']} pts; balanced total read low by up to {h['balancedUnderReadMaxPts']} pts)")
     es = np.concatenate(err_s)
     ea = np.concatenate(err_all)
     cards = {}
@@ -243,7 +253,8 @@ def run(steps=REPORTED, runs=RUNS, write=True, out=print, capacity=True):
             out(f"referee capacity {pol}: {c['n']} Cores from an empty feeder, {steps} steps, {time.perf_counter() - t:.0f} s: "
                 f"battery-caused normal {c['causedNormal']['n']} (all {c['normalEvents']}), battery-caused emergency intervals "
                 f"{c['causedEmergencyN']}, protection on {len(c['protectionTfs'])} tfs, max tf {c['maxPct']['v']}% (tf {c['maxPct']['tf']}, "
-                f"{c['maxPct']['t']}); head max {c['head']['maxPct']}% of 370 A at {c['head']['t']} (estimate {c['head']['estMaxPct']}%); "
+                f"{c['maxPct']['t']}); head max {c['head']['maxPct']}% of 370 A at {c['head']['t']} (per-phase estimate {c['head']['estAtMaxPct']}% there, "
+                f"max {c['head']['estMaxPct']}%; balanced total {c['head']['balancedMaxPct']}%); "
                 f"min home voltage {c['vmin']['pu']} pu ({c['vmin']['home']}, {c['vmin']['t']}), homes < 0.95 pu {c['vmin']['homesBelow095']}; "
                 f"surrogate err all tfs max {c['errorAllPts']['max']} p99 {c['errorAllPts']['p99']} pts")
         doc["capacity"] = cap
