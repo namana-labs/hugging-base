@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   heatStripSVG, lineChartSVG, barChartSVG, priceStripSVG, cliffStripSVG, chartHTML, captionHTML, band, modeIndex,
-  ChartLabelError, parseISOmin, priceStrip, heatStrip, lineChart, barChart, cliffStrip, axisTickTexts,
+  ChartLabelError, parseISOmin, priceStrip, heatStrip, lineChart, barChart, cliffStrip, axisTickTexts, integerTicks,
 } from '../lib/charts.js';
 
 const UI = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -106,4 +106,15 @@ test('charts: y-axis ticks stay distinct on small ranges (judge R0: the naive ca
   const ticks = [...svg.matchAll(/<text class="lc-tick"[^>]*text-anchor="end">([^<]*)<\/text>/g)].map((m) => m[1]);
   assert.equal(ticks.length, 3);
   assert.equal(new Set(ticks).size, 3, `duplicate ticks ${ticks}`);
+});
+
+test('charts: a count axis (integer: true) prints whole numbers only, never "0 0.5 1" (audit R2 L13)', () => {
+  assert.deepEqual(integerTicks(0, 1), [0, 1]);
+  assert.deepEqual(integerTicks(0, 4), [0, 2, 4]);
+  assert.deepEqual(integerTicks(0, 0.4), [0, 1]);
+  assert.deepEqual(integerTicks(0, 3), [0, 2, 3]);
+  const svg = lineChartSVG({ series: [{ values: [0, 0, 0, 1] }], label: 'SIM', integer: true });
+  const ticks = [...svg.matchAll(/<text class="lc-tick"[^>]*text-anchor="end">([^<]*)<\/text>/g)].map((m) => m[1]);
+  assert.deepEqual(ticks, ['0', '1']);
+  for (const t of ticks) assert.match(t, /^-?\d+$/);
 });

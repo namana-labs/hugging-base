@@ -12,7 +12,7 @@ import {
   parseCombo, comboId, counterpart, findCandidate, rankOf, flipVerdict, fleetTotals, counterfactualParts,
   counterfactualText, counterfactualHTML, tfName, FLIP_HEADLINE_MAX_OVERLAP, bulk, p2SceneModel,
 } from '../panels/p2.js';
-import { FACTS, placeholders, stripPlaceholders, sourcesFor, evalFact, resolveCaption, beatHref } from '../panels/more.js';
+import { FACTS, placeholders, stripPlaceholders, sourcesFor, evalFact, resolveCaption, beatHref, requiredPart, optionalClauses, applyOptional } from '../panels/more.js';
 import * as sceneModel from '../lib/scene-model.js';
 
 const UI = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -177,9 +177,11 @@ test('beats.json: envelope, unique ids, the video clock runs 0:00 -> 5:00 with n
   for (const b of beats) assert.ok(['REAL', 'SIM', 'DERIVED', 'ASSUMPTION'].includes(b.label), b.id);
 });
 
-test('beats.json: no bare digits in any caption or title (numbers come from data, with labels)', () => {
+test('beats.json: no bare digits in any caption, headline or title (numbers come from data, with labels)', () => {
   for (const b of beats) {
     assert.ok(!/\d/.test(stripPlaceholders(b.caption)), `${b.id}: bare digit in caption: ${stripPlaceholders(b.caption).match(/.{0,20}\d.{0,20}/)}`);
+    assert.ok(typeof b.headline === 'string' && b.headline.length > 0, `${b.id}: every beat has a headline (UX_SPEC_R2 7.2)`);
+    assert.ok(!/\d/.test(stripPlaceholders(b.headline)), `${b.id}: bare digit in headline: ${stripPlaceholders(b.headline).match(/.{0,20}\d.{0,20}/)}`);
     assert.ok(!/\d/.test(b.title), `${b.id}: bare digit in title`);
   }
   // the admit half: the check does catch one
@@ -189,7 +191,7 @@ test('beats.json: no bare digits in any caption or title (numbers come from data
 
 test('beats.json: every placeholder is a known fact or a chip with a valid label', () => {
   for (const b of beats) {
-    for (const p of placeholders(b.caption)) {
+    for (const p of [...placeholders(b.caption), ...placeholders(b.headline)]) {
       if (p.chip !== undefined) assert.ok(['REAL', 'SIM', 'DERIVED', 'ASSUMPTION'].includes(p.chip), `${b.id}: chip ${p.chip}`);
       else assert.ok(FACTS[p.name], `${b.id}: unknown fact {{${p.name}}}`);
     }
@@ -216,9 +218,9 @@ test('beats.json: captions resolve against the committed fixtures, with a label 
     topology, p1meta: fx('p1/meta.json'), p2index: index,
     'p1:naive': fx('p1/naive.json'), 'p1:aware': fx('p1/aware.json'), 'p1:aware_faults': fx('p1/aware_faults.json'),
     'p2:aware-core-d26-g0': fx('p2/aware-core-d26-g0.json'), 'p2:naive-core-d26-g0': fx('p2/naive-core-d26-g0.json'),
-    engine: null,
+    engine: null, p1days: null, p1cal: null,
   };
-  const need = sourcesFor(beats.map((b) => b.caption));
+  const need = sourcesFor(beats.flatMap((b) => [b.caption, b.headline]));
   for (const k of need) assert.ok(k in S, `test is missing source ${k}`);
   const resolvedFacts = new Set();
   for (const b of beats) {
@@ -396,15 +398,21 @@ test('beats.json on the REAL committed data: every placeholder resolves (no "(no
     'p1:naive': realJSON('p1/naive.json'), 'p1:aware': realJSON('p1/aware.json'), 'p1:aware_faults': realJSON('p1/aware_faults.json'),
     'p2:aware-core-d26-g0': realJSON('p2/aware-core-d26-g0.json'), 'p2:naive-core-d26-g0': realJSON('p2/naive-core-d26-g0.json'),
   };
+  S.p1days = realJSON('p1/days/index.json');
+  S.p1cal = realJSON('p1/days/calendar.json');
   for (const b of beats) {
-    for (const p of placeholders(b.caption)) {
-      if (!p.name) continue;
-      const parts = evalFact(p.name, S);
-      assert.ok(parts, `${b.id}: {{${p.name}}} did not resolve on real data`);
-      for (const x of parts) if (typeof x !== 'string') assert.ok(fmt.isLabelled(x), `${b.id}: {{${p.name}}} unlabelled ${JSON.stringify(x)}`);
+    for (const tpl of [b.caption, b.headline]) {
+      // required placeholders always resolve; an optional clause [[...]] may drop until its data is built
+      for (const p of placeholders(requiredPart(tpl))) {
+        if (!p.name) continue;
+        const parts = evalFact(p.name, S);
+        assert.ok(parts, `${b.id}: {{${p.name}}} did not resolve on real data`);
+        for (const x of parts) if (typeof x !== 'string') assert.ok(fmt.isLabelled(x), `${b.id}: {{${p.name}}} unlabelled ${JSON.stringify(x)}`);
+      }
+      const txt = resolveCaption(tpl, S, fmt, { html: false });
+      assert.ok(!/not built yet/.test(txt), `${b.id}: ${txt}`);
+      assert.ok(!/\[\[|\]\]|\{\{/.test(txt), `${b.id}: leftover template syntax: ${txt}`);
     }
-    const txt = resolveCaption(b.caption, S, fmt, { html: false });
-    assert.ok(!/not built yet/.test(txt), `${b.id}: ${txt}`);
   }
   // spot values that sim.verify p1/p2 print (the screen equals the JSON)
   const t = (id) => resolveCaption(beats.find((b) => b.id === id).caption, S, fmt, { html: false });
@@ -636,15 +644,20 @@ test('P3 ERCOT console: four REAL-system cards whose numbers equal the snapshot 
     for (const x of c.thread || []) if (typeof x !== 'string') assert.ok(fmt.isLabelled(x), `${c.key} thread: ${JSON.stringify(x)}`);
   }
   assert.equal(stat('frequency', 'lowest ten-second sample').parts[0].v, freq.stats.frequency.min_hz);
-  assert.equal(stat('prc', 'lowest PRC').parts[0].v, Math.min(...num(r.prcMinMW)));
-  assert.equal(stat('prc', 'lowest PRC').parts[0].label, r.fields.prcMinMW.status);
+  // audit R2 L10: the lowest PRC is the SAMPLE and its own time (07:44:52), not the 5-min bin start (07:40)
+  assert.equal(stat('prc', 'lowest PRC sample').parts[0].v, freq.stats.prc.min_mw);
+  assert.equal(stat('prc', 'lowest PRC sample').parts[0].v, Math.min(...num(r.prcMinMW)), 'the sample min equals the 1-min bin min');
+  assert.equal(stat('prc', 'lowest PRC sample').parts[0].label, r.fields.prcMinMW.status);
+  assert.equal(stat('prc', 'lowest PRC sample').parts[2].v, freq.stats.prc.min_time_cdt);
   assert.equal(stat('netload', 'net-load peak (demand − wind − solar)').parts[0].v, Math.max(...num(r.netLoadMW)));
   assert.equal(Math.abs(stat('netload', 'steepest quarter-hour ramp').parts[0].v), Math.max(...num(r.ramp15MWperMin).map(Math.abs)));
   assert.equal(stat('congestion', 'most binding constraints in one bin').parts[0].v, Math.max(...num(r.scedBinding)));
   assert.equal(stat('congestion', 'highest LZ_NORTH real-time price').parts[0].v, Math.max(...num(r.lzNorthUSD)));
-  // the time printed is the bin of that extreme
-  const i = r.prcMinMW.indexOf(Math.min(...num(r.prcMinMW)));
-  assert.equal(stat('prc', 'lowest PRC').parts[1].v, r.t[i]);
+  assert.notEqual(stat('prc', 'lowest PRC sample').parts[2].v, r.t[r.prcMinMW.indexOf(Math.min(...num(r.prcMinMW)))], 'not the bin start');
+  // audit R2 L11: the fleet line says settling, not nadir, and carries the research band too
+  const th = m.cards.find((c) => c.key === 'frequency').thread.filter((x) => typeof x === 'string').join(' ');
+  assert.match(th, /settles/);
+  assert.match(th, /nadir/);
   assert.match(m.caveat, /not live/);
   assert.equal(emsModel(null, null, null), null);
 });
@@ -662,4 +675,160 @@ test('P3: the More view renders the console and the rest of More, with every scr
     assert.match(el.innerHTML, /ERCOT console/);
     assert.equal((el.innerHTML.match(/data-ems="/g) || []).length, 4);
   }
+});
+
+// ------------------------------------------------------------------------------------ round 2 (UX_SPEC_R2 7, AUDIT-R2)
+import { backfeed, HOUSTON_BLOCK_MW, machineNote, dateText } from '../panels/more.js';
+import { inIndexScope, handoffRow, headReading, capacityParts, peakWord, flipLineHTML, secHTML, BEAT_SECTION } from '../panels/p2.js';
+
+test('R2 optional clauses: dropped whole when a fact inside is not built, kept (brackets removed) when it is (both halves)', () => {
+  const tpl = 'A. [[B {{onsetDeferredKW}} C. ]]D {{onsetT}}.';
+  assert.deepEqual(optionalClauses(tpl).map((c) => c.inner), ['B {{onsetDeferredKW}} C. ']);
+  assert.equal(requiredPart(tpl), 'A. D {{onsetT}}.');
+  const meta = fx('p1/meta.json');
+  const without = { topology, p1meta: { ...meta, onsetDeferral: undefined } };
+  assert.equal(resolveCaption(tpl, without, fmt, { html: false }), 'A. D 22:00 DERIVED.');
+  const withIt = { topology, p1meta: { ...meta, onsetDeferral: { deferredKW: { v: 1326.4, label: 'DERIVED' } } } };
+  assert.equal(resolveCaption(tpl, withIt, fmt, { html: false }), 'A. B 1,326 kW DERIVED C. D 22:00 DERIVED.');
+  assert.ok(!/\d/.test(stripPlaceholders(tpl)));
+});
+
+test('R2 adopt #2: the Houston charge block the caption shows equals sim/constants.py BASE_HOUSTON_CHARGE_BLOCK_MW', () => {
+  const py = fs.readFileSync(path.join(UI, '..', 'sim', 'constants.py'), 'utf8');
+  const m = /BASE_HOUSTON_CHARGE_BLOCK_MW\s*=\s*const\(\s*"BASE_HOUSTON_CHARGE_BLOCK_MW",\s*(-?[\d.]+),\s*"(\w+)"/.exec(py);
+  assert.ok(m, 'constant not found in sim/constants.py');
+  assert.equal(HOUSTON_BLOCK_MW.v, Number(m[1]));
+  assert.equal(HOUSTON_BLOCK_MW.label, m[2]);
+  const parts = evalFact('houstonBlock', { topology, p1meta: null });
+  assert.equal(parts[0].v, Number(m[1]));
+  // the meta constant wins once l2 exports it
+  const p2 = evalFact('houstonBlock', { topology, p1meta: { constants: { BASE_HOUSTON_CHARGE_BLOCK_MW: { value: -45.8, label: 'REAL', cite: 'meta' } } } });
+  assert.equal(p2[0].cite, 'meta');
+  assert.ok(beats.find((b) => b.id === 'problem').caption.includes('{{houstonBlock}}'));
+});
+
+test('R2 audit M4: back-feed is net P < 0 (homes + batteries), never a minute the transformer imports', { skip: !realJSON('p1/aware.json') && 'no real P1' }, () => {
+  for (const br of ['aware', 'naive']) {
+    const d = realJSON(`p1/${br}.json`);
+    const b = backfeed(d, topology);
+    assert.ok(b, br);
+    const f = d.focus[b.key];
+    assert.ok(f.homeKW[b.k] + f.batKW[b.k] < 0, `${br}: ${b.key} imports at step ${b.k}`);
+    // nothing larger while exporting
+    for (const key of ['A', 'B', 'C', 'D']) {
+      const g = d.focus[key];
+      g.batKW.forEach((kw, k) => { if (kw < 0 && g.homeKW[k] + kw < 0) assert.ok(d.loading[k][g.tf] / 10 <= b.v, `${br} ${key} ${k}`); });
+    }
+  }
+  // the audit's minute: A at 16:39 in aware (batteries -1.7 kW, but A imports 23.0 kW) is not back-feed
+  const aw = realJSON('p1/aware.json');
+  const A = aw.focus.A, k = 399;
+  if (A.batKW[k] < 0) assert.ok(A.homeKW[k] + A.batKW[k] > 0);
+  const b = backfeed(aw, topology);
+  assert.notEqual(b.key, 'A');
+});
+
+test('R2 audit H1: the capacity card and beat never headline the refuted naive count; OpenDSS results are on screen', { skip: !realJSON('p2/index.json') && 'no real P2' }, async () => {
+  const idx = realJSON('p2/index.json');
+  const u = idx.usefulCapacity;
+  const cp = capacityParts(u, topology);
+  const txt = cp.naive.map((x) => (typeof x === 'string' ? x : fmt.fmt(x, x.o || {}))).join('');
+  assert.match(txt, /cable passes its rating at /);
+  if (u.opendss && u.opendss.naive) {
+    assert.ok(txt.includes(`OpenDSS found ${u.opendss.naive.causedNormal.v} SIM battery-caused events`), txt);
+    assert.ok(txt.includes(`${u.opendss.naive.headMaxPct.v.toFixed(1)}% SIM`), txt);
+  }
+  const { html } = await mountP2('?view=p2&combo=aware-core-d26-g0&n=10&beat=p2-capacity');
+  const sec = html.slice(html.indexOf('data-sec="capacity"'));
+  assert.ok(sec.includes('How many batteries fit before the grid is harmed?'));
+  assert.ok(sec.includes(`${SCREEN_CHIP}`), 'the screening count carries the screening tag');
+  assert.ok(/data-sec="capacity" data-beat="p2-capacity" open/.test(html), 'the beat opens its section');
+  const S = { topology, p1meta: realJSON('p1/meta.json'), p2index: idx, 'p2:aware-core-d26-g0': realJSON('p2/aware-core-d26-g0.json'), 'p2:naive-core-d26-g0': realJSON('p2/naive-core-d26-g0.json') };
+  const cap = resolveCaption(beats.find((b) => b.id === 'p2-capacity').caption, S, fmt, { html: false });
+  assert.ok(!/naive dispatch fits/.test(cap), cap);
+  assert.match(cap, /OpenDSS found/);
+});
+
+test('R2 audit M1, M2, M6, M3: a +20% page reads its OWN ranking, fleet and cable; index blocks carry a scope label', { skip: !realJSON('p2/index.json') && 'no real P2' }, async () => {
+  const idx = realJSON('p2/index.json');
+  const g20 = realJSON('p2/aware-core-d26-g20.json');
+  const st = { index: idx, doc: g20, combo: 'aware-core-d26-g20' };
+  const r = handoffRow(st, 240);
+  const own = g20.ranking.find((e) => e.tf === 240);
+  assert.equal(r.rank, own.rank);
+  assert.equal(r.without.v, g20.baseline.peak[240] / 10);
+  assert.equal(inIndexScope(idx, 'aware-core-d26-g20'), false);
+  assert.equal(inIndexScope(idx, 'aware-core-d26-g0'), true);
+  const { html } = await mountP2('?view=p2&combo=aware-core-d26-g20');
+  const fleet = html.slice(html.indexOf('data-sec="fleet"'));
+  assert.ok(fleet.includes(fmt.fmtHTML(g20.headline.h100, { digits: 1 })), 'fleet h100 is this combo\'s own');
+  assert.ok(fleet.includes(fmt.fmtHTML(g20.headline.normalEvents)), 'fleet events are this combo\'s own');
+  const h = headReading(idx, 'aware-core-d26-g20');
+  if (idx.referee && idx.referee.head && idx.referee.head['baseline aware-core-d26-g20']) {
+    assert.equal(h.own, true);
+    assert.ok(html.includes(fmt.fmtHTML(h.x, { unit: '%', digits: 1 })), 'the +20% cable reading is on the page');
+  }
+  assert.equal(headReading(idx, 'aware-legacy-cheapest-g20').own, h ? false : undefined);
+  assert.ok(html.includes("Computed for Core battery · D-26 onset · today&#39;s load only"), 'scope label on the index blocks');
+  const { html: def } = await mountP2('?view=p2&combo=aware-core-d26-g0');
+  assert.ok(!def.includes('Computed for Core battery'), 'no scope label on the combo the index was built for');
+});
+
+test('R2 P2 declutter: front cards, then closed sections; month-peak words are peaks, not tier events', async () => {
+  const { html } = await mountP2('?view=p2&combo=aware-core-d26-g0');
+  const i = html.indexOf('class="p2-secs"');
+  assert.ok(i > 0);
+  const front = html.slice(0, i);
+  assert.ok(front.includes('Next battery goes here'));
+  assert.ok(front.includes('class="p2-flipline'));
+  assert.equal((html.match(/<details class="hb-sec p2-sec"/g) || []).length >= 8, true);
+  assert.ok(!/<details class="hb-sec p2-sec"[^>]*\sopen>/.test(html), 'all sections closed by default');
+  assert.equal(peakWord(96.9)[1], 'Stays within rating');
+  assert.equal(peakWord(119.3)[1], 'Peaks above its normal rating');
+  assert.equal(peakWord(151)[0], 4);
+  assert.ok(!front.includes('p2-reason'), 'audit L8: the raw reason string is not shown');
+  assert.equal(BEAT_SECTION['p2-capacity'], 'capacity');
+  assert.match(secHTML({ id: 'x', title: 'T', body: 'b', open: true }), /data-sec="x" open/);
+});
+
+test('R2 audit M5, L4, adopt #5: More keeps the storage benchmark away from per-evening $, measures timings, and caveats the teammate cards', async () => {
+  const link = parseLink('?view=more');
+  const el = { classList: { add() {} }, innerHTML: '', querySelector: () => null };
+  const ctx = { topology, footprints: null, link, data: dataMod, fmt, sceneModel, theme: 'light', scene: { update() {} },
+    href: (patch) => dataMod.linkQuery({ ...link, ...patch }), go() {}, reportError: (e) => { throw e; } };
+  await mountMore(el, ctx);
+  const h = el.innerHTML;
+  const money = h.slice(h.indexOf('class="hb-card more-money"'), h.indexOf('class="hb-card more-payers-card"'));
+  assert.ok(money.length > 0);
+  assert.ok(!/kW-month|system-capacity/i.test(money), 'no monthly benchmark in the per-evening money card');
+  assert.ok(/grid-scale storage revenue benchmark/.test(h) || !realJSON('p1/meta.json'));
+  assert.ok(!/system-capacity value/.test(h), 'the old label is gone');
+  assert.ok(!/<td>loadAvg<\/td>/.test(h), 'loadAvg is not a result row');
+  const eng = realJSON('engine.json');
+  if (eng) assert.ok(machineNote(eng));
+  assert.match(h, /0\.88/);
+  assert.match(h, /privileged voltage baseline/);
+  assert.match(h, /3–5 mHz/);
+  assert.equal(dateText('2026-08-23'), 'Sun 23 Aug 2026');
+});
+
+test('R2 More: the real-evenings facts read p1/days/index.json, labelled; absent index means not built', async () => {
+  const idx = { schema: 'hb.p1.days.v1', default: '2026-08-23', series: { sparkline: { label: 'REAL' } }, days: [
+    { date: '2026-08-23', tag: 'The evening we know best', sparkline: [10, 20, 500, 40], peak: { v: 566.42, label: 'REAL', t: '21:00' },
+      perBattery: { naive: { v: 9.31, label: 'DERIVED' }, aware: { v: 9.55, label: 'DERIVED' } }, awareMoreUSD: { v: 22.73, label: 'DERIVED' },
+      naiveMax: { v: 201.2, label: 'SIM', tf: 'A', t: '22:30', tier: 4 }, naiveEvents: { v: 11, label: 'SIM' }, awareBatteryCaused: { v: 0, label: 'SIM' } },
+    { date: '2026-08-14', tag: 'A quiet night', sparkline: [10, 12, 11, 9], peak: { v: 34.23, label: 'REAL', t: '18:45' },
+      perBattery: { naive: { v: -0.31, label: 'DERIVED' }, aware: { v: -0.21, label: 'DERIVED' } }, awareMoreUSD: { v: 9.28, label: 'DERIVED' },
+      naiveMax: { v: 214.1, label: 'SIM', tf: 'B', t: '19:00', tier: 4 }, naiveEvents: { v: 9, label: 'SIM' }, awareBatteryCaused: { v: 0, label: 'SIM' } },
+  ] };
+  const S = { topology, p1days: idx };
+  const say = (n) => evalFact(n, S).map((x) => (typeof x === 'string' ? x : fmt.fmt(x, x.o || {}))).join('');
+  assert.equal(say('daysCount'), '2 DERIVED');
+  assert.equal(say('daysAwareMoreEvery'), 'on every one of them');
+  assert.equal(say('daysNaiveBroke'), '2 SIM');
+  assert.match(say('daysBest'), /Sun 23 Aug 2026 REAL \(The evening we know best\), \$9\.55 DERIVED a battery/);
+  assert.match(say('daysWorst'), /-\$0\.21 DERIVED/);
+  assert.equal(say('awareMoreTonight'), '$22.73 DERIVED');
+  // no index: the facts are "not built", never a guess
+  assert.equal(evalFact('daysCount', { topology }), null);
 });
