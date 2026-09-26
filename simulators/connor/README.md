@@ -50,6 +50,28 @@ python3 -m http.server 4388 --bind 127.0.0.1 --directory .
 
 Then open http://127.0.0.1:4388/ui/four-node.html?replay=day. Scrub the steps, switch policy, hover any chart, or open the table view.
 
+## The control-room dashboard (Chapter 1, option 3a)
+
+`ui/dashboard.html` is the handoff's Chapter 1 screen (`docs/design-handoff/README.md`), rebuilt to read the simulator's replay instead of the prototype's scripted series. Serve this folder and open:
+
+```sh
+.venv/bin/python -m sim.server        # http://127.0.0.1:4388/ui/dashboard.html
+```
+
+The board, the fleet card, voltage by bus, reactive power and the transport all read `data/replays/day.json` (`?replay=` picks another). The five system cards read `data/ems/freq-series.json`, real ERCOT data for 25 Sep 2026, because no feeder simulator produces frequency, RoCoF, time error, PRC or inertia. Even split / Feeder-aware switches between the replay's two policy runs. Layer tabs Loading and Voltage work; Next battery and Detector are placeholders for later chapters. The story line is derived from the replay (phase changes, the bank, the fleet reaching full or the reserve, the referee's flags, device events), not scripted. "Model & sources" opens the replay's provenance and parameters and, when the server is live, reruns the simulator with them.
+
+Rules it follows from the handoff and this README's decisions: one day is 20 s at 1×; graphs and motion interpolate between the 5-minute steps, but text, tiers and counters change only on a step, from the replay's values; the heartbeat runs at `40 + 80·|P|` beats per minute with |P| the fleet power over its nameplate; the reserve is drawn and never breached; every number carries its tag; the tokens come from `ui/design-system/` (a copy of `docs/design-handoff/design-system/`).
+
+Debug parameters: `?t=18.5` starts at that hour, `?paused=1`, `?policy=naive|aware`, `?layer=loading|voltage`. Space plays and pauses; the arrow keys step 15 minutes.
+
+What it does not do yet: the handoff's 45-transformer board with Cedar Hollow and Mesquite Run (the lateral has one home per node, all with batteries); per-day variation (every day replays the same day, with yesterday's charge curve as a ghost); the scripted 18:20 unit trip (the ERCOT file's own events are real and stay in the data).
+
+`ui/dashboard-model.js` is the pure part (interpolation, tier codes, board layout, ERCOT mapping, the story) and is tested with:
+
+```sh
+node --test ui/test/*.test.mjs
+```
+
 ## Four-node mechanics test
 
 Before the day, a two-hour run checks the pieces: charge, comms loss, backup islanding, tiered thermal limits, naive vs feeder-aware splitter.
@@ -160,6 +182,10 @@ Two places where the design handoff and the rest of the project disagree. Each i
 |---|---|
 | `pyproject.toml`, `uv.lock` | Pinned dependencies |
 | `ui/four-node.html` | Viewer for the replays in `data/replays/` (`?replay=day`, `four_node`, `four_node_backup`) with the live parameter panel when served by `sim.server` |
+| `ui/dashboard.html`, `dashboard.js`, `dashboard-model.js` | The Chapter 1 control room from the design handoff, reading the replay and the ERCOT series |
+| `ui/design-system/` | Copy of the handoff's tokens and stylesheet (see its README) |
+| `ui/test/` | `node --test` for the dashboard model |
+| `data/ems/freq-series.json` | ERCOT system series for the five system cards (see its README) |
 | `data/replays/` | `day.json` (288 steps), `four_node.json` and `four_node_backup.json` (24 steps each) |
 
 `sim/`:

@@ -1,0 +1,13 @@
+:root{
+  --brand:#1e4d2b; --brand-hover:#2a6a3b; --brand-tint:#e4efe6;
+  --ink:#10231a; --ink-2:#34443a; --muted:#5f6b63;
+  --bg:#f7f4ec; --panel:#fffdf8; --border:#e3dfd3; --border-strong:#cfcabd;
+  --board:#efece3; --board-dusk:#d0d3cc; --sky-night:#d8dad3; --sky-day:#f1eee5;
+  --healthy:#8aa58f; --tier-1:#c7962b; --tier-2:#b23a2f; --tier-3:#6e1d17;
+  --flag:#b23a2f; --quarantine:#4a4f4c; --home:#b9b4a6;
+  /* semantic */
+  --surface-page:var(--bg); --surface-card:var(--panel); --surface-board:var(--board);
+  --text-body:var(--ink); --text-secondary:var(--muted);
+  --action-primary:var(--brand); --action-primary-hover:var(--brand-hover); --selected-bg:var(--brand-tint);
+  --battery-ours:var(--brand);
+}

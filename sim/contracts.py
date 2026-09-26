@@ -1,6 +1,6 @@
 """The data contract between the simulator and the UI (docs/contracts.md is the prose version).
 
-    python -m sim.contracts            # validate every ui/data/**/*.json; print sizes; fail on a bad file
+    python -m sim.contracts            # validate every ui/data/**/*.json and *.json.gz; print sizes; fail on a bad file
 
 Checks, per file (ui/data/ems/** is a P3 snapshot of site/ems: size-checked only):
   1. the envelope: schema "hb.<name>.v1", producer "sim.<module>" or "scripts.<name>" (a fetcher such as
@@ -10,12 +10,16 @@ Checks, per file (ui/data/ems/** is a P3 snapshot of site/ems: size-checked only
      {"v": n, "label": "REAL|SIM|DERIVED|ASSUMPTION", "cite"?: "..."}; siblings of "v" inside a labelled
      dict share its label; ids and counters named in ID_KEYS may be bare; numeric arrays are bulk
      (labelled once in `series`). Any dict with "v" and "label" anywhere must carry a valid label;
-  3. shapes of the named files (topology, p1/meta, p1/<branch>, p2/index, p2/<combo>) where cheap;
-  4. size: at most DATA_FILE_CAP_MB per file and DATA_BUDGET_MB for all of ui/data.
+  3. shapes of the named files (topology, p1/meta, p1/<branch>, p2/index, p2/<combo>, and the round-2 history files
+     p1/days/index.json (A.10), p1/days/calendar.json (A.9h), p1/days/<date>/meta.json (A.5h) and
+     p1/days/<date>/<branch>.json.gz (A.6h)) where cheap;
+  4. size: at most DATA_FILE_CAP_MB per file and DATA_BUDGET_MB for all of ui/data, counted ON DISK (a .json.gz
+     counts its compressed bytes, and is decompressed and checked by rules 1-3 like any other file).
 Ends with one line: "CONTRACTS: PASS (...)" or "CONTRACTS: FAIL (...)".
 
-Also the helpers every producer uses: envelope(), write_json(), inputs_sha().
+Also the helpers every producer uses: envelope(), write_json(), write_json_gz(), inputs_sha().
 """
+import gzip
 import hashlib
 import json
 import re
@@ -109,6 +113,24 @@ def write_json(path, doc):
     return len(data)
 
 
+def write_json_gz(path, doc):
+    """Gzipped deterministic JSON (history days, A.6h): level 9, mtime 0, no file name, so a rebuild is byte-identical.
+    Returns the compressed size in bytes."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    data = gzip.compress(dumps(doc).encode("utf-8"), compresslevel=9, mtime=0)
+    path.write_bytes(data)
+    return len(data)
+
+
+def read_json_any(path):
+    """A .json or .json.gz file as a doc (gz is decompressed)."""
+    raw = Path(path).read_bytes()
+    if str(path).endswith(".gz"):
+        raw = gzip.decompress(raw)
+    return json.loads(raw.decode("utf-8"))
+
+
 # ---- validation --------------------------------------------------------------------------
 def _is_num(x):
     return isinstance(x, (int, float)) and not isinstance(x, bool)
@@ -185,29 +207,88 @@ def _need(cond, msg, errs):
         errs.append(msg)
 
 
+DAY_DIR_RE = re.compile(r"p1/days/(\d{4}-\d{2}-\d{2})/")
+HIST_BRANCHES = ("none", "naive", "aware")
+
+
+def _check_p1_meta(doc, errs, tag):
+    n = doc["steps"]
+    _need(len(doc["price"]) == n, f"{tag}: price length != steps", errs)
+    _need(isinstance(doc["branches"], list) and doc["branches"], f"{tag}: branches empty", errs)
+    _need(isinstance(doc.get("summary"), dict), f"{tag}: summary missing", errs)
+    cash = doc.get("cash")
+    if cash is not None:   # A.5r: one cumulative int (cents) per step per branch, labelled once in series.cash
+        _need(isinstance(cash, dict) and all(isinstance(v, list) and len(v) == n and all(isinstance(c, int) for c in v)
+                                             for v in cash.values()), f"{tag}: cash[branch] must be {n} ints", errs)
+        _need("cash" in doc.get("series", {}), f"{tag}: series.cash label missing", errs)
+
+
+def _check_p1_branch(doc, errs, tag):
+    n = len(doc["loading"])
+    _need(all(len(r) == 379 for r in doc["loading"]), f"{tag}: loading rows != 379", errs)
+    _need(len(doc["tier"]) == n and all(len(s) == 379 for s in doc["tier"]), f"{tag}: tier strings", errs)
+    _need(len(doc["state"]) == n and all(len(s) == 96 for s in doc["state"]), f"{tag}: state strings", errs)
+    _need(len(doc["batKW"]) == n and len(doc["soc"]) == n, f"{tag}: batKW/soc length", errs)
+    _need(set(doc["focus"]) >= {"A", "B", "C", "D"}, f"{tag}: focus A-D missing", errs)
+
+
 def check_shapes(rel, doc):
     """Cheap shape checks for the named files (docs/contracts.md)."""
     errs = []
     name = rel.replace("\\", "/")
     base = name.split("fixtures/", 1)[-1]
+    if base.endswith(".json.gz"):
+        base = base[:-3]
+    day = DAY_DIR_RE.match(base)
     try:
-        if base == "topology.json":
+        if base == "p1/days/index.json":                          # A.10
+            days = doc["days"]
+            _need(isinstance(days, list) and days, "p1/days/index: days empty", errs)
+            _need(days and days[0]["date"] == "2026-08-23" and days[0]["dir"] == "", "p1/days/index: row 0 must be 2026-08-23 with dir \"\"", errs)
+            _need(len({d["date"] for d in days}) == len(days), "p1/days/index: duplicate dates", errs)
+            for d in days:
+                tag = f"p1/days/index[{d.get('date')}]"
+                _need(re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(d["date"])) is not None, f"{tag}: date", errs)
+                _need(d["dir"] in ("", f"days/{d['date']}"), f"{tag}: dir must be '' or days/<date>", errs)
+                _need(isinstance(d["branches"], list) and set(d["branches"]) >= set(HIST_BRANCHES), f"{tag}: branches", errs)
+                _need(isinstance(d["tag"], str) and not re.search(r"\d", d["tag"]), f"{tag}: tag must be words (no digits)", errs)
+                for k in ("peak", "naiveMax", "awareBatteryCaused"):
+                    _need(isinstance(d[k], dict) and d[k].get("label") in LABELS, f"{tag}: {k} must be labelled", errs)
+                _need(isinstance(d["perBattery"]["aware"], dict) and d["perBattery"]["aware"].get("label") in LABELS,
+                      f"{tag}: perBattery.aware must be labelled", errs)
+                _need(isinstance(d["sparkline"], list) and len(d["sparkline"]) == 48, f"{tag}: sparkline != 48 prices", errs)
+            _need("sparkline" in doc["series"], "p1/days/index: series.sparkline label missing", errs)
+        elif base == "p1/days/calendar.json":                     # A.9h
+            n = doc["n"]
+            for k in ("net", "sold", "bought", "peak", "negMin"):
+                _need(isinstance(doc[k], list) and len(doc[k]) == n, f"p1/days/calendar: {k} length != n", errs)
+                _need(k in doc["series"], f"p1/days/calendar: series.{k} label missing", errs)
+            for k in ("peakT", "onset"):
+                _need(len(str(doc[k]).split()) == n, f"p1/days/calendar: {k} must hold n space-separated times", errs)
+            _need(len(doc["mode"]) == n and set(doc["mode"]) <= set("bnf-"), "p1/days/calendar: mode must be n chars of b/n/f/-", errs)
+            _need(isinstance(doc["sim"], dict) and doc["sim"].get("2026-08-23") == "", "p1/days/calendar: sim must map 2026-08-23 to ''", errs)
+        elif day and base.endswith("/meta.json"):                 # A.5h
+            tag = f"p1/days/{day.group(1)}/meta"
+            _check_p1_meta(doc, errs, tag)
+            _need(doc["day"] == day.group(1), f"{tag}: day != its folder", errs)
+            _need("aware_faults" not in doc["branches"], f"{tag}: history days have no aware_faults branch", errs)
+            _need(doc.get("events") == {}, f"{tag}: events must be {{}} (failures are scripted for 23 Aug only)", errs)
+        elif day and name.endswith(".json.gz"):                   # A.6h
+            b = base.rsplit("/", 1)[1][:-5]
+            tag = f"p1/days/{day.group(1)}/{b}"
+            _need(b in HIST_BRANCHES, f"{tag}: branch must be one of {HIST_BRANCHES}", errs)
+            _check_p1_branch(doc, errs, tag)
+        elif base.startswith("p1/days/"):
+            errs.append(f"{base}: not a known history file (A.5h, A.6h, A.9h, A.10)")
+        elif base == "topology.json":
             _need(len(doc["homes"]) == 1010, "topology: homes != 1010", errs)
             _need(len(doc["transformers"]) == 379, "topology: transformers != 379", errs)
             _need(len(doc["fleet"]) == 96, "topology: fleet != 96", errs)
             _need([f["key"] for f in doc["focus"]] == ["A", "B", "C", "D"], "topology: focus keys != A-D", errs)
         elif base == "p1/meta.json":
-            n = doc["steps"]
-            _need(len(doc["price"]) == n, "p1/meta: price length != steps", errs)
-            _need(isinstance(doc["branches"], list) and doc["branches"], "p1/meta: branches empty", errs)
-            _need(isinstance(doc.get("summary"), dict), "p1/meta: summary missing", errs)
-        elif base.startswith("p1/") and base.endswith(".json") and base not in ("p1/meta.json", "p1/chaos.json"):
-            n = len(doc["loading"])
-            _need(all(len(r) == 379 for r in doc["loading"]), "p1 branch: loading rows != 379", errs)
-            _need(len(doc["tier"]) == n and all(len(s) == 379 for s in doc["tier"]), "p1 branch: tier strings", errs)
-            _need(len(doc["state"]) == n and all(len(s) == 96 for s in doc["state"]), "p1 branch: state strings", errs)
-            _need(len(doc["batKW"]) == n and len(doc["soc"]) == n, "p1 branch: batKW/soc length", errs)
-            _need(set(doc["focus"]) >= {"A", "B", "C", "D"}, "p1 branch: focus A-D missing", errs)
+            _check_p1_meta(doc, errs, "p1/meta")
+        elif re.fullmatch(r"p1/[^/]+\.json", base) and base not in ("p1/meta.json", "p1/chaos.json"):
+            _check_p1_branch(doc, errs, "p1 branch")
         elif base == "p2/index.json":
             _need(len(doc["combos"]) == 16 or doc.get("fixture"), "p2/index: combos != 16", errs)
             _need(doc["default"] in [c if isinstance(c, str) else c.get("id") for c in doc["combos"]],
@@ -223,7 +304,7 @@ def check_shapes(rel, doc):
 
 def validate(root=UI_DATA, out=print):
     root = Path(root)
-    files = sorted(p for p in root.rglob("*.json"))
+    files = sorted(list(root.rglob("*.json")) + list(root.rglob("*.json.gz")))
     total = 0
     failures = []
     labelled_n = 0
@@ -238,10 +319,10 @@ def validate(root=UI_DATA, out=print):
         snapshot = rel.startswith("ems/")
         if not snapshot:
             try:
-                doc = json.loads(p.read_text())
-            except ValueError as e:
+                doc = read_json_any(p)
+            except (ValueError, OSError, EOFError) as e:   # gzip.BadGzipFile is an OSError
                 doc = None
-                errs.append(f"invalid JSON: {e}")
+                errs.append(f"invalid {'gzip/' if rel.endswith('.gz') else ''}JSON: {e}")
             if doc is not None:
                 errs += check_envelope(doc)
                 le, n = audit_labels(doc)

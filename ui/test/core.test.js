@@ -13,7 +13,7 @@ import { parseLink, linkQuery, applyBeat, _configure, getWithFixture, getOptiona
   DEFAULT_DATE, SPEEDS, getGz, loadP1MetaFor, loadP1BranchFor, resolveP1Date } from '../lib/data.js';
 import * as icons from '../lib/icons.js';
 import { LABEL_TIPS, tipHTMLFor, chipLabel, speedTip } from '../lib/tip.js';
-import { dayChipHTML, dayRowsHTML, sparklineSVG } from '../lib/days.js';
+import { dayChipHTML, dayRowsHTML, sparklineSVG, calendarStripHTML, netColour } from '../lib/days.js';
 
 const UI = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -232,6 +232,28 @@ test('days: the day chip and the popover rows read index.json only, with labels 
   assert.equal(sparklineSVG([1]), '');
 });
 
+test('days: the money calendar strip (A.9h): a cell per evening, sim days clickable, labels from series', () => {
+  const cal = { from: '2026-07-30', n: 5, net: [1234, -56, null, 0, 90000], sold: [], bought: [], peak: [56642, 3000, null, 2500, 78072],
+    peakT: '2100 1845 - 1900 2215', onset: '2200 2130 - 2200 2300', mode: 'bb-bb', negMin: [0, 15, 0, 0, 0],
+    sim: { '2026-08-23': '', '2026-08-01': 'days/2026-08-01' }, gaps: [{ day: '2026-08-01', reason: 'DST test gap' }],
+    headline: { perBattery2026ytd: { v: 284.68, label: 'DERIVED' }, top10Share2026: { v: 55, label: 'DERIVED' }, losingNights2026: { v: 85, label: 'DERIVED' } },
+    series: { net: { label: 'DERIVED' }, peak: { label: 'REAL' }, negMin: { label: 'REAL' } } };
+  const h = calendarStripHTML(cal, '2026-08-03');
+  assert.equal((h.match(/class="hb-cal-cell[^"]*" data-date=/g) || []).length, 5);
+  assert.equal((h.match(/class="hb-cal-row"/g) || []).length, 2, 'Jul and Aug rows');
+  assert.match(h, /<button type="button" class="hb-cal-cell gap sim" data-date="2026-08-01"/);
+  assert.match(h, /class="hb-cal-cell lose paid" data-date="2026-07-31"/);
+  assert.match(h, /class="hb-cal-cell cur" data-date="2026-08-03"/);
+  assert.ok(h.includes('DST test gap'));
+  assert.ok(h.includes('a smart dispatcher sits out'));
+  assert.ok(h.includes('$284.68') && h.includes('chip-DERIVED'));
+  assert.ok(h.includes('566.42 $/MWh') && h.includes('at 21:00'));
+  assert.deepEqual(netColour(-1, 10), [125, 147, 178]);
+  assert.deepEqual(netColour(10, 10), [184, 134, 11]);
+  assert.equal(netColour(null, 10), null);
+  assert.equal(calendarStripHTML(null), '');
+});
+
 test('data: a beat sets every key it names', () => {
   const beats = { beats: [{ id: 'rebound', link: 'view=p1&branch=naive&t=22:30&cam=street' }] };
   const l = applyBeat(parseLink('?view=p2&beat=rebound&nowebgl=1'), beats);
@@ -324,6 +346,18 @@ function deeplinks() {
 }
 const param = (q, k) => new URLSearchParams(q).get(k);
 
+test('deeplinks: history dates are derived from p1/days/index.json; 2026-01-01 is the not-simulated probe', () => {
+  const dated = deeplinks().map((d) => d.query).filter((q) => param(q, 'date'));
+  assert.ok(dated.includes('view=p1&date=2026-01-01'), 'the not-simulated probe');
+  assert.ok(dated.some((q) => param(q, 'branch') === 'aware_faults'), 'a history-day aware_faults probe');
+  const idx = readJSON(path.join(UI, 'data', 'p1', 'days', 'index.json'));
+  if (idx) {
+    const sim = new Set(idx.days.map((d) => d.date));
+    assert.ok(!sim.has('2026-01-01'), 'the probe date must stay not simulated');
+    for (const q of dated) if (param(q, 'date') !== '2026-01-01') assert.ok(sim.has(param(q, 'date')), `${q}: date not in p1/days/index.json`);
+  }
+});
+
 test('deeplinks: exactly three canaries, one P1, one P2 (the default combo) and view=more', () => {
   const c = deeplinks().filter((d) => d.tags.includes('canary'));
   assert.deepEqual(c.map((d) => param(d.query, 'view')), ['p1', 'p2', 'more']);
@@ -353,7 +387,8 @@ test('deeplinks: every P2 combo in p2/index.json, the home= link at its measured
   }
   const meta = readJSON(path.join(UI, 'data', 'p1', 'meta.json'));
   if (meta && meta.tc) {
-    const f = links.filter((q) => param(q, 'branch') === 'aware_faults');
+    // the 23 Aug failure links (a history-day aware_faults link is the notice probe: failures are scripted for 23 Aug only)
+    const f = links.filter((q) => param(q, 'branch') === 'aware_faults' && !param(q, 'date'));
     assert.ok(f.length >= 1, 'an aware_faults link');
     for (const q of f) assert.equal(param(q, 't'), minToHHMM(hhmmToMin(meta.tc.t) + 16), 'aware_faults t = Tc + 16 (meta.tc)');
   }

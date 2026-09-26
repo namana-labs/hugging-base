@@ -15,6 +15,13 @@ p1 view=p1&branch=naive&t=22:00&cam=street
 p1 view=p1&branch=aware&t=22:00&cam=street&nowebgl=1
 # &date= routing: a day that is not simulated shows a notice and the 23 Aug evening (never a fixture, never an error).
 p1 view=p1&date=2026-01-01
+# Real ERCOT evenings (HIST-R2 6.5; l2's p1/days/, l4's day picker). Until p1.js exports supportsDates they show the
+# "reads 23 Aug only" notice; aware_faults on a history day opens aware with "Failures are scripted for ... only".
+# core.test.js: every date here except the not-simulated probe must be in p1/days/index.json once it exists.
+p1 view=p1&date=2026-07-22&branch=naive&t=23:15
+p1 view=p1&date=2026-08-14&branch=naive&t=19:00
+p1 view=p1&date=2026-08-26&branch=aware&t=22:15
+p1 view=p1&date=2026-08-14&branch=aware_faults
 # P2 (L3 data, L5 view): all 16 combos; the default combo is the always-run link.
 p2,canary view=p2&combo=aware-core-d26-g0
 p2 view=p2&combo=aware-core-d26-g20

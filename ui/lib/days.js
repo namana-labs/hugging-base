@@ -1,6 +1,7 @@
 // ui/lib/days.js (L0): the P1 day picker (UX_SPEC_R2 4.3, HIST-R2 7.1). Real ERCOT evenings, simulated on our feeder.
 //   dayChipHTML(index, date)   the chip: calendar icon, "Wed 22 Jul 2026 · Texas's record demand ▾", an R tag on the date
 //   dayRowsHTML(index, date)   the popover rows, from p1/days/index.json ONLY (it never loads a branch file)
+//   calendarStripHTML(calendar, date)   the money strip: every real evening's one-Core cycle from p1/days/calendar.json
 //   mountDayPicker(el, {index, calendar, date, onPick})   the DOM half; l4 places it (the Day + scenario card)
 // Every number goes through fmt with the label the index carries; the weekday is computed from the date, never typed.
 // index = p1/days/index.json (docs/contracts.md A.10) or null before l2 builds it: then the chip shows the date alone.
@@ -69,6 +70,57 @@ export function dayRowsHTML(index, date = DEFAULT_DATE) {
   }).join('');
 }
 
+// ---- the money calendar strip (HIST-R2 7.1, Should): one cell per evening from p1/days/calendar.json (A.9h) --------
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const LOSE_RGB = [125, 147, 178], ZERO_RGB = [236, 233, 224], GAIN_RGB = [184, 134, 11];
+const mix = (a, b, t) => a.map((x, i) => Math.round(x + (b[i] - x) * t));
+/** A cell's colour: losing evenings a flat cool colour; earning evenings a gold ramp (sqrt of net over the year's max). */
+export function netColour(net, max) {
+  if (net === null || net === undefined) return null;
+  if (net < 0) return LOSE_RGB;
+  return mix(ZERO_RGB, GAIN_RGB, max > 0 ? Math.sqrt(Math.min(1, net / max)) : 0);
+}
+/** The calendar strip (pure string): a row per month, a cell per evening, ◆ on simulated evenings (clickable). Every value
+ *  in a tooltip carries the label its `series` gives it; a gap says why. */
+export function calendarStripHTML(cal, date = DEFAULT_DATE) {
+  if (!cal || !Array.isArray(cal.net) || !cal.from) return '';
+  const S = cal.series || {};
+  const lab = (k, v, opts) => (S[k] && fmt.LABELS.includes(S[k].label) ? fmt.fmtHTML({ v, label: S[k].label }, opts) : '');
+  const peakT = String(cal.peakT || '').split(/\s+/), neg = cal.negMin || [];
+  const gaps = new Map((cal.gaps || []).map((g) => [g.day, g.reason]));
+  const max = Math.max(0, ...cal.net.filter((x) => typeof x === 'number'));
+  const months = new Map();
+  for (let i = 0; i < cal.net.length; i++) {
+    const d = fmt.addDays(cal.from, i);
+    if (!d) break;
+    const key = d.slice(0, 7);
+    if (!months.has(key)) months.set(key, []);
+    const net = cal.net[i], sim = cal.sim && Object.prototype.hasOwnProperty.call(cal.sim, d);
+    const rgb = netColour(net, max);
+    let tip = `<b>${esc(fmt.dateLabel(d))}</b>`;
+    if (gaps.has(d) || net === null || net === undefined) tip += `<br>${esc(gaps.get(d) || 'no price data for this evening')}`;
+    else {
+      tip += `<br>one Core, one cycle: ${lab('net', net / 100, { money: true, digits: 2 })}`;
+      if (cal.peak && typeof cal.peak[i] === 'number') tip += `<br>evening peak ${lab('peak', cal.peak[i] / 100, { digits: 2, unit: ' $/MWh' })}${peakT[i] && peakT[i] !== '-' ? ` at ${esc(peakT[i].slice(0, 2))}:${esc(peakT[i].slice(2, 4))}` : ''}`;
+      if (net < 0) tip += '<br>one cycle would lose money: a smart dispatcher sits out';
+      if (neg[i] > 0) tip += `<br>paid to charge: ${lab('negMin', neg[i], { unit: ' min' })} of negative price`;
+    }
+    if (sim) tip += '<br>◆ simulated on this feeder: click to open';
+    const style = rgb ? ` style="background:rgb(${rgb.join(',')})"` : '';
+    const cls = `hb-cal-cell${rgb ? '' : ' gap'}${net < 0 ? ' lose' : ''}${sim ? ' sim' : ''}${d === date ? ' cur' : ''}${neg[i] > 0 ? ' paid' : ''}`;
+    months.get(key).push(`<${sim ? 'button type="button"' : 'span'} class="${cls}" data-date="${d}" data-tip-html="${esc(tip)}"${style}>${sim ? '◆' : ''}</${sim ? 'button' : 'span'}>`);
+  }
+  const rows = [...months.entries()].map(([k, cells]) => `<div class="hb-cal-row"><span class="hb-cal-m">${MON[+k.slice(5, 7) - 1]}</span>${cells.join('')}</div>`);
+  const h = cal.headline || {};
+  const head = [];
+  if (fmt.isLabelled(h.perBattery2026ytd)) head.push(`${fmt.fmtHTML(h.perBattery2026ytd, { money: true, digits: 2 })} per Core this year`);
+  if (fmt.isLabelled(h.top10Share2026)) head.push(`${fmt.fmtHTML(h.top10Share2026, { unit: '%' })} of it on the ten best evenings`);
+  if (fmt.isLabelled(h.losingNights2026)) head.push(`${fmt.fmtHTML(h.losingNights2026)} evenings would lose money`);
+  return `<div class="hb-cal"><div class="hb-cal-h">${svg('money', { size: 14 })} Every real evening, one Core, one cycle (gross, not Base's profit)${head.length ? `: ${head.join(' · ')}` : ''}</div>`
+    + `<div class="hb-cal-grid">${rows.join('')}</div>`
+    + `<div class="hb-cal-key"><span class="hb-cal-cell lose"></span> would lose money <span class="hb-cal-cell" style="background:rgb(${GAIN_RGB.join(',')})"></span> earned most <span class="hb-cal-cell sim">◆</span> simulated</div></div>`;
+}
+
 /** Mount the chip + popover into `el`. onPick(date) runs when a different day is chosen (the caller sets &date=, keeps
  *  branch, cam, t and speed, and pauses). Returns {close(), destroy()}. */
 export function mountDayPicker(el, { index = null, calendar = null, date = DEFAULT_DATE, onPick = () => {} } = {}) {
@@ -76,7 +128,7 @@ export function mountDayPicker(el, { index = null, calendar = null, date = DEFAU
   const many = rows(index).length > 1;
   el.classList.add('hb-daypick');
   el.innerHTML = `<button type="button" class="hb-daychip" aria-haspopup="${many ? 'listbox' : 'false'}" aria-expanded="false"${many ? '' : ' disabled'}>${dayChipHTML(index, date)}</button>`
-    + (many ? `<div class="hb-daypop" hidden><div class="hb-daypop-h">Real ERCOT evenings, simulated on this feeder ${fmt.chip('SIM', 'OpenDSS every minute, our controller')}</div><ul class="hb-daylist">${dayRowsHTML(index, date)}</ul></div>` : '');
+    + (many ? `<div class="hb-daypop" hidden><div class="hb-daypop-h">Real ERCOT evenings, simulated on this feeder ${fmt.chip('SIM', 'OpenDSS every minute, our controller')}</div><ul class="hb-daylist">${dayRowsHTML(index, date)}</ul>${calendarStripHTML(calendar, date)}</div>` : '');
   const chipBtn = el.querySelector('.hb-daychip');
   const pop = el.querySelector('.hb-daypop');
   const close = () => { if (pop) { pop.hidden = true; chipBtn.setAttribute('aria-expanded', 'false'); } };
@@ -86,7 +138,7 @@ export function mountDayPicker(el, { index = null, calendar = null, date = DEFAU
   chipBtn.addEventListener('click', () => (pop && pop.hidden ? open() : close()));
   if (pop) {
     pop.addEventListener('click', (e) => {
-      const b = e.target.closest('.hb-dayrow');
+      const b = e.target.closest('.hb-dayrow, .hb-cal-cell.sim');
       if (!b) return;
       close();
       if (b.dataset.date !== date) onPick(b.dataset.date);
@@ -94,6 +146,5 @@ export function mountDayPicker(el, { index = null, calendar = null, date = DEFAU
   }
   doc.addEventListener('pointerdown', onDoc);
   doc.addEventListener('keydown', onKey);
-  void calendar;   // the money calendar strip (HIST 7.1, Should) is not built in this PR
   return { close, destroy: () => { doc.removeEventListener('pointerdown', onDoc); doc.removeEventListener('keydown', onKey); el.innerHTML = ''; } };
 }
