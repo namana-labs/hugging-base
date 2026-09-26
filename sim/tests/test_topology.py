@@ -47,6 +47,21 @@ class TopologyTests(unittest.TestCase):
         self.assertEqual(tab["profiles"][list(tab["load_home"]).index(211)], "res_kw_38274_pu")
         self.assertEqual(len(tab["tf_of_batt"]), 96)
 
+    def test_mount_pad_or_pole_from_smartds(self):
+        # UX_SPEC_R2 4.2.6: 304 pad, 75 pole; A and C on poles; B, D and T-240 pad-mounted (by id, not index)
+        from collections import Counter
+        from sim.topology import transformer_mounts
+        m = transformer_mounts()
+        self.assertEqual(Counter(m.values()), Counter({"pad": 304, "pole": 75}))
+        self.assertEqual([t["mount"] for t in self.t["transformers"]], [m[t["id"]] for t in self.t["transformers"]])
+        self.assertEqual({k: m[tid] for k, tid in FOCUS_TFS.items()}, {"A": "pole", "B": "pad", "C": "pole", "D": "pad"})
+        self.assertEqual(m[BRIDGE_TF], "pad")
+        self.assertEqual(self.t["series"]["mount"]["label"], "DERIVED")
+        self.assertIn("ASSUMPTION", self.t["series"]["mount"]["by"])
+
+    def test_stand_in_cite_is_pedernales(self):
+        self.assertIn("Pedernales Electric Cooperative", self.t["constants"]["STAND_IN"]["cite"])
+
     def test_envelope(self):
         for k in ("schema", "producer", "inputs", "constants", "sources", "series"):
             self.assertIn(k, self.t)

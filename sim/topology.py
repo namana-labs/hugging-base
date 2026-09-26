@@ -51,6 +51,32 @@ def load_table():
             "tf_ids": [t["id"] for t in topo["transformers"]], "fleet": fl, "tf_of_batt": home_tf[fl]}
 
 
+MOUNT_RULE = ("SMART-DS Lines.dss secondary linecodes; any *_OH_* on the LV bus -> pole "
+              "(ASSUMPTION: a pad-mount cannot feed an overhead secondary)")
+
+
+def transformer_mounts(smartds=None):
+    """{transformer id: 'pad' | 'pole'} from the SMART-DS text files, WITHOUT OpenDSS. A transformer is pole-mounted
+    when any line touching its low-voltage bus (winding 2) uses an overhead linecode (*_OH_*), else pad-mounted."""
+    d = Path(smartds) if smartds else ROOT / "data" / "smartds"
+    lv = {}
+    for line in (d / "Transformers.dss").read_text().splitlines():
+        if not line.strip().lower().startswith("new transformer."):
+            continue
+        name = line.split()[1].split(".", 1)[1]
+        seg = re.search(r"(?i)\bwdg=2\b(.*?)(?:\bwdg=3\b|$)", line).group(1)
+        lv[name] = re.search(r"(?i)\bbus=([^\s.]+)", seg).group(1)
+    overhead = set()
+    for line in (d / "Lines.dss").read_text().splitlines():
+        if not line.strip().lower().startswith("new line."):
+            continue
+        if "_OH_" not in re.search(r"(?i)linecode=(\S+)", line).group(1).upper():
+            continue
+        for k in ("bus1", "bus2"):
+            overhead.add(re.search(rf"(?i)\b{k}=([^\s.]+)", line).group(1))
+    return {name: ("pole" if bus in overhead else "pad") for name, bus in lv.items()}
+
+
 def freeze_fleet(prototype_topology):
     """Freeze the prototype's placement, home order, districts and shaping. Reads, never writes, demos/."""
     src = Path(prototype_topology)
@@ -85,11 +111,12 @@ def build(feeder=None):
             "tf": h["tf"], "kwNameplate": round(h["kw"], 3), "eligible": bool(h["eligible"]),
             "battery": {"cls": "core"} if i in fleet_set else None, "district": districts[h["id"]],
         })
+    mounts = transformer_mounts()
     transformers = []
     for i, t in enumerate(f.transformers):
         transformers.append({"id": t["id"], "kva": t["kva"],
                              "lonlat": [round(t["coordinates"][0], 7), round(t["coordinates"][1], 7)],
-                             "homes": t["homes"], "focus": focus_by_tf.get(i)})
+                             "homes": t["homes"], "focus": focus_by_tf.get(i), "mount": mounts[t["id"]]})
     edges = [[round(e["coordinates"][0][0], 7), round(e["coordinates"][0][1], 7),
               round(e["coordinates"][1][0], 7), round(e["coordinates"][1][1], 7)] for e in f.edges]
     body = {
@@ -112,7 +139,8 @@ def build(feeder=None):
                             "fleet": {"label": "ASSUMPTION", "text": "the prototype's 96-Core placement (seed 17263), frozen in data/fleet.json"},
                             "shaping": {"label": "ASSUMPTION", "text": doc["shaping"]["description"]}},
                    series={"lonlat": {"label": "REAL", "unit": "deg", "by": "SMART-DS Buscoords.dss"},
-                           "kwNameplate": {"label": "REAL", "unit": "kW", "by": "SMART-DS Loads.dss"}})
+                           "kwNameplate": {"label": "REAL", "unit": "kW", "by": "SMART-DS Loads.dss"},
+                           "mount": {"label": "DERIVED", "unit": "pad|pole", "by": MOUNT_RULE}})
     env.update(body)
     return env
 
