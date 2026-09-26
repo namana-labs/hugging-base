@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "four-node-viewer",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "4388", "--bind", "127.0.0.1", "--directory", "simulators/connor"],
+      "port": 4388
+    }
+  ]
+}

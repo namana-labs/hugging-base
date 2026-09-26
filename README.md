@@ -12,6 +12,19 @@ The main app is promoted from the playable prototype in [`demos/grid-stories/`](
 - [Reconciliation of the three designs](docs/reconciliation.md)
 - [Research and source references](docs/research-report.md)
 
+## Simulators
+
+Candidate simulators live one per folder under [`simulators/`](simulators/README.md); the trial by fire picks the one the main app promotes. Each is self-contained. For example, the four-node mechanics test in `simulators/connor/`:
+
+```sh
+cd simulators/connor
+uv sync --group dev
+.venv/bin/python -m sim.scenarios.four_node
+python3 -m http.server 4388 --bind 127.0.0.1 --directory .
+```
+
+Open **http://127.0.0.1:4388/ui/four-node.html**. Tests: `.venv/bin/python -m pytest`.
+
 ## Run the toy demo
 
 From the repository root:
