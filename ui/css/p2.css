@@ -107,3 +107,5 @@ body.view-more .hb-panel { overflow: hidden; }
   .more-top { grid-template-columns: 1fr; }
   .more-beats { grid-row: auto; }
 }
+.p2-odss { border: 1px solid var(--accent); border-radius: 6px; padding: 4px 8px; margin: 6px 0; font-size: 12px; }
+.p2-odss > b { color: var(--accent); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }

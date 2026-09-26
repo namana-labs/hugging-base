@@ -270,3 +270,22 @@ test('driver.sharedWith as real objects ({home, label, tf}) reads as names with 
   meta.relief.minutesOver100 = { v: 17, label: 'SIM', none: 17, aware: 0 };
   assert.equal(resolveCaption('{{reliefMinutesNone}} -> {{reliefMinutesAware}}', { topology, p1meta: meta }, fmt, { html: false }), '17 min SIM -> 0 min SIM');
 });
+
+test('L3 shapes: bare untied.n, OpenDSS numbers replace screening numbers in the sentence when refereed', async () => {
+  const L = (v, label = 'DERIVED') => ({ v, label });
+  assert.equal(flipVerdict({ top10Overlap: L(2), untied: { top10Overlap: L(9), spearman: L(0.9), n: 40 } }).supports, false);
+  assert.equal(flipVerdict({ top10Overlap: L(2), untied: { top10Overlap: L(1), spearman: L(0.1), n: 40 } }).supports, true);
+  const { checkedByOpenDSS } = await import('../panels/p2.js');
+  const doc = fx('p2/aware-core-d26-g0.json');
+  const e = stressedEntry(doc);
+  assert.equal(checkedByOpenDSS(e), false);
+  e.opendss = { before: null, after: null };
+  assert.equal(checkedByOpenDSS(e), false, 'after = null means not refereed');
+  const O = (v) => ({ v, label: 'SIM', cite: 'OpenDSS (sim.referee)' });
+  e.opendss = { before: { peakPct: O(121.9), h100: O(0.75) }, after: { peakPct: O(97.1), h100: O(0) } };
+  e.screening = false;
+  assert.equal(checkedByOpenDSS(e), true);
+  const txt = counterfactualText({ entry: e, doc, index, topology, combo: 'aware-core-d26-g0' }, fmt);
+  assert.match(txt, /spent 0\.75 h SIM above nameplate without a new battery \(peak 121\.9% SIM\)/);
+  assert.match(txt, /under feeder-aware dispatch \(OpenDSS month run\): 0\.00 h SIM above nameplate, peak 97\.1% SIM/);
+});

@@ -77,7 +77,8 @@ export function flipVerdict(flip) {
   const ov = flip && flip.top10Overlap;
   if (!ov || typeof ov.v !== 'number') return { supports: false, headline: null };
   const un = flip.untied && flip.untied.top10Overlap;
-  const unOk = !un || typeof un.v !== 'number' || !(flip.untied.n && flip.untied.n.v >= 10) || un.v <= FLIP_HEADLINE_MAX_OVERLAP;
+  const nU = flip.untied ? (typeof flip.untied.n === 'number' ? flip.untied.n : flip.untied.n && flip.untied.n.v) : null;
+  const unOk = !un || typeof un.v !== 'number' || !(nU >= 10) || un.v <= FLIP_HEADLINE_MAX_OVERLAP;
   const supports = ov.v <= FLIP_HEADLINE_MAX_OVERLAP && unOk;
   return { supports, headline: supports ? 'How you charge decides where the next battery goes.' : null };
 }
@@ -99,6 +100,9 @@ export function fleetTotals(fc) {
   return out;
 }
 
+/** True when the OpenDSS referee re-ran this candidate (L3: opendss.after is null when it did not). */
+export function checkedByOpenDSS(e) { return !!(e && e.opendss && e.opendss.after && e.screening !== true); }
+
 function driverParts(driver) {
   if (!driver || !driver.profile) return null;
   const shared = sharedNames(driver.sharedWith);
@@ -116,8 +120,11 @@ export function counterfactualParts({ entry, doc, index, topology, combo }) {
   const tname = tfName(topology, tf);
   const month = (index && index.month) || 'the month';
   const parts = [];
-  const beforeH = entry.before && entry.before.h100 ? entry.before.h100 : bulk(doc, 'baseline', doc.baseline.h100[tf]);
-  const beforePeak = entry.before && entry.before.peakPct ? entry.before.peakPct : bulk(doc, 'baseline', doc.baseline.peak[tf] / 10);
+  const od = checkedByOpenDSS(entry) ? entry.opendss : null;
+  const B = od && od.before ? od.before : entry.before;
+  const A = od ? od.after : entry.after;
+  const beforeH = B && B.h100 ? B.h100 : bulk(doc, 'baseline', doc.baseline.h100[tf]);
+  const beforePeak = B && B.peakPct ? B.peakPct : bulk(doc, 'baseline', doc.baseline.peak[tf] / 10);
   const clsName = (CLASSES.find(([k]) => k === c.cls) || [null, c.cls])[1];
   const pol = c.policy === 'naive' ? 'naive dispatch (no feeder check)' : 'feeder-aware dispatch';
   const d = driverParts(entry.driver);
@@ -133,9 +140,10 @@ export function counterfactualParts({ entry, doc, index, topology, combo }) {
   } else {
     parts.push(`In ${month} transformer ${tname} stayed at or below nameplate without a new battery (peak `, { ...beforePeak, unit: '%', digits: 1 }, '). ');
   }
-  parts.push(`With a ${clsName} at ${homeLabel(topology, entry.home)} under ${pol}: `);
-  if (entry.after && entry.after.h100) parts.push({ ...entry.after.h100, unit: ' h', digits: 2 }, ' above nameplate, ');
-  if (entry.peakWithPct) parts.push('peak ', { ...entry.peakWithPct, unit: '%', digits: 1 }, ', ');
+  parts.push(`With a ${clsName} at ${homeLabel(topology, entry.home)} under ${pol}${od ? ' (OpenDSS month run)' : ''}: `);
+  if (A && A.h100) parts.push({ ...A.h100, unit: ' h', digits: 2 }, ' above nameplate, ');
+  const pk = od && A && A.peakPct ? A.peakPct : entry.peakWithPct;
+  if (pk) parts.push('peak ', { ...pk, unit: '%', digits: 1 }, ', ');
   if (entry.revenueUSD) parts.push('August energy value ', { ...entry.revenueUSD, money: true, digits: 0 });
   if (entry.curtailKWh && entry.curtailKWh.v > 0) parts.push(', curtailed ', { ...entry.curtailKWh, unit: ' kWh', digits: 0 });
   parts.push('.');
@@ -172,6 +180,14 @@ const METRIC_NAMES = {
   revenueUSD: ['August energy value', { money: true, digits: 0 }],
   curtailKWh: ['curtailed', { unit: ' kWh', digits: 0 }],
   protectionWith: ['protection operates (ASSUMPTION rule)', {}],
+};
+
+const OPENDSS_NAMES = {
+  peakPct: ['peak', { unit: '%', digits: 1 }],
+  h100: ['above nameplate', { unit: ' h', digits: 2 }],
+  normalEvents: ['normal-tier events', {}],
+  emergencyN: ['emergency intervals', {}],
+  protection: ['protection', {}],
 };
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -224,15 +240,15 @@ function candidateCard(ctx, st) {
   }
   const t = topology.transformers[e.tf];
   const kva = { v: t.kva, label: 'REAL', cite: 'SMART-DS Transformers.dss' };
-  const badge = e.opendss
+  const badge = checkedByOpenDSS(e)
     ? '<span class="p2-badge ok" title="sim.referee: OpenDSS month run">OpenDSS-checked</span>'
     : '<span class="p2-badge screen" title="surrogate only (sim.surrogate); not yet refereed by OpenDSS">screening</span>';
   const metrics = labelledPairs(e, fmt.isLabelled).filter(([k]) => METRIC_NAMES[k])
     .map(([k, v]) => `<div class="p2-m"><span>${esc(METRIC_NAMES[k][0])}</span><b>${fmt.fmtHTML(v, METRIC_NAMES[k][1])}</b></div>`).join('');
-  const odss = e.opendss ? ['before', 'after'].map((w) => {
-    const pairs = labelledPairs(e.opendss[w], fmt.isLabelled);
-    return pairs.length ? `<div class="p2-m"><span>OpenDSS ${w}</span><b>${pairs.map(([k, v]) => `${esc(k)} ${fmt.fmtHTML(v, { digits: 1 })}`).join(' · ')}</b></div>` : '';
-  }).join('') : '';
+  const odss = checkedByOpenDSS(e) ? `<div class="p2-odss"><b>OpenDSS month run</b>${['before', 'after'].map((w) => {
+    const pairs = labelledPairs(e.opendss[w], fmt.isLabelled).filter(([k]) => OPENDSS_NAMES[k]);
+    return pairs.length ? `<div class="p2-m"><span>${w === 'before' ? 'without' : 'with'} the battery</span><b>${pairs.map(([k, v]) => `${esc(OPENDSS_NAMES[k][0])} ${fmt.fmtHTML(v, OPENDSS_NAMES[k][1])}`).join(' · ')}</b></div>` : '';
+  }).join('')}</div>` : '';
   const also = (e.alsoOnTf || []).length
     ? `<div class="hb-sub">Same transformer, identical in the screening model: ${e.alsoOnTf.map((i) => esc(homeLabel(topology, i))).join(', ')}. The lowest id is shown.</div>` : '';
   const tie = e.tieBroken ? '<div class="hb-sub">Its place among equals was decided by home id (the last rank key).</div>' : '';
@@ -270,7 +286,7 @@ function rankingTable(ctx, st) {
     const rv = e.revenueUSD ? fmt.fmtValue(e.revenueUSD, { money: true, digits: 0 }) : 'n/a';
     const viol = e.noNewViolation && e.noNewViolation.v === false ? ' p2-viol' : '';
     return `<tr class="${on ? 'on' : ''}${viol}"><td>${esc(e.rank)}</td><td><a href="${ctx.href({ view: 'p2', combo: st.combo, home: id })}">${esc(homeLabel(topology, e.home))}</a>${e.tieBroken ? '<sup title="place decided by id">id</sup>' : ''}</td>
-      <td>${esc(tfName(topology, e.tf))}</td><td class="n">${esc(pw)}</td><td class="n">${esc(av)}</td><td class="n">${esc(rv)}</td><td>${e.opendss ? '<span class="p2-dot ok" title="OpenDSS-checked">●</span>' : '<span class="p2-dot" title="screening">○</span>'}</td></tr>`;
+      <td>${esc(tfName(topology, e.tf))}</td><td class="n">${esc(pw)}</td><td class="n">${esc(av)}</td><td class="n">${esc(rv)}</td><td>${checkedByOpenDSS(e) ? '<span class="p2-dot ok" title="OpenDSS-checked">●</span>' : '<span class="p2-dot" title="screening">○</span>'}</td></tr>`;
   }).join('');
   const lab = (k, fallback) => {
     const e = (doc.ranking || [])[0];
@@ -303,7 +319,9 @@ function flipBlock(ctx, st) {
     body += `<div class="p2-flip-big"><span class="hb-big">${fmt.fmtHTML(ov)}</span><span class="hb-sub"> of 10 homes in both top tens (naive vs feeder-aware)</span></div>`;
     body += v.supports ? `<div class="p2-headline">${esc(v.headline)}</div>`
       : `<div class="p2-headline muted">The two rankings overlap by the number above; the flip is ${ov.v >= 10 ? 'not seen' : 'partial'} in this data.</div>`;
-    body += `<div class="hb-sub">Spearman ${sp ? fmt.fmtHTML(sp, { digits: 2 }) : 'n/a'}${un.top10Overlap ? ` · untied candidates only: overlap ${fmt.fmtHTML(un.top10Overlap)}, Spearman ${un.spearman ? fmt.fmtHTML(un.spearman, { digits: 2 }) : 'n/a'} over ${un.n ? fmt.fmtHTML(un.n) : 'n/a'} candidates` : ''}${ties ? ` · places decided by id: ${fmt.fmtHTML(ties)} of ${esc(st.index.ties.of)}` : ''}</div>`;
+    body += `<div class="hb-sub">Spearman ${sp ? fmt.fmtHTML(sp, { digits: 2 }) : 'n/a'}${un.top10Overlap ? ` · untied candidates only: overlap ${fmt.fmtHTML(un.top10Overlap)}, Spearman ${un.spearman ? fmt.fmtHTML(un.spearman, { digits: 2 }) : 'n/a'} over ${un.n != null ? fmt.fmtHTML(typeof un.n === 'number' ? { v: un.n, label: un.top10Overlap.label || 'DERIVED' } : un.n) : 'n/a'} candidates` : ''}${ties ? ` · places decided by id: ${fmt.fmtHTML(ties)} of ${esc(st.index.ties.of)}` : ''}</div>`;
+    const dr = st.index.drivers;
+    if (dr && dr.top10DistinctProfiles) body += `<div class="hb-sub">The feeder-aware top 10 is driven by ${fmt.fmtHTML(dr.top10DistinctProfiles)} distinct SMART-DS load profiles${Array.isArray(dr.profiles) && dr.profiles.length ? ` (${esc([...new Set(dr.profiles)].join(', '))})` : ''}: shared shapes are one piece of evidence, not several.</div>`;
     body += `<div class="hb-sub">Headline rule: shown only when the two top tens share at most ${esc(FLIP_HEADLINE_MAX_OVERLAP)} homes (display rule ${fmt.chip('ASSUMPTION', 'ui/panels/p2.js FLIP_HEADLINE_MAX_OVERLAP')}).</div>`;
   }
   if (st.aware && st.naive) {
@@ -325,19 +343,27 @@ function capacityBlock(ctx, st) {
   const u = st.index.usefulCapacity;
   if (!u) return '';
   const stop = (x) => (x && x.stop ? ` <span class="hb-sub">(stops: ${esc(x.stop)})</span>` : '');
-  let chart = '';
-  const pick = (a) => (Array.isArray(a) ? a.map((x) => (typeof x === 'number' ? x : (x && typeof x === 'object'
-    ? [x.v, x.curtailPct, x.normalTfs, x.value].find((y) => typeof y === 'number') : null))) : []);
-  const cn = pick(u.curve && u.curve.naive), ca = pick(u.curve && u.curve.aware);
-  const cl = (st.index.series && st.index.series.usefulCapacity && st.index.series.usefulCapacity.label) || (u.aware && u.aware.label) || 'SIM';
-  if (cn.length > 1 || ca.length > 1) {
-    chart = chartHTML('line', { series: [{ name: 'naive', values: cn, cls: 's-without' }, { name: 'feeder-aware', values: ca, cls: 's-with' }],
-      label: cl, title: 'useful capacity', caption: 'Capacity curve as batteries are added in each policy\'s greedy order (grey naive, accent feeder-aware)' });
+  const cl = (st.index.series && st.index.series.curve && st.index.series.curve.label) || (u.aware && u.aware.label) || 'SIM';
+  // curve rows (L3): [k placed, transformers with a battery-caused normal event, feeder curtailment per mille, feeder h above 110%]
+  const rows = (a) => (Array.isArray(a) ? a.filter((r) => Array.isArray(r) && r.length >= 3) : []);
+  const cn = rows(u.curve && u.curve.naive), ca = rows(u.curve && u.curve.aware);
+  let charts = '';
+  if (cn.length > 1) {
+    charts += chartHTML('line', { series: [{ name: 'naive', values: cn.map((r) => r[1]), cls: 's-without' }], label: cl, title: 'naive capacity', height: 110,
+      xTicks: [{ i: 0, text: String(cn[0][0]) }, { i: cn.length - 1, text: String(cn[cn.length - 1][0]) }],
+      caption: 'Naive: transformers with a battery-caused normal-tier event, as batteries are added in greedy order' });
+  }
+  if (ca.length > 1) {
+    const capPct = u.cap && typeof u.cap.v === 'number' ? u.cap.v * 100 : null;
+    charts += chartHTML('line', { series: [{ name: 'feeder-aware', values: ca.map((r) => r[2] / 10), cls: 's-with' }], label: cl, title: 'aware capacity', height: 110, unit: '%',
+      refs: capPct !== null ? [{ y: capPct, text: 'cap', cls: 'r-normal' }] : [],
+      xTicks: [{ i: 0, text: String(ca[0][0]) }, { i: ca.length - 1, text: String(ca[ca.length - 1][0]) }],
+      caption: `Feeder-aware: feeder curtailment, % of the energy the new batteries need, as batteries are added${u.cap ? '' : ''}` });
   }
   return `<h2 data-beat="p2-capacity">Useful capacity from an empty feeder</h2>
     <div class="p2-cap"><div><span class="hb-sub">naive</span><div class="hb-big">${u.naive ? fmt.fmtHTML(u.naive) : 'n/a'}</div>${stop(u.naive)}</div>
     <div><span class="hb-sub">feeder-aware</span><div class="hb-big">${u.aware ? fmt.fmtHTML(u.aware) : 'n/a'}</div>${stop(u.aware)}</div></div>
-    <div class="hb-sub">Batteries added until the first battery-caused normal-tier event (naive) or curtailment above the cap (feeder-aware), or every home is used.</div>${chart}`;
+    <div class="hb-sub">Batteries added from an empty feeder until the first battery-caused normal-tier event (naive) or curtailment above the cap${u.cap ? ` of ${fmt.fmtHTML({ ...u.cap, v: u.cap.v * 100 }, { unit: '%', digits: 0 })}` : ''} (feeder-aware), or every eligible home is used.</div>${charts}`;
 }
 
 function insightBlock(ctx, st) {
@@ -360,9 +386,11 @@ function fleetBlock(ctx, st) {
   const t = fleetTotals(st.index.fleetCounterfactual);
   if (!t.none) return '';
   const lab = (st.index.series && st.index.series.fleetCounterfactual && st.index.series.fleetCounterfactual.label) || 'SIM';
-  const row = (k, name) => (t[k] ? `<tr><td>${esc(name)}</td><td class="n">${fmt.fmtHTML({ v: t[k].h100, label: lab }, { digits: 1 })}</td><td class="n">${fmt.fmtHTML({ v: t[k].normalTfs, label: lab })}</td><td class="n">${fmt.fmtHTML({ v: t[k].emergencyN, label: lab })}</td></tr>` : '');
+  const T = st.index.fleetCounterfactualTotals || {};
+  const cell = (k, key, v, o) => `<td class="n">${fmt.fmtHTML(T[k] && fmt.isLabelled(T[k][key]) ? T[k][key] : { v, label: lab }, o || {})}</td>`;
+  const row = (k, name) => (t[k] ? `<tr><td>${esc(name)}</td>${cell(k, 'h100', t[k].h100, { digits: 1 })}${cell(k, 'normalEvents', t[k].normalEvents)}${cell(k, 'emergencyN', t[k].emergencyN)}</tr>` : '');
   return `<h2>The existing fleet: did our batteries cause it?</h2>
-    <table class="p2-rank"><thead><tr><th>existing fleet</th><th>h above nameplate, all tfs</th><th>tfs with a normal-tier event</th><th>emergency intervals</th></tr></thead>
+    <table class="p2-rank"><thead><tr><th>existing fleet</th><th>h above nameplate, all tfs</th><th>normal-tier events</th><th>emergency intervals</th></tr></thead>
     <tbody>${row('none', 'no batteries')}${row('naive', 'managed naively')}${row('aware', 'feeder-aware')}</tbody></table>`;
 }
 
@@ -397,7 +425,15 @@ function handoffBlock(ctx, st) {
     const best = (st.doc.ranking || []).find((e) => e.tf === u.tf);
     const d = u.driver || {};
     const drv = d.profile ? ` Driver: ${esc(d.label || '')} (SMART-DS profile ${esc(d.profile)}${sharedNames(d.sharedWith).length ? `, the same profile as ${esc(sharedNames(d.sharedWith).join(', '))}` : ''})${d.kwAtPeak ? `, ${fmt.fmtHTML(d.kwAtPeak, { unit: ' kW', digits: 1 })} at the peak` : ''}.` : '';
-    const link = best ? ` Best candidate here: <a href="${ctx.href({ view: 'p2', combo: st.combo, home: topology.homes[best.home].id })}">#${esc(best.rank)} ${esc(homeLabel(topology, best.home))}</a>.` : ' No candidate on it in this combo\'s top 50.';
+    const br = (st.index.bridge || []).find((x) => x.tf === u.tf);
+    const pol = parseCombo(st.combo).policy;
+    const bp = br && br[pol];
+    let link;
+    if (bp && fmt.isLabelled(bp.peakWithPct)) {
+      link = ` A new battery here (${esc(bp.label || homeLabel(topology, bp.home))}, rank ${esc(bp.rank)} under this policy): month peak ${bp.peakWithoutPct ? fmt.fmtHTML(bp.peakWithoutPct, { unit: '%', digits: 1 }) : 'n/a'} without, ${fmt.fmtHTML(bp.peakWithPct, { unit: '%', digits: 1 })} with${bp.noNewViolation && bp.noNewViolation.v === false ? '; it adds a violation (where NOT to put it)' : ''}. <a href="${ctx.href({ view: 'p2', combo: st.combo, home: topology.homes[bp.home] ? topology.homes[bp.home].id : null })}">Open its card</a>.`;
+    } else {
+      link = best ? ` Best candidate here: <a href="${ctx.href({ view: 'p2', combo: st.combo, home: topology.homes[best.home].id })}">#${esc(best.rank)} ${esc(homeLabel(topology, best.home))}</a>.` : ' No candidate on it in this combo\'s top 50.';
+    }
     return `<li><b>${esc(tfName(topology, u.tf))}</b>: ${esc(u.reason || 'unrelieved')}.${drv}${link}</li>`;
   }).join('');
   return `<section class="p2-handoff"><h2>From P1: left unrelieved on ${esc(st.p1meta.day || 'the P1 day')}</h2><ul>${items}</ul></section>`;

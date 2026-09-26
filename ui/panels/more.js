@@ -196,7 +196,11 @@ export const FACTS = {
   allocateLargest: [['topology'], (S) => { const h = scanEngine(S.engine, /100k|100000|1e5/i) || scanEngine(S.engine, /alloc/i); return h ? { ...h, o: { unit: ' µs', digits: 0 } } : null; }, ['engine']],
   candidates: [['p2index'], (S) => { const t = get(S, 'p2index.ties'); return t && typeof t.of === 'number' ? L(t.of, 'DERIVED', 'eligible homes without a battery') : null; }],
   refereeRuns: [['p2index'], (S) => { const r = get(S, 'p2index.referee'); return r && typeof r.runs === 'number' ? L(r.runs, 'SIM', 'sim.referee OpenDSS month runs') : null; }],
-  refereeP99: [['p2index'], (S) => { const x = withO(get(S, 'p2index.referee.errorPts.p99'), { unit: ' pts', digits: 2 }); return x ? ['p99 ', x] : null; }],
+  refereeP99: [['p2index'], (S) => {
+    if (get(S, 'p2index.referee.runs') === 0) return 'not measured (the referee has not run)';
+    const x = withO(get(S, 'p2index.referee.errorPts.p99'), { unit: ' pts', digits: 2 });
+    return x && typeof x.v === 'number' ? ['p99 ', x] : null;
+  }],
   awareTop1: [['p2:' + DEFAULT_AWARE, 'topology'], (S) => { const e = get(S, `p2:${DEFAULT_AWARE}.ranking.0`); return e ? homeLabel(S.topology, e.home) : null; }],
   awareTop1Tf: [['p2:' + DEFAULT_AWARE, 'topology'], (S) => { const e = get(S, `p2:${DEFAULT_AWARE}.ranking.0`); return e ? tfName(S.topology, e.tf) : null; }],
   awareTop1UnderNaive: [['p2:' + DEFAULT_AWARE, 'p2:' + DEFAULT_NAIVE], (S) => {
