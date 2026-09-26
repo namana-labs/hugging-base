@@ -48,6 +48,15 @@ export const PATHS = {
   clock: ['M12 3a9 9 0 1 0 0.01 0', 'M12 7v5l3.5 2'],
   list: ['M9 6h11M9 12h11M9 18h11', 'M4.5 6v.01M4.5 12v.01M4.5 18v.01'],
   cable: ['M2.5 16c3 0 3-8 6-8s3 8 6 8 3-8 6-8', 'M2.5 20h19'],
+  // l4 grafts: camera buttons, P1 section headers, the chain arrow
+  street: ['M3 20h18', 'M4.5 20v-6l3.5-3 3.5 3v6', 'M12.5 20v-6l3.5-3 3.5 3v6'],
+  feeder: ['M12 3.5a8.5 8.5 0 1 0 0.01 0', 'M3.5 12h17', 'M12 3.5c-3 3-3 14 0 17', 'M12 3.5c3 3 3 14 0 17'],
+  target: ['M12 4a8 8 0 1 0 0.01 0', 'M12 8.5a3.5 3.5 0 1 0 0.01 0'],
+  ruler: ['M3 15.5L15.5 3 21 8.5 8.5 21z', 'M7 11.5l2 2M10 8.5l2 2M13 5.5l2 2'],
+  book: ['M4.5 5c3-1.5 5.5-1.5 7.5.5v14c-2-2-4.5-2-7.5-.5z', 'M19.5 5c-3-1.5-5.5-1.5-7.5.5v14c2-2 4.5-2 7.5-.5z'],
+  log: ['M5 4h14v16H5z', 'M8 8.5h8M8 12h8M8 15.5h5'],
+  gauge: ['M4 16a8 8 0 1 1 16 0', 'M12 16l4-5'],
+  arrowRight: ['M4 12h15', 'M14 7l5 5-5 5'],
 };
 // Story names (UX-R2-story section 5) that map onto the prototype's glyphs.
 export const ALIASES = { nosignal: 'silent', ev: 'hot', coin: 'money', warning: 'warn', tripped: 'fuse', tf: 'padmount', pole: 'polemount' };

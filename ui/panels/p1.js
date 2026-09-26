@@ -919,7 +919,7 @@ export async function mount(el, ctx) {
   el.innerHTML = `
     <section class="p1-card p1-daycard">
       <div class="p1-day" id="p1-day"></div>
-      <nav class="p1-scn" role="tablist">${branches.map((b) => `<a href="${ctx.href({ branch: b, t: fmt.stepToTime(meta, k) })}" data-branch="${b}" aria-current="${b === branch}" data-tip="${esc(TAB_LINES[b] || '')}">${svg(TAB_ICONS[b] || 'info', { size: 16 })}<span>${esc(TAB_NAMES[b] || b)}</span>${b === 'naive' ? fmt.chip('ASSUMPTION', NAIVE_FRAMING) : ''}<span class="scn-out" id="scn-out-${b}"></span></a>`).join('')}</nav>
+      <nav class="p1-scn" role="tablist">${branches.map((b) => `<a href="${ctx.href({ branch: b, t: fmt.stepToTime(meta, k) })}" data-branch="${b}" aria-current="${b === branch}" data-tip="${esc(TAB_LINES[b] || '')}">${svg(TAB_ICONS[b] || 'info', { size: 16, level: 0.7, state: 'I' })}<span>${esc(TAB_NAMES[b] || b)}</span>${b === 'naive' ? fmt.chip('ASSUMPTION', NAIVE_FRAMING) : ''}<span class="scn-out" id="scn-out-${b}"></span></a>`).join('')}</nav>
       <p class="p1-scn-sub" id="p1-scn-sub"></p>
     </section>
     <section class="p1-card p1-now" id="p1-now" aria-live="polite"></section>
@@ -936,7 +936,21 @@ export async function mount(el, ctx) {
     ${sec('log', 'log', 'Controller log')}
     ${sec('sources', 'book', 'Sources and assumptions')}`;
   const $ = (id) => el.querySelector('#' + id);
-  for (const d of el.querySelectorAll('details.hb-sec')) d.addEventListener('toggle', () => store.set('hb.sec.' + d.dataset.sec, d.open ? '1' : '0'));
+  // A closed section holds its HTML aside and renders it only when opened: what is not visible is not in the page (the
+  // clutter metric and the reader see the same thing), and a playing clock never rebuilds hidden tables.
+  const pendingBody = {};
+  const bodyOf = (id) => ({
+    set innerHTML(html) {
+      const d = $(`sec-${id}`), b = $(`sec-${id}-body`);
+      if (d && d.open) { b.innerHTML = html; delete pendingBody[id]; } else { pendingBody[id] = html; if (b.firstChild) b.innerHTML = ''; }
+    },
+  });
+  for (const d of el.querySelectorAll('details.hb-sec')) {
+    d.addEventListener('toggle', () => {
+      store.set('hb.sec.' + d.dataset.sec, d.open ? '1' : '0');
+      if (d.open && pendingBody[d.dataset.sec] !== undefined) { $(`sec-${d.dataset.sec}-body`).innerHTML = pendingBody[d.dataset.sec]; delete pendingBody[d.dataset.sec]; }
+    });
+  }
 
   // ---- overlays on the scene: story, camera buttons, legend, credits, transport, intro ----
   for (const old of document.querySelectorAll('.p1-overlay')) old.remove();
@@ -1040,14 +1054,14 @@ export async function mount(el, ctx) {
     }
     set('scale', 'one home\'s two batteries vs A, the feeder, ERCOT');
     set('log', doc.ticker ? `${nv(fmt, L(doc.ticker.length, seriesLabel(doc, 'ticker', 'SIM')))} commands ${fmt.chip(seriesLabel(doc, 'ticker', 'SIM'), 'sim.orchestrator.allocate(): deterministic, no model in the loop')}` : '');
-    set('sources', `${fmt.chip('REAL', 'ERCOT, SMART-DS, OSM')} ERCOT · SMART-DS · OSM · ${fmt.chip('SIM', 'OpenDSS')} OpenDSS · ${fmt.chip('ASSUMPTION', 'named constants')} named`);
+    set('sources', 'ERCOT · SMART-DS · OSM · OpenDSS · named assumptions');
   }
 
   function renderSections() {
     sectionTeasers();
     const s = meta.summary && meta.summary[branch];
     // money (a: the existing card minus the system-capacity band; b: split / cash when l2 ships them)
-    $('sec-money-body').innerHTML = meta.money ? moneyHTML(fmt, meta.money, branch, BRANCH_NAMES, meta.constants, meta.summary) : '<div class="hb-sub">No money data.</div>';
+    bodyOf('money').innerHTML = meta.money ? moneyHTML(fmt, meta.money, branch, BRANCH_NAMES, meta.constants, meta.summary) : '<div class="hb-sub">No money data.</div>';
     // evening: the claim (scoped to service transformers) + the branch summary
     if (s) {
       const keys = ['batteryCausedNormal', 'batteryCausedEmergency', 'normalEvents', 'emergencyTfs', 'batteryCausedAmberMin', 'homeOnlyOver100',
@@ -1059,11 +1073,11 @@ export async function mount(el, ctx) {
           ? `<div class="p1-claim ok">${svg('check', { size: 15 })} No service transformer passed its limit this evening (normal rating or emergency) ${fmt.chip(s.normalEvents.label, s.normalEvents.cite)}</div>`
           : `<div class="p1-claim bad">${svg('warn', { size: 15 })} ${fmt.fmtHTML(s.normalEvents)} normal-rating violations and ${fmt.fmtHTML(s.emergencyTfs)} transformers in emergency this evening</div>`;
       }
-      $('sec-evening-body').innerHTML = claim
+      bodyOf('evening').innerHTML = claim
         + (ml ? `<div class="p1-row"><span class="p1-k">${NAMES.maxLoading}</span><span class="p1-v">${fmt.fmtHTML(ml, { unit: '%', digits: 1 })} <span class="hb-sub">${ml.tf !== undefined ? esc(tfName(ml.tf)) : ''}${ml.t ? ' at ' + esc(ml.t) : ''}</span></span></div>` : '')
         + keys.filter((kk) => s[kk]).map((kk) => `<div class="p1-row"><span class="p1-k">${esc(humanKey(kk))}</span><span class="p1-v">${fmt.fmtHTML(s[kk], optsFor(kk))}</span></div>`).join('');
     } else {
-      $('sec-evening-body').innerHTML = '<div class="hb-sub">No summary for this branch.</div>';
+      bodyOf('evening').innerHTML = '<div class="hb-sub">No summary for this branch.</div>';
     }
     // relief: one plain sentence, then the numbers
     const r = meta.relief;
@@ -1075,7 +1089,7 @@ export async function mount(el, ctx) {
         ? `no batteries ${nv(fmt, L(mins.none, mins.label), { unit: ' min' })} → feeder-aware ${nv(fmt, L(mins.aware, mins.label), { unit: ' min' })} ${fmt.chip(mins.label, mins.cite)}`
         : fmt.isLabelled(mins) ? fmt.fmtHTML(mins, { unit: ' min' }) : '';
       const shared = d && d.sharedWith && d.sharedWith.length ? `, also used at ${esc(d.sharedWith.map(homeLabel).join(', '))}` : '';
-      $('sec-relief-body').innerHTML = `
+      bodyOf('relief').innerHTML = `
         <div class="p1-relief-big">${esc(tfName(r.tf))}'s own batteries discharged up to ${r.reliefKW ? fmt.fmtHTML(r.reliefKW, { unit: ' kW', digits: 1 }) : ''}${at ? ` (${esc(at)})` : ''}: ${esc(tfName(r.tf))} reads ${r.aware ? fmt.fmtHTML(r.aware, { unit: '%', digits: 1 }) : 'n/a'} instead of ${r.none ? fmt.fmtHTML(r.none, { unit: '%', digits: 1 }) : 'n/a'} with no batteries.</div>
         <div class="p1-row"><span class="p1-k">Minutes over nameplate</span><span class="p1-v">${minsHTML}</span></div>
         ${r.reliefKWh ? `<div class="p1-row"><span class="p1-k">Relief energy</span><span class="p1-v">${fmt.fmtHTML(r.reliefKWh, { unit: ' kWh', digits: 1 })}</span></div>` : ''}
@@ -1083,17 +1097,17 @@ export async function mount(el, ctx) {
         ${r.text ? `<div class="hb-sub">${esc(r.text)}</div>` : ''}`;
     }
     // unrelieved -> P2 (audit L6: the peak is said once)
-    $('sec-unrel-body').innerHTML = (meta.unrelieved || []).map((u) => {
+    bodyOf('unrel').innerHTML = (meta.unrelieved || []).map((u) => {
       const d = u.driver;
       const why = String(u.reason || '').split(':')[0];
       return `<div class="p1-unrel">${esc(tfName(u.tf))}: ${esc(why)}${u.peak && fmt.isLabelled(u.peak) ? `; peak ${fmt.fmtHTML(u.peak, { unit: '%', digits: 1 })}${u.peak.t ? ' at ' + esc(u.peak.t) : ''}` : ''}${d ? `; driver ${esc(d.label || homeLabel(d.home))} (<code>${esc(d.profile || '')}</code>${d.sharedWith && d.sharedWith.length ? ', shared with ' + esc(d.sharedWith.map(homeLabel).join(', ')) : ''})` : ''}. <a href="${ctx.href({ view: 'p2', branch: null, t: null, cam: u.tf === ((topology.bridge || [])[0] || {}).tf ? 't240' : null })}">Where the next battery goes →</a></div>`;
     }).join('');
-    $('sec-grid-body').innerHTML = gridCheckHTML(fmt, s, homeLabel);
+    bodyOf('grid').innerHTML = gridCheckHTML(fmt, s, homeLabel);
     const ladder = meta.scaleLadder || (meta.money && meta.money.scaleLadder) || null;
-    $('sec-scale-body').innerHTML = ladder ? ladderHTML(fmt, ladder) : '';
+    bodyOf('scale').innerHTML = ladder ? ladderHTML(fmt, ladder) : '';
     const cv = meta.controllerView;
     const nl = meta.naiveLabel && meta.naiveLabel.text ? meta.naiveLabel : { text: NAIVE_FRAMING, label: 'ASSUMPTION', cite: 'build prompt 3.4, 12 Q5' };
-    $('sec-sources-body').innerHTML = `
+    bodyOf('sources').innerHTML = `
       <div class="p1-row"><span class="p1-k">What the controller sees</span><span class="p1-v">${esc(cv ? cv.text : '')} ${cv ? fmt.chip(cv.label, cv.cite) : ''}</span></div>
       <div class="p1-note"><b>Naive:</b> ${esc(nl.text)} ${fmt.chip(nl.label || 'ASSUMPTION', nl.cite)}</div>
       <div class="hb-sub">${Object.values(meta.sources || {}).map((x) => `${esc(x.text)} ${fmt.chip(x.label)}`).join('<br>')}</div>
@@ -1231,7 +1245,7 @@ export async function mount(el, ctx) {
     const lab = seriesLabel(doc, 'loading', 'SIM');
     const flab = seriesLabel(doc, 'focus', 'SIM');
     const fuse = { pct: meta.protection ? meta.protection.fusePct : 200, min: meta.protection ? meta.protection.fuseMinutes : 10, cite: meta.protection && meta.protection.cite };
-    $('sec-street-body').innerHTML = FOCUS_KEYS.map((key) => {
+    bodyOf('street').innerHTML = FOCUS_KEYS.map((key) => {
       const g = gaugeModel(meta, doc, topology, key, k, sceneModel.roomKW, sceneModel.exportRoomKW);
       if (!g) return '';
       const room = g.open ? 'fuse open' : g.pct > 100
@@ -1253,9 +1267,9 @@ export async function mount(el, ctx) {
       const lit = !!c && k >= c.k;
       let w = words, ic = icon, tone = c ? c.tone : 'info';
       if (id === 'turns' && done && k >= done.k) { w = 'Every transformer stayed within its limit'; ic = 'ok'; tone = 'ok'; }
-      const tip = c ? `${esc(c.t)} ${esc(words)}: click to jump here` : 'did not happen on this day';
+      const tip = c ? esc(`<b>${esc(c.t)}</b> ${cueText(c, fmt, names, branch)}<br><i>click to jump here</i>`) : '';
       const val = chainValue(c, fmt, names, branch, lit, done && k >= done.k ? done : null);
-      return `${i ? `<span class="ch-arrow">${svg('arrowRight', { size: 14 })}</span>` : ''}<button type="button" class="ch-step ${lit ? 'lit' : 'ghost'} tone-${tone}${c ? '' : ' nofire'}" data-k="${c ? c.k : ''}" data-tip="${tip}"${c ? '' : ' disabled'}>
+      return `${i ? `<span class="ch-arrow">${svg('arrowRight', { size: 14 })}</span>` : ''}<button type="button" class="ch-step ${lit ? 'lit' : 'ghost'} tone-${tone}${c ? '' : ' nofire'}" data-k="${c ? c.k : ''}" ${c ? `data-tip-html="${tip}"` : 'data-tip="did not happen on this day"'}>
         <span class="ch-ic">${ic === 'meter' ? svg('meter', { size: 20, pct: lit ? 160 : 80, tier: lit ? 4 : 0 }) : svg(ic, { size: 18 })}</span><span class="ch-w">${esc(w)}</span><span class="ch-v">${val}</span></button>`;
     }).join('');
     const a = activeCue(cues, k);
@@ -1284,10 +1298,10 @@ export async function mount(el, ctx) {
     renderStory();
     updateLegendCounts();
     const tk = tickerAt(doc, k, 12);
-    $('sec-log-body').innerHTML = `<ol class="p1-ticker">${tk.length ? tk.map(([st, text]) => `<li class="${st === k ? 'now' : ''}">${esc(text)}</li>`).join('') : '<li class="hb-sub">nothing sent yet</li>'}</ol>`;
+    bodyOf('log').innerHTML = `<ol class="p1-ticker">${tk.length ? tk.map(([st, text]) => `<li class="${st === k ? 'now' : ''}">${esc(text)}</li>`).join('') : '<li class="hb-sub">nothing sent yet</li>'}</ol>`;
     const ev = (meta.events && meta.events[branch]) || [];
     if (ev.length) {
-      $('sec-faults-body').innerHTML = `<ol class="p1-faults">${ev.map((e) => {
+      bodyOf('faults').innerHTML = `<ol class="p1-faults">${ev.map((e) => {
         const past = e.step <= k;
         let now = '';
         if (e.kind === 'comms_lost' && e.home !== undefined) {
@@ -1519,6 +1533,7 @@ export async function mount(el, ctx) {
   }
   if (scene.onHover) {
     scene.onHover((info) => {
+      try { window.__hbLastHover = info ? info.layer : null; } catch (e) { /* a test reads what was hovered */ }
       if (!info) { tips.hideTip(); return; }
       const html = tipFor(info);
       if (!html) { tips.hideTip(); return; }
@@ -1555,5 +1570,5 @@ export async function mount(el, ctx) {
   renderStatic();
   renderDynamic();
   const cam = link.cam || (bare ? 'street' : null);
-  if (cam) scene.camera(cam);
+  if (cam) scene.camera(cam, { instant: true });
 }

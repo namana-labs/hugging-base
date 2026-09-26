@@ -3,7 +3,7 @@
 // Scene API (docs/contracts.md A.9; fallback2d.js has the same shape):
 //   createScene(el, opts) -> scene        opts: {topology, theme, onError(err), viewState?}
 //   scene.update(model)                   model from scene-model.js buildSceneModel()
-//   scene.camera(preset)                  'feeder' | 'street' | 't240' (fly-to)
+//   scene.camera(preset, {instant}?)     'feeder' | 'street' | 't240' (fly-to; instant on first open)
 //   scene.flyTo(lonlat, {zoom, pitch})    fly to a point (a click on a street column or a legend row)
 //   scene.onPick(cb)                      cb({layer, object, index}) on click
 //   scene.onHover(cb)                     cb({x, y, layer, object}) on hover, cb(null) on leave (UX_SPEC_R2 6.1)
@@ -70,6 +70,8 @@ export function createScene(el, opts = {}) {
     },
     getCursor: ({ isHovering, isDragging }) => (isDragging ? 'grabbing' : isHovering ? 'pointer' : 'grab'),
   });
+
+  try { window.__hbDeck = deck; } catch (e) { /* tests project points through it (hover checks) */ }
 
   function layers(m) {
     const ink = m.ink;
@@ -138,8 +140,9 @@ export function createScene(el, opts = {}) {
     kind: 'webgl',
     deck,
     update(m) { model = m; deck.setProps({ layers: layers(m) }); },
-    camera(preset) {
-      deck.setProps({ initialViewState: { ...cameraPreset(topology, preset), transitionDuration: 1400,
+    camera(preset, o = {}) {
+      // {instant: true} on first open: the first frame (and every smoke screenshot) is already at the preset
+      deck.setProps({ initialViewState: o.instant ? { ...cameraPreset(topology, preset) } : { ...cameraPreset(topology, preset), transitionDuration: 1400,
         transitionInterpolator: new D.FlyToInterpolator() } });
     },
     flyTo(lonlat, o = {}) {
