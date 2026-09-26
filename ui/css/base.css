@@ -82,7 +82,7 @@ body.view-more .hb-panel > * { pointer-events: auto; }
 .chip-ASSUMPTION::before { content: "A"; }
 .chip-ASSUMPTION { border-style: dashed; border-color: var(--muted); }
 .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.hb-tip .chip, [aria-current="true"] .chip, [aria-current="page"] .chip { color: inherit; border-color: currentColor; }
+.hb-tip .chip, .hb-tabs a[aria-current="page"] .chip, .hb-seg a[aria-current="true"] .chip { color: inherit; border-color: currentColor; }
 .num { font-variant-numeric: tabular-nums; }
 .tier-0 { color: var(--good); } .tier-1 { color: var(--warn); } .tier-2, .tier-3 { color: var(--serious); } .tier-4 { color: var(--crit); } .tier-5 { color: var(--open); }
 
@@ -150,6 +150,8 @@ body.view-more .hb-panel > * { pointer-events: auto; }
 .hb-dayrow-spark { color: var(--real); display: inline-flex; }
 .hb-day-money, .hb-day-aware, .hb-day-naive { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
 .hb-day-money { color: var(--money); } .hb-day-money .num, .hb-day-aware .num { color: var(--ink); }
+.hb-daypick .chip { color: var(--muted); border-color: var(--tag-border); }
+.hb-daypick .chip-ASSUMPTION { border-color: var(--muted); }
 .hb-day-aware { color: var(--muted); }
 
 .hb-error { position: fixed; bottom: 12px; left: 12px; z-index: 30; background: var(--crit); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 13px; max-width: 60vw; }
