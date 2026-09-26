@@ -832,3 +832,22 @@ test('R2 More: the real-evenings facts read p1/days/index.json, labelled; absent
   // no index: the facts are "not built", never a guess
   assert.equal(evalFact('daysCount', { topology }), null);
 });
+
+test('R2 lazyDetails: a closed section body leaves the live DOM and comes back on first open; an open one stays', async () => {
+  const { lazyDetails } = await import('../panels/more.js');
+  const mk = (open) => {
+    const body = { innerHTML: '<span class="num">1</span>' };
+    const d = { open, dataset: {}, handlers: [], querySelector: () => body, addEventListener(t, f) { this.handlers.push(f); } };
+    return { d, body };
+  };
+  const a = mk(false), b = mk(true);
+  const root = { querySelectorAll: () => [a.d, b.d] };
+  assert.equal(lazyDetails(root, 'details', '.x'), 1);
+  assert.equal(a.body.innerHTML, '');
+  assert.equal(b.body.innerHTML, '<span class="num">1</span>');
+  a.d.open = true;
+  a.d.handlers.forEach((f) => f());
+  assert.equal(a.body.innerHTML, '<span class="num">1</span>');
+  assert.equal(lazyDetails(root, 'details', '.x'), 0, 'idempotent');
+  assert.equal(lazyDetails({ innerHTML: '' }, 'details', '.x'), 0, 'no DOM (node stub): nothing to do');
+});

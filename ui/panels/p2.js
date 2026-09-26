@@ -8,7 +8,7 @@
 import { chartHTML, modeIndex, band } from '../lib/charts.js';
 import { svg } from '../lib/icons.js';
 import {
-  beatBarHTML, sharedNames, flipVerdict, FLIP_HEADLINE_MAX_OVERLAP, isScreening, numHTML, numText, SCREEN_CHIP, unscreenedChips,
+  beatBarHTML, sharedNames, flipVerdict, FLIP_HEADLINE_MAX_OVERLAP, isScreening, numHTML, numText, SCREEN_CHIP, unscreenedChips, lazyDetails,
 } from './more.js';
 
 // ---- round 2 (UX_SPEC_R2 7.2): a few front cards, everything else in collapsible sections, plain words first ----
@@ -386,8 +386,8 @@ function candidateCard(ctx, st) {
       <div class="hb-sub">${h.battery ? 'This home already has a battery.' : 'Not in this combo\'s top 50.'}</div>
       <div class="p2-meters">${meters}</div>
       ${viol ? `<div class="p2-warnline">${svg('warn', { size: 16 })} Adds a violation here: where NOT to put it</div>` : ''}
-      <details class="p2-why"><summary>Why ${svg('chevron', { size: 13, cls: 'sec-chev' })}</summary>
-        <div class="hb-sub">Its transformer's month peak without a new battery: ${numHTML(fmt, peak, P)}.</div>${more}${dr}</details></div>`;
+      <details class="p2-why"><summary>Why ${svg('chevron', { size: 13, cls: 'sec-chev' })}</summary><div class="p2-why-body">
+        <div class="hb-sub">Its transformer's month peak without a new battery: ${numHTML(fmt, peak, P)}.</div>${more}${dr}</div></details></div>`;
   }
   const t = topology.transformers[e.tf];
   const kva = { v: t.kva, label: 'REAL', cite: 'SMART-DS Transformers.dss' };
@@ -405,7 +405,7 @@ function candidateCard(ctx, st) {
     <h3 class="p2-next-who">#${esc(e.rank)} ${esc(homeLabel(topology, e.home))} · on ${svg(mount, { size: 16 })} ${esc(tfName(topology, e.tf))} · ${numHTML(fmt, kva, { unit: ' kVA' })}</h3>
     <div class="p2-meters">${peakMeter(fmt, before, 'without the battery')}<span class="p2-arrow">${svg('chevron', { size: 18 })}</span>${peakMeter(fmt, after, 'with the battery')}</div>
     ${viol ? `<div class="p2-warnline">${svg('warn', { size: 16 })} Adds a violation here: where NOT to put it</div>` : ''}
-    <details class="p2-why"><summary>Why this home ${svg('chevron', { size: 13, cls: 'sec-chev' })}</summary>${candidateDetails(ctx, st, e)}</details>
+    <details class="p2-why"><summary>Why this home ${svg('chevron', { size: 13, cls: 'sec-chev' })}</summary><div class="p2-why-body">${candidateDetails(ctx, st, e)}</div></details>
   </div>`;
 }
 
@@ -813,7 +813,8 @@ export function p2Sections(ctx, st) {
   const capTeaser = u ? `${fh ? `naive: cable over at ${numHTML(fmt, fh)}` : 'naive'} · aware ${u.aware ? numHTML(fmt, u.aware) : 'n/a'}${cp && cp.awareOk ? ' ✓' : ''}` : '';
   const ins = st.index.insight;
   const mt = ins && Array.isArray(ins.tfPeakHour) ? modeIndex(ins.tfPeakHour) : null, mp = ins ? modeIndex(ins.priceMaxHour) : null;
-  const insTeaser = mt !== null && mp !== null ? `load ${String(mt).padStart(2, '0')}:00 ${fmt.chip('SIM')} · price ${String(mp).padStart(2, '0')}:00 ${fmt.chip('REAL')}` : '';
+  // teasers stay words where the number is one click away (UX_SPEC_R2 2.5: fewer tags above the fold)
+  const insTeaser = mt !== null && mp !== null ? (mt !== mp ? 'at different hours' : 'at the same hour') : '';
   const hrd = headReading(st.index, st.combo);
   const fleetTeaser = hrd ? `cable ${numHTML(fmt, hrd.x, P)}${hrd.own ? '' : ' (Core D-26)'}` : '';
   const cl = st.index.cliffs;
@@ -823,12 +824,12 @@ export function p2Sections(ctx, st) {
     { id: 'p1', title: 'From P1: still at risk', icon: 'warn', teaser: handTeaser, body: handoffBlock(ctx, st) },
     { id: 'flip', title: 'The flip in numbers', icon: 'turns', teaser: st.index.flip && st.index.flip.top10Overlap ? `${numHTML(fmt, st.index.flip.top10Overlap)} of ten shared${inIndexScope(st.index, st.combo) ? '' : ' (Core D-26)'}` : '', body: flipBlock(ctx, st), beat: 'p2-flip' },
     { id: 'cands', title: 'All candidates', icon: 'list', teaser: 'the top fifteen', body: rankingTable(ctx, st) },
-    { id: 'greedy', title: 'Place up to ten batteries', icon: 'cabinet', teaser: `placing ${numHTML(fmt, { v: st.n, label: 'ASSUMPTION', cite: 'the slider: how many batteries to add' })}`, body: greedyBlock(ctx, st) },
+    { id: 'greedy', title: 'Place up to ten batteries', icon: 'cabinet', teaser: 'use the slider above', body: greedyBlock(ctx, st) },
     { id: 'capacity', title: 'How many batteries fit?', icon: 'padmount', teaser: capTeaser, body: capacityBlock(ctx, st), beat: 'p2-capacity' },
     ...(prot ? [{ id: 'protect', title: 'Where lights could go out', icon: 'fuse', teaser: fmt.chip('ASSUMPTION', 'the fuse rule, round-1 world-sim'), body: prot }] : []),
     { id: 'insight', title: 'When transformers peak vs when prices peak', icon: 'clock', teaser: insTeaser, body: insightBlock(ctx, st), beat: 'insight' },
     { id: 'fleet', title: 'The batteries already here', icon: 'battery', teaser: fleetTeaser, body: fleetBlock(ctx, st) },
-    { id: 'prices', title: 'Real August prices and cliffs', icon: 'price', teaser: cl && cl.count ? `${numHTML(fmt, cl.count)} cliffs` : '', body: marketBlock(ctx, st) },
+    { id: 'prices', title: 'Real August prices and cliffs', icon: 'price', teaser: cl && cl.count ? 'ERCOT LZ_NORTH' : '', body: marketBlock(ctx, st) },
     { id: 'check', title: 'How we check', icon: 'check', teaser: r && r.runs ? `OpenDSS: ${esc(r.runs)} month runs` : 'screening only',
       body: `${refereeBlock(ctx, st)}<div class="hb-sub">The next-battery score is not a Base product: Base schedules installs by demand; this adds the grid lens. Screening numbers (≈) come from a per-transformer surrogate calibrated against OpenDSS; cards carry OpenDSS numbers (✓) where the referee has run. Growth ${fmt.chip('ASSUMPTION', 'EVs and heat pumps')}, the fleet placement ${fmt.chip('ASSUMPTION', 'seed 17263, the prototype placement')} and the curtailment cap ${fmt.chip('ASSUMPTION')} are named constants.</div>` },
   ];
@@ -919,6 +920,9 @@ export async function mount(el, ctx) {
   if (typeof el.querySelectorAll === 'function') {
     for (const d of el.querySelectorAll('details.p2-sec')) d.addEventListener('toggle', () => writeOpen(d.dataset.sec, d.open));
   }
+  // closed sections and "Why this home" keep their bodies out of the live DOM until opened (lazyDetails)
+  lazyDetails(el, 'details.p2-sec', '.hb-sec-body');
+  lazyDetails(el, 'details.p2-why', '.p2-why-body');
   const range = el.querySelector('.p2-n');
   if (range) {
     range.addEventListener('input', () => { el.querySelector('.p2-nout').textContent = range.value; });

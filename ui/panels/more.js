@@ -712,13 +712,36 @@ export async function beatBarHTML(ctx, { compact = false } = {}) {
     ${body}</div>`;
 }
 
+/** Closed <details> keep their body out of the live DOM until opened (Chrome lays out a closed body, so hidden tags
+ *  and numbers counted as "above the fold" and were reachable by screen readers). The HTML string a panel builds still
+ *  holds every body (node tests read it); in the browser the body is moved aside and put back on the first open.
+ *  bodySel names the body element inside each details (its first match). */
+export function lazyDetails(root, detailsSel, bodySel) {
+  if (!root || typeof root.querySelectorAll !== 'function') return 0;
+  let n = 0;
+  for (const d of root.querySelectorAll(detailsSel)) {
+    if (d.open || d.dataset.lazy) continue;
+    const body = d.querySelector(bodySel);
+    if (!body || !body.innerHTML) continue;
+    const html = body.innerHTML;
+    body.innerHTML = '';
+    d.dataset.lazy = '1';
+    d.addEventListener('toggle', () => { if (d.open && !body.innerHTML) body.innerHTML = html; });
+    n += 1;
+  }
+  return n;
+}
+
 /** For the shell or the P1 panel: put the compact caption bar at the top of the panel when ?beat= is set. */
 export async function mountBeatBar(ctx, panelEl) {
   if (!ctx.link.beat) return;
   const el = panelEl || (typeof document !== 'undefined' && document.getElementById('panel'));
   if (!el || el.querySelector('.beat-bar')) return;
   const html = await beatBarHTML(ctx, { compact: ctx.link.view === 'p1' });
-  if (html) el.insertAdjacentHTML('afterbegin', html);
+  if (html) {
+    el.insertAdjacentHTML('afterbegin', html);
+    lazyDetails(el, '.beat-bar details.beat-more', '.beat-cap');
+  }
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -805,7 +828,7 @@ function daysCard(ctx, S) {
     <div class="day-head"><span></span><span>price, 16:00 to 04:00</span><span>per battery, feeder-aware</span><span>naive</span><span>aware</span></div>
     <div class="day-rows">${rows}</div>
     ${lines.length ? `<div class="day-lines">${lines.map((l) => `<div>${l}</div>`).join('')}</div>` : ''}
-    <p class="hb-sub">Why it matters for Base: the money comes from a few spiky evenings, and those are the evenings a whole fleet charging at once would push this street's transformers past their ratings. Feeder-aware keeps almost all of that money and adds a claim Base can take to the wires company: its fleet did not overload the street. Click an evening to replay it.</p>
+    <p class="hb-sub">Why it matters for Base: the money comes from the evening price spike and the fall after it, and that fall is when a whole fleet charging at once overloads this street's transformers. The lines above compare the two ways of charging on each real evening; where feeder-aware shows no battery-caused overload, Base keeps the money and gains a claim it can take to the wires company. Click an evening to replay it.</p>
     ${cal}</div>`;
 }
 
@@ -1081,6 +1104,7 @@ export async function mount(el, ctx) {
       ${await chaosCard(ctx)}
     </div>
     ${await emsCards(ctx)}</div>`;
+  lazyDetails(el, 'details.beat-more', '.beat-cap');
   // the money calendar's simulated evenings open on P1 (the same link as the evening rows)
   if (typeof el.querySelectorAll === 'function') {
     for (const b of el.querySelectorAll('.more-days .hb-cal-cell.sim[data-date]')) {
