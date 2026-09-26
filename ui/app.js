@@ -119,6 +119,14 @@ async function main() {
     go: (patch) => { location.search = data.linkQuery({ ...link, beat: null, ...patch }); },
   };
   await panel.mount(panelEl, ctx);
+  // P1 beats get the caption bar from L5's more.js (P2 and More render their own). Namespace import + typeof guard:
+  // a no-op until more.js exports mountBeatBar; a failure counts in data-errors instead of blanking the page.
+  if (link.beat && link.view === 'p1') {
+    try {
+      const more = await import('./panels/more.js');
+      if (typeof more.mountBeatBar === 'function') await more.mountBeatBar(ctx, panelEl);
+    } catch (e) { reportError(e); }
+  }
   await withTimeout(scene.whenRendered(), 20000, 'first scene render');
   countOffsite();
   if (link.smoke === 'dump') scene.dispose();
