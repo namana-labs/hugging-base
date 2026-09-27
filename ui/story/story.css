@@ -344,6 +344,8 @@ main.st-page-configure { overflow-y: auto; }
 .cfg-scn-note { display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: visible; }
 .cfg-scn-note .chip, .cfg-run-id .chip { flex: none; margin-left: 2px; }
 .cfg-run-id { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 2px 4px; }
+/* review-0927 M3: a run title is date + tag · policy words + tag · moved levers + tags */
+.cfg-scn-note .sep, .cfg-run-id .sep { flex: none; color: var(--muted); font-weight: 400; }
 .rv-lab .v, .rv-lab .note { display: flex; align-items: baseline; gap: 3px; overflow: visible; text-overflow: clip; }
 .rv-lab .v > .chip, .rv-lab .note > .chip { flex: none; margin-left: 0; }
 .rv-lab .v > .tx, .rv-lab .note > .tx { flex: 0 1 auto; }

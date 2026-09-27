@@ -9,7 +9,7 @@
 //   - the one-lever rule (ruling 1): the fleet levers are run one away from the default at a time, so moving a second
 //     one resets the first (the note says so); any other lever the move changes carries the catalogue's reason.
 // Nothing here invents a number: the Fixed column reads the scenario's meta (constants, plan, sources) and topology.
-import { tagHTML, FEEDER_TAG, vsDefaultInfo, vsDefaultHTML, leverTag, LEVER_SET, settingTags } from './shell.js';
+import { tagHTML, FEEDER_TAG, vsDefaultInfo, vsDefaultHTML, leverTag, LEVER_SET, runTitleHTML } from './shell.js';
 import { dateLabel, stepToTime } from '../lib/format.js';
 
 export const LEVER_KEYS = ['evening', 'policy', 'failure', 'fleet', 'cls', 'reserve', 'soc0', 'growth'];
@@ -270,7 +270,7 @@ export async function mount(root, ctx) {
     const active = presetOf(cat, scenario.levers);
     $('.cfg-seg').innerHTML = pre.map((p) => `<button type="button" role="radio" aria-checked="${p.name === active}" class="${p.name === active ? 'on' : ''}" data-s="${esc(p.id)}">${esc(p.name)}</button>`).join('')
       + `<button type="button" role="radio" aria-checked="${!active}" class="${!active ? 'on' : ''}" data-custom="1">Custom</button>`;
-    $('.cfg-scn-note').innerHTML = `<span class="tx">${esc(active ? scenario.title || scenario.id : `Your own settings: ${scenario.title || scenario.id}`)}</span>${settingTags(cat, scenario.levers)}`;
+    $('.cfg-scn-note').innerHTML = runTitleHTML(cat, scenario, { prefix: active ? '' : 'Your own settings: ', naive: meta && meta.naiveLabel });
   }
 
   function renderEvenings() {
@@ -351,7 +351,7 @@ export async function mount(root, ctx) {
     $('.cfg-notes').innerHTML = notes.map((t) => `<div>${esc(t)}</div>`).join('');
     const e = scenario.engine || {};
     const cost = [e.solves ? `${ctx.num(e.solves)} OpenDSS solves` : '', e.buildSeconds ? `${ctx.num(e.buildSeconds, { unit: ' s' })} to build` : ''].filter(Boolean).join(' · ');
-    $('.cfg-run').innerHTML = `<span class="cfg-run-id"><span>${esc(scenario.title || scenario.id)}</span>${settingTags(cat, scenario.levers)}</span>${cost ? `<span class="cfg-run-cost">${cost}</span>` : ''}`;
+    $('.cfg-run').innerHTML = `<span class="cfg-run-id">${runTitleHTML(cat, scenario, { naive: meta && meta.naiveLabel })}</span>${cost ? `<span class="cfg-run-cost">${cost}</span>` : ''}`;
   }
 
   function render() {
