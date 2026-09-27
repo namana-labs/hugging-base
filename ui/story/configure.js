@@ -9,7 +9,7 @@
 //   - the one-lever rule (ruling 1): the fleet levers are run one away from the default at a time, so moving a second
 //     one resets the first (the note says so); any other lever the move changes carries the catalogue's reason.
 // Nothing here invents a number: the Fixed column reads the scenario's meta (constants, plan, sources) and topology.
-import { tagHTML, FEEDER_TAG, FEEDER_CITE, vsDefaultRows, vsDefaultHTML } from './shell.js';
+import { tagHTML, FEEDER_TAG, vsDefaultInfo, vsDefaultHTML, leverTag, LEVER_SET } from './shell.js';
 import { dateLabel, stepToTime } from '../lib/format.js';
 
 export const LEVER_KEYS = ['evening', 'policy', 'failure', 'fleet', 'cls', 'reserve', 'soc0', 'growth'];
@@ -18,6 +18,8 @@ export const ONE_LEVER_REASON = 'the engine ran the fleet levers one away from t
 export const NO_BATTERIES_REASON = 'No batteries in this run: pick a dispatch policy first';
 export const NOT_RUN_REASON = 'Not run: no engine run in the catalogue has these settings';
 const LABEL_OK = (l) => ['REAL', 'SIM', 'DERIVED', 'ASSUMPTION', 'UNVERIFIED', 'SCREENING'].includes(l);
+const tagOpt = (label, cite) => (LABEL_OK(label) ? tagHTML(label, cite) : '');
+
 const same = (a, b) => String(a) === String(b);
 
 export const defaultLevers = (cat) => Object.fromEntries(LEVER_KEYS.map((k) => [k, cat.levers && cat.levers[k] ? cat.levers[k].default : undefined]));
@@ -90,17 +92,18 @@ export function applyLever(cat, current, key, value) {
 export function customerCounts(meta) {
   const counts = meta && meta.counts;
   if (!counts || !Number.isFinite(counts.homes)) return null;
-  const use = meta.customerUse && meta.customerUse.label ? meta.customerUse : { label: 'DERIVED', cite: 'topology.json meta.counts' };
+  const use = meta.customerUse && LABEL_OK(meta.customerUse.label) ? meta.customerUse : { label: null, cite: '' };
   const split = Number.isFinite(counts.residential) && Number.isFinite(counts.commercial);
   return { customers: counts.homes, residential: split ? counts.residential : null, commercial: split ? counts.commercial : null,
     fleetOnCommercial: Number.isFinite(counts.fleetOnCommercial) ? counts.fleetOnCommercial : null, label: use.label, cite: use.cite || '' };
 }
-/** HTML: "1,010 customers (971 homes, 39 small businesses)", each count with its tag. */
-export function customersHTML(cc, num, feederCite = '') {
+/** HTML: "1,010 customers (971 homes, 39 small businesses)". The split carries meta.customerUse's label; the total
+ *  is a count the topology does not label, so it shows without a tag (the page never assigns a label itself). */
+export function customersHTML(cc, num) {
   if (!cc) return '';
-  const total = `${num({ v: cc.customers, label: 'REAL', cite: `${feederCite} Every load bus in the feeder is a customer.`.trim() })} customers`;
+  const total = `<span class="num" title="every load bus in the feeder is a customer (topology.json meta.counts)">${Number(cc.customers).toLocaleString('en-US')}</span> customers`;
   if (cc.residential === null) return total;
-  const t = (v) => num({ v, label: cc.label, cite: cc.cite });
+  const t = (v) => (cc.label ? num({ v, label: cc.label, cite: cc.cite }) : `<span class="num">${Number(v).toLocaleString('en-US')}</span>`);
   return `${total} (${t(cc.residential)} homes, ${t(cc.commercial)} small businesses)`;
 }
 
@@ -121,9 +124,9 @@ export function pairingText(date, constants = {}, dataset = '') {
   const sameWeekday = loadDay ? price.slice(0, 3) === loadDay.slice(0, 3) : null;
   const src = dataset ? `the ${dataset} load profile` : 'the feeder dataset\'s load profile';
   return {
-    price, load: loadDay, sameWeekday,
+    price, load: loadDay, sameWeekday, label: pair && LABEL_OK(pair.label) ? pair.label : null,
     short: loadDay ? `Home load: the profile of ${loadDay}` : 'Home load: the profile of the same calendar date',
-    text: `Prices: ERCOT LZ_NORTH on ${price} (REAL). Home load: ${src} of the same calendar date${loadDay ? `, ${loadDay}` : ''} (ASSUMPTION${pair ? `: ${pair.value}` : ''}). `
+    text: `Prices: ERCOT LZ_NORTH on ${price}. Home load: ${src} of the same calendar date${loadDay ? `, ${loadDay}` : ''}${pair ? ` (${LABEL_OK(pair.label) ? `${pair.label}: ` : ''}${pair.value})` : ''}. `
       + (sameWeekday === null ? '' : sameWeekday ? 'The weekdays match. ' : `The weekday differs (${price.slice(0, 3)} prices, ${loadDay.slice(0, 3)} load). `)
       + `The profiles have no daylight-saving shift, so the load may sit one hour early against the CDT prices${clock ? ` (${clock.value})` : ''}.`,
   };
@@ -132,9 +135,9 @@ export function pairingText(date, constants = {}, dataset = '') {
 /** The feeder dataset's name and its label: topology constants.FEEDER_NAME, else meta.feeder; null when neither. */
 export function feederName(topology) {
   const c = topology && topology.constants && topology.constants.FEEDER_NAME;
-  if (c && c.value) return { name: String(c.value), label: c.label || 'REAL', cite: c.cite || '' };
+  if (c && c.value) return { name: String(c.value), label: LABEL_OK(c.label) ? c.label : null, cite: c.cite || '' };
   const f = topology && topology.meta && topology.meta.feeder;
-  return f ? { name: String(f), label: 'REAL', cite: 'topology.json meta.feeder' } : null;
+  return f ? { name: String(f), label: null, cite: 'topology.json meta.feeder' } : null;
 }
 
 /** The presets, in the catalogue's order: [{name, id, scenario}]. `catalogue.presets` ([{name, id}]) when present,
@@ -211,7 +214,7 @@ export async function mount(root, ctx) {
         <div class="cfg-sub">Pick an evening and set the levers. Every setting you can reach is a run the engine already made: one OpenDSS power flow per minute of the evening. The right-hand column stays fixed.</div></div>
         <button type="button" class="st-btn-ghost cfg-reset">Reset to defaults</button></div>
       <div class="cfg-grid">
-        <section class="cfg-col cfg-col-evening"><div class="cfg-colhead"><div class="st-eyebrow">EVENING</div><div class="cfg-colsub">A real ERCOT evening: its prices, and its home load</div></div><div class="cfg-evenings"></div></section>
+        <section class="cfg-col cfg-col-evening"><div class="cfg-colhead"><div class="st-eyebrow">EVENING</div><div class="cfg-colsub">Real ERCOT prices; the home load is NREL's synthetic profile for the same calendar date (ASSUMPTION)</div></div><div class="cfg-evenings"></div></section>
         <section class="cfg-col"><div class="cfg-colhead"><div class="st-eyebrow">CONTROLLER</div><div class="cfg-colsub">Who decides each battery's charge, and what goes wrong</div></div><div class="cfg-ctl"></div></section>
         <section class="cfg-col"><div class="cfg-colhead"><div class="st-eyebrow">FLEET</div><div class="cfg-colsub">Our batteries: one lever away from the default at a time</div></div><div class="cfg-fleet"></div></section>
         <section class="cfg-col"><div class="cfg-colhead"><div class="st-eyebrow">FIXED IN THIS RUN</div><div class="cfg-colsub">Grid and market inputs the result depends on</div></div><div class="cfg-fixed"></div></section>
@@ -235,28 +238,30 @@ export async function mount(root, ctx) {
     const tip = [st.enabled ? '' : st.reason, title].filter(Boolean).join(' · ');
     return `<button type="button" class="cfg-opt${st.selected ? ' on' : ''}" data-key="${key}" data-val="${esc(o.id)}"
       aria-pressed="${st.selected}"${st.enabled ? '' : ' disabled aria-disabled="true"'}${tip ? ` title="${esc(tip)}"` : ''}>
-      <span class="t">${esc(o.label)}${o.tag && key !== 'evening' ? ` <span class="cfg-tagline">${esc(o.tag)}</span>` : ''}</span>
+      <span class="t">${esc(o.label)}${key !== 'evening' && o.why && LABEL_OK(o.why.label) ? tagHTML(o.why.label, [o.why.text, o.why.cite].filter(Boolean).join(' · ')) : ''}${o.tag && key !== 'evening' ? ` <span class="cfg-tagline">${esc(o.tag)}</span>` : ''}</span>
       ${sub ? `<span class="s">${esc(sub)}</span>` : ''}${extraHTML}
       ${!st.enabled ? `<span class="cfg-why-off">${esc(st.reason)}</span>` : ''}</button>`;
   }
   const changedBadge = (key) => (!same(scenario.levers[key], cat.levers[key].default) ? '<span class="cfg-changed">changed</span>' : '');
 
   // the catalogue's vsDefault (what this run changed against the default run), shown by the lever that moved
+  // the catalogue's reference run (vsDefaultRef) and what this run moved against it, shown by the lever(s) that differ
   function movedLevers() {
     const end = meta && meta.start && meta.steps ? stepToTime(meta, meta.steps) : null;
-    const rows = vsDefaultRows(cat, scenario, { end });
-    if (!rows.length) return { keys: [], rows };
-    const ref = scenarioById(cat, rows[0].refId);
-    return { keys: ref ? LEVER_KEYS.filter((k) => !same(ref.levers[k], scenario.levers[k])) : [], rows };
+    const info = vsDefaultInfo(cat, scenario, { end });
+    if (!info || !info.ref) return { keys: [], info };
+    return { keys: LEVER_KEYS.filter((k) => !same(info.ref.levers[k], scenario.levers[k])), info };
   }
   const vsBlock = (key) => {
     const m = movedLevers();
-    if (!m.keys.includes(key)) return '';
-    return `<div class="cfg-vs"><div class="cfg-vs-h" title="${esc(`The default run: ${m.rows[0].refTitle}`)}">What this changed vs the default run</div>${vsDefaultHTML(m.rows)}</div>`;
+    if (!m.keys.includes(key) || key !== m.keys[m.keys.length - 1]) return '';
+    const body = m.info.rows.length ? vsDefaultHTML(m.info.rows) : '<span class="vs-row">no headline value moved</span>';
+    return `<div class="cfg-vs"><div class="cfg-vs-h" title="${esc(m.info.refId)}">vs ${esc(m.info.refTitle)}</div>${body}</div>`;
   };
   function leverCard(key, bodyHTML, { desc = '', compact = false } = {}) {
     const L = cat.levers[key];
-    return `<div class="cfg-card${compact ? ' compact' : ''}" data-lever="${key}"><div class="cfg-card-h"><span class="cfg-card-t">${esc(L.label)}</span>${changedBadge(key)}</div>
+    const lt = leverTag(cat, key, scenario.levers[key]);
+    return `<div class="cfg-card${compact ? ' compact' : ''}" data-lever="${key}"><div class="cfg-card-h"><span class="cfg-card-t">${esc(L.label)}</span>${lt ? tagHTML(lt.label, lt.cite) : ''}${changedBadge(key)}</div>
       ${desc ? `<div class="cfg-desc">${esc(desc)}</div>` : ''}${bodyHTML}${vsBlock(key)}<div class="cfg-changes">Changes → ${esc(CHANGES[key] || '')}</div></div>`;
   }
 
@@ -276,7 +281,7 @@ export async function mount(root, ctx) {
       const pair = pairingText(o.id, (meta && meta.constants) || {}, fn ? fn.name : '');
       const extra = `<span class="cfg-ev-tag">${esc(o.tag || '')}</span>${whyHTML(o.why)}
         ${pk ? `<span class="cfg-ev-peak">Peak price ${ctx.num(pk, { money: true, digits: 2, unit: '/MWh' })}${pk.t ? ` at ${esc(pk.t)}` : ''}</span>` : ''}
-        ${pair ? `<span class="cfg-ev-load">${esc(pair.short)}${pair.sameWeekday ? '' : ' (another weekday)'} ${tagHTML('ASSUMPTION', pair.text)}</span>` : ''}`;
+        ${pair ? `<span class="cfg-ev-load">${esc(pair.short)}${pair.sameWeekday === false ? ' (another weekday)' : ''} ${pair.label ? tagHTML(pair.label, pair.text) : ''}</span>` : ''}`;
       return optionButton('evening', { ...o, tag: null }, extra, pair ? pair.text : '');
     }).join('') + vsBlock('evening');
   }
@@ -284,21 +289,23 @@ export async function mount(root, ctx) {
   function renderController() {
     const pol = cat.levers.policy, fail = cat.levers.failure;
     const attacker = scenario.levers.failure === 'covert' ? '<span class="cfg-fict">Fictional attacker</span>' : '';
-    $('.cfg-ctl').innerHTML = leverCard('policy', `<div class="cfg-stack">${(pol.options || []).map((o) => optionButton('policy', o, o.why ? `<span class="cfg-why">${tagHTML(o.why.label, [o.why.text, o.why.cite].filter(Boolean).join(' '))}</span>` : '')).join('')}</div>`)
+    $('.cfg-ctl').innerHTML = leverCard('policy', `<div class="cfg-stack">${(pol.options || []).map((o) => optionButton('policy', o)).join('')}</div>`)
       + leverCard('failure', `<div class="cfg-stack">${(fail.options || []).map((o) => optionButton('failure', o)).join('')}</div>${attacker}`);
   }
 
   function renderFleet() {
     const cards = FLEET_KEYS.filter((k) => cat.levers[k]).map((k) => {
       const L = cat.levers[k];
+      const sc = cat.constants && cat.constants[LEVER_SET[k]];
+      const setTag = sc && LABEL_OK(sc.label) ? tagHTML(sc.label, `the options of this lever: ${sc.cite || LEVER_SET[k]}`) : '';
       const opts = (L.options || []).map((o) => {
         const st = optionState(cat, scenario.levers, k, o.id);
         return { o, st };
       });
       const seg = `<div class="cfg-seg-sm" role="radiogroup" aria-label="${esc(L.label)}">${opts.map(({ o, st }) => `<button type="button" data-key="${k}" data-val="${esc(o.id)}"
-          class="${st.selected ? 'on' : ''}" aria-pressed="${st.selected}"${st.enabled ? '' : ' disabled aria-disabled="true"'}${reasonHTML(st)}>${esc(o.label)}</button>`).join('')}</div>`;
+          class="${st.selected ? 'on' : ''}" aria-pressed="${st.selected}"${st.enabled ? '' : ' disabled aria-disabled="true"'}${reasonHTML(st)}>${esc(o.label)}${setTag ? '' : tagOpt(o.why && o.why.label, o.why && [o.why.text, o.why.cite].filter(Boolean).join(' · '))}</button>`).join('')}${setTag}</div>`;
       const sel = optionOf(cat, k, scenario.levers[k]);
-      const selWhy = sel && sel.why ? `<div class="cfg-desc">${esc(sel.label)}: ${whyHTML(sel.why)}</div>` : '';
+      const selWhy = sel && sel.why && sel.why.text ? `<div class="cfg-desc">${esc(sel.label)}: ${esc(sel.why.text)}${tagOpt(sel.why.label, sel.why.cite)}</div>` : '';
       const off = [...new Set(opts.filter(({ st }) => !st.enabled).map(({ st }) => st.reason))];
       const offIds = opts.filter(({ st }) => !st.enabled).map(({ o }) => o.label);
       const offHTML = off.length ? `<div class="cfg-off">Not available: ${esc(offIds.join(', '))}. ${esc(off.length === 1 ? off[0] : off.join(' · '))}</div>` : '';
@@ -313,14 +320,16 @@ export async function mount(root, ctx) {
     const n = (x, o) => (x ? ctx.num(x, o) : '');
     const counts = topo && topo.meta && topo.meta.counts;
     const cc = customerCounts(topo && topo.meta);
-    const cite = `${FEEDER_CITE} Counts: topology.json meta.counts.`;
+
     const grid = [];
     if (topo) {
       const fn = feederName(topo);
-      grid.push(row('Feeder', `${fn ? `${esc(fn.name)} ${tagHTML(LABEL_OK(fn.label) ? fn.label : 'REAL', fn.cite)}` : ''} <span class="cfg-synth" title="${esc(FEEDER_CITE)}">${esc(FEEDER_TAG)}</span>`
-        + (counts && cc ? `<br>${ctx.num({ v: counts.transformers, label: 'REAL', cite })} transformers · ${customersHTML(cc, ctx.num, cite)}` : '')));
-      const sh = topo.meta.shaping;
-      if (sh && sh.description) grid.push(row('Fleet placement', `a deliberate stress placement, not a neutral one ${tagHTML(sh.label || 'ASSUMPTION', sh.description)}`));
+      grid.push(row('Feeder', `${fn ? `${esc(fn.name)} ${LABEL_OK(fn.label) ? tagHTML(fn.label, fn.cite) : ''}` : ''} <span class="cfg-synth"${fn && fn.cite ? ` title="${esc(fn.cite)}"` : ''}>${esc(FEEDER_TAG)}</span>`
+        + (counts && cc ? `<br><span class="num" title="topology.json meta.counts">${Number(counts.transformers).toLocaleString('en-US')}</span> transformers · ${customersHTML(cc, ctx.num)}` : '')));
+      // the stress placement (data-truth #5): topology's FLEET_SIZE constant says so, else meta.shaping
+      const fs = topo.constants && topo.constants.FLEET_SIZE, sh = topo.meta.shaping;
+      const pl = fs && LABEL_OK(fs.label) ? { label: fs.label, cite: fs.cite } : sh && LABEL_OK(sh.label) ? { label: sh.label, cite: sh.description } : null;
+      if (fs || sh) grid.push(row('Fleet placement', `a deliberate stress placement, not a neutral one ${pl ? tagHTML(pl.label, pl.cite) : ''}`));
     }
     if (c.TIER_AMBER_PCT) grid.push(row('Over nameplate', `above ${n(K(c.TIER_AMBER_PCT), { unit: '%' })} of kVA as shipped (counted, not a violation)`));
     if (c.TIER_NORMAL_PCT) grid.push(row('Normal rating', `above ${n(K(c.TIER_NORMAL_PCT), { unit: '%' })} for ${n(K(c.TIER_NORMAL_MIN), { unit: ' min' })} or more`));
@@ -328,7 +337,11 @@ export async function mount(root, ctx) {
     if (c.FUSE_PCT) grid.push(row('Fuse rule', `${n(K(c.FUSE_PCT), { unit: '%' })} for ${n(K(c.FUSE_MINUTES), { unit: ' min' })}, or ${n(K(c.FUSE_INSTANT_PCT), { unit: '%' })} for ${n(K(c.FUSE_INSTANT_SECONDS), { unit: ' s' })}`));
     const market = [];
     if (m && m.sources && m.sources.price) market.push(row('Prices', `${esc(m.sources.price.text)}, ${esc(m.day || '')} ${tagHTML(m.sources.price.label, m.sources.price.text)}`));
-    if (m && m.plan) market.push(row('Charge onset', `${esc(m.plan.rule || '')} onset ${esc(m.plan.onset || '')}${m.plan.threshold ? ` · at or below ${n(m.plan.threshold, { money: true, digits: 2, unit: '/MWh' })}` : ''}`));
+    if (m && m.plan) {
+      const pl = m.plan;
+      market.push(row('Charge onset', `${esc(pl.rule || '')} onset ${esc(pl.onset || '')}${LABEL_OK(pl.label) ? tagHTML(pl.label, `the run's plan (${pl.mode || 'rule'})`) : ''}`
+        + `${pl.onsetPrice ? ` at ${n(pl.onsetPrice, { money: true, digits: 2, unit: '/MWh' })}` : ''}${pl.threshold ? ` · at or below ${n(pl.threshold, { money: true, digits: 2, unit: '/MWh' })}` : ''}`));
+    }
     if (c.CONTROLLER_VIEW) market.push(row('What the controller sees', `${esc(c.CONTROLLER_VIEW.value)} ${tagHTML(c.CONTROLLER_VIEW.label, c.CONTROLLER_VIEW.cite)}`));
     $('.cfg-fixed').innerHTML = `<div class="st-eyebrow sm">GRID</div>${grid.join('')}<div class="st-eyebrow sm">MARKET</div>${market.join('')}`
       + (m ? '' : '<div class="cfg-desc">The run\'s meta file did not load.</div>');

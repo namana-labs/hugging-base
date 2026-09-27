@@ -10,30 +10,33 @@
 //                            aside (worst-now hero, fleet battery, Right now with failures, the transformer bar, the
 //                            battery grid). `covert` adds a Detector card and "Fictional attacker"; `worker_kill` shows
 //                            the kill, the takeover and the lease strip from its `runtime` block.
-// Story line: extras.moments (the engine's rule log). Failures: extras.failures. Without extras (not built yet) they
-// fall back to meta.markers / meta.events / the runtime blocks and the counts series; no text is invented here.
-// Transformer count, steps, start time, fleet size, tiers and the reserve are all read from the data.
-import { TIER_RGB, STATE_RGB, buildSceneModel, frameFromP1 } from '../lib/scene-model.js';
+// Story line: extras.moments (the engine's rule log). Failures: extras.failures. Without extras the page says "not
+// exported for this run" (it never re-derives the engine's rules). Transformer count, steps, start time, fleet size,
+// tier thresholds (TIER_* constants), lane ranges, the reserve and every label are read from the data; a label the
+// data does not give is not shown.
+import { TIER_RGB, STATE_RGB, STATE_WORDS, buildSceneModel, frameFromP1 } from '../lib/scene-model.js';
 import { stepToTime, timeToStep } from '../lib/format.js';
-import { tagHTML, vsDefaultRows, vsDefaultHTML, vsDefaultText, customerName, markCustomers } from './shell.js';
+import { tagHTML, vsDefaultInfo, vsDefaultHTML, vsDefaultText, customerName, markCustomers, leverTag } from './shell.js';
 
 export const SPEEDS = [0.1, 0.25, 0.5, 1, 2, 4];
 export const DEFAULT_SPEED = 0.25;         // 0.25x = 2.5 simulated minutes per second (story contract ruling 5)
 export const MS_PER_STEP = 100;            // 1x = one step (a simulated minute) per 100 ms, as ui/panels/p1.js
-export const MERGE_GAP = 5;                // network-limit intervals merge when the gap is 5 steps or less (contract)
-export const LANE_WORST = [40, 210];       // display ranges of the lanes (story-flow spec 2b), not data
-export const LANE_FOCUS = [0, 210];
 export const AUTOPLAY_KEY = 'hb-story-autoplay';
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const rgb = (c) => `rgb(${c[0]},${c[1]},${c[2]})`;
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
 const fmtN = (v, d = 0) => Number(v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+export const LABEL_OK = (l) => ['REAL', 'SIM', 'DERIVED', 'ASSUMPTION', 'UNVERIFIED', 'SCREENING'].includes(l);
+/** A tag only when the data gives a label (never a typed one). */
+export const tagOpt = (label, cite) => (LABEL_OK(label) ? tagHTML(label, cite) : '');
+/** The label of a series in a file's `series` block, or null. */
+export const seriesLabel = (doc, key) => (doc && doc.series && doc.series[key] && LABEL_OK(doc.series[key].label) ? doc.series[key].label : null);
 
 // ------------------------------------------------------------------------------------------------ pure helpers
-/** The covert scenario's detector file (catalogue `attack`; `covert` in the dev catalogue), or null. */
+/** The covert scenario's detector file (catalogue `attack`; `covert` in the test fixture catalogue), or null. */
 export function attackPath(scenario) {
   if (!scenario || !scenario.levers || scenario.levers.failure !== 'covert') return null;
-  return scenario.attack || scenario.covert || 'p3/covert.json';
+  return scenario.attack || scenario.covert || null;
 }
 
 /** The files a scenario's Run page reads (paths under ui/data). */
@@ -46,6 +49,7 @@ export function runFiles(scenario) {
   ];
   if (scenario.extras) out.push({ path: scenario.extras, what: 'the rule log, failures, feeder readouts', optional: true });
   if (attackPath(scenario)) out.push({ path: attackPath(scenario), what: 'the detector run (fictional attacker)', optional: false });
+  else if (scenario.levers && scenario.levers.failure === 'covert') out.push({ path: '(the catalogue names no detector file)', what: 'the detector run', optional: false, missing: true });
   return out;
 }
 
@@ -66,10 +70,59 @@ export function tfName(topology, tf) {
   return `T-${tf}`;
 }
 
-/** Tier names from the run's own thresholds (meta.tiers). */
-export function tierNames(tiers = {}) {
-  return ['within nameplate', `over nameplate (${tiers.amber ?? 100}%)`, `above ${tiers.normal ?? 110}%, counting`,
-    `normal rating exceeded (${tiers.normalMinutes ?? 30}+ min)`, `emergency (above ${tiers.emergency ?? 150}%)`, 'protection open'];
+/** The run's tier thresholds as labelled values {v, label, cite}: the extras' constants TIER_*, else the meta's, else
+ *  meta.tiers (with its own label). A threshold the data does not give is null: never a typed number. */
+export function tierConsts(meta, extras = null) {
+  const pick = (key, tk) => {
+    for (const src of [extras && extras.constants, meta && meta.constants]) {
+      const c = src && src[key];
+      if (c && c.value !== undefined && c.value !== null) return { v: c.value, label: LABEL_OK(c.label) ? c.label : null, cite: c.cite || key };
+    }
+    const t = meta && meta.tiers;
+    return t && t[tk] !== undefined && t[tk] !== null ? { v: t[tk], label: LABEL_OK(t.label) ? t.label : null, cite: `meta.tiers.${tk}` } : null;
+  };
+  return { amber: pick('TIER_AMBER_PCT', 'amber'), normal: pick('TIER_NORMAL_PCT', 'normal'),
+    normalMin: pick('TIER_NORMAL_MIN', 'normalMinutes'), emergency: pick('TIER_EMERGENCY_PCT', 'emergency') };
+}
+const pctOf = (x) => (x ? `${fmtN(x.v)}%` : null);
+
+/** Tier-code words from the run's own thresholds (T = tierConsts); a missing threshold drops its number. */
+export function tierNames(T) {
+  const a = pctOf(T.amber), nm = pctOf(T.normal), e = pctOf(T.emergency), mn = T.normalMin ? `${fmtN(T.normalMin.v)}+ min` : null;
+  return ['within nameplate', a ? `over nameplate (${a})` : 'over nameplate', nm ? `above ${nm}, counting` : 'above the normal rating, counting',
+    mn ? `normal rating exceeded (${mn})` : 'normal rating exceeded', e ? `emergency (above ${e})` : 'emergency', 'protection open'];
+}
+
+/** ONE definition of the transformer counts at a step (the hero card and the Right-now card both use it). The engine's
+ *  `counts` series gives the transformers at tier codes 1-5 and a transformer sits in exactly one code, so the bands
+ *  are EXCLUSIVE: over nameplate up to the normal threshold (code 1); from the normal to the emergency threshold (codes
+ *  2 and 3; code 3 = past its minimum minutes, "normal rating exceeded"); above the emergency threshold (code 4);
+ *  protection open (code 5). So "110-150%" does NOT include the transformers above 150%. */
+export function tierBands(c, tot, T) {
+  const x = c || [0, 0, 0, 0, 0];
+  const a = pctOf(T.amber), nm = pctOf(T.normal), e = pctOf(T.emergency);
+  const bands = [
+    { key: 'over', name: a && nm ? `${a}–${nm}` : 'over nameplate', n: x[0], rgb: TIER_RGB[1], bad: false },
+    { key: 'above', name: nm && e ? `${nm}–${e}` : 'above the normal rating', n: x[1] + x[2], past: x[2], rgb: TIER_RGB[3], bad: x[2] > 0 },
+    { key: 'emergency', name: e ? `above ${e}` : 'above the emergency rating', n: x[3], rgb: TIER_RGB[4], bad: x[3] > 0 },
+    { key: 'open', name: 'protection open', n: x[4], rgb: TIER_RGB[5], bad: x[4] > 0 },
+  ];
+  const within = tot - bands.reduce((sum, b) => sum + b.n, 0);
+  const pastWords = T.normalMin ? `past ${fmtN(T.normalMin.v)} min` : 'normal rating exceeded';
+  const text = bands.map((b) => `${b.name} ${fmtN(b.n)}${b.key === 'above' && b.past ? ` (${fmtN(b.past)} ${pastWords})` : ''}`).join(' · ');
+  return { within, bands, text };
+}
+
+/** A lane's display range from its own data: [lo, hi] in steps of `step`, with the reference lines inside. */
+export function laneRange(vals, refs = [], { step = 10, floor = null } = {}) {
+  let lo = Infinity, hi = -Infinity;
+  for (const v of vals) { if (v < lo) lo = v; if (v > hi) hi = v; }
+  for (const r of refs) if (Number.isFinite(r)) { if (r < lo) lo = r; if (r > hi) hi = r; }
+  if (!Number.isFinite(lo)) return [0, 1];
+  lo = Math.floor(lo / step) * step;
+  hi = Math.ceil((hi + (hi - lo) * 0.04) / step) * step;
+  if (floor !== null) lo = Math.min(lo, floor);
+  return hi > lo ? [lo, hi] : [lo, lo + step];
 }
 
 /** Per-step series for the lanes and cards. Worst transformer from extras (worstPct/worstTf, tenths) or from loading. */
@@ -102,56 +155,18 @@ export function buildSeries(doc, meta, topology, extras = null) {
   return { n, worst, wtf, soc, kw, focus, price, counts: doc.counts, fleetN: (doc.soc[0] || []).length, tfN: (doc.loading[0] || []).length };
 }
 
-/** [[a, b], ...] runs of steps where fn(k) holds, merged when the gap is `gap` steps or less. */
-export function ranges(n, fn, gap = MERGE_GAP) {
-  const r = [];
-  let st = -1, last = -1e9;
-  for (let k = 0; k < n; k++) {
-    if (!fn(k)) continue;
-    if (st < 0) st = k;
-    else if (k - last > gap) { r.push([st, last]); st = k; }
-    last = k;
-  }
-  if (st >= 0) r.push([st, last]);
-  return r;
-}
-
 /** Display words for the failure kinds of extras.failures (engine codes) and of the fallback list. */
 export const KIND = { comms_lost: 'Battery silent', hot: 'Load spike', stall: 'Controller stalled', stale: 'Batteries stale',
   normal: 'Normal rating exceeded', emergency: 'Emergency rating', protection: 'Protection open', worker_kill: 'Worker killed',
   takeover: 'Lease taken over', late: 'Late commands refused', covert: 'Hidden carrier' };
 export const kindWord = (kind) => KIND[kind] || String(kind || '').replace(/_/g, ' ');
-/** Failures without extras: meta.events of this branch, the runtime block (worker_kill), the covert attack, the
- *  network-limit intervals of the counts series (codes 3/4/5) and stale/expired batteries (state S/X). */
-export function fallbackFailures({ meta, doc, series, topology, branch, covert = null }) {
-  const n = series.n, out = [];
-  const home = (h) => customerName(topology, h);
-  for (const e of (meta.events && meta.events[branch]) || []) {
-    const k1 = e.kind === 'comms_lost' ? (e.coveredStep ?? e.expiredStep ?? e.step) : e.kind === 'stall' ? (e.resumeStep ?? e.step) : e.kind === 'hot' && e.minutes ? e.step + e.minutes : e.step;
-    const where = e.kind === 'comms_lost' ? home(e.home) : e.tf !== undefined ? tfName(topology, e.tf) : e.kind === 'stall' ? 'our controller' : '';
-    out.push({ kind: e.kind, where, k0: e.step, k1: Math.min(n - 1, k1), text: e.text || '', label: 'ASSUMPTION' });
-  }
-  const rt = doc.runtime;
-  if (rt) {
-    const tk = (rt.takeover || [])[0];
-    if (rt.kill) out.push({ kind: 'worker_kill', where: `${rt.kill.worker} · ${(rt.kill.groups || []).join(', ')}`, k0: rt.kill.step, k1: tk ? tk.step : rt.kill.step, text: rt.kill.text || '', label: 'SIM' });
-  }
-  out.push(...covertFailures(covert, n));
-  const c = series.counts;
-  for (const [a, b] of ranges(n, (k) => c[k][4] > 0)) out.push({ kind: 'protection', where: tfName(topology, series.wtf[a]), k0: a, k1: b, text: 'The fuse rule opens a transformer; homes without a battery behind it go dark.', label: 'SIM' });
-  for (const [a, b] of ranges(n, (k) => c[k][3] > 0)) out.push({ kind: 'emergency', where: tfName(topology, series.wtf[a]), k0: a, k1: b, text: `A transformer is above ${meta.tiers ? meta.tiers.emergency : 150}% of nameplate.`, label: 'SIM' });
-  for (const [a, b] of ranges(n, (k) => c[k][2] > 0)) out.push({ kind: 'normal', where: tfName(topology, series.wtf[a]), k0: a, k1: b, text: `Above ${meta.tiers ? meta.tiers.normal : 110}% for ${meta.tiers ? meta.tiers.normalMinutes : 30} minutes or more.`, label: 'SIM' });
-  if (series.fleetN) for (const [a, b] of ranges(n, (k) => /[SX]/.test(doc.state[k] || ''), 2)) out.push({ kind: 'stale', where: 'fleet', k0: a, k1: b, text: 'A battery stopped reporting, or its last command expired.', label: 'SIM' });
-  out.sort((x, y) => x.k0 - y.k0 || x.k1 - y.k1);
-  return out;
-}
-
 /** The covert attack as a failure interval: the channel opens at attack.step and runs until the last quarantine. */
 export function covertFailures(covert, n) {
   if (!covert || !covert.attack) return [];
   const q = (covert.quarantine && covert.quarantine.log) || [];
   const end = q.length ? Math.max(...q.map((x) => x[0])) : n - 1;
-  return [{ kind: 'covert', where: `${(covert.attack.shard || []).length} batteries (fictional attacker)`, k0: covert.attack.step, k1: Math.min(n - 1, end), text: covert.attack.text || '', label: 'ASSUMPTION' }];
+  const adv = covert.sources && covert.sources.adversary;
+  return [{ kind: 'covert', where: `${(covert.attack.shard || []).length} batteries (fictional attacker)`, k0: covert.attack.step, k1: Math.min(n - 1, end), text: covert.attack.text || '', label: adv && LABEL_OK(adv.label) ? adv.label : null }];
 }
 export const DET_WORDS = { off: 'channel not open yet', on: 'carrying the hidden signal, not flagged yet', flag: 'flagged by the detector', held: 'quarantined: held at zero' };
 /** The Detector card's model from p3/covert.json: the shard's units, flagged and quarantined counts per step, and two
@@ -179,36 +194,28 @@ export function detectorModel(covert, n) {
   };
   const series = covert.series && covert.series.units;
   return { units, w0, w1, flaggedAt, quarantinedAt, flagPath: path(flaggedAt), heldPath: path(quarantinedAt),
-    x: (k) => (k < w0 || k > w1 ? null : X(k).toFixed(1)), label: (series && series.label) || 'SIM' };
+    x: (k) => (k < w0 || k > w1 ? null : X(k).toFixed(1)), label: series && LABEL_OK(series.label) ? series.label : null };
 }
 /** The covert attack in the story line: its own text at attack.step. */
 export function covertMoments(covert) {
   if (!covert || !covert.attack) return [];
-  return [{ k: covert.attack.step, t: covert.attack.t, text: covert.attack.text, label: 'ASSUMPTION', rule: 'covert channel opens' }];
+  const adv = covert.sources && covert.sources.adversary;
+  return [{ k: covert.attack.step, t: covert.attack.t, text: covert.attack.text, label: adv && LABEL_OK(adv.label) ? adv.label : null, rule: 'covert channel opens' }];
 }
 
-/** Story moments without extras: meta.markers (their own text; another branch's fault markers dropped), this branch's
- *  events, the runtime lines (worker_kill) and the covert attack. */
-export function fallbackMoments({ meta, doc, branch, covert = null }) {
-  const out = [];
-  const other = new Set();
-  for (const [b, list] of Object.entries(meta.events || {})) if (b !== branch) for (const e of list) other.add(e.text);
-  const mine = new Set(((meta.events && meta.events[branch]) || []).map((e) => e.text));
-  for (const m of meta.markers || []) {
-    if (other.has(m.text) && !mine.has(m.text)) continue;
-    const k = timeToStep(meta, m.t);
-    if (k !== null) out.push({ k, t: m.t, text: m.text, label: m.label, rule: 'marker' });
-  }
-  for (const e of (meta.events && meta.events[branch]) || []) if (!out.some((m) => m.text === e.text)) out.push({ k: e.step, t: e.t, text: e.text, label: 'ASSUMPTION', rule: `fault · ${e.kind}` });
-  const rt = doc.runtime;
-  if (rt) {
-    if (rt.kill) out.push({ k: rt.kill.step, t: rt.kill.t, text: rt.kill.text, label: 'SIM', rule: 'worker killed' });
-    for (const t of rt.takeover || []) out.push({ k: t.step, t: t.t, text: t.text, label: 'SIM', rule: 'takeover' });
-    if (rt.late) out.push({ k: rt.late.step, t: rt.late.t, text: rt.late.text, label: 'SIM', rule: 'late batch' });
-  }
-  out.push(...covertMoments(covert));
-  out.sort((a, b) => a.k - b.k);
-  return out;
+/** "+0.59" / "−3.84" / "0.00": the fleet's signed power in MW from kW. */
+export const signedMW = (kw) => `${kw > 0 ? '+' : kw < 0 ? '−' : ''}${fmtN(Math.abs(kw) / 1000, 2)}`;
+
+/** The member reserve note: the floor (its constant's label), breaches by dispatch (summary.reserveBreaches) and the
+ *  reserve used for home backup during outages (summary.reserveUsedInOutage), each with the summary's own label. */
+export function reserveHTML({ reserveC, summary = {}, num, noFleet = false }) {
+  if (!reserveC) return '';
+  const floor = LABEL_OK(reserveC.label) ? num({ v: reserveC.value * 100, label: reserveC.label, cite: reserveC.cite }, { unit: '%' }) : `${fmtN(reserveC.value * 100)}%`;
+  const parts = [`↑ ${floor} member reserve`];
+  const br = summary.reserveBreaches, out = summary.reserveUsedInOutage;
+  if (!noFleet && br && LABEL_OK(br.label)) parts.push(br.v === 0 ? `never breached by dispatch ${tagHTML(br.label, br.cite)}` : `breached by dispatch ${num(br)} battery-minutes`);
+  if (!noFleet && out && LABEL_OK(out.label) && out.v > 0) parts.push(`used for home backup during outages: ${num(out)} battery-minutes`);
+  return parts.map((p) => `<span>${p}</span>`).join('');
 }
 
 /** The last item with k <= now, or null. */
@@ -261,6 +268,7 @@ export async function mountRunning(root, ctx) {
   const results = await Promise.all(files.map(async (f, i) => {
     const t0 = performance.now();
     setRow(i, 'loading', 'loading');
+    if (f.missing) { setRow(i, 'bad', 'not in the catalogue'); return { ok: false, optional: false, err: new Error('the catalogue names no file') }; }
     try {
       const doc = await ctx.getAny(f.path);
       if (!disposed) setRow(i, 'ok', `loaded in ${fmtN(performance.now() - t0)} ms`);
@@ -310,35 +318,36 @@ async function makeScene(el, topology, nowebgl, onError) {
   return s;
 }
 const n0 = (doc) => (doc.loading || []).length;
-const LABEL_OK = (l) => ['REAL', 'SIM', 'DERIVED', 'ASSUMPTION', 'UNVERIFIED', 'SCREENING'].includes(l);
 const withTimeout = (p, ms, what) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(`${what} timed out after ${ms} ms`)), ms))]);
 
 const STATE_CSS = { C: '#1e4d2b', D: '#c7962b', I: '#e3dfd3', S: '#8f8b7f', X: '#8f8b7f', B: '#8fcf9f' };
-const STATE_WORDS = { C: 'charging', D: 'discharging', I: 'idle', S: 'stale: no telemetry', X: 'command expired', B: 'carrying its home (backup)' };
+// the battery states the grid counts, in order (words: scene-model STATE_WORDS, shared with the 3D scene)
+const STATE_ORDER = ['C', 'D', 'I', 'B', 'S', 'X'];
 
 export async function mount(root, ctx) {
   const sc = ctx.scenario;
   const lev = sc.levers || {};
-  const covertOn = lev.failure === 'covert';
+  let covertOn = lev.failure === 'covert';
   let runtimeOn = false;
   root.innerHTML = '<div class="rv"><div class="rv-loading">Loading the run…</div></div>';
   const [topology, footprints, meta, doc, extras, covert] = await Promise.all([
     ctx.getJSON('topology.json'), ctx.getJSON('footprints.json').catch(() => null), ctx.getAny(sc.meta), ctx.getAny(sc.branch),
     sc.extras ? ctx.getAny(sc.extras).catch(() => null) : Promise.resolve(null),
-    covertOn ? ctx.getAny(attackPath(sc)) : Promise.resolve(null),
+    covertOn && attackPath(sc) ? ctx.getAny(attackPath(sc)) : Promise.resolve(null),
   ]);
+  covertOn = covertOn && !!covert;
   const branch = doc.branch || (lev.failure === 'faults' ? 'aware_faults' : lev.policy);
   const rt = doc.runtime && Array.isArray(doc.runtime.holder) && Array.isArray(doc.runtime.partitions) ? doc.runtime : null;
   runtimeOn = !!rt;
-  const rtLab = (key) => (doc.series && doc.series[key] && doc.series[key].label) || 'SIM';
+  const rtLab = (key) => seriesLabel(doc, key);
   const noFleet = lev.policy === 'none';
   const S = buildSeries(doc, meta, topology, extras);
   const n = S.n;
-  const tiers = meta.tiers || {};
-  const TN = tierNames(tiers);
+  const T = tierConsts(meta, extras);
+  const TN = tierNames(T);
   const reserveC = meta.constants && meta.constants.RESERVE_FLOOR;
   const reservePct = reserveC ? reserveC.value * 100 : null;
-  const summary = (meta.summary && meta.summary[branch]) || sc.summary || {};
+  const summary = sc.summary || (meta.summary && meta.summary[branch]) || {};
   // a variant run may place its batteries on other homes (meta.fleet / doc.fleet: home indices)
   const fleetHomes = (Array.isArray(meta.fleet) && meta.fleet) || (Array.isArray(doc.fleet) && doc.fleet) || null;
   let topoRun = topology;
@@ -349,30 +358,42 @@ export async function mount(root, ctx) {
   else if (S.fleetN !== (topology.fleet || []).length) hideBatteries = true;
   // the engine's rule log and failure list (extras); the covert attack lives in its own file (p3/covert.json), so its
   // line and interval are added here from that file's own text and steps
-  const moments = (extras && Array.isArray(extras.moments)
-    ? [...extras.moments, ...covertMoments(covert)].sort((a, b) => a.k - b.k) : fallbackMoments({ meta, doc, branch, covert }))
+  // without extras the engine's rule log and failure list are "not exported for this run" (null), never re-derived
+  const moments = (extras && Array.isArray(extras.moments) ? [...extras.moments, ...covertMoments(covert)].sort((a, b) => a.k - b.k) : covertMoments(covert))
     .map((m) => ({ ...m, text: markCustomers(m.text, topology) }));
-  const failures = (extras && Array.isArray(extras.failures)
+  const failures = extras && Array.isArray(extras.failures)
     ? [...extras.failures, ...covertFailures(covert, n0(doc))].sort((a, b) => a.k0 - b.k0 || a.k1 - b.k1)
-    : fallbackFailures({ meta, doc, series: S, topology, branch, covert }))
-    .map((f) => ({ ...f, where: markCustomers(f.where, topology), text: markCustomers(f.text, topology) }));
-  const worstMax = Math.max(...S.worst);
-  const priceMax = S.price ? Math.max(...S.price) : 0;
-  const priceHi = Math.max(600, Math.ceil(priceMax / 100) * 100);
-  const kwMax = Math.max(...Array.from(S.kw, Math.abs));
-  const kwHi = Math.max(2000, Math.ceil(kwMax / 1000) * 1000);
+      .map((f) => ({ ...f, where: markCustomers(f.where, topology), text: markCustomers(f.text, topology) }))
+    : null;
+  const failList = failures || [];
+  // lane ranges from the data: worst transformer and the named ones with their thresholds inside; price from 0; the
+  // fleet power symmetric about 0 (kW)
+  const LW = laneRange(S.worst, [T.normal && T.normal.v, T.emergency && T.emergency.v]);
+  const LF = laneRange(S.focus.flatMap((f) => Array.from(f.pct)), [T.amber && T.amber.v], { floor: 0 });
+  const priceHi = S.price ? laneRange(S.price, [], { step: 100, floor: 0 })[1] : 1;
+  const kwMax = Math.max(1, ...Array.from(S.kw, Math.abs));
+  const kwHi = laneRange([kwMax], [], { step: 500, floor: 0 })[1];
   const uid = Math.random().toString(36).slice(2, 8);
-  const vsRows = vsDefaultRows(ctx.catalogue || {}, sc, { end: stepToTime(meta, n) });
+  const vsInfo = vsDefaultInfo(ctx.catalogue || {}, sc, { end: stepToTime(meta, n) });
   const { streetsLabel, bridgeLabel } = focusLabels(topology);
   // data-truth audit #5: the fleet sits where it stresses these streets on purpose (topology meta.shaping; a variant's
   // own placement rule is the catalogue's FLEET_PLACEMENT)
   const shaping = topology.meta && topology.meta.shaping;
   const placeC = ctx.catalogue && ctx.catalogue.constants && ctx.catalogue.constants.FLEET_PLACEMENT;
-  const placementNote = noFleet || !shaping ? '' : `<span class="note">fleet placed to stress these streets${tagHTML(shaping.label || 'ASSUMPTION',
-    [shaping.description, fleetHomes && placeC ? `This run: ${placeC.value}` : ''].filter(Boolean).join(' '))}</span>`;
-  const loadLab = (doc.series && doc.series.loading && doc.series.loading.label) || 'SIM';
-  const socLab = (doc.series && doc.series.soc && doc.series.soc.label) || 'SIM';
-  const priceLab = (meta.series && meta.series.price && meta.series.price.label) || 'REAL';
+  const fsC = topology.constants && topology.constants.FLEET_SIZE;
+  const plLab = fsC && LABEL_OK(fsC.label) ? fsC.label : shaping && LABEL_OK(shaping.label) ? shaping.label : null;
+  const placementNote = noFleet || !(fsC || shaping) ? '' : `<span class="note">fleet placed to stress these streets${tagOpt(plLab,
+    [fsC ? fsC.cite : shaping.description, fleetHomes && placeC ? `This run: ${placeC.value}` : ''].filter(Boolean).join(' '))}</span>`;
+  const loadLab = seriesLabel(doc, 'loading');
+  const socLab = seriesLabel(doc, 'soc');
+  const kwLab = seriesLabel(doc, 'batKW');
+  const cntLab = seriesLabel(doc, 'counts');
+  const cntCite = (doc.series && doc.series.counts && doc.series.counts.unit) || 'counts';
+  const priceLab = seriesLabel(meta, 'price');
+  const tierLab = seriesLabel(doc, 'tier');
+  const rules = extras && extras.sources && extras.sources.rules;
+  const rulesTag = rules && LABEL_OK(rules.label) ? tagHTML(rules.label, rules.text || '') : '';
+  const fleetTag = (() => { const t = leverTag(ctx.catalogue || {}, 'fleet', lev.fleet); return t ? tagHTML(t.label, t.cite) : ''; })();
   const bands = ((meta.plan && meta.plan.discharge) || []).map(([t, mins]) => {
     const k0 = timeToStep(meta, t);
     return k0 === null ? '' : `<rect x="${(k0 / (n - 1) * 1000).toFixed(1)}" y="0" width="${(mins / (n - 1) * 1000).toFixed(1)}" height="100" fill="#e9dfbb"></rect>`;
@@ -384,8 +405,10 @@ export async function mount(root, ctx) {
   const lane = (inner, refs = '') => `<div class="rv-plot"><svg viewBox="0 0 1000 100" preserveAspectRatio="none"><rect width="1000" height="100" fill="#f6f3ea"></rect>${refs}<defs>${clipRect.replace(`rvc-${uid}`, `rvc-${uid}-${inner.id}`)}</defs><g clip-path="url(#rvc-${uid}-${inner.id})">${inner.html}</g></svg></div>`;
   const dash = (v, lo, hi, col, da = '4 3') => `<line x1="0" x2="1000" y1="${yOf(v, lo, hi)}" y2="${yOf(v, lo, hi)}" stroke="${col}" stroke-dasharray="${da}" vector-effect="non-scaling-stroke"></line>`;
   const kwPos = Array.from(S.kw, (v) => Math.max(0, v)), kwNeg = Array.from(S.kw, (v) => Math.min(0, v));
-  const legend = [[TIER_RGB[0], 'within nameplate'], [TIER_RGB[1], `over nameplate (${tiers.amber ?? ''}%)`], [TIER_RGB[3], `above ${tiers.normal ?? ''}%`],
-    [TIER_RGB[4], `emergency (${tiers.emergency ?? ''}%)`], [TIER_RGB[5], 'protection open'], ...(hideBatteries ? [] : [[STATE_RGB.C, 'battery charging']])];
+  // legend thresholds carry their constants' labels
+  const thr = (x) => (x ? ` ${x.label ? ctx.num(x, { unit: '%' }) : `${fmtN(x.v)}%`}` : '');
+  const legend = [[TIER_RGB[0], 'within nameplate'], [TIER_RGB[1], `over nameplate${thr(T.amber)}`], [TIER_RGB[3], `above${thr(T.normal) || ' the normal rating'}`],
+    [TIER_RGB[4], `emergency${thr(T.emergency)}`], [TIER_RGB[5], 'protection open'], ...(hideBatteries ? [] : [[STATE_RGB.C, STATE_WORDS.C]])];
 
   root.innerHTML = `<div class="rv">
     <div class="rv-left">
@@ -393,21 +416,21 @@ export async function mount(root, ctx) {
         <div class="rv-over"><div class="rv-story" hidden><b></b><span></span></div><div class="rv-banner" hidden><span class="bang">!</span><span class="t"></span></div>
           ${covertOn ? `<div class="rv-fict" title="${esc((covert.sources && covert.sources.adversary && covert.sources.adversary.text) || '')}">Fictional attacker</div>` : ''}</div>
         <div class="rv-cams" role="radiogroup" aria-label="Camera">${[['feeder', 'Whole feeder'], ['street', streetsLabel], ['t240', bridgeLabel]].filter(([, t]) => t).map(([id, t]) => `<button type="button" data-cam="${id}" class="${id === 'feeder' ? 'on' : ''}">${esc(t)}</button>`).join('')}</div>
-        <div class="rv-legend">${legend.map(([c, t]) => `<span><i style="background:${rgb(c)}"></i>${esc(t)}</span>`).join('')}${tagHTML(loadLab, 'OpenDSS loading, as % of nameplate kVA as shipped; tiers from the engine (never re-derived here)')}</div>
+        <div class="rv-legend">${legend.map(([c, t]) => `<span><i style="background:${rgb(c)}"></i>${t.replace(/^([^<]*)/, (m0) => esc(m0))}</span>`).join('')}${tagOpt(loadLab, 'OpenDSS loading, as % of nameplate kVA as shipped; tiers from the engine (never re-derived here)')}</div>
       </div>
       <div class="rv-lanes">
         <div class="rv-trans"><button type="button" class="rv-play" aria-label="Play">▶</button><span class="st-clock">${stepToTime(meta, 0)}</span>
           <button type="button" class="st-btn-ghost rv-replay" title="Replay from ${esc(meta.start)}">↺ Replay</button>
           <span class="rv-stepno">Step 1 of ${fmtN(n)}</span>
-          ${vsRows.length ? `<span class="rv-vs" title="${esc(`Versus ${vsRows[0].refTitle}: ${vsDefaultText(vsRows)}`)}"><b>vs the default run</b>${vsDefaultHTML(vsRows, { max: 2 })}</span>` : ''}
+          ${vsInfo ? `<span class="rv-vs" title="${esc(`Versus ${vsInfo.refTitle}: ${vsInfo.rows.length ? vsDefaultText(vsInfo.rows) : 'no headline value moved'}`)}"><b>vs ${esc(vsInfo.refName)}</b>${vsInfo.rows.length ? vsDefaultHTML(vsInfo.rows, { max: 2 }) : '<span class="vs-row">no headline value moved</span>'}</span>` : ''}
           <div class="rv-speed" role="radiogroup" aria-label="Speed">${SPEEDS.map((s) => `<button type="button" data-speed="${s}">${s}×</button>`).join('')}</div></div>
         <div class="rv-grid">
           <div class="rv-lab"><span class="n">Worst transformer</span><span class="v" data-v="worst"></span></div>
-          ${lane({ id: 'w', html: `<path d="${lanePath(S.worst, ...LANE_WORST)}" fill="none" stroke="#10231a" stroke-width="1.4" vector-effect="non-scaling-stroke"></path>` },
-            (tiers.normal ? dash(tiers.normal, ...LANE_WORST, '#c7962b') : '') + (tiers.emergency ? dash(tiers.emergency, ...LANE_WORST, '#b23a2f') : ''))}
+          ${lane({ id: 'w', html: `<path d="${lanePath(S.worst, ...LW)}" fill="none" stroke="#10231a" stroke-width="1.4" vector-effect="non-scaling-stroke"></path>` },
+            (T.normal ? dash(T.normal.v, ...LW, '#c7962b') : '') + (T.emergency ? dash(T.emergency.v, ...LW, '#b23a2f') : ''))}
           <div class="rv-lab"><span class="n">${esc([streetsLabel, bridgeLabel].filter(Boolean).join(', ') || 'Named transformers')}</span><span class="v" data-v="focus"></span>${placementNote}</div>
-          ${lane({ id: 'f', html: S.focus.map((f) => `<path d="${lanePath(f.pct, ...LANE_FOCUS)}" fill="none" stroke="#10231a" stroke-opacity="${f.key.length > 1 ? 0.9 : 0.55}" stroke-width="1.1" ${f.key.length > 1 ? 'stroke-dasharray="4 3"' : ''} vector-effect="non-scaling-stroke"></path>`).join('') },
-            tiers.amber ? dash(tiers.amber, ...LANE_FOCUS, '#c7962b') : '')}
+          ${lane({ id: 'f', html: S.focus.map((f) => `<path d="${lanePath(f.pct, ...LF)}" fill="none" stroke="#10231a" stroke-opacity="${f.key.length > 1 ? 0.9 : 0.55}" stroke-width="1.1" ${f.key.length > 1 ? 'stroke-dasharray="4 3"' : ''} vector-effect="non-scaling-stroke"></path>`).join('') },
+            T.amber ? dash(T.amber.v, ...LF, '#c7962b') : '')}
           <div class="rv-lab"><span class="n">Price $/MWh</span><span class="v" data-v="price"></span></div>
           ${lane({ id: 'p', html: S.price ? `<path d="${lanePath(S.price, 0, priceHi)}" fill="none" stroke="#10231a" stroke-width="1.4" vector-effect="non-scaling-stroke"></path>` : '' }, bands)}
           <div class="rv-lab"><span class="n">Fleet charge %</span><span class="v" data-v="soc"></span></div>
@@ -418,19 +441,19 @@ export async function mount(root, ctx) {
             `<line x1="0" x2="1000" y1="50" y2="50" stroke="#10231a" stroke-opacity=".25" vector-effect="non-scaling-stroke"></line>`)}
           <div></div><div class="rv-axis">${hrs.map((h) => `<span>${h}</span>`).join('')}</div>
           <div class="rv-scrub" role="slider" aria-label="Scrub the evening" aria-valuemin="0" aria-valuemax="${n - 1}" tabindex="0">
-            ${failures.map((f, i) => `<div class="rv-band" data-f="${i}" style="left:${(f.k0 / (n - 1) * 100).toFixed(3)}%;width:${Math.max(0.25, (f.k1 - f.k0 + 1) / (n - 1) * 100).toFixed(3)}%"></div>`).join('')}
+            ${failList.map((f, i) => `<div class="rv-band" data-f="${i}" style="left:${(f.k0 / (n - 1) * 100).toFixed(3)}%;width:${Math.max(0.25, (f.k1 - f.k0 + 1) / (n - 1) * 100).toFixed(3)}%"></div>`).join('')}
             <div class="rv-cursor"></div></div>
         </div>
       </div>
     </div>
     <aside class="rv-aside">
-      <div class="rv-card rv-hero"><div class="h"><span class="st-eyebrow">WORST TRANSFORMER NOW</span>${tagHTML(loadLab, 'OpenDSS loading as % of nameplate kVA as shipped')}</div>
+      <div class="rv-card rv-hero"><div class="h"><span class="st-eyebrow">WORST TRANSFORMER NOW</span>${tagOpt(loadLab, 'OpenDSS loading as % of nameplate kVA as shipped')}</div>
         <div class="big" data-v="hero"></div><div class="who"><i></i><b></b><span class="tn"></span></div><div class="cnt"></div></div>
       ${covertOn ? '<div class="rv-card rv-det"></div>' : ''}
       ${runtimeOn ? '<div class="rv-card rv-ctl"></div>' : ''}
-      <div class="rv-card rv-bat"><div class="h"><span class="t">Fleet charge</span><span class="m">${noFleet ? 'no batteries in this run' : `${fmtN(S.fleetN)} batteries`}</span><span class="flow"></span></div>
+      <div class="rv-card rv-bat"><div class="h"><span class="t">Fleet charge</span><span class="m">${noFleet ? 'no batteries in this run' : `${fmtN(S.fleetN)} batteries${fleetTag}`}</span><span class="flow"></span></div>
         <div class="rv-cell"><div class="rv-body"><div class="rv-track"><div class="rv-fill"></div><div class="rv-stripes"></div>${reservePct !== null ? `<div class="rv-reserve" style="left:${reservePct}%"></div>` : ''}<span class="rv-pct"></span></div></div><div class="rv-term"></div></div>
-        <div class="rv-resnote">${reservePct !== null ? `<span style="left:calc(${reservePct}% - 4px)">↑ ${fmtN(reservePct)}% member reserve${summary.reserveBreaches ? (summary.reserveBreaches.v === 0 ? ', never used' : `, crossed ${fmtN(summary.reserveBreaches.v)} battery-minutes`) : ''} ${tagHTML(reserveC.label, reserveC.cite)}</span>` : ''}</div></div>
+        <div class="rv-resnote">${reservePct !== null ? reserveHTML({ reserveC, summary, num: ctx.num, noFleet }) : ''}</div></div>
       <div class="rv-card rv-now"></div>
     </aside></div>`;
   const $ = (s) => root.querySelector(s);
@@ -454,38 +477,38 @@ export async function mount(root, ctx) {
   const span = (f) => `${stepToTime(meta, f.k0)}–${stepToTime(meta, f.k1)}`;
 
   function drawNow() {
-    const c = S.counts[k] || [0, 0, 0, 0, 0];
     const tot = S.tfN;
-    const within = tot - (c[0] + c[1] + c[2] + c[3] + c[4]);
-    const nowF = failures.filter((f) => f.k0 <= k && k <= f.k1);
+    const B = tierBands(S.counts[k], tot, T);
+    const nowF = failList.filter((f) => f.k0 <= k && k <= f.k1);
     const st = noFleet ? '' : (doc.state[k] || '');
-    const cnt = { C: 0, D: 0, I: 0, F: 0 };
+    const cnt = {};
     const cells = Array.from(st).map((ch, j) => {
       const bad = ch === 'S' || ch === 'X';
-      if (bad) cnt.F += 1; else if (ch in cnt) cnt[ch] += 1;
+      cnt[ch] = (cnt[ch] || 0) + 1;
       const who = batteryHomes[j] !== undefined ? customerName(topology, batteryHomes[j]) : `battery ${j + 1}`;
       return `<i class="${bad ? 'bad' : ''}" style="background:${STATE_CSS[ch] || '#e3dfd3'}" title="${esc(`${who} · ${STATE_WORDS[ch] || ch}`)}"></i>`;
     }).join('');
-    const tierRows = [['over nameplate', c[0], TIER_RGB[1], false], [`above ${tiers.normal ?? ''}%`, c[1] + c[2], TIER_RGB[3], c[2] > 0],
-      ['emergency', c[3], TIER_RGB[4], c[3] > 0], ['open', c[4], TIER_RGB[5], c[4] > 0]];
-    const bar = [[within, TIER_RGB[0]], ...tierRows.map((r) => [r[1], r[2]])].filter((r) => r[0] > 0)
+    const stateLine = [...STATE_ORDER, ...Object.keys(cnt).filter((ch) => !STATE_ORDER.includes(ch))]
+      .filter((ch) => cnt[ch] || ['C', 'D', 'I'].includes(ch)).map((ch) => `${STATE_WORDS[ch] || ch} ${fmtN(cnt[ch] || 0)}`).join(' · ');
+    const bar = [[B.within, TIER_RGB[0]], ...B.bands.map((b) => [b.n, b.rgb])].filter((r) => r[0] > 0)
       .map(([v, col]) => `<div style="width:${(v / tot * 100).toFixed(2)}%;background:${rgb(col)}"></div>`).join('');
+    const batQual = noFleet ? ' (no batteries in this run)' : ' (none because of batteries)';
     const el = $('.rv-now');
     el.classList.toggle('failing', nowF.length > 0);
-    el.innerHTML = `<div class="h"><span class="st-eyebrow">RIGHT NOW · ${stepToTime(meta, k)}</span>${tagHTML('SIM', 'the engine\'s run at this minute')}</div>
-      ${nowF.length ? `<div class="rv-failing"><div class="e">FAILING NOW · ${nowF.length}</div>${nowF.map((f) => `<button type="button" class="rv-fnow" data-seek="${f.k0}"><span class="a"><b>${esc(kindWord(f.kind))}${f.where ? ` · ${esc(f.where)}` : ''}</b><span>${span(f)}</span></span><span class="b">${esc(f.text)}${LABEL_OK(f.label) ? tagHTML(f.label, f.label === 'ASSUMPTION' ? 'a scripted failure: what fails and when are assumptions' : 'from this run') : ''}</span></button>`).join('')}</div>`
-        : '<div class="rv-ok"><i></i>No failures right now</div>'}
-      <div class="rv-sec"><div class="r"><b>${fmtN(tot)} transformers</b><span>${fmtN(within)} within nameplate</span></div><div class="rv-tbar">${bar}</div>
-        <div class="rv-tiers">${tierRows.map(([nm, v, col, bad]) => `<span class="${bad ? 'bad' : v ? '' : 'zero'}"><i style="background:${rgb(col)}"></i>${esc(nm)} ${fmtN(v)}</span>`).join('')}</div></div>
-      ${noFleet ? '' : `<div class="rv-sec"><div class="r"><b>${fmtN(S.fleetN)} batteries</b><span>charging ${cnt.C} · discharging ${cnt.D} · idle ${cnt.I}${cnt.F ? ` · failing ${cnt.F}` : ''}</span></div><div class="rv-cells">${cells}</div></div>`}
-      <div class="rv-all"><div class="e">FAILURES THIS EVENING<span>${failures.length}</span></div>${failures.length ? failures.map((f) => {
+    el.innerHTML = `<div class="h"><span class="st-eyebrow">RIGHT NOW · ${stepToTime(meta, k)}</span>${tagOpt(cntLab, cntCite)}</div>
+      ${nowF.length ? `<div class="rv-failing"><div class="e">FAILING NOW · ${nowF.length}${rulesTag}</div>${nowF.map((f) => `<button type="button" class="rv-fnow" data-seek="${f.k0}"><span class="a"><b>${esc(kindWord(f.kind))}${f.where ? ` · ${esc(f.where)}` : ''}</b><span>${span(f)}</span></span><span class="b">${esc(f.text)}${tagOpt(f.label, f.label === 'ASSUMPTION' ? 'a scripted failure: what fails and when are assumptions' : 'from this run')}</span></button>`).join('')}</div>`
+        : failures ? `<div class="rv-ok"><i></i>No failures right now${batQual}</div>` : '<div class="rv-ok">Failures: not exported for this run</div>'}
+      <div class="rv-sec"><div class="r"><b>${fmtN(tot)} transformers</b><span>${fmtN(B.within)} within nameplate${tagOpt(cntLab, cntCite)}</span></div><div class="rv-tbar">${bar}</div>
+        <div class="rv-tiers">${B.bands.map((b) => `<span class="${b.bad ? 'bad' : b.n ? '' : 'zero'}"><i style="background:${rgb(b.rgb)}"></i>${esc(b.name)} ${fmtN(b.n)}${b.key === 'above' && b.past ? ` (${fmtN(b.past)} ${T.normalMin ? `past ${fmtN(T.normalMin.v)} min` : 'normal rating exceeded'})` : ''}</span>`).join('')}${tagOpt(cntLab, cntCite)}</div></div>
+      ${noFleet ? '' : `<div class="rv-sec"><div class="r"><b>${fmtN(S.fleetN)} batteries${fleetTag}</b><span>${esc(stateLine)}</span></div><div class="rv-cells">${cells}</div></div>`}
+      <div class="rv-all"><div class="e">FAILURES THIS EVENING<span>${failures ? `${failures.length}${rulesTag}` : '—'}</span></div>${!failures ? '<div class="rv-ok">Not exported for this run.</div>' : failures.length ? failures.map((f) => {
         const act = f.k0 <= k && k <= f.k1, past = f.k1 < k;
         return `<button type="button" class="rv-frow${act ? ' act' : past ? ' past' : ''}" data-seek="${f.k0}" title="${esc(f.text)}"><i></i><span class="s">${span(f)}</span><span class="w">${esc(kindWord(f.kind))}${f.where ? ` · ${esc(f.where)}` : ''}</span></button>`;
-      }).join('') : '<div class="rv-ok">None in this run.</div>'}</div>`;
+      }).join('') : `<div class="rv-ok">None in this run${batQual}.</div>`}</div>`;
     const banner = $('.rv-banner');
     banner.hidden = nowF.length === 0;
     banner.querySelector('.t').textContent = nowF.map((f) => `${kindWord(f.kind)}${f.where ? ` · ${f.where}` : ''}`).join('  ·  ');
-    for (const b of bandEls) { const f = failures[Number(b.dataset.f)]; b.style.opacity = f.k1 < k || (f.k0 <= k && k <= f.k1) ? '1' : '.45'; }
+    for (const b of bandEls) { const f = failList[Number(b.dataset.f)]; b.style.opacity = f.k1 < k || (f.k0 <= k && k <= f.k1) ? '1' : '.45'; }
   }
 
   const det = covertOn ? detectorModel(covert, n) : null;
@@ -498,7 +521,7 @@ export async function mount(root, ctx) {
       return `<i class="${st}" title="${esc(`${u.home !== null ? customerName(topology, u.home) : `battery ${u.batt}`} · ${DET_WORDS[st]}${u.flaggedStep !== null ? ` · flagged ${stepToTime(meta, u.flaggedStep)}` : ''}`)}"></i>`;
     }).join('');
     const cx = det.x(k);
-    $('.rv-det').innerHTML = `<div class="h"><span class="e">DETECTOR · FICTIONAL ATTACKER</span>${tagHTML(det.label, (covert.sources && covert.sources.detector && covert.sources.detector.text) || 'detector run')}</div>
+    $('.rv-det').innerHTML = `<div class="h"><span class="e">DETECTOR · FICTIONAL ATTACKER</span>${tagOpt(det.label, (covert.sources && covert.sources.detector && covert.sources.detector.text) || 'detector run')}</div>
       <div class="rv-det-top"><div class="big">${k < a.step ? '—' : `${fmtN(flagged)} of ${fmtN(det.units.length)}`}</div>
         <div class="l">${k < a.step ? `The channel opens at ${esc(a.t)}` : `compromised batteries flagged<br>${fmtN(quarantined)} quarantined (held at zero)`}</div></div>
       <svg class="rv-det-plot" viewBox="0 0 300 44" preserveAspectRatio="none" aria-label="Batteries flagged and quarantined, ${esc(stepToTime(meta, det.w0))} to ${esc(stepToTime(meta, det.w1))}">
@@ -527,10 +550,10 @@ export async function mount(root, ctx) {
         <span class="kw">${tgt[i] !== undefined ? `${fmtN(got[i] / 10, 0)} of ${fmtN(tgt[i] / 10, 0)} kW` : ''}</span></div>`;
     }).join('');
     const ev = (e, text) => (e ? `<div class="rv-ctl-ev${k >= e.step ? ' on' : ''}"><span class="s">${esc(e.t)}</span><span>${esc(text)}</span></div>` : '');
-    $('.rv-ctl').innerHTML = `<div class="h"><span class="e">CONTROLLER · ${fmtN((rt.workers || []).length)} WORKERS</span>${tagHTML(rtLab('holder'), (doc.series && doc.series.holder && doc.series.holder.unit) || 'runtime.holder')}</div>
+    $('.rv-ctl').innerHTML = `<div class="h"><span class="e">CONTROLLER · ${fmtN((rt.workers || []).length)} WORKERS</span>${tagOpt(rtLab('holder'), (doc.series && doc.series.holder && doc.series.holder.unit) || 'runtime.holder')}</div>
       <div class="rv-ctl-ws">${(rt.workers || []).map((w) => `<span class="${w === killed ? 'dead' : ''}">${esc(w)}${w === killed ? ' · killed' : ''}</span>`).join('')}</div>
       <div class="rv-ctl-rows">${rows}</div>
-      <div class="rv-ctl-sub">delivered of target kW per group ${tagHTML(rtLab('partitionDeliveredKW'), (doc.series && doc.series.partitionDeliveredKW && doc.series.partitionDeliveredKW.by) || '')}</div>
+      <div class="rv-ctl-sub">delivered of target kW per group ${tagOpt(rtLab('partitionDeliveredKW'), (doc.series && doc.series.partitionDeliveredKW && doc.series.partitionDeliveredKW.by) || '')}</div>
       ${ev(kill, kill ? kill.text : '')}${ev(tk, tk ? tk.text : '')}${ev(late, late ? late.text : '')}`;
   }
 
@@ -544,32 +567,32 @@ export async function mount(root, ctx) {
     $('.rv-stepno').textContent = `Step ${fmtN(k + 1)} of ${fmtN(n)}`;
     $('.rv-scrub').setAttribute('aria-valuenow', String(k));
     const code = doc.tier[k] ? Number(doc.tier[k][S.wtf[k]]) : 0;
-    const c = S.counts[k] || [0, 0, 0, 0, 0];
-    root.querySelector('[data-v="worst"]').innerHTML = `<b>${fmtN(S.worst[k], 1)}%</b> · ${esc(tfName(topology, S.wtf[k]))} ${tagHTML(loadLab)}`;
+    const B = tierBands(S.counts[k], S.tfN, T);
+    root.querySelector('[data-v="worst"]').innerHTML = `<b>${fmtN(S.worst[k], 1)}%</b> · ${esc(tfName(topology, S.wtf[k]))} ${tagOpt(loadLab)}`;
     const top = S.focus.reduce((m, f) => (f.pct[k] > m.pct[k] ? f : m), S.focus[0]);
-    root.querySelector('[data-v="focus"]').innerHTML = top ? `top <b>${esc(top.name)} ${fmtN(top.pct[k], 0)}%</b> ${tagHTML(loadLab)}` : '';
-    root.querySelector('[data-v="price"]').innerHTML = S.price ? `<b>$${fmtN(S.price[k], 2)}</b> ${tagHTML(priceLab, meta.sources && meta.sources.price ? meta.sources.price.text : '')}` : 'no price series';
-    root.querySelector('[data-v="soc"]').innerHTML = noFleet ? 'no batteries' : `<b>${fmtN(S.soc[k], 0)}%</b> ${tagHTML(socLab)}${reservePct !== null ? ` · ${fmtN(reservePct)}% reserve` : ''}`;
-    root.querySelector('[data-v="kw"]').innerHTML = noFleet ? 'no batteries' : `<b>${S.kw[k] >= 0 ? '+' : '−'}${fmtN(Math.abs(S.kw[k]) / 1000, 2)}</b> ${tagHTML('SIM')} · ±${fmtN(kwHi / 1000)} MW`;
+    root.querySelector('[data-v="focus"]').innerHTML = top ? `top <b>${esc(top.name)} ${fmtN(top.pct[k], 0)}%</b> ${tagOpt(loadLab)}` : '';
+    root.querySelector('[data-v="price"]').innerHTML = S.price ? `<b>$${fmtN(S.price[k], 2)}</b> ${tagOpt(priceLab, meta.sources && meta.sources.price ? meta.sources.price.text : '')}` : 'no price series';
+    root.querySelector('[data-v="soc"]').innerHTML = noFleet ? 'no batteries' : `<b>${fmtN(S.soc[k], 0)}%</b> ${tagOpt(socLab)}${reservePct !== null ? ` · ${reserveC && reserveC.label ? ctx.num({ v: reservePct, label: reserveC.label, cite: reserveC.cite }, { unit: '%' }) : `${fmtN(reservePct)}%`} reserve` : ''}`;
+    root.querySelector('[data-v="kw"]').innerHTML = noFleet ? 'no batteries' : `<b>${signedMW(S.kw[k])}</b> ${tagOpt(kwLab, 'the fleet\'s battery kW, + charging')} · ±${fmtN(kwHi / 1000, 1)} MW`;
     // hero
-    $('[data-v="hero"]').textContent = `${fmtN(S.worst[k], 1)}%`;
+    $('[data-v="hero"]').innerHTML = `${fmtN(S.worst[k], 1)}%${tagOpt(loadLab, 'OpenDSS loading as % of nameplate kVA as shipped')}`;
     $('.rv-hero .who i').style.background = rgb(TIER_RGB[code] || TIER_RGB[0]);
     $('.rv-hero .who b').textContent = tfName(topology, S.wtf[k]);
-    $('.rv-hero .who .tn').textContent = TN[code] || '';
-    $('.rv-hero .cnt').textContent = `Over nameplate ${fmtN(c[0] + c[1] + c[2] + c[3])} · above ${tiers.normal ?? ''}% ${fmtN(c[1] + c[2] + c[3])} · emergency ${fmtN(c[3])} · open ${fmtN(c[4])}`;
+    $('.rv-hero .who .tn').innerHTML = `${esc(TN[code] || '')}${tagOpt(tierLab, (doc.series && doc.series.tier && doc.series.tier.by) || 'tier code')}`;
+    $('.rv-hero .cnt').innerHTML = `${esc(B.text)} ${tagOpt(cntLab, cntCite)}`;
     // battery
     const socNow = noFleet ? 0 : clamp(S.soc[k], 0, 100);
     for (const s of [$('.rv-fill'), $('.rv-stripes')]) s.style.width = `${socNow.toFixed(1)}%`;
     const pctEl = $('.rv-pct');
-    pctEl.textContent = noFleet ? '' : `${fmtN(socNow, 0)}%`;
+    pctEl.innerHTML = noFleet ? '' : `${fmtN(socNow, 0)}%${tagOpt(socLab, 'mean state of charge of the fleet')}`;
     pctEl.classList.toggle('dark', socNow < 18);
-    const kwNow = S.kw[k];
-    $('.rv-bat .flow').textContent = noFleet ? '' : Math.abs(kwNow) < 5 ? 'Holding' : kwNow > 0 ? `Charging +${fmtN(kwNow / 1000, 2)} MW` : `Discharging −${fmtN(-kwNow / 1000, 2)} MW`;
+    // the fleet's signed power (the batKW series: + charging), no threshold word
+    $('.rv-bat .flow').innerHTML = noFleet ? '' : `${signedMW(S.kw[k])} MW ${tagOpt(kwLab, 'the fleet\'s battery kW, + charging')}`;
     // story line
     const m = momentAt(moments, k);
     const story = $('.rv-story');
     story.hidden = !m;
-    if (m) { story.querySelector('b').textContent = m.t || stepToTime(meta, m.k); story.querySelector('span').innerHTML = `${esc(m.text)} ${m.label ? tagHTML(m.label, m.rule ? `rule: ${m.rule}` : '') : ''}`; }
+    if (m) { story.querySelector('b').textContent = m.t || stepToTime(meta, m.k); story.querySelector('span').innerHTML = `${esc(m.text)} ${tagOpt(m.label, m.rule ? `rule: ${m.rule}` : '')}`; }
     drawNow();
     drawDetector();
     drawController();
