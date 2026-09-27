@@ -12,7 +12,12 @@ Extended for the root app:
   can read 92.7% instead of about 80%. Here kvar is written as 0 after every kW write;
 - `isolate_tf(i)` opens a transformer (protection operated) and `restore_all()`;
 - `solve()` returns per-transformer P, Q and %, the minimum per-unit voltage of each
-  home, and the feeder-head current (max phase, amps).
+  home, and the feeder-head current (max phase, amps);
+- sprint readouts (story contract, extras): `solve()` also returns the feeder-head P and Q
+  (`head_kw`, `head_kvar`, terminal 1 of HEAD_LINE, summed over conductors) and the capacitor
+  bank output (`cap_kvar`, positive = kvar injected); each transformer carries `distance`, the
+  path length from the substation along the SMART-DS lines (km, primary bus). The lowest home
+  voltage per transformer is derived from `vmin_home_pu` (`Feeder.vmin_tf()`).
 
 The root sim reads only data/smartds/ and data/fleet.json, never demos/.
 Sign: positive kW = consumption / charging.
@@ -100,6 +105,8 @@ def create(fleet=None):
                 parent[b] = a
                 heapq.heappush(queue, (length + w, b))
     tfbus = {x["secondary"]: i for i, x in enumerate(transformers)}
+    for x in transformers:    # km along the SMART-DS lines (Units=km), before the weak-line shaping below
+        x["distance"] = float(dist.get(x["primary"], dist.get(x["secondary"], math.nan)))
     loads = defaultdict(list)
     load_names = []
     for k, load in enumerate(dss.Loads):
@@ -177,6 +184,8 @@ class Feeder:
         self._home_node_split = np.cumsum([len(x) for x in self._home_nodes])[:-1]
         self.isolated = set()
         self._home_kw = np.zeros(N_HOMES)
+        self.capacitors = [c for c in dss.Capacitors.AllNames() if c and c.lower() != "none"]
+        self._tf_homes = [np.array(t["homes"], dtype=np.int64) for t in self.transformers]
 
     # ---- setters ------------------------------------------------------------
     def set_loads(self, kw, kvar):
@@ -255,8 +264,28 @@ class Feeder:
         cur = dss.CktElement.CurrentsMagAng()
         nc = dss.CktElement.NumConductors()
         head = max(cur[0:2 * nc:2])
+        pw = dss.CktElement.Powers()
+        head_kw = float(sum(pw[0:2 * nc:2]))
+        head_kvar = float(sum(pw[1:2 * nc:2]))
+        cap = 0.0
+        for c in self.capacitors:
+            dss.Circuit.SetActiveElement("Capacitor." + c)
+            cv = dss.CktElement.Powers()
+            n = 2 * dss.CktElement.NumConductors()
+            cap -= sum(cv[1:n:2])
         return {"P": P, "Q": Q, "pct": pct, "vmin_home_pu": vmin, "head_amps": float(head),
-                "feeder_kw": float(-dss.Circuit.TotalPower()[0])}
+                "feeder_kw": float(-dss.Circuit.TotalPower()[0]),
+                "head_kw": head_kw, "head_kvar": head_kvar, "cap_kvar": float(cap)}
+
+    def vmin_tf(self, vmin_home):
+        """Lowest home voltage (pu) per transformer from solve()'s `vmin_home_pu` ([1010] or [n, 1010]); 0.0 where the
+        transformer is isolated (its homes read 0.0) or has no homes."""
+        v = np.asarray(vmin_home, dtype=float)
+        out = np.zeros(v.shape[:-1] + (N_TFS,))
+        for i, hs in enumerate(self._tf_homes):
+            if len(hs):
+                out[..., i] = v[..., hs].min(axis=-1)
+        return out
 
 
 if __name__ == "__main__":

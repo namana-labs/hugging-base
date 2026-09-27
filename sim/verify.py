@@ -27,18 +27,18 @@ DAYS_INDEX = UI_DATA / "p1" / "days" / "index.json"
 
 def verify_labels():
     files = sorted(p for p in list(UI_DATA.rglob("*.json")) + list(UI_DATA.rglob("*.json.gz"))
-                   if not str(p.relative_to(UI_DATA)).startswith("ems/"))
+                   if not p.relative_to(UI_DATA).as_posix().startswith("ems/"))
     bad = []
     n = 0
     for p in files:
         try:
             doc = read_json_any(p)
         except (ValueError, OSError, EOFError) as e:
-            bad.append(f"{p.relative_to(UI_DATA)}: invalid JSON ({e})")
+            bad.append(f"{p.relative_to(UI_DATA).as_posix()}: invalid JSON ({e})")
             continue
         errs, k = audit_labels(doc)
         n += k
-        bad += [f"{p.relative_to(UI_DATA)}: {e}" for e in errs]
+        bad += [f"{p.relative_to(UI_DATA).as_posix()}: {e}" for e in errs]
     print(f"labels : {len(files)} files, {n} labelled headline numbers, {len(bad)} bare  [INVARIANT]")
     for b in bad[:20]:
         print("    -", b)
@@ -54,12 +54,12 @@ def verify_part(part, argv):
     have_data = DATA[part].exists()
     if importlib.util.find_spec(mod) is None:
         if have_data:
-            print(f"VERIFY {part}: FAIL ({mod} missing but {DATA[part].relative_to(UI_DATA.parent.parent)} exists)")
+            print(f"VERIFY {part}: FAIL ({mod} missing but {DATA[part].relative_to(UI_DATA.parent.parent).as_posix()} exists)")
             return 1
-        print(f"VERIFY {part}: SKIP (no {DATA[part].relative_to(UI_DATA.parent.parent)} yet)")
+        print(f"VERIFY {part}: SKIP (no {DATA[part].relative_to(UI_DATA.parent.parent).as_posix()} yet)")
         return 0
     if part == "p1" and "--days" in argv:
-        idx = DAYS_INDEX.relative_to(UI_DATA.parent.parent)
+        idx = DAYS_INDEX.relative_to(UI_DATA.parent.parent).as_posix()     # forward slashes on every OS
         if not DAYS_INDEX.exists() and ("--rebuild" not in argv or importlib.util.find_spec("sim.history") is None):
             print(f"VERIFY p1: SKIP (no {idx} yet)")
             return 0
@@ -68,7 +68,7 @@ def verify_part(part, argv):
             print(f"VERIFY p1: FAIL ({mod} does not handle --days, but {idx} exists or a days rebuild was asked for)")
             return 1
     if not have_data and "--rebuild" not in argv:
-        print(f"VERIFY {part}: SKIP (no {DATA[part].relative_to(UI_DATA.parent.parent)} yet)")
+        print(f"VERIFY {part}: SKIP (no {DATA[part].relative_to(UI_DATA.parent.parent).as_posix()} yet)")
         return 0
     return importlib.import_module(mod).main(argv) or 0
 
