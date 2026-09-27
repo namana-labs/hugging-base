@@ -259,10 +259,23 @@ class CatalogueTests(unittest.TestCase):
         self.assertIn("energyValueUSD", s["vsDefault"])
         self.assertEqual(s["vsDefault"]["energyValueUSD"]["refId"], "2026-08-23/naive")
         self.assertNotIn("vsDefault", self.by_id["2026-08-23/aware"])
+        self.assertNotIn("vsDefaultRef", self.by_id["2026-08-23/aware"])
+        for sid in ("2026-08-23/naive", "2026-08-23/none", "2026-08-23/aware/faults"):
+            self.assertEqual(self.by_id[sid]["vsDefaultRef"], "2026-08-23/aware", sid)
+        self.assertIn("batteryCausedNormal", self.by_id["2026-08-23/naive"]["vsDefault"])
+        self.assertEqual(self.by_id["2026-07-22/naive"]["vsDefaultRef"], "2026-08-23/naive")
         for sid, x in self.by_id.items():
-            for k, d in x.get("vsDefault", {}).items():
+            if sid == self.doc["default"]:
+                continue
+            self.assertIn(x["vsDefaultRef"], self.by_id, sid)       # every other scenario names its reference
+            self.assertIsInstance(x["vsDefault"], dict, sid)
+            ref = self.by_id[x["vsDefaultRef"]]["summary"]
+            for k, d in x["vsDefault"].items():
                 self.assertIn(k, self.doc["headline"])
                 self.assertNotEqual(d["v"], d["ref"], (sid, k))
+                self.assertEqual(d["refId"], x["vsDefaultRef"])
+                self.assertEqual((d["v"], d["label"]), (x["summary"][k]["v"], x["summary"][k]["label"]))
+                self.assertEqual(d["ref"], ref[k]["v"])
 
     def test_history_order_is_sim_history_days(self):
         from sim.history import DAYS
