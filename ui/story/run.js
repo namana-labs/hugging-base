@@ -366,6 +366,10 @@ export async function mount(root, ctx) {
       .map((f) => ({ ...f, where: markCustomers(f.where, topology), text: markCustomers(f.text, topology) }))
     : null;
   const failList = failures || [];
+  // where a failure happens, as HTML: the covert shard's size is covert.json's labelled summary.shard
+  const shardN = covert && covert.summary && covert.summary.shard && LABEL_OK(covert.summary.shard.label) ? covert.summary.shard : null;
+  const whereHTML = (f) => (f.kind === 'covert' && shardN
+    ? `${ctx.num(shardN)} batteries (fictional attacker)` : esc(f.where || ''));
   // lane ranges from the data: worst transformer and the named ones with their thresholds inside; price from 0; the
   // fleet power symmetric about 0 (kW)
   const LW = laneRange(S.worst, [T.normal && T.normal.v, T.emergency && T.emergency.v]);
@@ -382,7 +386,7 @@ export async function mount(root, ctx) {
   const placeC = ctx.catalogue && ctx.catalogue.constants && ctx.catalogue.constants.FLEET_PLACEMENT;
   const fsC = topology.constants && topology.constants.FLEET_SIZE;
   const plLab = fsC && LABEL_OK(fsC.label) ? fsC.label : shaping && LABEL_OK(shaping.label) ? shaping.label : null;
-  const placementNote = noFleet || !(fsC || shaping) ? '' : `<span class="note">fleet placed to stress these streets${tagOpt(plLab,
+  const placementNote = noFleet || !(fsC || shaping) ? '' : `<span class="note"><span class="tx">fleet placed to stress these streets</span>${tagOpt(plLab,
     [fsC ? fsC.cite : shaping.description, fleetHomes && placeC ? `This run: ${placeC.value}` : ''].filter(Boolean).join(' '))}</span>`;
   const loadLab = seriesLabel(doc, 'loading');
   const socLab = seriesLabel(doc, 'soc');
@@ -496,18 +500,18 @@ export async function mount(root, ctx) {
     const el = $('.rv-now');
     el.classList.toggle('failing', nowF.length > 0);
     el.innerHTML = `<div class="h"><span class="st-eyebrow">RIGHT NOW · ${stepToTime(meta, k)}</span>${tagOpt(cntLab, cntCite)}</div>
-      ${nowF.length ? `<div class="rv-failing"><div class="e">FAILING NOW · ${nowF.length}${rulesTag}</div>${nowF.map((f) => `<button type="button" class="rv-fnow" data-seek="${f.k0}"><span class="a"><b>${esc(kindWord(f.kind))}${f.where ? ` · ${esc(f.where)}` : ''}</b><span>${span(f)}</span></span><span class="b">${esc(f.text)}${tagOpt(f.label, f.label === 'ASSUMPTION' ? 'a scripted failure: what fails and when are assumptions' : 'from this run')}</span></button>`).join('')}</div>`
+      ${nowF.length ? `<div class="rv-failing"><div class="e">FAILING NOW · ${nowF.length}${rulesTag}</div>${nowF.map((f) => `<button type="button" class="rv-fnow" data-seek="${f.k0}"><span class="a"><b>${esc(kindWord(f.kind))}${f.where ? ` · ${whereHTML(f)}` : ''}</b><span>${span(f)}</span></span><span class="b">${esc(f.text)}${tagOpt(f.label, f.label === 'ASSUMPTION' ? 'a scripted failure: what fails and when are assumptions' : 'from this run')}</span></button>`).join('')}</div>`
         : failures ? `<div class="rv-ok"><i></i>No failures right now${batQual}</div>` : '<div class="rv-ok">Failures: not exported for this run</div>'}
       <div class="rv-sec"><div class="r"><b>${fmtN(tot)} transformers</b><span>${fmtN(B.within)} within nameplate${tagOpt(cntLab, cntCite)}</span></div><div class="rv-tbar">${bar}</div>
         <div class="rv-tiers">${B.bands.map((b) => `<span class="${b.bad ? 'bad' : b.n ? '' : 'zero'}"><i style="background:${rgb(b.rgb)}"></i>${esc(b.name)} ${fmtN(b.n)}${b.key === 'above' && b.past ? ` (${fmtN(b.past)} ${T.normalMin ? `past ${fmtN(T.normalMin.v)} min` : 'normal rating exceeded'})` : ''}</span>`).join('')}${tagOpt(cntLab, cntCite)}</div></div>
       ${noFleet ? '' : `<div class="rv-sec"><div class="r"><b>${fmtN(S.fleetN)} batteries${fleetTag}</b><span>${esc(stateLine)}</span></div><div class="rv-cells">${cells}</div></div>`}
       <div class="rv-all"><div class="e">FAILURES THIS EVENING<span>${failures ? `${failures.length}${rulesTag}` : '—'}</span></div>${!failures ? '<div class="rv-ok">Not exported for this run.</div>' : failures.length ? failures.map((f) => {
         const act = f.k0 <= k && k <= f.k1, past = f.k1 < k;
-        return `<button type="button" class="rv-frow${act ? ' act' : past ? ' past' : ''}" data-seek="${f.k0}" title="${esc(f.text)}"><i></i><span class="s">${span(f)}</span><span class="w">${esc(kindWord(f.kind))}${f.where ? ` · ${esc(f.where)}` : ''}</span></button>`;
+        return `<button type="button" class="rv-frow${act ? ' act' : past ? ' past' : ''}" data-seek="${f.k0}" title="${esc(f.text)}"><i></i><span class="s">${span(f)}</span><span class="w">${esc(kindWord(f.kind))}${f.where ? ` · ${whereHTML(f)}` : ''}</span></button>`;
       }).join('') : `<div class="rv-ok">None in this run${batQual}.</div>`}</div>`;
     const banner = $('.rv-banner');
     banner.hidden = nowF.length === 0;
-    banner.querySelector('.t').textContent = nowF.map((f) => `${kindWord(f.kind)}${f.where ? ` · ${f.where}` : ''}`).join('  ·  ');
+    banner.querySelector('.t').innerHTML = nowF.map((f) => `${esc(kindWord(f.kind))}${f.where ? ` · ${whereHTML(f)}` : ''}`).join('&nbsp; · &nbsp;');
     for (const b of bandEls) { const f = failList[Number(b.dataset.f)]; b.style.opacity = f.k1 < k || (f.k0 <= k && k <= f.k1) ? '1' : '.45'; }
   }
 
@@ -568,12 +572,12 @@ export async function mount(root, ctx) {
     $('.rv-scrub').setAttribute('aria-valuenow', String(k));
     const code = doc.tier[k] ? Number(doc.tier[k][S.wtf[k]]) : 0;
     const B = tierBands(S.counts[k], S.tfN, T);
-    root.querySelector('[data-v="worst"]').innerHTML = `<b>${fmtN(S.worst[k], 1)}%</b> · ${esc(tfName(topology, S.wtf[k]))} ${tagOpt(loadLab)}`;
+    root.querySelector('[data-v="worst"]').innerHTML = `<span class="tx"><b>${fmtN(S.worst[k], 1)}%</b> · ${esc(tfName(topology, S.wtf[k]))}</span>${tagOpt(loadLab)}`;
     const top = S.focus.reduce((m, f) => (f.pct[k] > m.pct[k] ? f : m), S.focus[0]);
-    root.querySelector('[data-v="focus"]').innerHTML = top ? `top <b>${esc(top.name)} ${fmtN(top.pct[k], 0)}%</b> ${tagOpt(loadLab)}` : '';
-    root.querySelector('[data-v="price"]').innerHTML = S.price ? `<b>$${fmtN(S.price[k], 2)}</b> ${tagOpt(priceLab, meta.sources && meta.sources.price ? meta.sources.price.text : '')}` : 'no price series';
-    root.querySelector('[data-v="soc"]').innerHTML = noFleet ? 'no batteries' : `<b>${fmtN(S.soc[k], 0)}%</b> ${tagOpt(socLab)}${reservePct !== null ? ` · ${reserveC && reserveC.label ? ctx.num({ v: reservePct, label: reserveC.label, cite: reserveC.cite }, { unit: '%' }) : `${fmtN(reservePct)}%`} reserve` : ''}`;
-    root.querySelector('[data-v="kw"]').innerHTML = noFleet ? 'no batteries' : `<b>${signedMW(S.kw[k])}</b> ${tagOpt(kwLab, 'the fleet\'s battery kW, + charging')} · ±${fmtN(kwHi / 1000, 1)} MW`;
+    root.querySelector('[data-v="focus"]').innerHTML = top ? `<span class="tx">top <b>${esc(top.name)} ${fmtN(top.pct[k], 0)}%</b></span>${tagOpt(loadLab)}` : '';
+    root.querySelector('[data-v="price"]').innerHTML = S.price ? `<span class="tx"><b>$${fmtN(S.price[k], 2)}</b></span>${tagOpt(priceLab, meta.sources && meta.sources.price ? meta.sources.price.text : '')}` : 'no price series';
+    root.querySelector('[data-v="soc"]').innerHTML = noFleet ? 'no batteries' : `<span class="tx"><b>${fmtN(S.soc[k], 0)}%</b></span>${tagOpt(socLab)}${reservePct !== null ? `<span class="tx">· ${fmtN(reservePct)}% reserve</span>${reserveC && LABEL_OK(reserveC.label) ? tagHTML(reserveC.label, reserveC.cite) : ''}` : ''}`;
+    root.querySelector('[data-v="kw"]').innerHTML = noFleet ? 'no batteries' : `<span class="tx"><b>${signedMW(S.kw[k])}</b></span>${tagOpt(kwLab, 'the fleet\'s battery kW, + charging')}<span class="tx">· ±${fmtN(kwHi / 1000, 1)} MW</span>`;
     // hero
     $('[data-v="hero"]').innerHTML = `${fmtN(S.worst[k], 1)}%${tagOpt(loadLab, 'OpenDSS loading as % of nameplate kVA as shipped')}`;
     $('.rv-hero .who i').style.background = rgb(TIER_RGB[code] || TIER_RGB[0]);
