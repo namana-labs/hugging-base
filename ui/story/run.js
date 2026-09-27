@@ -220,11 +220,13 @@ const yOf = (v, lo, hi) => clamp(100 - (v - lo) / (hi - lo) * 100, -2, 102).toFi
 /** The engine's measured cost of a run, from the catalogue (scenario.engine, and attackEngine for covert). */
 export function runCostHTML(sc, num) {
   const e = sc.engine || {}, a = sc.attackEngine || null;
-  const by = sc.producer ? ` (${esc(sc.producer)})` : '';
+  // `producer` made the run itself (worker_kill: mpalacios.runtime), or, with an attackEngine, only the attack replay
+  const by = sc.producer && !a ? ` (${esc(sc.producer)})` : '';
+  const aby = sc.producer && a ? ` (${esc(sc.producer)})` : '';
   const parts = [e.solves ? `${num(e.solves)} OpenDSS power flows` : '', e.buildSeconds ? `built in ${num(e.buildSeconds, { unit: ' s' })}` : ''].filter(Boolean);
   let html = parts.length ? `The engine already ran this evening${by}: ${parts.join(', ')}.`
     : 'The catalogue has no measured engine cost for this run.';
-  if (a && a.buildSeconds) html += ` The detector replay took ${num(a.buildSeconds, { unit: ' s' })} to build.`;
+  if (a && a.buildSeconds) html += ` The detector replay${aby} took ${num(a.buildSeconds, { unit: ' s' })} to build.`;
   return `${html} This page replays that output; nothing is solved in the browser.`;
 }
 

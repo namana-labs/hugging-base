@@ -60,8 +60,10 @@ test('run: the engine cost line is the catalogue\'s labelled numbers; no bare nu
   assert.match(html, /34\.8 s<\/span><span class="chip chip-DERIVED" title="sim.scenarios"/);
   assert.match(html, /nothing is solved in the browser/);
   assert.match(runCostHTML({}, numHTML), /no measured engine cost/);
-  const cov = runCostHTML({ ...sc, attackEngine: { buildSeconds: { v: 110, label: 'DERIVED' } } }, numHTML);
-  assert.match(cov, /detector replay took <span class="num">110 s/);
+  const cov = runCostHTML({ ...sc, producer: 'mpalacios.detect', attackEngine: { buildSeconds: { v: 110, label: 'DERIVED' } } }, numHTML);
+  assert.match(cov, /detector replay \(mpalacios\.detect\) took <span class="num">110 s/);
+  assert.match(cov, /^The engine already ran this evening: /, 'the feeder run is not the detector run');
+  assert.match(runCostHTML({ ...sc, producer: 'mpalacios.runtime' }, numHTML), /^The engine already ran this evening \(mpalacios\.runtime\): /);
   assert.throws(() => runCostHTML({ engine: { solves: 721 } }, numHTML), LabelError);
 });
 

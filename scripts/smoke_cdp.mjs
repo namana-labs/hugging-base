@@ -62,6 +62,7 @@ const chrome = spawn(CHROME, ['--headless=new', '--use-angle=swiftshader', '--en
 let done = false;
 const cleanup = () => {
   if (done) return; done = true;
+  if (process.platform === 'win32') spawnSync('taskkill', ['/F', '/T', '/PID', String(chrome.pid)]);   // the whole tree (no pkill)
   try { chrome.kill('SIGKILL'); } catch {}
   spawnSync('pkill', ['-f', `user-data-dir=${UD}`]);        // orphaned helpers (NetworkService) outlive the main process
   try { fs.rmSync(UD, { recursive: true, force: true }); } catch {}
@@ -148,7 +149,9 @@ async function main() {
         if (!f.placeholder && colours >= 0 && colours < 16) why.push(`shot has ${colours} colours (blank?)`);
       } catch (e) { why.push('shot:' + e.message); }
     }
-    if (consoleErrors.length) why.push(`console=${consoleErrors.length} (${consoleErrors[0].slice(0, 160)})`);
+    // a story page not merged yet: the app's probe of its module (a 404) is how it knows; nothing else is excused
+    const errs = consoleErrors.filter((e) => !(f.placeholder && /Failed to load resource/.test(e) && /\/story\/(results|learnings)\.js|\/story\/pages-b\.css/.test(e)));
+    if (errs.length) why.push(`console=${errs.length} (${errs[0].slice(0, 160)})`);
     const pass = why.length === 0; if (pass) ok++;
     const fl = ['status', 'webgl', 'errors', 'fixture', 'offsite'].map((k) => `${k}=${f[k] ?? '-'}`).join(' ') + (f.placeholder ? ` placeholder=${f.placeholder}` : '');
     console.log(`SMOKE ${q} ${pass ? 'ok' : 'FAIL ' + why.join(',')} | ${fl} | ${Date.now() - t0} ms | ${kb} KB | ${colours} colours`);
