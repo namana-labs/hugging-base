@@ -795,16 +795,27 @@ HEADLINE = ("batteryCausedNormal", "batteryCausedEmergency", "batteryCausedAmber
 
 
 def vs_default(summary, ref, ref_id):
-    """{key: {v, ref, refId}} for the headline keys whose value differs from the reference scenario's (the same policy on
-    the default evening and fleet): what this scenario's lever actually moved. Values only; labels stay in `summary`."""
+    """{key: {v, ref, refId, label}} for the headline keys whose value differs from the reference scenario's: v is this
+    scenario's value, ref the reference's, label this value's label (the full labelled values stay in `summary`). A key
+    missing or null on either side (e.g. chargedPctBy0400 with no batteries) is not a difference."""
     out = {}
     for k in HEADLINE:
         a, b = summary.get(k), ref.get(k)
-        if not isinstance(a, dict) or not isinstance(b, dict):
+        if not isinstance(a, dict) or not isinstance(b, dict) or a.get("v") is None or b.get("v") is None:
             continue
         if a.get("v") != b.get("v"):
-            out[k] = {"v": a.get("v"), "ref": b.get("v"), "refId": ref_id}
+            out[k] = {"v": a.get("v"), "ref": b.get("v"), "refId": ref_id, "label": a.get("label")}
     return out
+
+
+def vs_ref(levers):
+    """The reference scenario id of vsDefault (every scenario but the default has one): a policy change on the default
+    evening and fleet compares with the default run; a failure compares with the default run (its policy is aware);
+    a fleet lever compares with the same policy on the default fleet; another evening with the same policy on 23 Aug."""
+    fleet_default = all(levers[k] == DEFAULT_LEVERS[k] for k in ("fleet", "cls", "reserve", "soc0", "growth"))
+    if levers["evening"] == P1_DAY and fleet_default:
+        return DEFAULT_ID
+    return scenario_id(P1_DAY, levers["policy"])
 
 
 def build_catalogue():
@@ -881,9 +892,11 @@ def build_catalogue():
                 f"{date_label[P1_DAY]}: {POLICY_LABEL['none']} (a battery lever does not change it)", alias=none_sid)
     by_id = {s["id"]: s for s in scen}
     for s in scen:
-        ref_id = scenario_id(P1_DAY, s["levers"]["policy"])
-        if s["id"] != ref_id and ref_id in by_id and s.get("alias") != ref_id:
-            s["vsDefault"] = vs_default(s["summary"], by_id[ref_id]["summary"], ref_id)
+        if s["id"] == DEFAULT_ID:
+            continue
+        ref_id = vs_ref(s["levers"])
+        s["vsDefaultRef"] = ref_id
+        s["vsDefault"] = vs_default(s["summary"], by_id[ref_id]["summary"], ref_id)
     ids = [s["id"] for s in scen]
     if len(set(ids)) != len(ids):
         raise AssertionError("duplicate scenario ids")
