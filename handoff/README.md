@@ -2,7 +2,7 @@
 
 26 Sep 2026 · RZ. Snapshot of the live team hub doc; RZ shares the live docs.
 
-> **Update, 26 Sep 2026 (evening sprint): the root app is now the submission** (branch `submission`). Root `sim/` is the one engine and root `ui/` is the four story pages (Configure → Run → Results → Learnings); the old tab app is `ui/explore.html`. `simulators/rz/` stays as reference; where this hub says `simulators/rz/ui/data/` or `simulators/rz/docs/`, read the root `ui/data/` and `docs/`. Rulings and path ownership: [`docs/story-contract.md`](../docs/story-contract.md). Amy's audited numbers, each with its file and field: [`presentation/NUMBERS.md`](../presentation/NUMBERS.md).
+> **Update, 27 Sep 2026: the root app is the submission, merged into `main` (PR #42).** Root `sim/` is the one engine and root `ui/` is the four story pages (Configure → Run → Results → Learnings); the old tab app is `ui/explore.html`. `simulators/rz/` stays as reference; where this hub says `simulators/rz/ui/data/` or `simulators/rz/docs/`, read the root `ui/data/` and `docs/`. Rulings and path ownership: [`docs/story-contract.md`](../docs/story-contract.md). Amy's audited numbers, each with its file and field: [`presentation/NUMBERS.md`](../presentation/NUMBERS.md).
 
 ## Who does what, and the one doc each person reads
 
@@ -20,19 +20,19 @@ We submit a 5-minute video and the code by Sun 27 Sep, 11:00 AM Central. The dem
 
 | From | To | What | Where |
 | --- | --- | --- | --- |
-| RZ + Michael | Connor | Data files for every page: scenario catalogue, page-2 timeline, page-3 results, the capacity planner file | `simulators/rz/ui/data/`, documented in `simulators/rz/docs/contracts.md` |
+| RZ + Michael | Connor | Data files for every page: scenario catalogue, page-2 timeline, page-3 results, the capacity planner file | Root `ui/data/`, documented in `docs/contracts.md`, `docs/story-contract.md` and `docs/contracts-planner.md` |
 | Connor | RZ + Michael | A request list: any field, unit or label the pages need that the files lack | A GitHub issue or message; never faked on screen |
 | RZ + Michael | Amy | Audited numbers, and a yes or no on any claim | The numbers table in `presentation/START-HERE.md` |
 | Connor | Amy | One link per video beat, plus screenshots | Her script is a list of clicks |
 | Amy | Everyone | Who says what in the video, and the README first screen for judges | `presentation/` |
-| Bo | Connor, Amy | Design tokens, icons, slide design on request | `bo/` (branch `bo/frontend`) |
-| Everyone | The submission | Their piece, copied into one submission folder at the end | Section 5 |
+| Bo | Connor, Amy | Design tokens, icons, slide design on request | `bo/` (on `main`) |
+| Everyone | The submission | Their piece, merged into the root app on `main` | Section 5 |
 
 ## Bo and Jeff
 
-**Bo: design support.** Bo's design tokens and town-grid mockup are on branch `bo/frontend`, not yet on main.
+**Bo: design support.** Bo's design tokens and town-grid mockup are on `main` in the `bo/` folder (`bo/frontend` is merged).
 
-1. Open a PR from `bo/frontend` so the work lands on main in the `bo/` folder.
+1. Keep new design work in `bo/`.
 2. Read the team's design language in `docs/design-handoff/README.md` (colours, type, the battery-shaped fleet card, provenance tags, "green never means safe").
 3. Ask Connor what the four pages need first: icons (house, battery cabinet, pad-mount and pole-mount transformer, price, money, warning) are the likely first request.
 4. Offer Amy slide design for the one spec-only slide and the title card.
@@ -47,14 +47,14 @@ One folder per person or path. Each can be deleted without breaking another.
 
 | Folder | Whose | What |
 | --- | --- | --- |
-| `simulators/rz/` | RZ + Michael | The engine and app: run with `./run.sh`; gate `scripts/check_all.sh`. Also `research/`, `judges/`, `story/`, `RULINGS.md`. |
-| `mpalacios/` | Michael | Controller-crash survival and the attacker detector (imports the root `sim/`, which stays frozen) |
-| `simulators/connor/` | Connor | His simulator and control-room dashboard; the four pages get built here |
+| `simulators/rz/` | RZ + Michael | RZ's earlier copy of the app, superseded by the root app (PR #42); kept for `research/`, `judges/`, `story/`, `RULINGS.md`. |
+| `mpalacios/` | Michael | Controller-crash survival and the attacker detector (imports the root `sim/`) |
+| `simulators/connor/` | Connor | His simulator and control-room dashboard (earlier prototype); the four story pages live in the root `ui/` |
 | `docs/design-handoff/` | Connor | The team's design language |
 | `presentation/` | Amy | Her startup doc, script, Q&A |
-| `bo/` (branch) | Bo | Design tokens and mockup |
+| `bo/` | Bo | Design tokens and mockup |
 | `handoff/` | Everyone | This hub and the Connor and engine handoffs |
-| `sim/`, `ui/`, `scripts/`, `data/` at the root | Frozen | The older copy of the app; Michael's code depends on it. Don't edit. |
+| `sim/`, `ui/`, `scripts/`, `data/` at the root | Everyone (paths in `docs/story-contract.md`) | **The submission:** the engine (`sim/`) and the four story pages (`ui/`); `mpalacios/` imports `sim/`. Run: `docs/run-the-demo.md`. |
 | `demos/grid-stories/`, `four-home-simulation/` | Connor, Michael | Earlier prototypes, kept for history |
 
 Never commit `overnight/BASE_ENGINEER_INPUT.md`; it stays on RZ's laptop. The repo is public.
