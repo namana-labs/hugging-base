@@ -168,3 +168,60 @@ export function applyBeat(link, beats) {
   }
   return out;
 }
+
+// ---- the story app (ui/index.html + ui/story/, docs/story-contract.md "URL scheme") ---------------------------------
+// ui/index.html?page=configure|running|run|results|learnings&s=<scenario id>&k=<step>&speed=<x>&q=<1-4>&tf=<index>&n=<0-50>
+// plus two dev keys: &cat=<catalogue path under ui/data> (default story/index.json) and &nowebgl=1 (the 2D scene).
+// Defaults are omitted when a link is written: page=configure, k=0, speed=0.25, and s when it equals the catalogue default.
+export const STORY_PAGES = ['configure', 'running', 'run', 'results', 'learnings'];
+export const STORY_DEFAULT_PAGE = 'configure';
+export const STORY_DEFAULT_SPEED = 0.25;           // 0.25x = 2.5 simulated minutes per second (story contract ruling 5)
+export const STORY_CATALOGUE = 'story/index.json';
+const STORY_ID_RE = /^\d{4}-\d{2}-\d{2}(\/[a-z_]+){1,2}(\/[a-z0-9_]+=[a-z0-9_.]+)?$/;
+const CAT_RE = /^[A-Za-z0-9_\-/]+\.json(\.gz)?$/;
+
+/** Parse a story link. Unknown or malformed values become null (the page's default); `s` is checked against the
+ *  catalogue by the app (an unknown id falls back to the catalogue default with a notice). */
+export function parseStoryLink(search) {
+  const q = new URLSearchParams(search || '');
+  const int = (k, lo, hi) => {
+    const raw = q.get(k);
+    if (raw === null || !/^\d+$/.test(raw)) return null;
+    const n = Number(raw);
+    return n >= lo && n <= hi ? n : null;
+  };
+  const sp = q.get('speed') === null || q.get('speed') === '' ? NaN : Number(q.get('speed'));
+  const s = q.get('s');
+  const cat = q.get('cat');
+  return {
+    page: STORY_PAGES.includes(q.get('page')) ? q.get('page') : STORY_DEFAULT_PAGE,
+    s: s && s.length <= 120 && STORY_ID_RE.test(s) ? s : null,
+    k: int('k', 0, 100000),
+    speed: SPEEDS.includes(sp) ? sp : null,
+    q: int('q', 1, 4),
+    tf: int('tf', 0, 100000),
+    n: int('n', 0, 50),
+    cat: cat && CAT_RE.test(cat) && !cat.includes('..') ? cat : null,
+    nowebgl: q.get('nowebgl') === '1',
+  };
+}
+
+/** A story link as a query string ("?page=run&s=..."), defaults omitted. `defaults.s` is the catalogue default id. */
+export function storyLinkQuery(link, defaults = {}) {
+  const q = new URLSearchParams();
+  if (link.page && link.page !== STORY_DEFAULT_PAGE) q.set('page', link.page);
+  if (link.s && link.s !== defaults.s) q.set('s', link.s);
+  if (Number.isInteger(link.k) && link.k > 0) q.set('k', String(link.k));
+  if (link.speed != null && link.speed !== STORY_DEFAULT_SPEED) q.set('speed', String(link.speed));
+  for (const k of ['q', 'tf', 'n']) if (Number.isInteger(link[k])) q.set(k, String(link[k]));
+  if (link.cat && link.cat !== STORY_CATALOGUE) q.set('cat', link.cat);
+  if (link.nowebgl) q.set('nowebgl', '1');
+  // '/' and '=' are legal inside a query value: keep scenario ids readable (2026-08-23/naive/fleet=192)
+  return '?' + q.toString().replace(/%2F/g, '/').replace(/%3D/g, '=');
+}
+
+/** Any data file by path under ui/data: `*.json.gz` through getGz, anything else through getJSON. Cached. */
+export const getAny = (path) => (/\.gz$/.test(path) ? getGz(path) : getJSON(path));
+
+/** True when a file's fetch has already started (the Running screen shows it as loading or loaded). */
+export function isCached(path) { return state.cache.has(path); }
