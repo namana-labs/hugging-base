@@ -40,7 +40,7 @@ Tracks: **Orchestration** is our main one ("coordinate many independent things; 
 
 ## The one problem, in plain words
 
-ERCOT, the Texas grid operator, tells Base's fleet of home batteries one number per price zone, such as "charge this many megawatts now". It never looks at the equipment on your street. Each street has small transformers, each serving a handful of homes (about 3 on average on our feeder: 1,010 customers (971 homes, 39 small businesses) on 379 transformers). When prices crash at night and every battery charges at once, those small transformers overload, while the market sees "all good".
+ERCOT, the Texas grid operator, tells Base's fleet of home batteries one number per price zone, such as "charge this many megawatts now". It never looks at the equipment on your street. Each street has small transformers, each serving a handful of homes (about 3 customers per transformer on our feeder: 1,010 customers, 971 of them homes and 39 small businesses, on 379 transformers). When prices crash at night and every battery charges at once, those small transformers overload, while the market sees "all good".
 
 Base asked us two questions on site. **Where should batteries charge, given this?** And, the CEO's priority, **where should the next battery go?** A Base engineer then added the business pain: installs get blocked late because the utility says the street transformer needs an upgrade.
 
