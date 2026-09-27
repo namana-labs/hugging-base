@@ -619,7 +619,8 @@ export async function mount(root, ctx) {
     sceneK = -1;
     drawn = -1;
     draw();
-    await withTimeout(scene.whenRendered(), 20000, 'first scene render');
+    // a slow first frame (a loaded machine, a background tab) is not an error: the page is usable, the scene fills in
+    await withTimeout(scene.whenRendered(), 20000, 'first scene render').catch((e) => console.warn('[hb story]', e.message));
   } finally {
     const l = root.querySelector('.rv-scene .rv-loading');
     if (l) l.remove();
