@@ -322,8 +322,11 @@ headline: [summary keys in display order: batteryCausedNormal, batteryCausedEmer
 match: how a choice resolves (by id; else the first `unavailable` row whose every lever matches, a list = any of)
 scenarios: [{id, title, preset?, levers{all eight}, meta, branch, extras, compare{none?,naive?,aware?}, gz,
              summary{labelled, the same keys as meta.summary.<branch>}, engine{buildSeconds{v,label,cite}, solves{v,label,cite}},
-             vsDefault?{<headline key>: {v, ref, refId}},       # only the headline keys this scenario moved vs the same
-                                                                # policy on the default evening and fleet (refId)
+             vsDefaultRef?, vsDefault?{<headline key>: {v, ref, refId, label}},
+                 # every scenario but the default: vsDefaultRef = the reference scenario id (the default run for a policy
+                 # or failure change on 23 Aug; the same policy on the default fleet for a fleet lever; the same policy on
+                 # 23 Aug for another evening); vsDefault = only the headline keys whose value differs (v this scenario's,
+                 # ref the reference's, label v's label; a null on either side is not a difference); {} = nothing moved
              variant?, alias?, plays?, attack?, attackSummary?, attackEngine?, producer?}]
 unavailable: [{levers{partial; a value or a list}, reason}]
 constants: {... V_ANSI_LO 0.95, V_ANSI_HI 1.05 (REAL, ANSI C84.1-2020 Range A),
