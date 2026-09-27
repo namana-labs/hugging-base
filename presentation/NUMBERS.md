@@ -154,6 +154,7 @@ Paths are relative to the repo root. `mpalacios/out/p1/worker_kill.json` and `mp
 | Q4 #1: T-240's August peak without the battery (OpenDSS) | **119.5%** | SIM | `ui/data/p2/aware-core-d26-g0.json` | `ranking[0].opendss.before.peakPct` |
 | Q4 #1: …with the top-5 build (OpenDSS) | **96.9%** | SIM | `ui/data/p2/aware-core-d26-g0.json` | `ranking[0].opendss.after.peakPct` |
 | Q4 #1: hours above nameplate it relieves (screening) | **1.25 h** | SIM | `ui/data/p2/aware-core-d26-g0.json` | `ranking[0].stressAvoidedH` |
+| Q4 #1: T-240's August month peak with its battery, as the Q4 page prints it (screening, not the OpenDSS 96.9%) | **96.8%** | SIM | `ui/data/p2/aware-core-d26-g0.json` | `ranking[0].peakWithPct` |
 | Q4: candidates placed only by id (ties) | **802** | SIM | `ui/data/p2/index.json` | `ties.byId` |
 | …out of | **911** | SIM | `ui/data/p2/index.json` | `ties.of` |
 | The flip: #1 feeder-aware home's rank under naive | **345 of 353** | DERIVED | `ui/data/p2/index.json` | `flip.movers[2].rankNaive, flip.entries` |
