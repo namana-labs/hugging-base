@@ -1,0 +1,13 @@
+{
+  "redirects": [
+    { "source": "/", "destination": "/ui/index.html", "permanent": false },
+    { "source": "/ui", "destination": "/ui/index.html", "permanent": false }
+  ],
+  "headers": [
+    { "source": "/(.*)\\.json\\.gz", "headers": [
+      { "key": "Content-Type", "value": "application/gzip" },
+      { "key": "Cache-Control", "value": "public, max-age=3600" } ] },
+    { "source": "/ui/data/(.*)", "headers": [
+      { "key": "Cache-Control", "value": "public, max-age=3600" } ] }
+  ]
+}

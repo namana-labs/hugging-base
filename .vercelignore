@@ -1,0 +1,5 @@
+# Vercel serves only the static app (ui/); everything else stays in the repo.
+/*
+!/ui
+!/vercel.json
+/ui/test

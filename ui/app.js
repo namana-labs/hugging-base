@@ -101,7 +101,7 @@ function header(link) {
   const tabs = [['p1', 'P1 · where to charge'], ['p2', 'P2 · where the next battery goes'], ['more', 'More']];
   const h = document.createElement('header');
   h.className = 'hb-header';
-  h.innerHTML = `<div class="hb-brand">Hugging Base<small>feeder-aware battery fleet</small></div>
+  h.innerHTML = `<div class="hb-brand">Batter Up<small>feeder-aware battery fleet</small></div>
     <nav class="hb-tabs">${tabs.map(([v, t]) => `<a href="${data.linkQuery({ view: v })}"${v === link.view ? ' aria-current="page"' : ''}>${t}</a>`).join('')}</nav>
     <div class="hb-standin">NREL SMART-DS 2018 AUS P1U: REAL dataset · synthetic feeder ${fmt.chip('REAL', FEEDER_CITE)}<br>Oncor-suburb stand-in settled at LZ_NORTH (placeholder) ${fmt.chip('ASSUMPTION', STANDIN_CITE)}</div>`;
   const banner = document.createElement('div');
