@@ -89,6 +89,22 @@ export function vsDefaultHTML(rows, { max = Infinity } = {}) {
     + (more > 0 ? `<span class="vs-more" title="${esc(vsDefaultText(rows.slice(max)))}">+${more} more</span>` : '');
 }
 
+// ---- customers: every load bus is a customer; topology homes[].use says "residential" or "commercial" (DERIVED,
+// topology meta.customerUse). A single customer keeps its "Home 0xxx" id; a commercial one is marked a small business.
+export const SMALL_BUSINESS = 'small business';
+/** "Home 0225 (small business)" for a commercial customer, else its label ("Home 0001"). `h` = index into homes. */
+export function customerName(topology, h) {
+  const x = topology && topology.homes && topology.homes[h];
+  if (!x) return `Home ${h}`;
+  return x.use === 'commercial' ? `${x.label} (${SMALL_BUSINESS})` : x.label;
+}
+/** The engine's own text with every commercial customer's "Home 0xxx" marked "(small business)"; nothing else changes. */
+export function markCustomers(text, topology) {
+  const com = new Set(((topology && topology.homes) || []).filter((x) => x.use === 'commercial').map((x) => x.label));
+  if (!com.size || !text) return text;
+  return String(text).replace(/Home \d{4}(?! \(small business\))/g, (m) => (com.has(m) ? `${m} (${SMALL_BUSINESS})` : m));
+}
+
 /** Lever words for the run pill, from the catalogue's own option labels. */
 export function leverSummary(catalogue, levers) {
   const L = (catalogue && catalogue.levers) || {};

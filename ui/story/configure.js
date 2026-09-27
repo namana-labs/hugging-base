@@ -83,12 +83,24 @@ export function applyLever(cat, current, key, value) {
   return { scenario: st.scenario, levers: st.levers, notes };
 }
 
-/** Customers on the feeder from topology meta.counts: every load bus is a customer (`homes` counts load buses, not
- *  only houses). The residential count shows only when the data carries it (`residential`); never a literal. */
-export function customerCounts(counts) {
+/** Customers on the feeder from topology meta: every load bus is a customer (`counts.homes` counts load buses, not
+ *  only houses); `counts.residential` / `counts.commercial` split them, labelled by `meta.customerUse` {label, cite}.
+ *  The split shows only when the data carries it; never a literal. */
+export function customerCounts(meta) {
+  const counts = meta && meta.counts;
   if (!counts || !Number.isFinite(counts.homes)) return null;
-  const res = [counts.residential, counts.homesResidential].find((x) => Number.isFinite(x));
-  return { customers: counts.homes, residential: res ?? null };
+  const use = meta.customerUse && meta.customerUse.label ? meta.customerUse : { label: 'DERIVED', cite: 'topology.json meta.counts' };
+  const split = Number.isFinite(counts.residential) && Number.isFinite(counts.commercial);
+  return { customers: counts.homes, residential: split ? counts.residential : null, commercial: split ? counts.commercial : null,
+    fleetOnCommercial: Number.isFinite(counts.fleetOnCommercial) ? counts.fleetOnCommercial : null, label: use.label, cite: use.cite || '' };
+}
+/** HTML: "1,010 customers (971 homes, 39 small businesses)", each count with its tag. */
+export function customersHTML(cc, num, feederCite = '') {
+  if (!cc) return '';
+  const total = `${num({ v: cc.customers, label: 'REAL', cite: `${feederCite} Every load bus in the feeder is a customer.`.trim() })} customers`;
+  if (cc.residential === null) return total;
+  const t = (v) => num({ v, label: cc.label, cite: cc.cite });
+  return `${total} (${t(cc.residential)} homes, ${t(cc.commercial)} small businesses)`;
 }
 
 /** The evening's load/price pairing, disclosed (data-truth audit #9): the 2026 price date and the 2018 load date of
@@ -283,13 +295,12 @@ export async function mount(root, ctx) {
     const m = meta, c = (m && m.constants) || {};
     const n = (x, o) => (x ? ctx.num(x, o) : '');
     const counts = topo && topo.meta && topo.meta.counts;
-    const cc = customerCounts(counts);
+    const cc = customerCounts(topo && topo.meta);
     const cite = `${FEEDER_CITE} Counts: topology.json meta.counts.`;
     const grid = [];
     if (topo) {
       grid.push(row('Feeder', `NREL SMART-DS 2018 AUS P1U <span class="cfg-synth" title="${esc(FEEDER_CITE)}">${esc(FEEDER_TAG)}</span>`
-        + (counts && cc ? `<br>${ctx.num({ v: counts.transformers, label: 'REAL', cite })} transformers · ${ctx.num({ v: cc.customers, label: 'REAL', cite: `${cite} Every load bus is a customer; not all are houses.` })} customers`
-          + (cc.residential !== null ? ` (${ctx.num({ v: cc.residential, label: 'DERIVED', cite: `${cite} Residential load shapes.` })} homes)` : '') : '')));
+        + (counts && cc ? `<br>${ctx.num({ v: counts.transformers, label: 'REAL', cite })} transformers · ${customersHTML(cc, ctx.num, cite)}` : '')));
       const sh = topo.meta.shaping;
       if (sh && sh.description) grid.push(row('Fleet placement', `a deliberate stress placement, not a neutral one ${tagHTML(sh.label || 'ASSUMPTION', sh.description)}`));
     }

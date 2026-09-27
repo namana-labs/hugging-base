@@ -15,7 +15,7 @@
 // Transformer count, steps, start time, fleet size, tiers and the reserve are all read from the data.
 import { TIER_RGB, STATE_RGB, buildSceneModel, frameFromP1 } from '../lib/scene-model.js';
 import { stepToTime, timeToStep } from '../lib/format.js';
-import { tagHTML, vsDefaultRows, vsDefaultHTML, vsDefaultText } from './shell.js';
+import { tagHTML, vsDefaultRows, vsDefaultHTML, vsDefaultText, customerName, markCustomers } from './shell.js';
 
 export const SPEEDS = [0.1, 0.25, 0.5, 1, 2, 4];
 export const DEFAULT_SPEED = 0.25;         // 0.25x = 2.5 simulated minutes per second (story contract ruling 5)
@@ -114,7 +114,7 @@ export const kindWord = (kind) => KIND[kind] || String(kind || '').replace(/_/g,
  *  network-limit intervals of the counts series (codes 3/4/5) and stale/expired batteries (state S/X). */
 export function fallbackFailures({ meta, doc, series, topology, branch, covert = null }) {
   const n = series.n, out = [];
-  const home = (h) => (topology.homes[h] ? topology.homes[h].label : `Home ${h}`);
+  const home = (h) => customerName(topology, h);
   for (const e of (meta.events && meta.events[branch]) || []) {
     const k1 = e.kind === 'comms_lost' ? (e.coveredStep ?? e.expiredStep ?? e.step) : e.kind === 'stall' ? (e.resumeStep ?? e.step) : e.kind === 'hot' && e.minutes ? e.step + e.minutes : e.step;
     const where = e.kind === 'comms_lost' ? home(e.home) : e.tf !== undefined ? tfName(topology, e.tf) : e.kind === 'stall' ? 'our controller' : '';
@@ -303,6 +303,7 @@ const LABEL_OK = (l) => ['REAL', 'SIM', 'DERIVED', 'ASSUMPTION', 'UNVERIFIED', '
 const withTimeout = (p, ms, what) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(`${what} timed out after ${ms} ms`)), ms))]);
 
 const STATE_CSS = { C: '#1e4d2b', D: '#c7962b', I: '#e3dfd3', S: '#8f8b7f', X: '#8f8b7f', B: '#8fcf9f' };
+const STATE_WORDS = { C: 'charging', D: 'discharging', I: 'idle', S: 'stale: no telemetry', X: 'command expired', B: 'carrying its home (backup)' };
 
 export async function mount(root, ctx) {
   const sc = ctx.scenario;
@@ -330,16 +331,20 @@ export async function mount(root, ctx) {
   // a variant run may place its batteries on other homes (meta.fleet / doc.fleet: home indices)
   const fleetHomes = (Array.isArray(meta.fleet) && meta.fleet) || (Array.isArray(doc.fleet) && doc.fleet) || null;
   let topoRun = topology;
+  const batteryHomes = (fleetHomes && fleetHomes.length === S.fleetN ? fleetHomes : (topology.fleet || []).length === S.fleetN ? topology.fleet : [])
+    .map((f) => (typeof f === 'number' ? f : f && Number.isInteger(f.home) ? f.home : undefined));
   let hideBatteries = noFleet;
   if (fleetHomes && fleetHomes.length === S.fleetN) topoRun = { ...topology, fleet: fleetHomes };
   else if (S.fleetN !== (topology.fleet || []).length) hideBatteries = true;
   // the engine's rule log and failure list (extras); the covert attack lives in its own file (p3/covert.json), so its
   // line and interval are added here from that file's own text and steps
-  const moments = extras && Array.isArray(extras.moments)
-    ? [...extras.moments, ...covertMoments(covert)].sort((a, b) => a.k - b.k) : fallbackMoments({ meta, doc, branch, covert });
-  const failures = extras && Array.isArray(extras.failures)
+  const moments = (extras && Array.isArray(extras.moments)
+    ? [...extras.moments, ...covertMoments(covert)].sort((a, b) => a.k - b.k) : fallbackMoments({ meta, doc, branch, covert }))
+    .map((m) => ({ ...m, text: markCustomers(m.text, topology) }));
+  const failures = (extras && Array.isArray(extras.failures)
     ? [...extras.failures, ...covertFailures(covert, n0(doc))].sort((a, b) => a.k0 - b.k0 || a.k1 - b.k1)
-    : fallbackFailures({ meta, doc, series: S, topology, branch, covert });
+    : fallbackFailures({ meta, doc, series: S, topology, branch, covert }))
+    .map((f) => ({ ...f, where: markCustomers(f.where, topology), text: markCustomers(f.text, topology) }));
   const worstMax = Math.max(...S.worst);
   const priceMax = S.price ? Math.max(...S.price) : 0;
   const priceHi = Math.max(600, Math.ceil(priceMax / 100) * 100);
@@ -443,10 +448,11 @@ export async function mount(root, ctx) {
     const nowF = failures.filter((f) => f.k0 <= k && k <= f.k1);
     const st = noFleet ? '' : (doc.state[k] || '');
     const cnt = { C: 0, D: 0, I: 0, F: 0 };
-    const cells = Array.from(st).map((ch) => {
+    const cells = Array.from(st).map((ch, j) => {
       const bad = ch === 'S' || ch === 'X';
       if (bad) cnt.F += 1; else if (ch in cnt) cnt[ch] += 1;
-      return `<i class="${bad ? 'bad' : ''}" style="background:${STATE_CSS[ch] || '#e3dfd3'}"></i>`;
+      const who = batteryHomes[j] !== undefined ? customerName(topology, batteryHomes[j]) : `battery ${j + 1}`;
+      return `<i class="${bad ? 'bad' : ''}" style="background:${STATE_CSS[ch] || '#e3dfd3'}" title="${esc(`${who} · ${STATE_WORDS[ch] || ch}`)}"></i>`;
     }).join('');
     const tierRows = [['over nameplate', c[0], TIER_RGB[1], false], [`above ${tiers.normal ?? ''}%`, c[1] + c[2], TIER_RGB[3], c[2] > 0],
       ['emergency', c[3], TIER_RGB[4], c[3] > 0], ['open', c[4], TIER_RGB[5], c[4] > 0]];
@@ -477,7 +483,7 @@ export async function mount(root, ctx) {
     const flagged = det.flaggedAt(k), quarantined = det.quarantinedAt(k);
     const cells = det.units.map((u) => {
       const st = k < a.step ? 'off' : u.quarantinedStep !== null && u.quarantinedStep <= k ? 'held' : u.flaggedStep !== null && u.flaggedStep <= k ? 'flag' : 'on';
-      return `<i class="${st}" title="${esc(`battery ${u.batt} (home ${u.home}) · ${DET_WORDS[st]}${u.flaggedStep !== null ? ` · flagged ${stepToTime(meta, u.flaggedStep)}` : ''}`)}"></i>`;
+      return `<i class="${st}" title="${esc(`${u.home !== null ? customerName(topology, u.home) : `battery ${u.batt}`} · ${DET_WORDS[st]}${u.flaggedStep !== null ? ` · flagged ${stepToTime(meta, u.flaggedStep)}` : ''}`)}"></i>`;
     }).join('');
     const cx = det.x(k);
     $('.rv-det').innerHTML = `<div class="h"><span class="e">DETECTOR · FICTIONAL ATTACKER</span>${tagHTML(det.label, (covert.sources && covert.sources.detector && covert.sources.detector.text) || 'detector run')}</div>

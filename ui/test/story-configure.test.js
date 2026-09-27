@@ -197,14 +197,41 @@ test('configure: ENGINE\'s story/index.json holds the invariants (when built)', 
   assert.ok(cat.levers.reserve.options.every((o) => Number(o.id) >= 20), 'the reserve is never below 20% (ruling 1)');
 });
 
-test('configure: customers, not homes (data-truth #6): read from topology counts, the residential count only when present', async () => {
-  const { customerCounts } = await import('../story/configure.js');
-  const t = JSON.parse(fs.readFileSync(path.join(UI, 'data', 'topology.json'), 'utf8'));
-  const c = customerCounts(t.meta.counts);
-  assert.equal(c.customers, t.meta.counts.homes);
-  assert.equal(c.residential, Number.isFinite(t.meta.counts.residential) ? t.meta.counts.residential : null);
-  assert.deepEqual(customerCounts({ homes: 1010, residential: 971 }), { customers: 1010, residential: 971 });
+test('configure: customers, not homes (data-truth #6): "N customers (R homes, C small businesses)" read from topology', async () => {
+  const { customerCounts, customersHTML } = await import('../story/configure.js');
+  const { numHTML } = await import('../story/shell.js');
+  const meta = { counts: { homes: 10, residential: 8, commercial: 2, fleetOnCommercial: 1 }, customerUse: { label: 'DERIVED', cite: 'Loads.dss shapes' } };
+  const cc = customerCounts(meta);
+  assert.deepEqual(cc, { customers: 10, residential: 8, commercial: 2, fleetOnCommercial: 1, label: 'DERIVED', cite: 'Loads.dss shapes' });
+  const html = customersHTML(cc, numHTML, 'feeder');
+  assert.match(html, /^<span class="num">10<\/span><span class="chip chip-REAL"[^>]*>REAL<\/span> customers \(<span class="num">8<\/span><span class="chip chip-DERIVED" title="Loads.dss shapes">DERIVED<\/span> homes, <span class="num">2<\/span>.*small businesses\)$/);
+  // without the split in the data: the total only, never a typed number
+  assert.equal(customerCounts({ counts: { homes: 10 } }).residential, null);
+  assert.match(customersHTML(customerCounts({ counts: { homes: 10 } }), numHTML), /customers$/);
   assert.equal(customerCounts(null), null);
+  // the committed topology (the split once the engine's export is merged)
+  const t = JSON.parse(fs.readFileSync(path.join(UI, 'data', 'topology.json'), 'utf8'));
+  const real = customerCounts(t.meta);
+  assert.equal(real.customers, t.homes.length);
+  if (real.residential !== null) {
+    assert.equal(real.residential + real.commercial, real.customers);
+    assert.equal(t.homes.filter((h) => h.use === 'commercial').length, real.commercial);
+    assert.equal(real.label, t.meta.customerUse.label);
+  }
+});
+
+test('shell: a single customer keeps its id; a commercial one is marked "small business"', async () => {
+  const { customerName, markCustomers } = await import('../story/shell.js');
+  const topo = { homes: [{ label: 'Home 0001', use: 'residential' }, { label: 'Home 0002', use: 'commercial' }, { label: 'Home 0003' }] };
+  assert.equal(customerName(topo, 0), 'Home 0001');
+  assert.equal(customerName(topo, 1), 'Home 0002 (small business)');
+  assert.equal(customerName(topo, 2), 'Home 0003');
+  assert.equal(markCustomers('Home 0002 goes silent; Home 0001 does not', topo), 'Home 0002 (small business) goes silent; Home 0001 does not');
+  assert.equal(markCustomers('Home 0002 (small business) twice', topo), 'Home 0002 (small business) twice', 'idempotent');
+  assert.equal(markCustomers('Home 0002', { homes: [] }), 'Home 0002');
+  const t = JSON.parse(fs.readFileSync(path.join(UI, 'data', 'topology.json'), 'utf8'));
+  const com = t.homes.map((h, i) => [h, i]).filter(([h]) => h.use === 'commercial');
+  for (const [h, i] of com) assert.equal(customerName(t, i), `${h.label} (small business)`);
 });
 
 test('configure: the evening disclosure (data-truth #9) computes both weekdays and names the clock caveat', async () => {
