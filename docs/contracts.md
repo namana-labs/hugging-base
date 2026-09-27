@@ -366,7 +366,12 @@ from the branch file it describes, without OpenDSS (the OpenDSS series are kept)
 - Every extras file comes from a re-run of the branch the page plays, and the job **fails** unless the re-run reproduces
   that branch's `loading` cell for cell. OpenDSS starts every solve from the last solution, so a run reproduces only
   from the same circuit state: 23 Aug re-runs `sim.p1_build`'s order on a fresh circuit, the history evenings re-run
-  `sim.history`'s order (22 Jul, 26 Aug, 14 Aug, one fresh circuit). Variants are new runs (no committed twin).
+  `sim.history`'s order (22 Jul, 26 Aug, 14 Aug, one fresh circuit).
+- **Every job is reproducible by construction** (its result depends on no other job): each variant runs on its own fresh
+  circuit, none → naive → aware in `sim.p1_build`'s order. A battery lever's none must reproduce `p1/none.json` cell for
+  cell (the job fails otherwise), so the variant's naive and aware start from the circuit state `sim.p1_build` gives
+  them; with default lever values the variant path reproduces the committed 23 Aug branches (`test_scenarios`).
+  The canonical build is one process, `python -m sim.scenarios`.
 - A key the source cannot give is **ABSENT** (and named in `absent`), never zero. `worker_kill` is derived from its
   committed branch file alone (never rebuilt): `vTfMilli`, `headKW`, `headKVAr`, `capKVAr`, `feederLoadKW` are absent.
 

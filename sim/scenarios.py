@@ -6,7 +6,9 @@ docs/story-contract.md; docs/contracts.md A.12).
     python -m sim.scenarios --only variant:fleet=192 --only base:2026-07-22 --no-catalogue   # jobs by name
     python -m sim.scenarios --catalogue-only         # the two copies + ui/data/story/index.json from files on disk
 
-Jobs (each one live OpenDSS circuit; run several processes in parallel, then --catalogue-only):
+Jobs. Each job's result depends only on itself (OpenDSS warm-starts every solve from the last solution, so every job
+starts from a fresh circuit and runs its branches in the committed builders' order); `python -m sim.scenarios` in one
+process is the canonical build and reproduces every file here:
   base:<evening>     re-runs the committed branches of that evening (23 Aug: none, naive, aware, aware_faults; other
                      evenings: none, naive, aware, loads as sim.history builds them) and writes one extras file per
                      branch, ui/data/p1/extras/<scenario id with / as _>.json.gz (A.12). The re-run must reproduce the
@@ -14,9 +16,10 @@ Jobs (each one live OpenDSS circuit; run several processes in parallel, then --c
                      starts each solve from the last solution, so the runs follow the committed builds' order on a fresh
                      circuit: 23 Aug as sim.p1_build; any history evening re-runs all of them in sim.history.DAYS order
                      (22 Jul, 26 Aug, 14 Aug) on one circuit.
-  variant:<l>=<v>    one fleet lever away from the default on 23 Aug (FLEET_LEVERS): naive and aware (growth also its own
-                     none) into ui/data/p1/variants/<l>=<v>/ (meta.json + <branch>.json.gz in the A.5/A.6 shapes, with
-                     `variant`, `fleet`, `fleetCls` and measured engine seconds) and their extras.
+  variant:<l>=<v>    one fleet lever away from the default on 23 Aug (FLEET_LEVERS), on its own fresh circuit: none,
+                     naive, aware in sim.p1_build's order (a battery lever's none must reproduce p1/none.json and is
+                     shared; growth writes its own) into ui/data/p1/variants/<l>=<v>/ (meta.json + <branch>.json.gz in
+                     the A.5/A.6 shapes, with `variant`, `fleet`, `fleetCls` and measured engine seconds) + extras.
   worker_kill        derives the extras the committed worker-kill replay (mpalacios/out/p1/worker_kill.json) allows,
                      from that file alone (never rebuilt here); the rest is ABSENT, never zero. Its engine cost is the
                      measured rebuild time in mpalacios/docs/measurements.md (WORKER_KILL_SECONDS).
@@ -518,53 +521,79 @@ def job_base(evening, feeder=None):
     return runs, sc
 
 
-def job_variant(lever, value, feeder=None, none_run=None):
-    """One fleet lever away from the default on 23 Aug: naive + aware (+ none for growth) into the variant dir."""
+def variant_runs(lever=None, value=None, win=None, loads=None):
+    """The none, naive and aware runs of one 23 Aug lever value, independent of anything run before in the process by
+    construction: a fresh circuit (Feeder() -> dss ClearAll + compile), then the three branches in sim.p1_build's order
+    (none first, even when the lever cannot change it, so the circuit state before naive and aware is the one
+    sim.p1_build gives them). lever None = the committed defaults. Returns (sc, runs, secs, feeder_seconds)."""
     from .feeder import Feeder
     from .loads import Loads
-    from .p1_build import Scenario, Window, run_branch, assemble, hhmm
-    from .history import story_for, _gz_branch
+    from .p1_build import Scenario, Window, run_branch
     t0 = time.time()
-    key = lever_key(lever, value)
     if lever in ("fleet", "cls"):
-        doc = fleet_doc(value if lever == "fleet" else FLEET_SIZE, value if lever == "cls" else "core")
-        feeder = Feeder(fleet=doc)
-    elif feeder is None:
+        feeder = Feeder(fleet=fleet_doc(value if lever == "fleet" else FLEET_SIZE, value if lever == "cls" else "core"))
+    else:
         feeder = Feeder()
     t_feeder = time.time() - t0
-    win = Window()
-    sc = Scenario(win, loads=Loads(), feeder=feeder, **lever_kwargs(lever, value))
-    sc.const_extra = fleet_constants(lever, value, sc)
-    inputs = inputs_sha()
+    sc = Scenario(win or Window(), loads=loads if loads is not None else Loads(), feeder=feeder,
+                  **(lever_kwargs(lever, value) if lever else {}))
+    if lever:
+        sc.const_extra = fleet_constants(lever, value, sc)
     runs, secs = {}, {}
-    own_none = lever == "growth" or (lever == "fleet" and value != FLEET_SIZE)
     for b in ("none", "naive", "aware"):
-        if b == "none" and not own_none and none_run is not None:
-            runs[b] = none_run
-            continue
         t1 = time.time()
         runs[b] = run_branch(sc, b, faults={"dwell": MIN_DWELL_MIN})
         secs[b] = time.time() - t1
-        print(f"  {key} {b}: max {runs[b]['pct'].max():.1f}% ({secs[b]:.1f} s)", flush=True)
+    return sc, runs, secs, t_feeder
+
+
+def variant_docs(sc, runs, inputs=None):
+    """(meta, docs, tc) of a variant's three runs, assembled as sim.p1_build.build assembles them."""
+    from .p1_build import assemble
+    from .history import story_for
     g = runs["aware"]["grants"]
     charging = np.flatnonzero((g > MIN_GRANT_KW).any(axis=1) & np.array([m == "charge" for m in sc.modes]))
     tc = int(charging[0]) if len(charging) else None
-    solves = sum(win.steps + 1 for _ in secs)
-    meta, docs = assemble(sc, runs, tc, {"dwell": MIN_DWELL_MIN}, solves, inputs=inputs)
+    solves = 3 * (sc.win.steps + 1)
+    meta, docs = assemble(sc, runs, tc, {"dwell": MIN_DWELL_MIN}, solves, inputs=inputs or inputs_sha())
     meta["story"] = story_for(meta)
+    return meta, docs, tc
+
+
+def job_variant(lever, value):
+    """One fleet lever away from the default on 23 Aug, on its own fresh circuit (variant_runs): naive + aware (+ none
+    for growth) into the variant dir, and their extras. A battery lever cannot change `none` (no batteries; every home
+    carries a 0 kW battery load whatever the fleet), so its none run must reproduce the committed p1/none.json cell for
+    cell (proof that this circuit starts where sim.p1_build's does) and the catalogue shares p1/none.json."""
+    from .p1_build import hhmm
+    from .history import _gz_branch
+    t0 = time.time()
+    key = lever_key(lever, value)
+    sc, runs, secs, t_feeder = variant_runs(lever, value)
+    win = sc.win
+    for b in runs:
+        print(f"  {key} {b}: max {runs[b]['pct'].max():.1f}% ({secs[b]:.1f} s)", flush=True)
+    if lever != "growth":
+        _check_same(runs["none"], base_branch_rel(P1_DAY, "none"), f"{key}/none")
+    inputs = inputs_sha()
+    meta, docs, tc = variant_docs(sc, runs, inputs)
+    solves = 3 * (win.steps + 1)
     vdir = UI_DATA / variant_dir_rel(lever, value)
-    written = [b for b in ("none", "naive", "aware") if b in secs and (b != "none" or lever == "growth")]
-    shared_none = None if "none" in written else "p1/none.json"
+    written = ["none", "naive", "aware"] if lever == "growth" else ["naive", "aware"]
+    shared_none = None if "none" in written else base_branch_rel(P1_DAY, "none")
     meta["variant"] = {"lever": lever, "value": value, "id": key, "label": lever_option_label(lever, value),
                        "text": lever_text(lever, value), "labelKind": "ASSUMPTION", "noneShared": shared_none,
-                       "files": {b: f"{variant_dir_rel(lever, value)}/{b}.json.gz" for b in written}}
+                       "files": {b: f"{variant_dir_rel(lever, value)}/{b}.json.gz" for b in written},
+                       "build": "own fresh circuit; none, naive, aware in sim.p1_build's order"
+                                + ("" if shared_none is None else "; its none reproduces p1/none.json cell for cell")}
     meta["fleet"] = sc.fleet.tolist()
     meta["fleetCls"] = sorted(set(sc.cls))[0]
     meta["engine"]["buildSeconds"] = labelled(round(sum(secs.values()) + t_feeder, 1), "DERIVED",
-                                              f"this variant's runs ({', '.join(secs)}) and circuit build; "
+                                              f"this variant's circuit build and its three runs (none, naive, aware); "
                                               f"{machine_note()}")
-    meta["engine"]["branchSeconds"] = {b: labelled(round(s, 1), "DERIVED", machine_note()) for b, s in secs.items()}
-    meta["engine"]["solves"] = labelled(solves, "SIM", "OpenDSS solves in this variant (incl. one warm-up per branch)")
+    meta["engine"]["branchSeconds"] = {b: labelled(round(x, 1), "DERIVED", machine_note()) for b, x in secs.items()}
+    meta["engine"]["solves"] = labelled(solves, "SIM", "OpenDSS solves in this variant (three branches, one warm-up "
+                                                       "each)")
     sizes = {"meta.json": write_json(vdir / "meta.json", meta)}
     for b in written:
         name, size = _gz_branch(vdir / b, docs[b])
@@ -642,43 +671,27 @@ def job_of(token):
 
 
 def run_jobs(jobs):
-    """Run jobs in order, sharing one default-fleet circuit (OpenDSS is one circuit per process)."""
+    """Run jobs; each one's result depends only on itself. OpenDSS starts every solve from the last solution, so each
+    job starts from a fresh circuit and runs its branches in the committed builders' order:
+      history evenings  one circuit, sim.history.DAYS order (22 Jul, 26 Aug, 14 Aug), as `python -m sim.history` built
+                        them (26 Aug run after 14 Aug differs in 38 cells; after 22 Jul it matches);
+      base:2026-08-23   a fresh circuit, sim.p1_build's order (none, naive, aware, aware_faults);
+      variant:<l>=<v>   a fresh circuit, none, naive, aware (variant_runs);
+      worker_kill       no OpenDSS (derived from the committed replay)."""
     from .feeder import Feeder
-    feeder = None
-    none_run = None
     if any(j.startswith("base:") and j[5:] != P1_DAY for j in jobs):
-        # The history evenings are re-run exactly as `python -m sim.history` built them: one fresh circuit, the days in
-        # sim.history.DAYS order (22 Jul, 26 Aug, 14 Aug), three branches each. OpenDSS starts every solve from the
-        # last solution, so a day's loading reproduces bit for bit only from the same circuit state: 26 Aug run after
-        # 14 Aug differs in 38 cells (j_days.log), after 22 Jul it matches (the committed build's order).
         hist_feeder = Feeder()
         for e in HISTORY_ORDER:
             job_base(e, feeder=hist_feeder)
         del hist_feeder
-    base_first = sorted((j for j in jobs if not (j.startswith("base:") and j[5:] != P1_DAY)),
-                        key=lambda j: (not j.startswith("base:"), j.startswith("variant:fleet")
-                                       or j.startswith("variant:cls"), j == "worker_kill"))
-    for j in base_first:
+    rest = sorted((j for j in jobs if not (j.startswith("base:") and j[5:] != P1_DAY)),
+                  key=lambda j: (not j.startswith("base:"), j == "worker_kill", j))
+    for j in rest:
         if j.startswith("base:"):
-            feeder = Feeder()                                  # sim.p1_build's order on a fresh circuit
-            runs, _ = job_base(j[5:], feeder=feeder)
-            if j[5:] == P1_DAY:
-                none_run = runs["none"]
+            job_base(j[5:], feeder=Feeder())
         elif j.startswith("variant:"):
             lv, v = j[8:].split("=")
-            v = v if lv == "cls" else int(v)
-            if lv in ("fleet", "cls"):
-                feeder = None                                  # this job builds its own circuit
-                job_variant(lv, v, none_run=none_run if lv == "cls" else None)
-            else:
-                if feeder is None:
-                    feeder = Feeder()
-                if none_run is None and lv != "growth":
-                    from .loads import Loads
-                    from .p1_build import Scenario, Window, run_branch
-                    none_run = run_branch(Scenario(Window(), loads=Loads(), feeder=feeder), "none",
-                                          faults={"dwell": MIN_DWELL_MIN})
-                job_variant(lv, v, feeder=feeder, none_run=none_run)
+            job_variant(lv, v if lv == "cls" else int(v))
         elif j == "worker_kill":
             job_worker_kill()
 
