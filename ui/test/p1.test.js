@@ -304,7 +304,12 @@ test('money card: every line labelled; the system-capacity band has left P1 (aud
   };
   const h = moneyHTML(fmt, money, 'aware');
   assert.match(h, /\$916\.56/);
-  assert.match(h, /Feeder-aware earned .*\$22\.73.* more than naive tonight/s);
+  // fix list #12: the money headline says "fleet" and "gross, not Base's profit"
+  assert.match(h, /Feeder-aware's fleet earned .*\$22\.73.* more than naive tonight \(gross, not Base's profit\)/s);
+  assert.match(h, /The fleet tonight, feeder-aware .*not Base's profit.*perfect foresight/s);
+  // with both splits, the reason is the measured sold / bought difference (DERIVED), not an assertion
+  const both = { ...money, split: { ...money.split, naive: { sold: { v: 1014.74, label: 'DERIVED' }, bought: { v: 120.91, label: 'DERIVED' }, net: { v: 893.83, label: 'DERIVED' } } } };
+  assert.match(moneyHTML(fmt, both, 'aware'), /because prices kept falling after the onset: it sold <span class="num">\$13\.63<\/span><span class="chip chip-DERIVED"[^>]*>DERIVED<\/span> less at the peak but bought back <span class="num">\$36\.36<\/span>/);
   assert.match(h, /Sold into the evening peak.*\$1,001\.11/s);
   assert.match(h, /Bought back when cheap.*\$84\.55/s);
   assert.ok(!/5,893|16,055/.test(h), 'the band never renders on P1');
@@ -413,4 +418,39 @@ test('history days (checkpoint b): the panel reads &date=; every simulated eveni
       if (m.cash && m.cash[b]) assert.equal(cashAt(m, b, m.steps - 1).v, m.summary[b].energyValueUSD.v, `${row.date} ${b}: the money meter ends at the evening's value`);
     }
   }
+});
+
+// ------------------------------------------------------------------------------------ data-truth fix list (lead, 26 Sep)
+import { noViolationClaim, commsLossTip } from '../panels/p1.js';
+import { loadPairingNote } from '../lib/days.js';
+
+test('fix list #10: the no-violation claim names the tier rule, says "because of batteries", and admits over-nameplate', () => {
+  const s = { normalEvents: { v: 0, label: 'SIM', cite: 'OpenDSS' }, emergencyTfs: { v: 0, label: 'SIM' },
+    maxLoading: { v: 119.5, label: 'SIM', tf: 240, t: '16:45' } };
+  const h = noViolationClaim(fmt, meta, s, { branch: 'aware', tfName: (tf) => `T-${tf}`, homeOnly: () => true });
+  assert.match(h, /No service transformer passed its limit this evening/);
+  assert.match(h, /So none because of batteries\./);
+  if (meta.constants && meta.constants.TIER_NORMAL_MIN) assert.match(h, /for <span class="num">30 minutes<\/span>/);
+  if (meta.constants && meta.constants.TIER_AMBER_PCT) assert.match(h, /T-240 still went over nameplate on its homes' load alone \(<span class="num">119\.5%<\/span>/);
+  assert.match(noViolationClaim(fmt, meta, s, { branch: 'none' }), /This scenario has no batteries\./);
+});
+
+test('comms-loss tooltip: the behaviour is REAL (Base engineer, on site), the timings ASSUMPTION, read from the meta', () => {
+  for (const st of ['S', 'X']) {
+    const h = commsLossTip(fmt, meta, st);
+    assert.match(h, /backup-only mode, never discharges to the grid/);
+    assert.match(h, /chip-REAL" title="Base engineer, on site, 26 Sep 2026 \(verbal\)/);
+    assert.match(h, /chip-ASSUMPTION" title="COMMS_STALE_S and COMMAND_TTL_S are our timings/);
+    if (meta.constants && meta.constants.COMMAND_TTL_S) assert.ok(h.includes(`${meta.constants.COMMAND_TTL_S.value} s`), h);
+    assert.ok(!/3\+ minutes|\(5 min\)/.test(h), 'no typed timings');
+  }
+});
+
+test('fix list #9: the evening note computes both weekdays and flags the one-hour clock caveat', () => {
+  const c = { LOAD_PAIRING: { value: '2018 SMART-DS weather-year load paired with 2026 prices by calendar date', label: 'ASSUMPTION' } };
+  assert.match(loadPairingNote('2026-08-23', c), /this Sun's \(REAL\); home loads are the same calendar date in the SMART-DS 2018 year, a Thu, a different weekday/);
+  assert.match(loadPairingNote('2026-07-22', c), /this Wed's .* a Sun, a different weekday/);
+  assert.match(loadPairingNote('2026-08-23', c), /one hour early against the CDT prices/);
+  assert.match(loadPairingNote('2026-08-23', null), /can fall on a different weekday/);
+  assert.equal(loadPairingNote('not a date', c), null);
 });

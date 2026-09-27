@@ -35,6 +35,8 @@ AUG1_STEP = 212 * 96          # 2018-08-01 00:00 = day-of-year 213 (Jan..Jul = 2
 N_STEPS = 3000                # 1 Aug 00:00 -> 1 Sep 06:00 (2,976 reported + 24 for the 31 Aug night)
 LOAD_RE = re.compile(r'(?i)^New Load\.(\S+)\s')
 CAL_BEGIN, CAL_END = '<!-- calibrate:begin -->', '<!-- calibrate:end -->'
+# the hand-written provenance manifest (data-truth fix list #15) survives a rebuild, placed before the hash table
+PROV_BEGIN, PROV_END = '<!-- provenance:begin -->', '<!-- provenance:end -->'
 
 
 def default_dss():
@@ -230,6 +232,10 @@ def write_source(dss_path, rows, kw_names, kvar_names, kw_ok, kvar_ok, manifest,
         if CAL_BEGIN in old and CAL_END in old:
             keep = old[old.index(CAL_BEGIN):old.index(CAL_END) + len(CAL_END)]
             text = text[:text.index(CAL_BEGIN)] + keep + text[text.index(CAL_END) + len(CAL_END):]
+        if PROV_BEGIN in old and PROV_END in old:
+            prov = old[old.index(PROV_BEGIN):old.index(PROV_END) + len(PROV_END)]
+            head = '## sha256 manifest (raw CSVs as fetched)'
+            text = text.replace(head, prov + '\n\n' + head, 1)
     SOURCE_MD.write_text(text)
 
 

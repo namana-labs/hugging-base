@@ -9,6 +9,7 @@ import { chartHTML, modeIndex, band } from '../lib/charts.js';
 import { svg } from '../lib/icons.js';
 import {
   beatBarHTML, sharedNames, flipVerdict, FLIP_HEADLINE_MAX_OVERLAP, isScreening, numHTML, numText, SCREEN_CHIP, unscreenedChips, lazyDetails,
+  FLEET_PLACEMENT_CITE, rankOfN,
 } from './more.js';
 
 // ---- round 2 (UX_SPEC_R2 7.2): a few front cards, everything else in collapsible sections, plain words first ----
@@ -139,6 +140,12 @@ export function fleetTotals(fc) {
   return out;
 }
 
+/** Fix list #14: " of N" after a rank, N read from the index (collapsed: one entry per transformer, index.flip.entries;
+ *  else every candidate, index.ties.of). '' when the index does not carry N. */
+export function ofN(fmt, index, collapsed) {
+  return rankOfN({ p2index: index }, collapsed).map((x) => (typeof x === 'string' ? esc(x) : numHTML(fmt, x, x.o || {}))).join('');
+}
+
 /** Where a home stands under a policy when it is outside that combo's top 50: the collapsed rank from
  *  index.flip.movers (one entry per transformer) and the with/without month peak from index.bridge, when L3 lists
  *  them. Both are labelled data; null fields when not listed. */
@@ -207,7 +214,9 @@ export function counterfactualParts({ entry, doc, index, topology, combo }) {
   }
   if (entry.protectionWith && entry.protectionWith.v === true) {
     const dark = (entry.homesDarkWith || []).map((i) => homeLabel(topology, i));
-    parts.push(` Protection may operate here (ASSUMPTION rule)${dark.length ? `: ${dark.join(', ')} go dark while battery homes island and stay lit` : ''}.`);
+    // fix list #14: a protection call from the surrogate is screening only (the OpenDSS month did not judge it)
+    const screen = isScreening(entry.protectionWith) || !checkedByOpenDSS(entry);
+    parts.push(` Protection may operate here (ASSUMPTION rule${screen ? '; screening, not OpenDSS-checked' : ''})${dark.length ? `: ${dark.join(', ')} go dark while battery homes island and stay lit` : ''}.`);
   }
   return parts;
 }
@@ -326,11 +335,11 @@ function candidateDetails(ctx, st, e) {
     const dark = (oEntry.homesDarkWith || []).map((i) => homeLabel(topology, i));
     if (dark.length) neighbour = `<div class="p2-neighbour">Under ${oc.policy === 'naive' ? 'naive' : 'feeder-aware'} dispatch, protection may operate here (ASSUMPTION rule) and ${esc(dark.join(', '))} go dark. Under this policy they stay lit: your neighbour's battery, managed this way, kept your lights on (SIM).</div>`;
   }
-  let oWhere = oRank ? `rank ${esc(oRank)}` : 'not in its top 50';
+  let oWhere = oRank ? `rank ${esc(oRank)}${ofN(fmt, index, false)}` : 'not in its top 50';
   let oViol = !!(oEntry && oEntry.noNewViolation && oEntry.noNewViolation.v === false);
   if (!oRank && otherCombo && inIndexScope(index, combo)) {
     const so = standingOutside(index, e.home, e.tf, oc.policy);
-    if (so.rank) oWhere = `rank ${numHTML(fmt, so.rank)} (one entry per transformer)`;
+    if (so.rank) oWhere = `rank ${numHTML(fmt, so.rank)}${ofN(fmt, index, true)} (one entry per transformer)`;
     if (so.bridge && fmt.isLabelled(so.bridge.peakWithPct)) oWhere += `, month peak with it ${numHTML(fmt, so.bridge.peakWithPct, P)}`;
     oViol = oViol || !!(so.bridge && so.bridge.noNewViolation && so.bridge.noNewViolation.v === false);
   }
@@ -369,7 +378,7 @@ function candidateCard(ctx, st) {
     const so = h.battery || !inIndexScope(index, combo) ? { rank: null, bridge: null } : standingOutside(index, sel.home, h.tf, pol);
     const polName = pol === 'naive' ? 'naive dispatch (no feeder check)' : 'feeder-aware dispatch';
     let more = '';
-    if (so.rank) more += `<div class="hb-sub">Rank under ${esc(polName)}: ${numHTML(fmt, so.rank)} (one entry per transformer).</div>`;
+    if (so.rank) more += `<div class="hb-sub">Rank under ${esc(polName)}: ${numHTML(fmt, so.rank)}${ofN(fmt, index, true)} (one entry per transformer).</div>`;
     const b = so.bridge;
     let meters = peakMeter(fmt, peak, 'without a new battery');
     if (b && fmt.isLabelled(b.peakWithPct)) {
@@ -462,10 +471,10 @@ export function flipLineHTML(ctx, st) {
   const R = (v, which) => numHTML(fmt, { v, label: 'DERIVED', cite: `rank in the ${which} ranking of this setting (sim.p2_build; ties broken by home id)` });
   const r = rankOf(otherDoc, pick.home);
   let where;
-  if (r) where = `${esc(otherName)} rank ${R(r, otherName)}`;
+  if (r) where = `${esc(otherName)} rank ${R(r, otherName)}${ofN(fmt, st.index, false)}`;
   else {
     const so = inIndexScope(st.index, st.combo) ? standingOutside(st.index, pick.home, pick.tf, otherPol) : { rank: null };
-    where = so.rank ? `${esc(otherName)} rank ${numHTML(fmt, so.rank)}` : `outside ${esc(otherName)}'s top fifty`;
+    where = so.rank ? `${esc(otherName)} rank ${numHTML(fmt, so.rank)}${ofN(fmt, st.index, true)}` : `outside ${esc(otherName)}'s top fifty`;
   }
   const te = findCandidate(otherDoc, topology, topology.homes[pick.home] && topology.homes[pick.home].id).entry;
   const viol = te && te.noNewViolation && te.noNewViolation.v === false;
@@ -490,7 +499,7 @@ function flipBlock(ctx, st) {
     if (dr && dr.top10DistinctProfiles) body += `<div class="hb-sub">The feeder-aware top 10 is driven by ${numHTML(fmt, dr.top10DistinctProfiles)} distinct SMART-DS load profiles${Array.isArray(dr.profiles) && dr.profiles.length ? ` (${esc([...new Set(dr.profiles)].join(', '))})` : ''}: shared shapes are one piece of evidence, not several.</div>`;
     const mv = Array.isArray(f.movers) ? f.movers.filter((m) => fmt.isLabelled(m.rankNaive) && fmt.isLabelled(m.rankAware)) : [];
     if (mv.length) {
-      body += `<div class="hb-sub"><b>Biggest movers</b> (one entry per transformer): <ul class="p2-fliplist">${mv.slice(0, 5).map((m) => `<li>${esc(m.label || homeLabel(topology, m.home))} on ${esc(tfName(topology, m.tf))}: naive rank ${numHTML(fmt, m.rankNaive)} → feeder-aware rank ${numHTML(fmt, m.rankAware)}</li>`).join('')}</ul></div>`;
+      body += `<div class="hb-sub"><b>Biggest movers</b> (one entry per transformer): <ul class="p2-fliplist">${mv.slice(0, 5).map((m) => `<li>${esc(m.label || homeLabel(topology, m.home))} on ${esc(tfName(topology, m.tf))}: naive rank ${numHTML(fmt, m.rankNaive)}${ofN(fmt, st.index, true)} → feeder-aware rank ${numHTML(fmt, m.rankAware)}</li>`).join('')}</ul></div>`;
     }
     body += `<div class="hb-sub">Headline rule: shown only when the two top tens share at most ${esc(FLIP_HEADLINE_MAX_OVERLAP)} homes (display rule ${fmt.chip('ASSUMPTION', 'ui/panels/p2.js FLIP_HEADLINE_MAX_OVERLAP')}).</div>`;
   }
@@ -501,10 +510,10 @@ function flipBlock(ctx, st) {
       const r = rankOf(to, e.home);
       const te = findCandidate(to, topology, topology.homes[e.home] && topology.homes[e.home].id).entry;
       let viol = te && te.noNewViolation && te.noNewViolation.v === false;
-      let where = r ? `rank ${esc(r)}` : 'not in the top 50';
+      let where = r ? `rank ${esc(r)}${ofN(fmt, st.index, false)}` : 'not in the top 50';
       if (!r && scoped) {
         const so = standingOutside(st.index, e.home, e.tf, toPolicy);
-        if (so.rank) where = `rank ${numHTML(fmt, so.rank)} (one entry per transformer)`;
+        if (so.rank) where = `rank ${numHTML(fmt, so.rank)}${ofN(fmt, st.index, true)} (one entry per transformer)`;
         if (so.bridge && fmt.isLabelled(so.bridge.peakWithPct)) {
           where += `; month peak ${so.bridge.peakWithoutPct ? numHTML(fmt, so.bridge.peakWithoutPct, P) : 'n/a'} without, ${numHTML(fmt, so.bridge.peakWithPct, P)} with`;
           viol = viol || (so.bridge.noNewViolation && so.bridge.noNewViolation.v === false);
@@ -517,6 +526,27 @@ function flipBlock(ctx, st) {
   return `<div class="p2-flip">${body || '<div class="hb-sub">Not computed yet.</div>'}</div>`;
 }
 
+/** usefulCapacity.naiveOpenDSS as parts: "holds at N batteries in OpenDSS; at M the feeder cable passes its rating",
+ *  plus `head`, the cable's highest reading at M (X%); N, M and X read from the index (failAt and the check row at
+ *  failAt, by checkCols). Null when not built. */
+export function naiveOpenDSSParts(u) {
+  const n = u && u.naiveOpenDSS;
+  if (!n || typeof n.v !== 'number' || !LABELS_OK(n.label)) return null;
+  const parts = ['holds at ', { ...n, o: {} }, ' batteries in OpenDSS'];
+  const fail = typeof n.failAt === 'number' ? n.failAt : null;
+  if (fail !== null) {
+    const failL = { v: fail, label: n.label, cite: 'usefulCapacity.naiveOpenDSS.failAt: the first naive build OpenDSS (sim.referee) fails' };
+    const cols = Array.isArray(n.checkCols) ? n.checkCols : [];
+    const row = (Array.isArray(n.checks) ? n.checks : []).find((r) => Array.isArray(r) && r[cols.indexOf('n')] === fail);
+    const hi = cols.indexOf('headMaxPct');
+    const head = row && hi >= 0 && typeof row[hi] === 'number' ? row[hi] : null;
+    parts.push('; at ', { ...failL, o: {} }, ' the feeder cable passes its rating');
+    if (head !== null) return { parts, head: { v: head, label: n.label, cite: `OpenDSS month (sim.referee), the ${fail}-battery naive build: feeder-head current over its rating, highest step (usefulCapacity.naiveOpenDSS.checks)`, o: P }, v: n.v, failAt: fail };
+  }
+  return { parts, head: null, v: n.v, failAt: fail };
+}
+const LABELS_OK = (l) => ['REAL', 'SIM', 'DERIVED', 'ASSUMPTION'].includes(l);
+
 /** Audit R2 H1, L15, M3: "how many batteries fit before the grid is harmed?", both policies under the same question,
  *  with OpenDSS's verdict on each build shown (not only in a cite). The screening count 383 is never the naive
  *  headline: OpenDSS refutes it (3 battery-caused events, the cable at 176.5%), and the per-phase cable estimate
@@ -527,11 +557,20 @@ export function capacityParts(u, topology) {
   const eligible = ((topology && topology.homes) || []).filter((h) => h.eligible).length;
   const fh = u.feederHead && u.feederHead.naive;
   const naive = [];
-  if (fh && fh.overAt && typeof fh.overAt.v === 'number') naive.push('the feeder cable passes its rating at ', { ...fh.overAt, o: {} }, ' batteries (per-phase estimate)');
+  // Fix list #3 (DATA-TRUTH-outputs #1): lead with OpenDSS's answer (usefulCapacity.naiveOpenDSS), the referee of every
+  // violation; the per-phase estimate is kept beside it, named as the quick estimate.
+  const nod = naiveOpenDSSParts(u);
+  if (nod) {
+    naive.push(...nod.parts);
+    const est = fh && fh.overAt && typeof fh.overAt.v === 'number' ? ['the quick per-phase estimate said ', { ...fh.overAt, o: {} }] : [];
+    if (nod.head || est.length) naive.push(' (', ...(nod.head ? [nod.head] : []), nod.head && est.length ? '; ' : '', ...est, ')');
+  } else if (fh && fh.overAt && typeof fh.overAt.v === 'number') {
+    naive.push('the feeder cable passes its rating at ', { ...fh.overAt, o: {} }, ' batteries (per-phase estimate; not OpenDSS-checked)');
+  }
   if (u.naive && typeof u.naive.v === 'number') {
-    naive.push(naive.length ? ', and ' : '', 'transformers break before the screening count of ', { ...u.naive, o: {}, screen: true });
+    naive.push(naive.length ? '; ' : '', 'the transformers-only screening count of ', { ...u.naive, o: {}, screen: true });
     if (od) {
-      naive.push(': OpenDSS found ', { ...od.naive.causedNormal, o: {} }, ' battery-caused events');
+      naive.push(' is refuted: OpenDSS found ', { ...od.naive.causedNormal, o: {} }, ' battery-caused events');
       if (od.naive.headMaxPct) naive.push(' and the cable at ', { ...od.naive.headMaxPct, o: P }, ' there');
     } else naive.push(' (screening only; not OpenDSS-checked)');
   }
@@ -541,13 +580,21 @@ export function capacityParts(u, topology) {
     if (od) {
       aware.push(', OpenDSS-checked: ', { ...od.aware.causedNormal, o: {} }, ' battery-caused events');
       if (od.aware.headMaxPct) aware.push(', cable max ', { ...od.aware.headMaxPct, o: P });
+      // Fix list #4 (DATA-TRUTH-outputs #2): below 0.95 pu is below the ANSI floor, never "at the edge"; how many homes
+      // is read from homesBelow095, and the harm test (transformers and the head cable) does not include voltage.
       const vm = od.aware.vMinPu;
       if (vm && typeof vm.v === 'number') {
-        aware.push('; the lowest home voltage ', { ...vm, o: { digits: 4, unit: ' pu' } });
-        if (typeof vm.volts === 'number') aware.push(' (', { v: vm.volts, label: vm.label, cite: vm.cite, o: { digits: 1, unit: ' V' } }, ')');
         const edge = { v: 0.95, label: 'REAL', cite: 'ANSI C84.1 Range A service voltage lower limit (114 V on a 120 V base)', o: { digits: 2, unit: ' pu' } };
-        if (vm.v < edge.v) aware.push(', just under the ANSI Range A edge (', edge, ')');
-        else if (vm.v < edge.v + 0.001) aware.push(', at the ANSI Range A edge (', edge, ')');
+        const nb = od.aware.homesBelow095;
+        const at = [{ ...vm, o: { digits: 4, unit: ' pu' } }, ...(typeof vm.volts === 'number' ? [', ', { v: vm.volts, label: vm.label, cite: vm.cite, o: { digits: 1, unit: ' V' } }] : [])];
+        if (vm.v < edge.v) {
+          if (nb && typeof nb.v === 'number' && nb.v === 1) aware.push('; one home dips just under ', edge, ' (', ...at, ')');
+          else if (nb && typeof nb.v === 'number') aware.push('; ', { ...nb, o: {} }, ' homes dip under ', edge, ', the lowest to ', ...at);
+          else aware.push('; the lowest home voltage dips under ', edge, ' (', ...at, ')');
+          aware.push(': voltage is not in this harm test');
+        } else {
+          aware.push('; the lowest home voltage ', ...at, ', within ANSI Range A (', edge, ')');
+        }
       }
     } else aware.push(' (screening only; not OpenDSS-checked)');
   }
@@ -809,8 +856,11 @@ export function p2Sections(ctx, st) {
   const unTf = st.p1meta && Array.isArray(st.p1meta.unrelieved) && st.p1meta.unrelieved[0] ? st.p1meta.unrelieved[0].tf : null;
   const hr = unTf === null ? null : handoffRow(st, unTf);
   const handTeaser = hr ? `${esc(tfName(topology, unTf))}: ${hr.kind === 'absent' ? 'no candidate in the top 50' : `rank ${esc(hr.rank)} here`}` : '';
+  // fix list #3: the teaser leads with OpenDSS's naive answer (usefulCapacity.naiveOpenDSS), the estimate only without it
   const fh = u && u.feederHead && u.feederHead.naive && u.feederHead.naive.overAt;
-  const capTeaser = u ? `${fh ? `naive: cable over at ${numHTML(fmt, fh)}` : 'naive'} · aware ${u.aware ? numHTML(fmt, u.aware) : 'n/a'}${cp && cp.awareOk ? ' ✓' : ''}` : '';
+  const nod = u && u.naiveOpenDSS && typeof u.naiveOpenDSS.v === 'number' ? u.naiveOpenDSS : null;
+  const naiveTeaser = nod ? `naive: holds at ${numHTML(fmt, nod)} (OpenDSS)` : fh ? `naive: cable over at ${numHTML(fmt, fh)} (estimate)` : 'naive';
+  const capTeaser = u ? `${naiveTeaser} · aware ${u.aware ? numHTML(fmt, u.aware) : 'n/a'}${cp && cp.awareOk ? ' ✓' : ''}` : '';
   const ins = st.index.insight;
   const mt = ins && Array.isArray(ins.tfPeakHour) ? modeIndex(ins.tfPeakHour) : null, mp = ins ? modeIndex(ins.priceMaxHour) : null;
   // teasers stay words where the number is one click away (UX_SPEC_R2 2.5: fewer tags above the fold)
@@ -831,7 +881,7 @@ export function p2Sections(ctx, st) {
     { id: 'fleet', title: 'The batteries already here', icon: 'battery', teaser: fleetTeaser, body: fleetBlock(ctx, st) },
     { id: 'prices', title: 'Real August prices and cliffs', icon: 'price', teaser: cl && cl.count ? 'ERCOT LZ_NORTH' : '', body: marketBlock(ctx, st) },
     { id: 'check', title: 'How we check', icon: 'check', teaser: r && r.runs ? `OpenDSS: ${esc(r.runs)} month runs` : 'screening only',
-      body: `${refereeBlock(ctx, st)}<div class="hb-sub">The next-battery score is not a Base product: Base schedules installs by demand; this adds the grid lens. Screening numbers (≈) come from a per-transformer surrogate calibrated against OpenDSS; cards carry OpenDSS numbers (✓) where the referee has run. Growth ${fmt.chip('ASSUMPTION', 'EVs and heat pumps')}, the fleet placement ${fmt.chip('ASSUMPTION', 'seed 17263, the prototype placement')} and the curtailment cap ${fmt.chip('ASSUMPTION')} are named constants.</div>` },
+      body: `${refereeBlock(ctx, st)}<div class="hb-sub">The next-battery score is not a Base product: Base schedules installs by demand; this adds the grid lens. Screening numbers (≈) come from a per-transformer surrogate calibrated against OpenDSS; cards carry OpenDSS numbers (✓) where the referee has run. Growth ${fmt.chip('ASSUMPTION', 'EVs and heat pumps')}, the fleet placement, a deliberate stress placement, ${fmt.chip('ASSUMPTION', FLEET_PLACEMENT_CITE)} and the curtailment cap ${fmt.chip('ASSUMPTION')} are named constants.</div>` },
   ];
   void c;
   return secs;

@@ -10,7 +10,28 @@ import { svg } from './icons.js';
 import { DEFAULT_DATE } from './data.js';
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-export const DATE_CITE = 'The evening\'s prices are ERCOT LZ_NORTH for this real date (REAL); the load is the 2018 SMART-DS weather year paired by calendar date (ASSUMPTION).';
+export const DATE_CITE = 'The evening\'s prices are ERCOT LZ_NORTH for this real date (REAL); the load is the 2018 SMART-DS weather year paired by calendar date (ASSUMPTION), which can fall on a different weekday, and the SMART-DS clock has no daylight-saving shift, so the loads may sit one hour early against the CDT prices (unverified).';
+
+/**
+ * Data-truth fix list #9 (DATA-TRUTH-inputs problem 7): prices on this date, home loads on the SMART-DS weather year's
+ * same calendar date (LOAD_PAIRING, ASSUMPTION). The two weekdays can differ (23 Aug 2026 is a Sunday on a Thursday's
+ * load), and the SMART-DS series has 365 x 96 values, so no daylight-saving shift (PROFILE_INDEX_RULE, unverified): its
+ * clock may run one hour early against the CDT prices. The load year is read from the LOAD_PAIRING constant a data
+ * file exports (p1/meta.json or p1/days/index.json `constants`); both weekdays are computed, never typed. Plain text
+ * (a data-tip or a chip cite); null without a date.
+ */
+export function loadPairingNote(iso, consts) {
+  if (!fmt.dateLabel(iso)) return null;
+  const pairing = consts && consts.LOAD_PAIRING && String(consts.LOAD_PAIRING.value || '');
+  const y = pairing ? /\b(\d{4})\b/.exec(pairing) : null;
+  const clock = 'The SMART-DS series has no daylight-saving shift, so its clock may run one hour early against the CDT '
+    + 'prices (PROFILE_INDEX_RULE, unverified).';
+  if (!y) return `Home loads are the same calendar date in the SMART-DS weather year, which can fall on a different weekday (LOAD_PAIRING, ASSUMPTION). ${clock}`;
+  const a = fmt.dateLabel(iso).split(' ')[0];
+  const b = fmt.dateLabel(`${y[1]}${String(iso).slice(4, 10)}`).split(' ')[0];
+  return `Prices are this ${a}'s (REAL); home loads are the same calendar date in the SMART-DS ${y[1]} year, a ${b}`
+    + `${a === b ? '' : ', a different weekday'} (LOAD_PAIRING, ASSUMPTION). ${clock}`;
+}
 const rows = (index) => (index && Array.isArray(index.days) ? index.days : []);
 export const dayRow = (index, date) => rows(index).find((d) => d.date === date) || null;
 
@@ -29,7 +50,8 @@ export function dayChipHTML(index, date = DEFAULT_DATE) {
   const label = fmt.dateLabel(date) || esc(date);
   const tag = row && row.tag ? ` · <span class="hb-day-tag">${esc(row.tag)}</span>` : '';
   const caret = rows(index).length > 1 ? `<span class="hb-day-caret" aria-hidden="true">▾</span>` : '';
-  return `${svg('calendar', { size: 16 })}<span class="hb-day-date">${esc(label)}</span>${fmt.chip('REAL', DATE_CITE)}${tag}${caret}`;
+  const cite = (index && index.constants && loadPairingNote(date, index.constants)) || DATE_CITE;
+  return `${svg('calendar', { size: 16 })}<span class="hb-day-date">${esc(label)}</span>${fmt.chip('REAL', cite === DATE_CITE ? cite : `ERCOT LZ_NORTH prices for this real date (REAL). ${cite}`)}${tag}${caret}`;
 }
 
 function naiveMeter(row) {
@@ -113,7 +135,8 @@ export function calendarStripHTML(cal, date = DEFAULT_DATE) {
   const rows = [...months.entries()].map(([k, cells]) => `<div class="hb-cal-row"><span class="hb-cal-m">${MON[+k.slice(5, 7) - 1]}</span>${cells.join('')}</div>`);
   const h = cal.headline || {};
   const head = [];
-  if (fmt.isLabelled(h.perBattery2026ytd)) head.push(`${fmt.fmtHTML(h.perBattery2026ytd, { money: true, digits: 2 })} per Core this year`);
+  // fix list #12: the "$ per Core" sells the known priciest intervals (perfect foresight) and cycles even on losing nights
+  if (fmt.isLabelled(h.perBattery2026ytd)) head.push(`${fmt.fmtHTML(h.perBattery2026ytd, { money: true, digits: 2 })} per Core this year with perfect foresight`);
   if (fmt.isLabelled(h.top10Share2026)) head.push(`${fmt.fmtHTML(h.top10Share2026, { unit: '%' })} of it on the ten best evenings`);
   if (fmt.isLabelled(h.losingNights2026)) head.push(`${fmt.fmtHTML(h.losingNights2026)} evenings would lose money`);
   return `<div class="hb-cal"><div class="hb-cal-h">${svg('money', { size: 14 })} Every real evening, one Core, one cycle (gross, not Base's profit)${head.length ? `: ${head.join(' · ')}` : ''}</div>`
