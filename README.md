@@ -58,6 +58,8 @@ More detail, including every page link and how to read the screen: [docs/run-the
 | `README.md` | This page. |
 | [`docs/`](docs/README.md) | Everything a judge needs: how to run the demo, the video script, the audited numbers, data sources and licences, research, and the data contracts. Start at [docs/README.md](docs/README.md). |
 | `ui/` | The web app (the four pages). This is what the live demo serves. |
+| `video/` | The Batter Up intro video (`batterup-intro-video.mp4`) and its source. |
+| `vercel.json`, `.vercelignore` | Hosting: Vercel serves only `ui/` (the site root opens the story app). |
 | `sim/` | The engine: the Python simulator that wrote every number the app shows, with OpenDSS as the referee. |
 | `resilience/` | Controller-crash survival (a worker is killed and another takes over), the hidden-attacker detector, and physics checks. |
 | `data/` | Pre-extracted inputs (the SMART-DS feeder, load profiles, ERCOT prices, building footprints, the fleet placement, the capacity planner's inputs), with a `SOURCE.md` for each source. |
