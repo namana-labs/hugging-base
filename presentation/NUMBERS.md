@@ -1,6 +1,6 @@
 # NUMBERS: the audited numbers for the video
 
-Every number Amy's script may say, with its label, the committed file it comes from and the field. The values were extracted with Python from the files as committed on `submission` (and, for the story catalogue and the fleet-lever variants, on ENGINE's `sprint/engine` @5559c05, which merges into `submission`), after the data-truth audit of 26 Sep 2026 (`simulators/rz/judges/DATA-TRUTH-inputs.md`, `DATA-TRUTH-outputs.md`). **If a number is not here or on the page, don't say it. Say it with its label, as the page prints it.**
+Every number Amy's script may say, with its label, the committed file it comes from and the field. The values were extracted with Python from the files as committed on `submission` (and, for the story catalogue and the fleet-lever variants, on ENGINE's `sprint/engine` @0db9b7f, which merges into `submission`), after the data-truth audit of 26 Sep 2026 (`simulators/rz/judges/DATA-TRUTH-inputs.md`, `DATA-TRUTH-outputs.md`). **If a number is not here or on the page, don't say it. Say it with its label, as the page prints it.**
 
 Labels: **REAL** sourced fact · **SIM** our simulation (OpenDSS unless marked *screening*) · **DERIVED** arithmetic on REAL or SIM · **ASSUMPTION** a named choice of ours. Money is always the **fleet's gross energy value, not Base's profit**. Every no-violation claim ends **because of batteries**.
 
@@ -172,13 +172,13 @@ Learnings Q2 (one transformer, 0 to 50 batteries) and Q3 (which transformers to 
 | …OpenDSS solves in that build | **2,884** | DERIVED | `ui/data/engine.json` | `p1.solves` |
 | Controller call, 96 batteries | **66.6 µs** | DERIVED | `ui/data/engine.json` | `allocate.96` |
 | Controller call, 100,000 batteries (about 65 ms) | **65,011.7 µs** | DERIVED | `ui/data/engine.json` | `allocate.100000` |
-| Running page, `2026-08-23/naive`: build time, OpenDSS solves | **26.5 s, 721** | DERIVED / SIM | ui/data/story/index.json (ENGINE, `sprint/engine` @5559c05) | `scenarios[id=2026-08-23/naive].engine.buildSeconds, .solves` |
-| Running page, `2026-08-23/aware`: build time, OpenDSS solves | **31 s, 721** | DERIVED / SIM | ui/data/story/index.json (ENGINE, `sprint/engine` @5559c05) | `scenarios[id=2026-08-23/aware].engine.buildSeconds, .solves` |
-| Running page, `2026-08-23/aware/faults`: build time, OpenDSS solves | **34.8 s, 721** | DERIVED / SIM | ui/data/story/index.json (ENGINE, `sprint/engine` @5559c05) | `scenarios[id=2026-08-23/aware/faults].engine.buildSeconds, .solves` |
+| Running page, `2026-08-23/naive`: build time, OpenDSS solves | **26.5 s, 721** | DERIVED / SIM | ui/data/story/index.json (ENGINE, `sprint/engine` @0db9b7f) | `scenarios[id=2026-08-23/naive].engine.buildSeconds, .solves` |
+| Running page, `2026-08-23/aware`: build time, OpenDSS solves | **31 s, 721** | DERIVED / SIM | ui/data/story/index.json (ENGINE, `sprint/engine` @0db9b7f) | `scenarios[id=2026-08-23/aware].engine.buildSeconds, .solves` |
+| Running page, `2026-08-23/aware/faults`: build time, OpenDSS solves | **34.8 s, 721** | DERIVED / SIM | ui/data/story/index.json (ENGINE, `sprint/engine` @0db9b7f) | `scenarios[id=2026-08-23/aware/faults].engine.buildSeconds, .solves` |
 
 ## The fleet levers: each one lever away from the default (23 Aug 2026)
 
-Each row is a real engine run on 23 Aug, from `ui/data/p1/variants/<lever>=<value>/meta.json` (ENGINE, `sprint/engine` @5559c05), fields `summary.<branch>.maxLoading`, `.batteryCausedNormal`, `.batteryCausedEmergency`, `.chargedPctBy0400` (all SIM) and `.energyValueUSD` (DERIVED, fleet gross). The default row is `ui/data/p1/meta.json`. The lever itself is an ASSUMPTION.
+Each row is a real engine run on 23 Aug, from `ui/data/p1/variants/<lever>=<value>/meta.json` (ENGINE, `sprint/engine` @0db9b7f), fields `summary.<branch>.maxLoading`, `.batteryCausedNormal`, `.batteryCausedEmergency`, `.chargedPctBy0400` (all SIM) and `.energyValueUSD` (DERIVED, fleet gross). The default row is `ui/data/p1/meta.json`. The lever itself is an ASSUMPTION.
 
 | Lever | Naive: worst | Naive: battery-caused events / emergency tfs | Naive: charged by 04:00 | Feeder-aware: worst | Feeder-aware: battery-caused events / emergency tfs | Feeder-aware: charged | Naive $ | Feeder-aware $ |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
