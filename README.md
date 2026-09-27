@@ -51,6 +51,68 @@ scripts/check_all.sh  # the full gate: unit, node, archived-prototype, contract,
 
 More detail, including every page link and how to read the screen: [docs/run-the-demo.md](docs/run-the-demo.md).
 
+## Reproduce the demo: environment variables and keys
+
+**None are required.** The demo needs no API key, no account, no `.env` file and no network: it replays committed JSON under `ui/data/`. The two commands above are the whole reproduction; the video's beats are one link each in [docs/demo-script.md](docs/demo-script.md).
+
+Requirements: `python3` to view the demo; Python 3.12 or newer, Node 22 or newer and Chrome to rebuild the numbers and run the tests.
+
+To regenerate the numbers from the inputs (slow: OpenDSS solves every minute of every evening):
+
+```sh
+scripts/setup.sh
+scripts/build_all.sh all       # topology, fixtures, p1, p2, referee; ends "BUILD: PASS"
+scripts/check_all.sh --full    # rebuilds every artifact and byte-compares it with the committed copy
+```
+
+Optional overrides, all with working defaults, are listed in [.env.example](.env.example). The scripts do not read a `.env` file; export a variable in your shell if you need one.
+
+| Variable | Default | What it changes |
+|---|---|---|
+| `PORT` | `8765` | The port `scripts/serve.sh` listens on. |
+| `HB_VENV` | `~/hb-overnight/.venv` | Where `scripts/setup.sh` creates or finds the Python venv. |
+| `PY` | the venv's Python | The interpreter the build and test scripts use. |
+| `CHROME` | found automatically | The Chrome binary for the browser smoke test. |
+| `HB_SLOW` | unset | `1` also runs the slow full-evening engine tests. |
+| `HB_LOCK_HELD` | unset | `1` skips the heavy-run lock (needed on Windows and Linux without `lockf`). |
+| `PLAN_WORKERS` | `1` | Parallel workers for the capacity planner build. |
+
+## Tech stack and architecture
+
+| Layer | What we used |
+|---|---|
+| Power flow (the referee) | OpenDSS through OpenDSSDirect.py 0.9.4 |
+| Engine | Python 3.12+, numpy 2.5.3; no other dependency |
+| Resilience | Python: controller workers with leases, a peer detector for the hidden attacker |
+| Web app | Plain JavaScript modules, HTML and CSS, no framework and no build step; deck.gl 9.4.0 (vendored) for the 3D street |
+| Tests | Python `unittest`, `node --test`, a headless-Chrome smoke test |
+| Hosting | Vercel, static files only |
+
+```mermaid
+flowchart LR
+  subgraph inputs["data/ (committed inputs)"]
+    A["SMART-DS feeder and load profiles"]
+    B["ERCOT LZ_NORTH prices"]
+    C["OSM building footprints"]
+    D["Fleet placement (96 batteries)"]
+  end
+  subgraph offline["Offline, deterministic Python"]
+    E["sim/ controller: allocate() splits the charge by transformer headroom"]
+    F["OpenDSS AC power flow: the referee of every violation"]
+    G["resilience/: controller crash and hidden-attacker runs"]
+  end
+  H["ui/data/*.json: committed replays, every number labelled"]
+  I["ui/: static web app (Configure, Running, Run, Results, Learnings)"]
+  J["Browser, locally or on Vercel"]
+  inputs --> E
+  E -- "per-battery commands" --> F
+  F -- "loading, voltage, tiers" --> H
+  G --> H
+  H --> I --> J
+```
+
+The arrow from the engine to the app is a file, not a service: the engine runs ahead of time and commits its output, and the browser only reads it. The controller acts on its own view of transformer load; OpenDSS scores every step afterwards and never controls. No language model is anywhere in this path.
+
 ## Where everything lives
 
 | Folder or file | What it is |
@@ -76,14 +138,6 @@ More detail, including every page link and how to read the screen: [docs/run-the
 - [docs/NUMBERS.md](docs/NUMBERS.md): every number the video says, with its label, file and field.
 - [docs/data-sources.md](docs/data-sources.md): where each input comes from, its licence and its label.
 
-## Team
-
-Connor Daly - Product Design and System Design
-Razaq Alagbada - Data and System Design - razaqalagbada@gmail.com
-Michael Palacios - Data and Electrical Consulting - michaelxpalacios@gmail.com
-Bo Banducci - Video Production - bobanducci90@gmail.com
-Ashley I. - Presentation Production
-
 ## Data and licences
 
 - **SMART-DS** (NREL's synthetic feeder and load profiles): CC BY 4.0.
@@ -91,7 +145,31 @@ Ashley I. - Presentation Production
 - **ERCOT** market data: public ERCOT data, used in analysis (not ERCOT's logo).
 - **deck.gl** (vendored in `ui/vendor/`): MIT.
 
-Details and attribution: [docs/data-sources.md](docs/data-sources.md).
+**Synthetic and assumed data.** The feeder is synthetic (NREL calls SMART-DS "realistic but not real"), not a utility circuit. The 96-battery fleet placement is ours (ASSUMPTION): a deliberate stress placement, 24 batteries clustered on the densest homes plus 72 random homes, seed 17263. The failure scenarios (pieces fail, controller crash, hidden attacker) are scripted by us, and the attacker is fictional. The one recorded ERCOT frequency day (25 Sep 2026) is REAL.
+
+Details, file paths, checksums and attribution for every input: [docs/data-sources.md](docs/data-sources.md).
+
+## Known limitations
+
+- **One synthetic feeder.** Every result is for one SMART-DS feeder (1,010 customers, 379 transformers) used as an Oncor-suburb stand-in. Its coordinates fall in Pedernales Electric Cooperative territory, and LZ_NORTH is a placeholder zone. Nothing here is measured on a real circuit.
+- **2018 load, 2026 prices.** Load profiles from the 2018 weather year are paired with 2026 prices by calendar date, which mixes weekdays and weekends. If the profiles are in standard time, every August load sits one hour early against the prices; the +1 h sensitivity run has not been done.
+- **The controller sees more than Base does today.** It assumes total transformer load with a 60-second lag. Base sees its members' meters; off a street where every home is a member, that needs a utility meter-to-transformer map.
+- **Battery constants are assumptions.** Usable energy (37 kWh), round-trip efficiency (0.89) and unity power factor are unpublished values we chose.
+- **The fuse rule is an assumption, and a knife edge.** On 23 Aug the naive run stays above 200% for 9 minutes, one short of the rule.
+- **"Naive" is our assumption,** not how Base charges. Base's method is not public.
+- **Voltage is not in the capacity test.** In the 1,007-battery feeder-aware build one home dips just under the 0.95 pu floor (0.9498 pu).
+- **Money is gross energy value with perfect price foresight,** not Base's profit. Local transformer relief is unpriced: we found no ERCOT programme that pays for it.
+- **Coverage.** Four evenings are simulated in full; the failure scenarios exist for 23 Aug with feeder-aware charging only. Month and growth counts use the faster per-transformer estimate and are marked SCREENING.
+- **Replay, not live.** The app plays committed runs; it does not take a new scenario and solve it in the browser.
+
+## Next steps
+
+- Replace the assumptions with Base's answers: the ten open questions in [docs/how-base-plugs-in.md](docs/how-base-plugs-in.md) each change a labelled constant, not the code.
+- Run on a real feeder with the utility's transformer ratings and meter-to-transformer map.
+- Run the +1 h clock sensitivity and pair load and prices from the same weather year.
+- Add voltage to the capacity test, and test volt-VAR as well as unity power factor.
+- Extend the failure scenarios to the other evenings and to the naive policy.
+- Source transformer replacement cost and failure data, to turn avoided overload minutes into dollars.
 
 ## Hosting
 
