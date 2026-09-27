@@ -138,14 +138,6 @@ The arrow from the engine to the app is a file, not a service: the engine runs a
 - [docs/NUMBERS.md](docs/NUMBERS.md): every number the video says, with its label, file and field.
 - [docs/data-sources.md](docs/data-sources.md): where each input comes from, its licence and its label.
 
-## Team
-
-Connor Daly - Product Design and System Design - connor@nanama.io
-Razaq Alagbada - Data and System Design - razaqalagbada@gmail.com
-Michael Palacios - Data and Electrical Consulting - michaelxpalacios@gmail.com
-Bo Banducci - Video Production - bobanducci90@gmail.com
-Ashley I. - Presentation Production
-
 ## Data and licences
 
 - **SMART-DS** (NREL's synthetic feeder and load profiles): CC BY 4.0.
