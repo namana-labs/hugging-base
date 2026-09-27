@@ -89,6 +89,7 @@ code { font-size: 12.5px; }
 .cfg-evenings, .cfg-ctl { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; overflow: auto; }
 .cfg-fleet { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: auto; align-content: start; gap: 10px; overflow: auto; }
 .cfg-ctl > .cfg-card, .cfg-evenings > .cfg-opt { flex: none; }
+.cfg-fleet > .cfg-card { min-height: auto; }
 .cfg-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
 .cfg-card-h { display: flex; align-items: center; gap: 8px; }
 .cfg-card-t { font-size: 15px; font-weight: 700; }
