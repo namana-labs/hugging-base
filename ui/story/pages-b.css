@@ -175,3 +175,5 @@
 .pb-rank-v { font-size:13px; font-weight:700; white-space:nowrap; }
 .pb-up-v { font-size:12.5px; line-height:1.4; }
 .pb-up-v .pb-verdict-w { margin-right:4px; }
+.pb-up-moved { box-shadow:inset 3px 0 0 var(--tier-1); }
+.pb-moved { font-weight:700; color:var(--tier-1); }

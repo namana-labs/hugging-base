@@ -9,7 +9,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import {
-  parseParams, effectiveCap, roomStatus, peakBucket, q1Status, growthLevels, rankingFor, upgradeList, upgradeShortlist,
+  parseParams, effectiveCap, roomStatus, peakBucket, q1Status, growthLevels, rankingOf, upgradeList, upgradeShortlist, growthStory, q3Rows,
   verdictWords, VERDICT_WORDS, rankingModel, stripCells, monthName, questions, plannerRows, constOf, tfName, countBy,
 } from '../story/learnings.js';
 
@@ -97,62 +97,71 @@ test('labels and helpers', () => {
   assert.deepEqual([...plannerRows({ meta: { tfOrder: [5, 2] } }).entries()], [[5, 0], [2, 1]]);
   assert.deepEqual(constOf('A', { constants: { A: { value: 0.9, label: 'ASSUMPTION', cite: 'x' } } }), { v: 0.9, label: 'ASSUMPTION', cite: 'x' });
   assert.equal(constOf('A', {}), null);
-  const g = growthLevels({ meta: { growth: [0, 20, 50] }, perK: { g0: { capAware: [] }, g20: { capAware: [] } } });
-  assert.deepEqual(g.map((x) => [x.g, x.ok]), [[0, true], [20, true], [50, false]]);
 });
 
-// a two-transformer planner in the planner.json shape, for the ranking port
+// a two-row planner in the planner.json shape: the page only READS rankingByGrowth (no ranking logic in the browser)
 function tinyPlanner() {
-  const F = (last) => Array.from({ length: 9 }, (_, i) => [0, 0, 0, 0, 0, last * (0.5 + i / 8)]);
-  const row = (tf, homes, inst, aware, paper, upA, upP, key, age) => ({ tf, homes, installed: lab(inst, 'ASSUMPTION'), pending: lab(0, 'ASSUMPTION'),
-    cap: { naive: lab(0, 'SIM', { shown: 0, opendss: 'agree' }), aware: lab(aware, 'SIM', { shown: aware, opendss: 'agree' }), paper: lab(paper, 'DERIVED') },
-    up: { kva: lab(50, 'ASSUMPTION'), aware: lab(upA, 'SIM', { screening: true }), paper: lab(upP, 'DERIVED') }, nb: { key }, age: lab(age, 'DERIVED', { pRep5: age / 100 }) });
+  const row = (tf, inst, paper) => ({ tf, homes: 3, installed: lab(inst, 'ASSUMPTION'), pending: lab(0, 'ASSUMPTION'), cap: { paper: lab(paper, 'DERIVED') } });
+  const rk = (rank, tf, why, fit, extra = {}) => ({ rank, tf, why, unlocked: lab(1, 'DERIVED', { p10: 1, p90: 1 }), controlsFit: lab(fit), ...extra });
+  const g0 = [rk(1, 10, 'blocked', 2), rk(2, 11, 'onboard', 4)];
   return {
-    meta: { tfOrder: [10, 11], growth: [0, 20], kMax: 50 },
-    tfs: [row(10, 3, 2, 3, 1, 5, 2, 'a', 30), row(11, 4, 1, 4, 2, 6, 3, 'b', 10)],
-    perK: { g0: { capAware: [3, 4] }, g20: { capAware: [3, 1], capAwareExact: [1, 0] } },
-    money: { memberValueUSDYr: lab(631, 'DERIVED'), upgradeUSD: lab(10000, 'REAL'), coresPerMember: lab(1, 'ASSUMPTION') },
-    demand: { curves: { a: { q0: F(0.4) }, b: { q0: F(0.8) } } },
+    meta: { tfOrder: [10, 11], growth: [0, 20, 50] },
+    tfs: [row(10, 2, 1), row(11, 1, 2)],
+    ranking: g0,
+    rankingByGrowth: { g0, g20: [rk(1, 10, 'blocked', 2, { approx: false }), rk(2, 11, 'onboard', 5, { approx: true })] },
   };
 }
-test('the ranking port: binding cap min(aware, rule), unlocked, value, payback; growth re-ranks as screening', () => {
+test('Q3 reads rankingByGrowth as written; growth levels exist only when the file carries them', () => {
   const p = tinyPlanner();
-  const r0 = rankingFor(p, 0);
-  assert.deepEqual(r0.map((r) => [r.tf, r.why]), [[10, 'blocked'], [11, 'unlocks']]);
-  const a = r0[0];
-  assert.equal(a.c, 1); assert.equal(a.cUp, 2); assert.equal(a.k0, 2);
-  assert.equal(a.blockedToday.v, 1);
-  assert.equal(a.unlocked.v, 1);
-  assert.equal(a.valueUSDYr.v, 631);
-  assert.equal(a.paybackYears.v, 15.8);
-  assert.equal(a.screening, false);
-  const r20 = rankingFor(p, 20);
-  const b = r20.find((r) => r.tf === 11);
-  assert.equal(b.c, 1); assert.equal(b.why, 'unlocks'); assert.equal(b.approx, true); assert.equal(b.screening, true);
-  assert.deepEqual(rankingFor(p, 50), []);                                            // not exported: nothing invented
-  assert.deepEqual(rankingFor(null, 0), []);
-  const sl = upgradeShortlist([{ why: 'onboard', tf: 1 }, { why: 'blocked', tf: 2 }, { why: 'little', tf: 3 }, { why: 'onboard', tf: 4 }, { why: 'onboard', tf: 5 }], 8, 2);
-  assert.deepEqual(sl.map((x) => x.tf), [2, 3, 1, 4]);
+  assert.deepEqual(growthLevels(p).map((x) => [x.g, x.ok]), [[0, true], [20, true], [50, false]]);
+  assert.equal(rankingOf(p, 50), null);
+  assert.deepEqual(upgradeList(p, 50), []);                                           // not exported: nothing invented
+  assert.equal(rankingOf({ ranking: p.ranking }, 0), p.ranking);                     // older file: g0 falls back to ranking
+  assert.equal(rankingOf({ ranking: p.ranking }, 20), null);
+  const l0 = upgradeList(p, 0);
+  assert.deepEqual(l0.map((r) => [r.tf, r.k0, r.paper.v, r.fitFrom]), [[10, 2, 1, null], [11, 1, 2, null]]);
+  const l20 = upgradeList(p, 20);
+  assert.deepEqual(l20.map((r) => [r.tf, r.rank, r.approx, r.fitFrom]), [[10, 1, false, null], [11, 2, true, 4]]);
+  assert.equal(l20[1].controlsFit.v, 5);
 });
 
-test('real planner.json: the port reproduces sim.planner\'s ranking at today\'s load', (t) => {
+test('growthStory states what the file shows: order held, unlocked held, which rows moved and which way', () => {
+  const p = tinyPlanner();
+  const s = growthStory(p, 20);
+  assert.equal(s.n, 2); assert.equal(s.sameOrder, true); assert.equal(s.sameUnlocked, true);
+  assert.deepEqual(s.changed, [{ tf: 11, from: 4, to: 5 }]);
+  assert.equal(s.up, 1); assert.equal(s.down, 0); assert.equal(s.approx, 1);
+  p.rankingByGrowth.g20 = [p.rankingByGrowth.g20[1], p.rankingByGrowth.g20[0]];
+  assert.equal(growthStory(p, 20).sameOrder, false);
+  assert.equal(growthStory(p, 50), null);
+});
+
+test('Q3 rows: the shortlist, plus every row that moved at +g%, in rank order', () => {
+  const sl = upgradeShortlist([{ why: 'onboard', tf: 1 }, { why: 'blocked', tf: 2 }, { why: 'little', tf: 3 }, { why: 'onboard', tf: 4 }, { why: 'onboard', tf: 5 }], 8, 2);
+  assert.deepEqual(sl.map((x) => x.tf), [2, 3, 1, 4]);
+  const all = [{ rank: 1, tf: 1, why: 'blocked' }, { rank: 2, tf: 2, why: 'onboard' }, { rank: 3, tf: 3, why: 'onboard' }, { rank: 4, tf: 4, why: 'onboard', fitFrom: 1 }];
+  assert.deepEqual(q3Rows(all).map((x) => x.tf), [1, 2, 3, 4]);
+  assert.deepEqual(upgradeShortlist(all, 8, 2).map((x) => x.tf), [1, 2, 3]);
+});
+
+test('real planner.json: rankingByGrowth.g0 is the ranking; the page\'s rows carry the transformer facts', (t) => {
   if (!PLANNER) { t.skip('no planner.json yet'); return; }
-  const mine = rankingFor(PLANNER, 0), theirs = PLANNER.ranking;
-  assert.equal(mine.length, theirs.length);
-  mine.forEach((m, i) => {
-    const x = theirs[i];
-    assert.equal(m.tf, x.tf, `row ${i}`); assert.equal(m.why, x.why, `row ${i}`); assert.equal(m.rank, x.rank);
-    for (const k of ['blockedToday', 'wanted5y', 'unlocked', 'valueUSDYr', 'paybackYears']) assert.equal(m[k].v, x[k].v, `${x.tf} ${k}`);
-    assert.equal(m.unlocked.p10, x.unlocked.p10); assert.equal(m.unlocked.p90, x.unlocked.p90);
-  });
-  const shown = upgradeList(PLANNER, 0);
-  assert.deepEqual(shown.map((r) => r.tf), theirs.map((r) => r.tf));
-  assert.ok(shown.every((r) => Number.isInteger(r.k0) && Number.isInteger(r.c)));
-  for (const g of growthLevels(PLANNER).filter((x) => x.g && x.ok)) assert.ok(rankingFor(PLANNER, g.g).every((r) => r.screening), `g${g.g}`);
-  // planner room/full status covers every homes-serving transformer; the excluded stay -1
-  const s = q1Status(379, PLANNER, null, null);
-  assert.equal(s.aware.filter((x) => x >= 0).length, PLANNER.tfs.length);
-  for (const ex of PLANNER.meta.excluded) assert.equal(s.aware[ex], -1);
+  if (!PLANNER.rankingByGrowth) { t.skip('planner.json predates rankingByGrowth'); return; }
+  assert.deepEqual(PLANNER.rankingByGrowth.g0, PLANNER.ranking);
+  for (const g of growthLevels(PLANNER)) {
+    assert.ok(g.ok, `g${g.g} exported`);
+    const l = upgradeList(PLANNER, g.g);
+    assert.ok(l.length > 0);
+    assert.ok(l.every((r) => Number.isInteger(r.k0) && r.paper && Number.isInteger(r.paper.v)), `g${g.g}`);
+    if (g.g) {
+      const s = growthStory(PLANNER, g.g);
+      assert.equal(s.changed.length, l.filter((r) => r.fitFrom != null).length);
+      assert.equal(s.up + s.down, s.changed.length);
+    }
+  }
+  const s1 = q1Status(379, PLANNER, null, null);
+  assert.equal(s1.aware.filter((x) => x >= 0).length, PLANNER.tfs.length);
+  for (const ex of PLANNER.meta.excluded) assert.equal(s1.aware[ex], -1);
 });
 
 test('real planner.json + planner.js: every shortlisted row gets a verdict code the page can word', async (t) => {

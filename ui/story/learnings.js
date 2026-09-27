@@ -5,8 +5,8 @@
 //      planner is missing: P2 baseline.peak bucketed by the TIER_AMBER_PCT / TIER_NORMAL_PCT constants
 //   Q2 one transformer 0..kMax: p2/planner.json caps (naive / utility rule / feeder-aware, OpenDSS wins: cap.*.shown)
 //      with the OpenDSS pill; perK.g0 per-k peaks at n
-//   Q3 RZ's upgrade priority list: planner.json `ranking` (today's load) with the verdict from ui/lib/planner.js
-//      paramsFor() + decide() + verdict(); the home-load growth toggle re-ranks with perK.g20 / g50 caps (screening)
+//   Q3 RZ's upgrade priority list: planner.json rankingByGrowth.g0 / g20 / g50 as sim.planner wrote it (no ranking logic
+//      in the browser), verdicts from ui/lib/planner.js paramsFor() + decide() + verdict()
 //   Q4 where a battery helps most: top of p2/aware-core-d26-g0.json ranking
 // Q2-Q4 are feeder-aware only. A missing file or field says "not built yet" / "not exported"; never a zero, never a
 // typed-in value. No language model produces a rank or verdict here: sim.planner, sim.p2_build and planner.js do.
@@ -141,78 +141,55 @@ export function q1Status(nTf, planner, p2n, p2a) {
 }
 export const countBy = (arr, vals) => vals.map((v) => arr.filter((x) => x === v).length);
 
-/** Growth levels the planner exported: [{g (pct), id 'g<pct>', ok}]; ok = caps exist for that level. */
+/** Growth levels for Q3: [{g (pct), id 'g<pct>', ok}]; ok = planner.json carries that level's upgrade list. */
 export function growthLevels(planner) {
   const lv = planner && planner.meta && Array.isArray(planner.meta.growth) ? planner.meta.growth : [];
-  const pk = (planner && planner.perK) || {};
-  return lv.map((g) => ({ g, id: `g${g}`, ok: !!(pk[`g${g}`] && Array.isArray(pk[`g${g}`].capAware)) }));
+  return lv.map((g) => ({ g, id: `g${g}`, ok: Array.isArray(rankingOf(planner, g)) }));
 }
-const pct = (row, i) => (Array.isArray(row) ? row[i] : null);
-
-/**
- * RZ's upgrade priority list (DATA-SCOPE layer 3): a port of sim.planner.upgrade_ranking so the growth toggle can
- * re-rank at perK.g20 / g50 caps. At growth 0 it reproduces planner.json `ranking` (the page shows the file's).
- * Binding cap c = min(feeder-aware cap, utility rule); c_up = min(one size up, its rule); wanted(5 y) = installed +
- * pending + non-member homes x F_q(horizon); unlocked = min(wanted, c_up) - min(wanted, c). DERIVED arithmetic.
- */
-export function rankingFor(planner, growth = 0) {
-  if (!planner || !Array.isArray(planner.tfs)) return [];
-  const m = planner.money || {}, curves = planner.demand && planner.demand.curves;
-  const V = has(m.memberValueUSDYr) ? m.memberValueUSDYr.v : null, C = has(m.upgradeUSD) ? m.upgradeUSD.v : null;
-  const per = has(m.coresPerMember) ? m.coresPerMember.v : null;
-  const blk = growth ? planner.perK && planner.perK[`g${growth}`] : null;
-  if (growth && !(blk && Array.isArray(blk.capAware))) return [];
-  if (!curves || per == null) return [];
-  const rows = plannerRows(planner), out = [];
-  for (const r of planner.tfs) {
-    const k0 = (has(r.installed) ? r.installed.v : 0) + (has(r.pending) ? r.pending.v : 0);
-    const paper = r.cap && has(r.cap.paper) ? r.cap.paper.v : null;
-    const aw = growth ? pct(blk.capAware, rows.get(r.tf)) : r.cap && r.cap.aware ? (fin(r.cap.aware.shown) ? r.cap.aware.shown : r.cap.aware.v) : null;
-    if (paper == null || !fin(aw) || !r.up || !has(r.up.aware) || !has(r.up.paper)) continue;
-    const c = Math.min(aw, paper), cUp = Math.min(r.up.aware.v, r.up.paper.v);
-    const mm = Math.max(0, r.homes - Math.min(k0, r.homes));
-    const F = curves[r.nb && r.nb.key] && curves[r.nb.key].q0;
-    if (!Array.isArray(F) || F.length < 9) continue;
-    const want = { p10: k0 + per * mm * F[0][F[0].length - 1], p50: k0 + per * mm * F[4][F[4].length - 1], p90: k0 + per * mm * F[8][F[8].length - 1] };
-    if (!(k0 >= c || want.p90 >= c + 0.5)) continue;
-    const unl = Object.fromEntries(Object.entries(want).map(([q, w]) => [q, Math.max(0, Math.min(w, cUp) - Math.min(w, c))]));
-    const why = k0 > c ? 'blocked' : mm === 0 ? 'onboard' : unl.p50 >= 0.5 ? 'unlocks' : 'little';
-    const r2 = (x) => Math.round(x * 100) / 100;
-    const val = V != null ? unl.p50 * V : null;
-    const exact = growth ? pct(blk.capAwareExact, rows.get(r.tf)) : 1;
-    out.push({ tf: r.tf, why, k0, c, cUp, approx: growth ? exact === 0 && aw <= paper : false,
-      blockedToday: { v: Math.max(0, k0 - c), label: 'DERIVED', cite: 'installed + pending over min(feeder-aware cap, utility rule)' },
-      wanted5y: { v: r2(want.p50), label: 'DERIVED', cite: 'installed + pending + non-member homes x F_p50(horizon)', p10: r2(want.p10), p90: r2(want.p90) },
-      unlocked: { v: r2(unl.p50), label: 'DERIVED', cite: 'min(wanted, cap one size up) - min(wanted, cap)', p10: r2(unl.p10), p90: r2(unl.p90) },
-      valueUSDYr: val != null ? { v: Math.round(val), label: 'DERIVED', cite: `unlocked x ${m.memberValueUSDYr.cite || 'member value'} (gross energy value, not Base's profit)` } : null,
-      costUSD: C != null ? { ...m.upgradeUSD } : null,
-      paybackYears: { v: C != null && val > 0 ? Math.round(C / val * 10) / 10 : null, label: 'DERIVED', cite: 'cost / value per year' },
-      age: has(r.age) ? { v: r.age.v, label: r.age.label, cite: r.age.cite, pRep5: r.age.pRep5 } : null,
-      screening: !!growth });
-  }
-  out.sort((a, b) => (b.unlocked.v - a.unlocked.v) || (((b.age && b.age.pRep5) || 0) - ((a.age && a.age.pRep5) || 0)) || a.tf - b.tf);
-  out.forEach((x, i) => { x.rank = i + 1; });
-  return out;
+/** RZ's upgrade priority list at a growth level, as sim.planner wrote it: rankingByGrowth.g<g> (g0 == ranking).
+ *  No ranking logic runs in the browser. null when the file does not carry that level. */
+export function rankingOf(planner, growth = 0) {
+  if (!planner) return null;
+  const byG = planner.rankingByGrowth && planner.rankingByGrowth[`g${growth}`];
+  if (Array.isArray(byG)) return byG;
+  return growth === 0 && Array.isArray(planner.ranking) ? planner.ranking : null;
 }
-/** The list to show at a growth level: planner.json `ranking` at 0 (the planner's own), the port otherwise. Each row
- *  gets k0 / c / cUp from the transformer row for the page's words. */
+/** The list to show at a growth level: the file's rows, plus the transformer's own facts for the page's words
+ *  (installed + pending = planner.js's "Cores wanted here now", the utility rule's count) and, at +g%, how the
+ *  feeder-aware-control count moved against today's load (fitFrom). */
 export function upgradeList(planner, growth = 0) {
-  if (!planner) return [];
-  if (growth) return rankingFor(planner, growth);
-  if (!Array.isArray(planner.ranking)) return [];
+  const src = rankingOf(planner, growth);
+  if (!src) return [];
   const byTf = new Map((planner.tfs || []).map((t) => [t.tf, t]));
-  return planner.ranking.map((x) => {
+  const today = new Map((rankingOf(planner, 0) || []).map((x) => [x.tf, x]));
+  return src.map((x) => {
     const r = byTf.get(x.tf);
-    if (!r) return { ...x };
-    const k0 = (has(r.installed) ? r.installed.v : 0) + (has(r.pending) ? r.pending.v : 0);
-    const aw = r.cap && r.cap.aware ? (fin(r.cap.aware.shown) ? r.cap.aware.shown : r.cap.aware.v) : null;
-    const paper = r.cap && has(r.cap.paper) ? r.cap.paper.v : null;
-    return { ...x, k0, c: aw != null && paper != null ? Math.min(aw, paper) : null, cUp: r.up && has(r.up.aware) && has(r.up.paper) ? Math.min(r.up.aware.v, r.up.paper.v) : null, screening: false };
+    const k0 = r ? (has(r.installed) ? r.installed.v : 0) + (has(r.pending) ? r.pending.v : 0) : null;
+    const t0 = today.get(x.tf);
+    const fitFrom = growth && t0 && has(t0.controlsFit) && has(x.controlsFit) && t0.controlsFit.v !== x.controlsFit.v ? t0.controlsFit.v : null;
+    return { ...x, k0, paper: r && r.cap && has(r.cap.paper) ? r.cap.paper : null, fitFrom };
   });
+}
+/** What home-load growth does to the list, read from the file: does the order hold (same transformers, same order,
+ *  same members unlocked), and which rows' feeder-aware-control count moved, up or down. */
+export function growthStory(planner, growth) {
+  const a = rankingOf(planner, 0), b = rankingOf(planner, growth);
+  if (!a || !b) return null;
+  const sameOrder = a.length === b.length && a.every((x, i) => x.tf === b[i].tf);
+  const sameUnlocked = sameOrder && a.every((x, i) => has(x.unlocked) && has(b[i].unlocked) && x.unlocked.v === b[i].unlocked.v);
+  const changed = upgradeList(planner, growth).filter((x) => x.fitFrom != null).map((x) => ({ tf: x.tf, from: x.fitFrom, to: x.controlsFit.v }));
+  return { n: b.length, sameOrder, sameUnlocked, changed, up: changed.filter((c) => c.to > c.from).length, down: changed.filter((c) => c.to < c.from).length,
+    approx: b.filter((x) => x.approx).length };
 }
 /** The rows the page shows: the first `n` that unlock something, then up to `nb` "already on board" rows. */
 export function upgradeShortlist(rows, n = UPGRADE_SHOWN, nb = ONBOARD_SHOWN) {
   return [...rows.filter((r) => r.why !== 'onboard').slice(0, n), ...rows.filter((r) => r.why === 'onboard').slice(0, nb)];
+}
+/** Q3's rows: the shortlist, plus (at +g%) every row whose feeder-aware-control count moved, in the file's rank order. */
+export function q3Rows(all) {
+  const short = upgradeShortlist(all);
+  const moved = all.filter((r) => r.fitFrom != null && !short.includes(r));
+  return [...short, ...moved].sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
 }
 /** planner.js verdict() codes -> the page's words (DESIGN §3.4.4). */
 export const VERDICT_WORDS = {
@@ -464,13 +441,17 @@ export async function mount(root, ctx) {
     const eyebrow = `<div class="pb-row-b"><span class="pb-eyebrow">WHICH ARE WORTH UPGRADING</span>${planner && planner.decision ? tagHTML(planner.decision.label, planner.decision.cite) : ''}</div>`;
     if (!planner) return `${eyebrow}${missingHTML(notBuilt(plR.err, 'p2/planner.json'))}<div class="pb-body">The upgrade list comes from the capacity planner (sim.planner): RZ's three-layer scope.</div>`;
     const levels = growthLevels(planner);
-    const all = upgradeList(planner, st.g), list = upgradeShortlist(all);
+    const all = upgradeList(planner, st.g);
+    const list = q3Rows(all);
     const money = planner.money || {};
     const blocked = all.filter((r) => r.why === 'blocked').length;
+    const N = all.length;
+    const ruleBinds = N > 0 && all.every((r) => r.paper && has(r.controlsFit) && r.paper.v <= r.controlsFit.v);
+    const story = st.g ? growthStory(planner, st.g) : null;
     const seg = levels.map((l) => `<button type="button" class="pb-seg-b${l.g === st.g ? ' on' : ''}" data-g="${l.g}"${l.ok ? '' : ' disabled title="not exported by the planner"'}>${l.g ? `+${l.g}%` : 'Today\'s load'}${l.ok ? '' : ' · not exported'}</button>`).join('');
     const H = horizon != null ? `${fmtNum(horizon)} years` : 'the horizon';
-    const N = all.length;
     const interp = st.g && planner.perK && planner.perK[`g${st.g}`] ? planner.perK[`g${st.g}`].awareInterp || null : null;
+    const gSeries = planner.series && planner.series.rankingByGrowth ? planner.series.rankingByGrowth.text : null;
     const upCite = planner.meta && planner.meta.cites && planner.meta.cites.up;
     const lines = list.map((r) => {
       const t = planner.tfs[rows.get(r.tf)] || {};
@@ -479,20 +460,34 @@ export async function mount(root, ctx) {
       const dv = decideCache.get(`${st.g}:${r.tf}`);
       const vw = dv === undefined ? { word: lib ? 'computing…' : 'verdict not built yet', why: lib ? '' : 'ui/lib/planner.js (PLANNER)' } : dv.err ? { word: 'no verdict', why: dv.err } : verdictWords(dv.code, horizon) || { word: dv.code, why: '' };
       const ageTxt = r.age && has(r.age) ? ` · age ${num(r.age, { digits: 0, unit: ' y' })}${t.age && t.age.source !== 'utility' ? ' (simulated)' : ''}` : '';
+      const fit = has(r.controlsFit) ? `${r.approx ? '≈' : ''}${num(r.controlsFit, { digits: 0, screening: !!st.g })}${r.approx ? ` <span class="pb-sub" title="${esc(interp || 'interpolated between awareGrid points')}">interpolated</span>` : ''}` : missingHTML();
+      const movedTxt = r.fitFrom != null ? ` <b class="pb-moved">${fmtNum(r.fitFrom)} at today's load</b>` : '';
       return `
-        <div class="pb-up${r.tf === st.sel ? ' on' : ''}${r.why === 'onboard' ? ' pb-dim' : ''}" data-tf="${r.tf}">
-          <div class="pb-up-h"><span class="pb-rank-n">${r.rank != null ? `${r.rank}<small> of ${fmtNum(N)}</small>` : ''}</span><b>${esc(tfName(topo, r.tf))}</b><span class="pb-sub">${has(t.kva) ? fmtNum(t.kva.v) : '—'}${t.up && has(t.up.kva) ? ` → ${fmtNum(t.up.kva.v)}` : ''} kVA · ${fmtNum(t.homes)} home${t.homes === 1 ? '' : 's'} · ${fmtNum(r.k0)} wanted now, fits ${r.approx ? '≈' : ''}${fmtNum(r.c)}${r.approx ? ' (interpolated)' : ''}</span></div>
+        <div class="pb-up${r.tf === st.sel ? ' on' : ''}${r.why === 'onboard' ? ' pb-dim' : ''}${r.fitFrom != null ? ' pb-up-moved' : ''}" data-tf="${r.tf}">
+          <div class="pb-up-h"><span class="pb-rank-n">${r.rank != null ? `${r.rank}<small> of ${fmtNum(N)}</small>` : ''}</span><b>${esc(tfName(topo, r.tf))}</b><span class="pb-sub">${has(t.kva) ? fmtNum(t.kva.v) : '—'}${t.up && has(t.up.kva) ? ` → ${fmtNum(t.up.kva.v)}` : ''} kVA · ${fmtNum(t.homes)} home${t.homes === 1 ? '' : 's'}</span></div>
           <div class="pb-up-v"><span class="pb-verdict-w${vw && /^Upgrade/.test(vw.word) ? ' pb-go' : ''}">${esc(vw ? vw.word : '')}</span>${vw && vw.why ? ` <span class="pb-sub">${esc(vw.why)}</span>` : ''}</div>
-          <div class="pb-up-b">${r.why === 'onboard' ? 'every home here is already a member: an upgrade unlocks no one' : `unlocks <b>${unl}</b> member${has(u) && u.v === 1 ? '' : 's'} ${has(u) ? tagHTML(u.label, `${u.cite}; one size up: ${upCite || 'screening'}`, true) : ''} within ${esc(H)}${r.valueUSDYr && has(r.valueUSDYr) && r.valueUSDYr.v ? `, worth ${num(r.valueUSDYr, { money: true, digits: 0 })}/yr` : ''}${has(r.paybackYears) ? ` · pays back in ${num(r.paybackYears, { digits: 1, unit: ' yr' })}` : ''}`}${ageTxt}${r.screening ? ` ${tagHTML('SCREENING', 'caps at this home-load growth are the surrogate screen (not OpenDSS-checked); one size up stays at today\'s load')}` : ''}</div>
+          <div class="pb-up-b">${fmtNum(r.k0)} wanted now · the utility rule allows ${r.paper ? num(r.paper, { digits: 0 }) : missingHTML()} · feeder-aware control would fit ${fit}${movedTxt}</div>
+          <div class="pb-up-b">${r.why === 'onboard' ? 'every home here is already a member: an upgrade unlocks no one' : `unlocks <b>${unl}</b> member${has(u) && u.v === 1 ? '' : 's'} ${has(u) ? tagHTML(u.label, `${u.cite}; one size up: ${upCite || 'screening'}`, true) : ''} within ${esc(H)}${r.valueUSDYr && has(r.valueUSDYr) && r.valueUSDYr.v ? `, worth ${num(r.valueUSDYr, { money: true, digits: 0 })}/yr` : ''}${has(r.paybackYears) ? ` · pays back in ${num(r.paybackYears, { digits: 1, unit: ' yr' })}` : ''}`}${ageTxt}</div>
         </div>`;
     }).join('');
+    let head, note = '';
+    if (!st.g) head = `At today's load, ${fmtNum(blocked)} of ${fmtNum(N)} listed transformers block a battery wanted now${ruleBinds ? '; the utility\'s nameplate rule is the binding limit on every one' : ''}.`;
+    else if (!story) head = `At +${st.g}% home load: not exported by the planner.`;
+    else {
+      head = story.sameOrder && story.sameUnlocked
+        ? `At +${st.g}% home load the upgrade order holds: the same ${fmtNum(story.n)} transformers, in the same order, unlocking the same members.`
+        : `At +${st.g}% home load the upgrade list changes: ${fmtNum(story.n)} transformers${story.sameOrder ? ', same order' : ''}.`;
+      const ch = story.changed.length;
+      const dir = [story.up ? `${fmtNum(story.up)} fit more` : '', story.down ? `${fmtNum(story.down)} fit fewer` : ''].filter(Boolean).join(', ');
+      note = `${ruleBinds ? 'The utility rule still binds. ' : ''}${ch ? `Only what feeder-aware control would fit moves, on ${fmtNum(ch)} row${ch === 1 ? '' : 's'} (${dir}), marked below.` : 'What feeder-aware control would fit does not move on any row.'}${story.approx ? ` ${fmtNum(story.approx)} feeder-aware count${story.approx === 1 ? ' is' : 's are'} interpolated between grid points.` : ''} Feeder-aware counts at +${st.g}% are the surrogate screen ${tagHTML('SCREENING', gSeries || 'not OpenDSS-checked')}`;
+    }
     return `
       ${eyebrow}
-      <div class="pb-headline pb-h20">${st.g ? `At +${st.g}% home load` : 'At today\'s load'}, ${fmtNum(blocked)} transformer${blocked === 1 ? ' blocks' : 's block'} a battery wanted now, feeder-aware with the utility rule unchanged.</div>
-      ${st.g ? `<div class="pb-note">At least as many batteries still fit with feeder-aware charging as home load grows; the upgrade verdict carries the growth story. Caps at +${st.g}% are the surrogate screen${interp ? ', feeder-aware values between grid points interpolated' : ''} ${tagHTML('SCREENING', interp || 'not OpenDSS-checked')}</div>` : ''}
-      <div class="pb-growth"><span class="pb-sub">Home load growth (EVs, heat pumps)</span>${tagHTML('ASSUMPTION', constOf('PLAN_GROWTH_PCTS', planner) ? constOf('PLAN_GROWTH_PCTS', planner).cite : 'planner perK growth levels')}<div class="pb-seg">${seg}</div></div>
+      <div class="pb-headline pb-h20">${esc(head)}</div>
+      ${note ? `<div class="pb-note">${note}</div>` : ''}
+      <div class="pb-growth"><span class="pb-sub">Home load growth (EVs, heat pumps)</span>${tagHTML('ASSUMPTION', constOf('PLAN_GROWTH_PCTS', planner) ? constOf('PLAN_GROWTH_PCTS', planner).cite : 'planner growth levels')}<div class="pb-seg">${seg}</div></div>
       <div class="pb-uplist">${lines || '<div class="pb-body">No transformer is at capacity at this load.</div>'}</div>
-      <div class="pb-foot">Upgrade cost ${has(money.upgradeUSD) ? num(money.upgradeUSD, { money: true, digits: 0 }) : missingHTML()} per transformer · member value ${has(money.memberValueUSDYr) ? num(money.memberValueUSDYr, { money: true, digits: 0 }) : missingHTML()}/yr per battery is gross energy value, not Base's profit, and assumes perfect price foresight · unlocked = members over today's cap that one size up serves (typical growth; slow–fast) · verdict = least worst regret over slow, typical and fast growth (planner.js decide)</div>`;
+      <div class="pb-foot">sim.planner rankingByGrowth · upgrade cost ${has(money.upgradeUSD) ? num(money.upgradeUSD, { money: true, digits: 0 }) : missingHTML()} per transformer · member value ${has(money.memberValueUSDYr) ? num(money.memberValueUSDYr, { money: true, digits: 0 }) : missingHTML()}/yr per battery is gross energy value, not Base's profit, and assumes perfect price foresight · unlocked = members over today's cap that one size up serves (typical growth; slow–fast) · feeder-aware control would fit = the cap if the utility counted our control (UNVERIFIED in Texas) · verdict = least worst regret over slow, typical and fast growth (planner.js decide)</div>`;
   }
 
   function q4HTML() {
@@ -537,7 +532,7 @@ export async function mount(root, ctx) {
     // one decide() per tick (60-90 ms each on a loaded machine, docs/contracts-planner.md §3): the page stays live
     const step = () => {
       const g = st.g;
-      const r = upgradeShortlist(upgradeList(planner, g)).find((x) => !decideCache.has(`${g}:${x.tf}`));
+      const r = q3Rows(upgradeList(planner, g)).find((x) => !decideCache.has(`${g}:${x.tf}`));
       if (!r) return;
       const key = `${g}:${r.tf}`;
       try {
