@@ -1139,6 +1139,22 @@ def fit_budget(doc, out=print):
     return doc
 
 
+def write_outputs(doc, local=ASSETS_LOCAL, out=OUT, private=PRIVATE_OUT, assets_sim=ASSETS_SIM, say=print):
+    """The privacy rule (DESIGN §2.1, Must). With a hand-filled local asset file, apply it and write ONLY the private
+    file (plus a `*` .gitignore beside it, so it can never be committed); the public planner.json and assets.sim.csv
+    stay untouched. Without one, write the public file and the SIM asset CSV. Returns (target path, bytes written)."""
+    if Path(local).exists():
+        doc = apply_local_assets(doc, local)
+        target = Path(private)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        (target.parent / ".gitignore").write_text("*\n", encoding="utf-8")
+        say("planner: LOCAL UTILITY DATA found: writing ui/data/private/planner.json (do not publish)")
+    else:
+        Path(assets_sim).write_bytes(assets_sim_csv(doc).encode("utf-8"))
+        target = Path(out)
+    return target, write_json(target, doc)
+
+
 def main(argv):
     if argv and argv[0] == "ages":
         print(f"planner: wrote {write_ages_csv()}")
@@ -1156,14 +1172,7 @@ def main(argv):
               f"{'shape ok' if not errs else 'SHAPE FAIL'}")
         return 1 if errs else 0
     doc = fit_budget(doc)
-    target = OUT
-    if ASSETS_LOCAL.exists():
-        doc = apply_local_assets(doc)
-        target = PRIVATE_OUT
-        print("planner: LOCAL UTILITY DATA found: writing ui/data/private/planner.json (do not publish)")
-    else:
-        ASSETS_SIM.write_bytes(assets_sim_csv(doc).encode("utf-8"))
-    size = write_json(target, doc)
+    target, size = write_outputs(doc)
     print(f"planner: wrote {target.relative_to(ROOT)} {size / 1024:.0f} KB ({len(doc['tfs'])} transformers, "
           f"referee {info['referee']}, {info['seconds']} s){'' if not errs else ' SHAPE FAIL'}")
     return 1 if errs or size > SIZE_CAP_BYTES else 0
