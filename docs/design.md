@@ -35,7 +35,7 @@ Base's utilities page does mention deploying batteries on targeted circuits to r
 Two corollaries drive the rest of the design:
 
 - **Distance to congestion is the wrong variable; the sign of the shift factor is the right one.** Charging is load. Charge on the side of a constraint where power is trapped, discharge on the side that is short. At feeder level: charge electrically near the substation, discharge far from it, until reverse flow raises voltage at the far end.
-- **Frequency is one number for Texas; voltage is a street-by-street problem.** A 1,000-battery swing is about 40 MW, which moves system frequency by about 3–17 mHz (DERIVED), no larger than ERCOT's normal wander (σ ≈ 13.7 mHz on 25 Sep 2026), and is invisible at ERCOT. Quote the band, never a single value. The same swing is roughly the entire peak of three median Austin feeders. Risk, and detection, live at the feeder.
+- **Frequency is one number for Texas; voltage is a street-by-street problem.** A 1,000-battery swing is about 40 MW, which moves system frequency by about 3–17 mHz (DERIVED), no larger than ERCOT's normal wander (σ 13.51 mHz on 25 Sep 2026, DERIVED, `ui/data/ems/freq-series.json`), and is invisible at ERCOT. Quote the band, never a single value. The same swing is roughly the entire peak of three median Austin feeders. Risk, and detection, live at the feeder.
 
 ## 3. Scope
 
@@ -73,7 +73,7 @@ Purpose: prove the simulator tracks a base point on a normal hard day, and popul
 
 ### 4.2 Charging rebound on a stressed feeder (the headline)
 
-Anchor: Base's Houston charge block swung from −15.9 to −45.8 MW in 10–15 minutes. Replayed zone price drop from MIS archives.
+Anchor: Base's Houston set point went from 0 to −45.8 MW in 15 minutes (23:30–23:45 CT, 22 Jul 2026; Base's set point, not ERCOT's base point; corrected 26 Sep 2026 from a pairing of two different charge blocks). Replayed zone price drop from MIS archives.
 
 A price drop tells the fleet to charge. The trigger is the **real LZ_NORTH 15-minute price series** for the replay window (extract `rtm2026_lz.csv`, 2025–26, committed under `data/`); the prototype's scripted drop is an ASSUMPTION placeholder until the swap lands. **Naive splitter**: every unit charges at full power. **Location-aware splitter**: allocate by transformer headroom and electrical distance, stagger and randomize starts, give up market position where headroom runs out.
 
@@ -147,7 +147,7 @@ State machine (from the report, §Product): GRID_DISPATCH, GRID_IDLE, STORM_HOLD
 ### 5.3 Market layer
 
 - One ADER partition, base point every 5 minutes, 15-minute settlement at the load-zone price.
-- **Which zone**: the SMART-DS sample is north Austin, which is really Austin Energy territory (LZ_AEN, zero ADER MW, Austin Energy dispatches under a 40 MW tolling deal). **Decision: present the feeder as a stand-in for an Oncor suburb on Base's ERCOT path, settled at LZ_NORTH.** Say so on the slide. Which load zone Oncor's Austin suburbs actually settle in is **UNVERIFIED**; ask on site.
+- **Which zone**: the SMART-DS sample is a synthetic feeder drawn on NW-Austin coordinates, which fall in Pedernales Electric Cooperative territory on the PUCT service-area layers (corrected 26 Sep 2026 from "Austin Energy territory"; Austin Energy is LZ_AEN, zero ADER MW, and dispatches Base under a 40 MW tolling deal). **Decision: present the feeder as a stand-in for an Oncor suburb on Base's ERCOT path, settled at LZ_NORTH.** Say so on the slide. Which load zone Oncor's Austin suburbs actually settle in is **UNVERIFIED**; ask on site.
 - Tracking tolerance max(2 MW, 15%). Base's Houston record: 3.3% mean deviation.
 - Energy behind reserves (RRS 0.5 h, ECRS 1 h, Non-Spin 4 h) is enforced as a SoC reservation only if we bid reserves; default is energy-only.
 
@@ -158,7 +158,7 @@ For each candidate home `h` without a battery, add one Core, re-solve the feeder
 ```
 value(h) = market_value            # flat within zone; $/day benchmark ~1.58 Core (DERIVED)
          + capacity_value(h)       # tolling-style; Austin Energy figure implies ~$8.50/kW-month vs
-                                   #   Modo's $3.12 market benchmark (UNVERIFIED, DERIVED); locational
+                                   #   Modo's $3.12 revenue benchmark (DERIVED, upper bound: City of Austin RCA 23 Apr 2026); locational
          + congestion_relief(h)    # kW of transformer/feeder headroom restored during discharge
          + voltage_support(h)      # pu improvement at the worst node during discharge
          + backup_value            # flat; member-facing, cited not modeled
@@ -174,7 +174,7 @@ Weights and λ are demo knobs, shown in the UI, not hidden. The honest claim is 
 
 Three refinements adopted from the reconciliation:
 
-- **Value-stack labels.** Present the score's parts under the names a utility planner uses: market, capacity / deferral, congestion relief, voltage support on the value side; headroom consumed, voltage excursion, concentration on the risk side. Put dollars only on what is sourced: the flat $1.58/day market benchmark (DERIVED) and a labelled $3.12–$8.50/kW-month capacity band (DERIVED / UNVERIFIED). Everything else stays dimensionless.
+- **Value-stack labels.** Present the score's parts under the names a utility planner uses: market, capacity / deferral, congestion relief, voltage support on the value side; headroom consumed, voltage excursion, concentration on the risk side. Put dollars only on what is sourced: the flat $1.58/day market benchmark (DERIVED) and a labelled $3.12–$8.50/kW-month band ($3.12 a grid-scale storage revenue benchmark, REAL; $8.50 DERIVED from the City of Austin's upper-bound estimate, 23 Apr 2026). Everything else stays dimensionless.
 - **Greedy marginal placement.** After "plan this as the next build", re-solve so that neighbours' value drops. This turns a static ranking into a build order. The prototype pins one candidate in session memory without re-solving; the re-solve is the upgrade.
 - **Useful capacity, not "hosting capacity".** Report the number of batteries added, in rank order, before the first normal-tier violation **or** before curtailment exceeds a stated share of requested charge. The prototype's aware controller "accepts" all 911 candidates by curtailing heavily, which is not a capacity; the curtailment cap is what makes the number honest.
 
