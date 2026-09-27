@@ -14,7 +14,15 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-const CHROME = process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+// Chrome: env CHROME, else the first of the usual install paths that exists (macOS, Windows, Linux)
+const CHROME_PATHS = [process.env.CHROME, '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
+  '/usr/bin/google-chrome', '/usr/bin/chromium'].filter(Boolean);
+const CHROME = CHROME_PATHS.find((p) => fs.existsSync(p));
+if (!CHROME) {
+  console.error(`No Chrome found. Set CHROME to the Chrome binary; tried: ${CHROME_PATHS.join(', ')}`);
+  process.exit(2);
+}
 const argv = process.argv.slice(2);
 const opt = { base: null, sizes: '1280x800,1440x900,1920x1080', timeout: 40, links: [] };
 for (let i = 0; i < argv.length; i++) {
