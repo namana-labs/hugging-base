@@ -7,7 +7,7 @@
 - **Use:** replayed from this file only. **No live ERCOT calls anywhere** in the app. ERCOT data may be redistributed in analyses; ERCOT's logo may not be used.
 - **Label:** REAL. Derived quantities (the D-26 onset, the discharge plan, cliffs) are DERIVED and computed in `sim/prices.py`.
 
-## Provenance manifest (data-truth fix list #15; audit `simulators/rz/judges/DATA-TRUTH-inputs.md` problem 8)
+## Provenance manifest (data-truth fix list #15; audit `previous-work/simulators/rz/judges/DATA-TRUTH-inputs.md` problem 8)
 
 A judge can follow this chain from ERCOT's public site to the committed bytes. The audit re-checked every link and hash below on 26 Sep 2026.
 

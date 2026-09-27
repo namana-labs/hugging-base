@@ -21,7 +21,7 @@
 <!-- calibrate:end -->
 
 <!-- provenance:begin -->
-## Provenance manifest (data-truth fix list #15; audit `simulators/rz/judges/DATA-TRUTH-inputs.md` problem 8)
+## Provenance manifest (data-truth fix list #15; audit `previous-work/simulators/rz/judges/DATA-TRUTH-inputs.md` problem 8)
 
 - **Dataset:** NREL SMART-DS v1.0, 2018, AUS, P1U, feeder `p1uhs19_1247--p1udt17263`. A real published dataset of a **synthetic** feeder: NREL calls SMART-DS "realistic but not real" (https://www.nlr.gov/grid/smart-ds.html); OEDI submission 2981 (https://data.openei.org/submissions/2981). **Licence: CC BY 4.0** (attribute NREL).
 - **Raw files:** `https://oedi-data-lake.s3.amazonaws.com/SMART-DS/v1.0/2018/AUS/P1U/profiles/{name}.csv`, one per shape in the table below (254 kW + 254 kvar, 35,040 values each = 365 x 96, so no daylight-saving shift). Fetched on demand by `python3 scripts/fetch_profiles.py --fetch-only` into `~/hb-overnight/cache/smartds/` (never committed); the fetch date was not recorded, and the table below is the byte check. The audit re-downloaded three of them on 26 Sep 2026 (HTTP 200), and `res_kw_38274_pu` again for the output audit: all equal their row below.
