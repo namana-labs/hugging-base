@@ -113,6 +113,15 @@ code { font-size: 12.5px; }
 .cfg-why { font-size: 12.5px; color: var(--ink-2); }
 .cfg-ev-peak { font-size: 12.5px; color: var(--ink-2); }
 .cfg-ev-load { font-size: 12px; color: var(--muted); }
+.cfg-vs { display: flex; flex-direction: column; gap: 2px; padding: 7px 9px; border-radius: 8px; background: var(--brand-tint); font-size: 12px; color: var(--ink-2); flex: none; }
+.cfg-vs-h { font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--brand); text-transform: uppercase; }
+.vs-row { display: block; }
+.vs-row .num { font-weight: 700; color: var(--ink); }
+.vs-was { color: var(--muted); font-variant-numeric: tabular-nums; }
+.vs-more { color: var(--muted); cursor: help; }
+.rv-vs { min-width: 0; flex: 1; display: flex; align-items: baseline; gap: 10px; font-size: 12px; color: var(--ink-2); white-space: nowrap; overflow: hidden; }
+.rv-vs > b { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--brand); }
+.rv-vs .vs-row { display: inline; }
 .cfg-synth { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .04em; padding: 0 5px; border: 1px dashed var(--border-strong); border-radius: 3px; color: var(--muted); cursor: help; white-space: nowrap; }
 .rv-lab .note { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cfg-tagline { font-weight: 400; color: var(--muted); font-size: 12.5px; }

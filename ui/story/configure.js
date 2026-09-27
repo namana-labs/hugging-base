@@ -9,7 +9,7 @@
 //   - the one-lever rule (ruling 1): the fleet levers are run one away from the default at a time, so moving a second
 //     one resets the first (the note says so); any other lever the move changes carries the catalogue's reason.
 // Nothing here invents a number: the Fixed column reads the scenario's meta (constants, plan, sources) and topology.
-import { tagHTML, FEEDER_TAG, FEEDER_CITE } from './shell.js';
+import { tagHTML, FEEDER_TAG, FEEDER_CITE, vsDefaultRows, vsDefaultHTML } from './shell.js';
 import { dateLabel } from '../lib/format.js';
 
 export const LEVER_KEYS = ['evening', 'policy', 'failure', 'fleet', 'cls', 'reserve', 'soc0', 'growth'];
@@ -214,10 +214,22 @@ export async function mount(root, ctx) {
   }
   const changedBadge = (key) => (!same(scenario.levers[key], cat.levers[key].default) ? '<span class="cfg-changed">changed</span>' : '');
 
+  // the catalogue's vsDefault (what this run changed against the default run), shown by the lever that moved
+  function movedLevers() {
+    const rows = vsDefaultRows(cat, scenario);
+    if (!rows.length) return { keys: [], rows };
+    const ref = scenarioById(cat, rows[0].refId);
+    return { keys: ref ? LEVER_KEYS.filter((k) => !same(ref.levers[k], scenario.levers[k])) : [], rows };
+  }
+  const vsBlock = (key) => {
+    const m = movedLevers();
+    if (!m.keys.includes(key)) return '';
+    return `<div class="cfg-vs"><div class="cfg-vs-h" title="${esc(`The default run: ${m.rows[0].refTitle}`)}">What this changed vs the default run</div>${vsDefaultHTML(m.rows)}</div>`;
+  };
   function leverCard(key, bodyHTML, { desc = '', compact = false } = {}) {
     const L = cat.levers[key];
     return `<div class="cfg-card${compact ? ' compact' : ''}" data-lever="${key}"><div class="cfg-card-h"><span class="cfg-card-t">${esc(L.label)}</span>${changedBadge(key)}</div>
-      ${desc ? `<div class="cfg-desc">${esc(desc)}</div>` : ''}${bodyHTML}<div class="cfg-changes">Changes → ${esc(CHANGES[key] || '')}</div></div>`;
+      ${desc ? `<div class="cfg-desc">${esc(desc)}</div>` : ''}${bodyHTML}${vsBlock(key)}<div class="cfg-changes">Changes → ${esc(CHANGES[key] || '')}</div></div>`;
   }
 
   function renderScenarioBar() {
@@ -237,7 +249,7 @@ export async function mount(root, ctx) {
         ${pk ? `<span class="cfg-ev-peak">Peak price ${ctx.num(pk, { money: true, digits: 2, unit: '/MWh' })}${pk.t ? ` at ${esc(pk.t)}` : ''}</span>` : ''}
         ${pair ? `<span class="cfg-ev-load">${esc(pair.short)}${pair.sameWeekday ? '' : ' (another weekday)'} ${tagHTML('ASSUMPTION', pair.text)}</span>` : ''}`;
       return optionButton('evening', { ...o, tag: null }, extra, pair ? pair.text : '');
-    }).join('');
+    }).join('') + vsBlock('evening');
   }
 
   function renderController() {

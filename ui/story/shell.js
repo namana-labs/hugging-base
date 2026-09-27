@@ -35,6 +35,60 @@ export function numHTML(x, opts = {}) {
   return `<span class="num">${esc(val)}</span>${tags}`;
 }
 
+// ---- what a lever changed: the catalogue's `vsDefault` (only the headline values that differ from the default run) ----
+/** Words for the catalogue's headline keys (`catalogue.headline`); money is the fleet's gross energy value (ruling 6). */
+export const VS_WORDS = {
+  batteryCausedNormal: ['battery-caused normal-rating events', {}],
+  batteryCausedEmergency: ['battery-caused emergency events', {}],
+  batteryCausedAmberMin: ['battery-caused minutes over nameplate', {}],
+  energyValueUSD: ['fleet gross energy value, not Base\'s profit', { money: true, digits: 2 }],
+  maxLoading: ['worst transformer', { unit: '%', digits: 1 }],
+  normalEvents: ['normal-rating events', {}],
+  emergencyTfs: ['transformers above emergency', {}],
+  chargedPctBy0400: ['fleet charged by 04:00', { unit: '%', digits: 1 }],
+  reserveBreaches: ['reserve breaches (battery-minutes)', {}],
+  protectionOperated: ['protection operations', {}],
+  homesDark: ['homes dark', {}],
+};
+
+/** The rows of a scenario's `vsDefault` in the catalogue's `headline` order: [{key, words, opts, now, ref, refId,
+ *  refTitle}], `now` and `ref` labelled from the two runs' own summaries (a row whose label is missing is dropped:
+ *  never a bare number). [] for the default run, an alias, or a scenario without `vsDefault`. */
+export function vsDefaultRows(cat, scenario) {
+  const vs = scenario && scenario.vsDefault;
+  if (!vs || typeof vs !== 'object') return [];
+  const order = Array.isArray(cat.headline) ? cat.headline : Object.keys(vs);
+  const keys = [...order.filter((k) => k in vs), ...Object.keys(vs).filter((k) => !order.includes(k))];
+  const out = [];
+  for (const key of keys) {
+    const d = vs[key];
+    if (!d || typeof d !== 'object' || !('v' in d)) continue;
+    const refS = (cat.scenarios || []).find((x) => x.id === d.refId) || null;
+    const lab = (sc) => (sc && sc.summary && sc.summary[key] && TAG_LABELS.includes(sc.summary[key].label) ? sc.summary[key] : null);
+    const nowL = lab(scenario), refL0 = lab(refS);
+    if (!nowL || !LABELS.includes(nowL.label)) continue;
+    const refL = refL0 && LABELS.includes(refL0.label) ? refL0 : nowL;
+    const [words, opts] = VS_WORDS[key] || [key, {}];
+    out.push({ key, words, opts, refId: d.refId, refTitle: refS ? refS.title || refS.id : d.refId,
+      now: { v: d.v, label: nowL.label, cite: nowL.cite }, ref: { v: d.ref, label: refL.label, cite: refL.cite } });
+  }
+  return out;
+}
+
+/** Plain text of the rows ("fleet gross energy value $1,845.39 (default run $916.56)"), for a tooltip. */
+export function vsDefaultText(rows) {
+  return rows.map((r) => `${r.words} ${fmtValue(r.now, r.opts)} (default run ${fmtValue(r.ref, r.opts)})`).join('; ');
+}
+
+/** HTML of the rows, each value with its tag. `max` rows at most (the rest in the title). */
+export function vsDefaultHTML(rows, { max = Infinity } = {}) {
+  if (!rows.length) return '';
+  const shown = rows.slice(0, max);
+  const more = rows.length - shown.length;
+  return shown.map((r) => `<span class="vs-row" title="${esc(`vs ${r.refTitle}`)}">${esc(r.words)} ${numHTML(r.now, r.opts)} <span class="vs-was">default run ${esc(fmtValue(r.ref, r.opts))}</span></span>`).join('')
+    + (more > 0 ? `<span class="vs-more" title="${esc(vsDefaultText(rows.slice(max)))}">+${more} more</span>` : '');
+}
+
 /** Lever words for the run pill, from the catalogue's own option labels. */
 export function leverSummary(catalogue, levers) {
   const L = (catalogue && catalogue.levers) || {};
@@ -89,7 +143,8 @@ export function createShell(body) {
       else if (page === 'learnings') right = '<span class="st-framing">Core batteries · D-26 onset · today\'s load</span>';
       else if (NEXT[page] && scenario) {
         const idx = (catalogue.scenarios || []).indexOf(scenario) + 1;
-        right = `<span class="st-pill" title="${esc(`A static replay of the engine's run ${scenario.id} (ui/data). No simulator runs in the page.`)}">
+        const vs = vsDefaultText(vsDefaultRows(catalogue, scenario));
+        right = `<span class="st-pill" title="${esc(`A static replay of the engine's run ${scenario.id} (ui/data). No simulator runs in the page.${vs ? ` Versus the default run: ${vs}.` : ''}`)}">
             <span class="dot"></span><b>Run #${idx}</b><span class="sum">${esc(leverSummary(catalogue, scenario.levers))}</span></span>
           <a class="st-btn" href="${esc(link(NEXT[page][0], {}))}" data-next="${NEXT[page][0]}">${NEXT[page][1]}</a>`;
       }

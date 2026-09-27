@@ -15,7 +15,7 @@
 // Transformer count, steps, start time, fleet size, tiers and the reserve are all read from the data.
 import { TIER_RGB, STATE_RGB, buildSceneModel, frameFromP1 } from '../lib/scene-model.js';
 import { stepToTime, timeToStep } from '../lib/format.js';
-import { tagHTML } from './shell.js';
+import { tagHTML, vsDefaultRows, vsDefaultHTML, vsDefaultText } from './shell.js';
 
 export const SPEEDS = [0.1, 0.25, 0.5, 1, 2, 4];
 export const DEFAULT_SPEED = 0.25;         // 0.25x = 2.5 simulated minutes per second (story contract ruling 5)
@@ -65,7 +65,10 @@ export function tierNames(tiers = {}) {
 export function buildSeries(doc, meta, topology, extras = null) {
   const n = doc.loading.length;
   const worst = new Float64Array(n), wtf = new Int32Array(n), soc = new Float64Array(n), kw = new Float64Array(n);
-  const useX = extras && Array.isArray(extras.worstPct) && extras.worstPct.length === n && Array.isArray(extras.worstTf);
+  // extras' worst series when exported for this run (never a series its `absent` list names)
+  const absent = new Set((extras && Array.isArray(extras.absent) && extras.absent) || []);
+  const useX = extras && !absent.has('worstPct') && !absent.has('worstTf') && Array.isArray(extras.worstPct) && extras.worstPct.length === n
+    && Array.isArray(extras.worstTf) && extras.worstTf.length === n;
   for (let k = 0; k < n; k++) {
     if (useX) { worst[k] = extras.worstPct[k] / 10; wtf[k] = extras.worstTf[k]; } else {
       const row = doc.loading[k];
@@ -343,6 +346,7 @@ export async function mount(root, ctx) {
   const kwMax = Math.max(...Array.from(S.kw, Math.abs));
   const kwHi = Math.max(2000, Math.ceil(kwMax / 1000) * 1000);
   const uid = Math.random().toString(36).slice(2, 8);
+  const vsRows = vsDefaultRows(ctx.catalogue || {}, sc);
   // data-truth audit #5: the fleet sits where it stresses these streets on purpose (topology meta.shaping; a variant's
   // own placement rule is the catalogue's FLEET_PLACEMENT)
   const shaping = topology.meta && topology.meta.shaping;
@@ -378,6 +382,7 @@ export async function mount(root, ctx) {
         <div class="rv-trans"><button type="button" class="rv-play" aria-label="Play">▶</button><span class="st-clock">${stepToTime(meta, 0)}</span>
           <button type="button" class="st-btn-ghost rv-replay" title="Replay from ${esc(meta.start)}">↺ Replay</button>
           <span class="rv-stepno">Step 1 of ${fmtN(n)}</span>
+          ${vsRows.length ? `<span class="rv-vs" title="${esc(`Versus ${vsRows[0].refTitle}: ${vsDefaultText(vsRows)}`)}"><b>vs the default run</b>${vsDefaultHTML(vsRows, { max: 2 })}</span>` : ''}
           <div class="rv-speed" role="radiogroup" aria-label="Speed">${SPEEDS.map((s) => `<button type="button" data-speed="${s}">${s}×</button>`).join('')}</div></div>
         <div class="rv-grid">
           <div class="rv-lab"><span class="n">Worst transformer</span><span class="v" data-v="worst"></span></div>

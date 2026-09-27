@@ -164,3 +164,24 @@ test('run: the covert detector card counts flagged and quarantined units from p3
   assert.equal(covertMoments(cov)[0].text, cov.attack.text);
   assert.deepEqual(covertFailures(null, n), []);
 });
+
+test('shell: vsDefault rows follow the catalogue headline order, labelled from the runs\' own summaries', async () => {
+  const { vsDefaultRows, vsDefaultText, vsDefaultHTML } = await import('../story/shell.js');
+  const sum = (v, label = 'SIM') => ({ v, label, cite: 'c' });
+  const cat = {
+    headline: ['batteryCausedNormal', 'energyValueUSD', 'maxLoading'],
+    scenarios: [
+      { id: 'd/naive', title: 'Naive', summary: { batteryCausedNormal: sum(11), energyValueUSD: sum(893.83, 'DERIVED'), maxLoading: sum(201.2) } },
+      { id: 'd/naive/fleet=192', title: 'Naive, 192', summary: { batteryCausedNormal: sum(15), energyValueUSD: sum(1789.11, 'DERIVED'), maxLoading: sum(201.3), bare: 3 },
+        vsDefault: { energyValueUSD: { v: 1789.11, ref: 893.83, refId: 'd/naive' }, batteryCausedNormal: { v: 15, ref: 11, refId: 'd/naive' }, bare: { v: 3, ref: 1, refId: 'd/naive' } } },
+    ],
+  };
+  const rows = vsDefaultRows(cat, cat.scenarios[1]);
+  assert.deepEqual(rows.map((r) => r.key), ['batteryCausedNormal', 'energyValueUSD'], 'headline order; a value without a label is dropped');
+  assert.deepEqual(rows[1].now, { v: 1789.11, label: 'DERIVED', cite: 'c' });
+  assert.equal(rows[1].refTitle, 'Naive');
+  assert.match(vsDefaultText(rows), /fleet gross energy value, not Base's profit \$1,789\.11 \(default run \$893\.83\)/);
+  assert.match(vsDefaultHTML(rows, { max: 1 }), /\+1 more/);
+  assert.deepEqual(vsDefaultRows(cat, cat.scenarios[0]), []);
+  assert.deepEqual(vsDefaultRows(cat, { id: 'x', vsDefault: {} }), []);
+});
