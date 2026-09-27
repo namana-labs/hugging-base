@@ -133,7 +133,7 @@ export function optionWords(catalogue, key, value) {
   return o ? String(o.label).split(/: | \(/)[0].trim() : String(value);
 }
 // the catalogue constant that holds each fleet lever's option set (its label says where the set comes from)
-const LEVER_SET = { fleet: 'STORY_FLEET_SIZES', reserve: 'STORY_RESERVES_PCT', soc0: 'STORY_SOC0_PCT', growth: 'STORY_GROWTH_PCT' };
+export const LEVER_SET = { fleet: 'STORY_FLEET_SIZES', reserve: 'STORY_RESERVES_PCT', soc0: 'STORY_SOC0_PCT', growth: 'STORY_GROWTH_PCT' };
 /** The tag of a lever setting: the option's own `why` label, else its lever's catalogue constant; null when the data
  *  gives none (no tag is then shown). */
 export function leverTag(catalogue, key, value) {

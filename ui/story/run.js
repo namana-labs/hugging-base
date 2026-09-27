@@ -16,7 +16,7 @@
 // data does not give is not shown.
 import { TIER_RGB, STATE_RGB, STATE_WORDS, buildSceneModel, frameFromP1 } from '../lib/scene-model.js';
 import { stepToTime, timeToStep } from '../lib/format.js';
-import { tagHTML, vsDefaultInfo, vsDefaultHTML, vsDefaultText, customerName, markCustomers } from './shell.js';
+import { tagHTML, vsDefaultInfo, vsDefaultHTML, vsDefaultText, customerName, markCustomers, leverTag } from './shell.js';
 
 export const SPEEDS = [0.1, 0.25, 0.5, 1, 2, 4];
 export const DEFAULT_SPEED = 0.25;         // 0.25x = 2.5 simulated minutes per second (story contract ruling 5)
@@ -390,6 +390,10 @@ export async function mount(root, ctx) {
   const cntLab = seriesLabel(doc, 'counts');
   const cntCite = (doc.series && doc.series.counts && doc.series.counts.unit) || 'counts';
   const priceLab = seriesLabel(meta, 'price');
+  const tierLab = seriesLabel(doc, 'tier');
+  const rules = extras && extras.sources && extras.sources.rules;
+  const rulesTag = rules && LABEL_OK(rules.label) ? tagHTML(rules.label, rules.text || '') : '';
+  const fleetTag = (() => { const t = leverTag(ctx.catalogue || {}, 'fleet', lev.fleet); return t ? tagHTML(t.label, t.cite) : ''; })();
   const bands = ((meta.plan && meta.plan.discharge) || []).map(([t, mins]) => {
     const k0 = timeToStep(meta, t);
     return k0 === null ? '' : `<rect x="${(k0 / (n - 1) * 1000).toFixed(1)}" y="0" width="${(mins / (n - 1) * 1000).toFixed(1)}" height="100" fill="#e9dfbb"></rect>`;
@@ -447,7 +451,7 @@ export async function mount(root, ctx) {
         <div class="big" data-v="hero"></div><div class="who"><i></i><b></b><span class="tn"></span></div><div class="cnt"></div></div>
       ${covertOn ? '<div class="rv-card rv-det"></div>' : ''}
       ${runtimeOn ? '<div class="rv-card rv-ctl"></div>' : ''}
-      <div class="rv-card rv-bat"><div class="h"><span class="t">Fleet charge</span><span class="m">${noFleet ? 'no batteries in this run' : `${fmtN(S.fleetN)} batteries`}</span><span class="flow"></span></div>
+      <div class="rv-card rv-bat"><div class="h"><span class="t">Fleet charge</span><span class="m">${noFleet ? 'no batteries in this run' : `${fmtN(S.fleetN)} batteries${fleetTag}`}</span><span class="flow"></span></div>
         <div class="rv-cell"><div class="rv-body"><div class="rv-track"><div class="rv-fill"></div><div class="rv-stripes"></div>${reservePct !== null ? `<div class="rv-reserve" style="left:${reservePct}%"></div>` : ''}<span class="rv-pct"></span></div></div><div class="rv-term"></div></div>
         <div class="rv-resnote">${reservePct !== null ? reserveHTML({ reserveC, summary, num: ctx.num, noFleet }) : ''}</div></div>
       <div class="rv-card rv-now"></div>
@@ -492,12 +496,12 @@ export async function mount(root, ctx) {
     const el = $('.rv-now');
     el.classList.toggle('failing', nowF.length > 0);
     el.innerHTML = `<div class="h"><span class="st-eyebrow">RIGHT NOW · ${stepToTime(meta, k)}</span>${tagOpt(cntLab, cntCite)}</div>
-      ${nowF.length ? `<div class="rv-failing"><div class="e">FAILING NOW · ${nowF.length}</div>${nowF.map((f) => `<button type="button" class="rv-fnow" data-seek="${f.k0}"><span class="a"><b>${esc(kindWord(f.kind))}${f.where ? ` · ${esc(f.where)}` : ''}</b><span>${span(f)}</span></span><span class="b">${esc(f.text)}${tagOpt(f.label, f.label === 'ASSUMPTION' ? 'a scripted failure: what fails and when are assumptions' : 'from this run')}</span></button>`).join('')}</div>`
+      ${nowF.length ? `<div class="rv-failing"><div class="e">FAILING NOW · ${nowF.length}${rulesTag}</div>${nowF.map((f) => `<button type="button" class="rv-fnow" data-seek="${f.k0}"><span class="a"><b>${esc(kindWord(f.kind))}${f.where ? ` · ${esc(f.where)}` : ''}</b><span>${span(f)}</span></span><span class="b">${esc(f.text)}${tagOpt(f.label, f.label === 'ASSUMPTION' ? 'a scripted failure: what fails and when are assumptions' : 'from this run')}</span></button>`).join('')}</div>`
         : failures ? `<div class="rv-ok"><i></i>No failures right now${batQual}</div>` : '<div class="rv-ok">Failures: not exported for this run</div>'}
-      <div class="rv-sec"><div class="r"><b>${fmtN(tot)} transformers</b><span>${fmtN(B.within)} within nameplate</span></div><div class="rv-tbar">${bar}</div>
-        <div class="rv-tiers">${B.bands.map((b) => `<span class="${b.bad ? 'bad' : b.n ? '' : 'zero'}"><i style="background:${rgb(b.rgb)}"></i>${esc(b.name)} ${fmtN(b.n)}${b.key === 'above' && b.past ? ` (${fmtN(b.past)} ${T.normalMin ? `past ${fmtN(T.normalMin.v)} min` : 'normal rating exceeded'})` : ''}</span>`).join('')}</div></div>
-      ${noFleet ? '' : `<div class="rv-sec"><div class="r"><b>${fmtN(S.fleetN)} batteries</b><span>${esc(stateLine)}</span></div><div class="rv-cells">${cells}</div></div>`}
-      <div class="rv-all"><div class="e">FAILURES THIS EVENING<span>${failures ? failures.length : '—'}</span></div>${!failures ? '<div class="rv-ok">Not exported for this run.</div>' : failures.length ? failures.map((f) => {
+      <div class="rv-sec"><div class="r"><b>${fmtN(tot)} transformers</b><span>${fmtN(B.within)} within nameplate${tagOpt(cntLab, cntCite)}</span></div><div class="rv-tbar">${bar}</div>
+        <div class="rv-tiers">${B.bands.map((b) => `<span class="${b.bad ? 'bad' : b.n ? '' : 'zero'}"><i style="background:${rgb(b.rgb)}"></i>${esc(b.name)} ${fmtN(b.n)}${b.key === 'above' && b.past ? ` (${fmtN(b.past)} ${T.normalMin ? `past ${fmtN(T.normalMin.v)} min` : 'normal rating exceeded'})` : ''}</span>`).join('')}${tagOpt(cntLab, cntCite)}</div></div>
+      ${noFleet ? '' : `<div class="rv-sec"><div class="r"><b>${fmtN(S.fleetN)} batteries${fleetTag}</b><span>${esc(stateLine)}</span></div><div class="rv-cells">${cells}</div></div>`}
+      <div class="rv-all"><div class="e">FAILURES THIS EVENING<span>${failures ? `${failures.length}${rulesTag}` : '—'}</span></div>${!failures ? '<div class="rv-ok">Not exported for this run.</div>' : failures.length ? failures.map((f) => {
         const act = f.k0 <= k && k <= f.k1, past = f.k1 < k;
         return `<button type="button" class="rv-frow${act ? ' act' : past ? ' past' : ''}" data-seek="${f.k0}" title="${esc(f.text)}"><i></i><span class="s">${span(f)}</span><span class="w">${esc(kindWord(f.kind))}${f.where ? ` · ${esc(f.where)}` : ''}</span></button>`;
       }).join('') : `<div class="rv-ok">None in this run${batQual}.</div>`}</div>`;
@@ -571,16 +575,16 @@ export async function mount(root, ctx) {
     root.querySelector('[data-v="soc"]').innerHTML = noFleet ? 'no batteries' : `<b>${fmtN(S.soc[k], 0)}%</b> ${tagOpt(socLab)}${reservePct !== null ? ` · ${reserveC && reserveC.label ? ctx.num({ v: reservePct, label: reserveC.label, cite: reserveC.cite }, { unit: '%' }) : `${fmtN(reservePct)}%`} reserve` : ''}`;
     root.querySelector('[data-v="kw"]').innerHTML = noFleet ? 'no batteries' : `<b>${signedMW(S.kw[k])}</b> ${tagOpt(kwLab, 'the fleet\'s battery kW, + charging')} · ±${fmtN(kwHi / 1000, 1)} MW`;
     // hero
-    $('[data-v="hero"]').textContent = `${fmtN(S.worst[k], 1)}%`;
+    $('[data-v="hero"]').innerHTML = `${fmtN(S.worst[k], 1)}%${tagOpt(loadLab, 'OpenDSS loading as % of nameplate kVA as shipped')}`;
     $('.rv-hero .who i').style.background = rgb(TIER_RGB[code] || TIER_RGB[0]);
     $('.rv-hero .who b').textContent = tfName(topology, S.wtf[k]);
-    $('.rv-hero .who .tn').textContent = TN[code] || '';
+    $('.rv-hero .who .tn').innerHTML = `${esc(TN[code] || '')}${tagOpt(tierLab, (doc.series && doc.series.tier && doc.series.tier.by) || 'tier code')}`;
     $('.rv-hero .cnt').innerHTML = `${esc(B.text)} ${tagOpt(cntLab, cntCite)}`;
     // battery
     const socNow = noFleet ? 0 : clamp(S.soc[k], 0, 100);
     for (const s of [$('.rv-fill'), $('.rv-stripes')]) s.style.width = `${socNow.toFixed(1)}%`;
     const pctEl = $('.rv-pct');
-    pctEl.textContent = noFleet ? '' : `${fmtN(socNow, 0)}%`;
+    pctEl.innerHTML = noFleet ? '' : `${fmtN(socNow, 0)}%${tagOpt(socLab, 'mean state of charge of the fleet')}`;
     pctEl.classList.toggle('dark', socNow < 18);
     // the fleet's signed power (the batKW series: + charging), no threshold word
     $('.rv-bat .flow').innerHTML = noFleet ? '' : `${signedMW(S.kw[k])} MW ${tagOpt(kwLab, 'the fleet\'s battery kW, + charging')}`;

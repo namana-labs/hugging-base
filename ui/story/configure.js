@@ -9,7 +9,7 @@
 //   - the one-lever rule (ruling 1): the fleet levers are run one away from the default at a time, so moving a second
 //     one resets the first (the note says so); any other lever the move changes carries the catalogue's reason.
 // Nothing here invents a number: the Fixed column reads the scenario's meta (constants, plan, sources) and topology.
-import { tagHTML, FEEDER_TAG, vsDefaultInfo, vsDefaultHTML, leverTag } from './shell.js';
+import { tagHTML, FEEDER_TAG, vsDefaultInfo, vsDefaultHTML, leverTag, LEVER_SET } from './shell.js';
 import { dateLabel, stepToTime } from '../lib/format.js';
 
 export const LEVER_KEYS = ['evening', 'policy', 'failure', 'fleet', 'cls', 'reserve', 'soc0', 'growth'];
@@ -18,6 +18,8 @@ export const ONE_LEVER_REASON = 'the engine ran the fleet levers one away from t
 export const NO_BATTERIES_REASON = 'No batteries in this run: pick a dispatch policy first';
 export const NOT_RUN_REASON = 'Not run: no engine run in the catalogue has these settings';
 const LABEL_OK = (l) => ['REAL', 'SIM', 'DERIVED', 'ASSUMPTION', 'UNVERIFIED', 'SCREENING'].includes(l);
+const tagOpt = (label, cite) => (LABEL_OK(label) ? tagHTML(label, cite) : '');
+
 const same = (a, b) => String(a) === String(b);
 
 export const defaultLevers = (cat) => Object.fromEntries(LEVER_KEYS.map((k) => [k, cat.levers && cat.levers[k] ? cat.levers[k].default : undefined]));
@@ -236,7 +238,7 @@ export async function mount(root, ctx) {
     const tip = [st.enabled ? '' : st.reason, title].filter(Boolean).join(' · ');
     return `<button type="button" class="cfg-opt${st.selected ? ' on' : ''}" data-key="${key}" data-val="${esc(o.id)}"
       aria-pressed="${st.selected}"${st.enabled ? '' : ' disabled aria-disabled="true"'}${tip ? ` title="${esc(tip)}"` : ''}>
-      <span class="t">${esc(o.label)}${o.tag && key !== 'evening' ? ` <span class="cfg-tagline">${esc(o.tag)}</span>` : ''}</span>
+      <span class="t">${esc(o.label)}${key !== 'evening' && o.why && LABEL_OK(o.why.label) ? tagHTML(o.why.label, [o.why.text, o.why.cite].filter(Boolean).join(' · ')) : ''}${o.tag && key !== 'evening' ? ` <span class="cfg-tagline">${esc(o.tag)}</span>` : ''}</span>
       ${sub ? `<span class="s">${esc(sub)}</span>` : ''}${extraHTML}
       ${!st.enabled ? `<span class="cfg-why-off">${esc(st.reason)}</span>` : ''}</button>`;
   }
@@ -287,21 +289,23 @@ export async function mount(root, ctx) {
   function renderController() {
     const pol = cat.levers.policy, fail = cat.levers.failure;
     const attacker = scenario.levers.failure === 'covert' ? '<span class="cfg-fict">Fictional attacker</span>' : '';
-    $('.cfg-ctl').innerHTML = leverCard('policy', `<div class="cfg-stack">${(pol.options || []).map((o) => optionButton('policy', o, o.why ? `<span class="cfg-why">${tagHTML(o.why.label, [o.why.text, o.why.cite].filter(Boolean).join(' '))}</span>` : '')).join('')}</div>`)
+    $('.cfg-ctl').innerHTML = leverCard('policy', `<div class="cfg-stack">${(pol.options || []).map((o) => optionButton('policy', o)).join('')}</div>`)
       + leverCard('failure', `<div class="cfg-stack">${(fail.options || []).map((o) => optionButton('failure', o)).join('')}</div>${attacker}`);
   }
 
   function renderFleet() {
     const cards = FLEET_KEYS.filter((k) => cat.levers[k]).map((k) => {
       const L = cat.levers[k];
+      const sc = cat.constants && cat.constants[LEVER_SET[k]];
+      const setTag = sc && LABEL_OK(sc.label) ? tagHTML(sc.label, `the options of this lever: ${sc.cite || LEVER_SET[k]}`) : '';
       const opts = (L.options || []).map((o) => {
         const st = optionState(cat, scenario.levers, k, o.id);
         return { o, st };
       });
       const seg = `<div class="cfg-seg-sm" role="radiogroup" aria-label="${esc(L.label)}">${opts.map(({ o, st }) => `<button type="button" data-key="${k}" data-val="${esc(o.id)}"
-          class="${st.selected ? 'on' : ''}" aria-pressed="${st.selected}"${st.enabled ? '' : ' disabled aria-disabled="true"'}${reasonHTML(st)}>${esc(o.label)}</button>`).join('')}</div>`;
+          class="${st.selected ? 'on' : ''}" aria-pressed="${st.selected}"${st.enabled ? '' : ' disabled aria-disabled="true"'}${reasonHTML(st)}>${esc(o.label)}${setTag ? '' : tagOpt(o.why && o.why.label, o.why && [o.why.text, o.why.cite].filter(Boolean).join(' · '))}</button>`).join('')}${setTag}</div>`;
       const sel = optionOf(cat, k, scenario.levers[k]);
-      const selWhy = sel && sel.why ? `<div class="cfg-desc">${esc(sel.label)}: ${whyHTML(sel.why)}</div>` : '';
+      const selWhy = sel && sel.why && sel.why.text ? `<div class="cfg-desc">${esc(sel.label)}: ${esc(sel.why.text)}${tagOpt(sel.why.label, sel.why.cite)}</div>` : '';
       const off = [...new Set(opts.filter(({ st }) => !st.enabled).map(({ st }) => st.reason))];
       const offIds = opts.filter(({ st }) => !st.enabled).map(({ o }) => o.label);
       const offHTML = off.length ? `<div class="cfg-off">Not available: ${esc(offIds.join(', '))}. ${esc(off.length === 1 ? off[0] : off.join(' · '))}</div>` : '';
