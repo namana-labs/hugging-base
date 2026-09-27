@@ -181,21 +181,21 @@ Paths are relative to the repo root. `mpalacios/out/p1/worker_kill.json` and `mp
 
 The medians are over the transformers of each size serving homes (`sizeSummary.<kVA>.count`). Where OpenDSS is stricter than the screen, OpenDSS wins (`referee.rule`). Read a single transformer's answer (Q2) and the upgrade list (Q3) from the page, with their tags.
 
-## Speed (measured on a shared machine)
+## Speed (measured on two different shared machines: `engine.json` on a Mac, the Running-page catalogue on the Windows 11 build machine)
 
 | Say | Value | Label | File | Field |
 | --- | --- | --- | --- | --- |
-| One OpenDSS solve (one power flow) | **2.13 ms** | DERIVED | `ui/data/engine.json` | `opendss.msPerSolve` |
-| One step (set every load and battery, solve, read out) | **4.2 ms** | DERIVED | `ui/data/engine.json` | `opendss.msPerStep` |
-| The committed 23 Aug build, four branches | **12.7 s** | DERIVED | `ui/data/engine.json` | `p1.buildSeconds` |
-| …OpenDSS solves in that build | **2,884** | DERIVED | `ui/data/engine.json` | `p1.solves` |
-| Controller call, 96 batteries | **66.6 µs** | DERIVED | `ui/data/engine.json` | `allocate.96` |
-| Controller call, 100,000 batteries (about 65 ms) | **65,011.7 µs** | DERIVED | `ui/data/engine.json` | `allocate.100000` |
-| Running page, `2026-08-23/naive`: build time, OpenDSS solves | **25.5 s, 721** | DERIVED / SIM | `ui/data/story/index.json` | `scenarios[id=2026-08-23/naive].engine.buildSeconds, .solves` |
-| Running page, `2026-08-23/aware`: build time, OpenDSS solves | **27.3 s, 721** | DERIVED / SIM | `ui/data/story/index.json` | `scenarios[id=2026-08-23/aware].engine.buildSeconds, .solves` |
-| Running page, `2026-08-23/aware/faults`: build time, OpenDSS solves | **25.1 s, 721** | DERIVED / SIM | `ui/data/story/index.json` | `scenarios[id=2026-08-23/aware/faults].engine.buildSeconds, .solves` |
+| One OpenDSS solve (one power flow) (Mac) | **2.13 ms** | DERIVED | `ui/data/engine.json` | `opendss.msPerSolve` |
+| One step (set every load and battery, solve, read out) (Mac) | **4.2 ms** | DERIVED | `ui/data/engine.json` | `opendss.msPerStep` |
+| The committed 23 Aug build, four branches (Mac) | **12.7 s** | DERIVED | `ui/data/engine.json` | `p1.buildSeconds` |
+| …OpenDSS solves in that build (Mac) | **2,884** | DERIVED | `ui/data/engine.json` | `p1.solves` |
+| Controller call, 96 batteries (Mac) | **66.6 µs** | DERIVED | `ui/data/engine.json` | `allocate.96` |
+| Controller call, 100,000 batteries (about 65 ms) (Mac) | **65,011.7 µs** | DERIVED | `ui/data/engine.json` | `allocate.100000` |
+| Running page, `2026-08-23/naive`: build time, OpenDSS solves (Windows 11 build machine) | **25.5 s, 721** | DERIVED / SIM | `ui/data/story/index.json` | `scenarios[id=2026-08-23/naive].engine.buildSeconds, .solves` |
+| Running page, `2026-08-23/aware`: build time, OpenDSS solves (Windows 11 build machine) | **27.3 s, 721** | DERIVED / SIM | `ui/data/story/index.json` | `scenarios[id=2026-08-23/aware].engine.buildSeconds, .solves` |
+| Running page, `2026-08-23/aware/faults`: build time, OpenDSS solves (Windows 11 build machine) | **25.1 s, 721** | DERIVED / SIM | `ui/data/story/index.json` | `scenarios[id=2026-08-23/aware/faults].engine.buildSeconds, .solves` |
 
-Timings are wall-clock measurements on the build machine: they change on every rebuild. Read them from the Running page; the rows above are the values committed at the time of this table.
+Timings are wall-clock measurements on busy shared machines, and they change on every rebuild. `engine.json` was measured on a Mac (its cite: 1-minute load average 13.1 while measuring). The Running-page build times in `ui/data/story/index.json` were measured by `sim.scenarios` on the Windows 11 build machine (their cite: "load average not available on this OS"; the machine is described in `mpalacios/docs/measurements.md`). Never combine the two sets (for example `engine.json`'s per-step time with the Running page's solve count): they come from different machines. Read the build time from the Running page; the rows above are the values committed at the time of this table.
 
 ## The fleet levers: each one lever away from the default (23 Aug 2026)
 
