@@ -42,7 +42,7 @@ from .contracts import envelope, inputs_sha, labelled, write_json
 from .devices import Battery, Device, CLASSES, discharge_limit
 from .feeder import Feeder, ROOT
 from .money import (energy_value_usd, money_block, ercot_demand, scale_ladder, ERCOT_DEMAND_REL, split_block, cash_cents,
-                    head_kva_per_phase, SPLIT_CITE)
+                    head_kva_per_phase, SPLIT_CITE, fleet_source)
 from .orchestrator import Controller, allocate, charge_target
 from .devices import Command
 from .constants import COMMAND_TTL_S, COMMS_STALE_S
@@ -928,7 +928,7 @@ def assemble(sc, runs, tc, faults, solves, dwell=MIN_DWELL_MIN, inputs=None):
     if len(pmax_a) != 1:
         raise AssertionError(f"the scale ladder needs one battery class on A, found {pmax_a}")
     ladder = scale_ladder(len(on_a), pmax_a[0], "A", sc.feeder.transformers[a]["id"], float(sc.kva[a]),
-                          head_kva_per_phase(), ercot)
+                          head_kva_per_phase(), ercot, fleet_src=fleet_source(sc.const_extra))
     meta = envelope("p1.meta", "sim.p1_build", inputs=inputs,
                     constants=constants_block(("TIER_AMBER_PCT", "TIER_NORMAL_PCT", "TIER_NORMAL_MIN", "TIER_EMERGENCY_PCT",
                                      "FUSE_PCT", "FUSE_MINUTES", "FUSE_INSTANT_PCT", "FUSE_INSTANT_SECONDS",
