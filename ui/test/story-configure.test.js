@@ -265,3 +265,22 @@ test('configure: the feeder dataset name comes from topology (FEEDER_NAME, else 
   assert.deepEqual(feederName({ meta: { feeder: 'X feeder' } }), { name: 'X feeder', label: null, cite: 'topology.json meta.feeder' }, 'no label in the data: none shown');
   assert.equal(feederName({}), null);
 });
+
+test('shell: a run title tags each part where it is (review-0927 M3): the date REAL, naive ASSUMPTION, moved levers last', async () => {
+  const { runTitleHTML, NAIVE_CITE } = await import('../story/shell.js');
+  const cat = readJSON('story/index.json');
+  const meta = readJSON('p1/meta.json');
+  const plain = (h) => h.replace(/<span class="chip chip-([A-Z]+)"[^>]*>[A-Z]+<\/span>/g, ' [$1]').replace(/<[^>]+>/g, '|');
+  const sc = (id) => scenarioById(cat, id);
+  const naive = plain(runTitleHTML(cat, sc('2026-08-23/naive'), { naive: meta.naiveLabel }));
+  // the evening's REAL tag sits on the date, and the naive words carry the data's own label (ASSUMPTION), never REAL
+  assert.match(naive, /^\|23 Aug 2026\| \[REAL\]\|·\|\|Naive: our assumption of one number, no feeder check\| \[ASSUMPTION\]$/);
+  assert.equal(meta.naiveLabel.label, 'ASSUMPTION');
+  // without the meta the fallback is still ASSUMPTION
+  assert.match(runTitleHTML(cat, sc('2026-08-23/naive')), new RegExp(`chip-ASSUMPTION" title="${NAIVE_CITE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/'/g, '&#39;')}"`));
+  // a moved lever keeps its own tag after its own words
+  assert.match(plain(runTitleHTML(cat, sc('2026-08-23/naive/fleet=48'), { prefix: 'Your own settings: ' })),
+    /^\|Your own settings: 23 Aug 2026\| \[REAL\]\|·\|\|Naive: [^|]*\| \[ASSUMPTION\]\|·\|\|48 batteries\| \[ASSUMPTION\]$/);
+  // the feeder-aware run: the date's tag only
+  assert.match(plain(runTitleHTML(cat, sc('2026-08-23/aware'))), /^\|23 Aug 2026\| \[REAL\]\|·\|\|Feeder-aware\|$/);
+});

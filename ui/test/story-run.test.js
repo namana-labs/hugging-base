@@ -193,8 +193,9 @@ test('run: the covert detector card counts flagged and quarantined units from p3
   const cf = covertFailures(cov, n);
   assert.equal(cf.length, 1);
   assert.equal(cf[0].k0, cov.attack.step);
-  assert.equal(cf[0].text, cov.attack.text);
-  assert.equal(covertMoments(cov)[0].text, cov.attack.text);
+  // the file's own text, its ASCII "+-" shown as "±" (review-0927 S7)
+  assert.equal(cf[0].text, cov.attack.text.replace('+-', '±'));
+  assert.equal(covertMoments(cov)[0].text, cov.attack.text.replace('+-', '±'));
   assert.deepEqual(covertFailures(null, n), []);
 });
 
@@ -244,4 +245,30 @@ test("shell: a time-named headline key takes its run's end time, or 'the end of 
     { id: 'x', summary: { chargedPctBy0400: sum(99.2) }, vsDefault: { chargedPctBy0400: { v: 99.2, ref: 100, refId: 'd' } } }] };
   assert.equal(vsDefaultRows(cat, cat.scenarios[1], { end: '04:00' })[0].words, 'fleet charged by 04:00');
   assert.equal(vsDefaultRows(cat, cat.scenarios[1])[0].words, 'fleet charged by the end of the run');
+});
+
+test('run: a silent battery says what it does next, REAL, with our stale/expiry timings from the meta (review-0927 M7)', async () => {
+  const { commsLossLine } = await import('../story/run.js');
+  const { COMMS_LOSS_CITE } = await import('../panels/more.js');
+  const meta = readJSON(path.join(UI, 'data', 'p1', 'meta.json'));
+  const c = meta.constants;
+  const h = commsLossLine(c, numHTML);
+  assert.match(h, /idles in backup-only mode: it never discharges to the grid and only backs up its own home <span class="chip chip-REAL"/);
+  assert.ok(h.includes(`title="${COMMS_LOSS_CITE.replace(/'/g, '&#39;')}"`));
+  // the timings are the meta's own numbers and label (ASSUMPTION), never typed here
+  assert.ok(h.includes(`stale after ${c.COMMS_STALE_S.value} s, expires at ${c.COMMAND_TTL_S.value} s <span class="chip chip-${c.COMMS_STALE_S.label}"`));
+  assert.equal(c.COMMS_STALE_S.label, 'ASSUMPTION');
+  // without the constants: the REAL behaviour only, no number
+  assert.doesNotMatch(commsLossLine({}, numHTML), /\d s/);
+  // the faults run's extras has a comms_lost failure (the Right-now card draws the line for it)
+  const ex = JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(UI, 'data', 'p1', 'extras', '2026-08-23_aware_faults.json.gz'))));
+  assert.ok(ex.failures.some((f) => f.kind === 'comms_lost'));
+});
+
+test('run: the covert text shows "±", not "+-" (review-0927 S7)', async () => {
+  const { plusMinus } = await import('../story/run.js');
+  assert.equal(plusMinus('a hidden +-350 W carrier'), 'a hidden ±350 W carrier');
+  assert.equal(plusMinus('x + -3'), 'x + -3');
+  const cov = readJSON(path.join(UI, 'data', 'p3', 'covert.json'));
+  for (const t of [covertMoments(cov)[0].text, covertFailures(cov, 720)[0].text]) assert.doesNotMatch(t, /\+-/);
 });

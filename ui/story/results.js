@@ -340,7 +340,8 @@ export function failureModel(kind, d = {}) {
     const det = cv && cv.sources && cv.sources.detector && LABELS.includes(cv.sources.detector.label) ? cv.sources.detector : null;
     return {
       title: 'Hidden attacker',
-      sub: cv && cv.attack ? { text: `${cv.attack.t} · ${cv.attack.text}`, label: adv ? adv.label : null, cite: adv ? adv.text : null } : { text: 'a fictional adversary inside the fleet' },
+      // the detector file's ASCII "+-350 W" shown as "±350 W" (review-0927 S7)
+      sub: cv && cv.attack ? { text: `${cv.attack.t} · ${String(cv.attack.text ?? '').replace(/\+-(?=\s*\d)/g, '±')}`, label: adv ? adv.label : null, cite: adv ? adv.text : null } : { text: 'a fictional adversary inside the fleet' },
       lines: [], note: { text: 'Fictional attacker: no real company or person. Found from physics (telemetry vs the home\'s own voltage), not command logs.', label: det ? det.label : null, cite: det ? det.text : null },
       rows: s ? [
         row('Compromised units flagged', flagged),
@@ -414,7 +415,9 @@ export async function mount(root, ctx) {
   let sm = scn.summary || (meta && meta.summary && meta.summary[bk]) || null;
   if (failure === 'covert' && scn.attackSummary && sm) {
     const a = scn.attackSummary;
-    sm = { ...sm, ...Object.fromEntries(Object.keys(sm).filter((k) => isLab(a[k])).map((k) => [k, a[k]])) };
+    // the attack runs' value; the clean run's "where" (tf, t) is kept when the value is the same (review-0927 S8: the
+    // worst tile's "T-240 at 16:45" line was lost)
+    sm = { ...sm, ...Object.fromEntries(Object.keys(sm).filter((k) => isLab(a[k])).map((k) => [k, isLab(sm[k]) && sm[k].v === a[k].v ? { ...sm[k], ...a[k] } : a[k]])) };
   }
   let fdata = {}, freq = null, freqErr = null;
   if (failure === 'faults') {
