@@ -137,7 +137,8 @@ def money_block(values, relief_kwh, peak_price, low_price, peak_t, low_t, fleet_
 
 # the scale ladder (build prompt 3.4): its ERCOT rung reads four-home's REAL demand CSV (read only, never edited)
 ERCOT_DEMAND_REL = "four-home-simulation/data/demand_2026-09-25.csv"
-ERCOT_DEMAND_CSV = ROOT / ERCOT_DEMAND_REL
+# archived 27 Sep 2026 under previous-work/ (moved, not edited); ERCOT_DEMAND_REL stays the recorded citation
+ERCOT_DEMAND_CSV = ROOT / "previous-work" / ERCOT_DEMAND_REL
 SCALE_LADDER_ERCOT = const(
     "SCALE_LADDER_ERCOT", "ERCOT's peak 5-min system demand on the day of four-home's demand CSV", "ASSUMPTION",
     f"{ERCOT_DEMAND_REL} (REAL, ERCOT supply-demand dashboard; four-home-simulation/data/four_home_provenance.json): the "

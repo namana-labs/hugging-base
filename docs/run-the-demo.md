@@ -11,7 +11,7 @@ scripts/serve.sh     # a plain static server from the repo root on port 8765
 
 Open **http://127.0.0.1:8765/ui/index.html**. Stop the server with Ctrl-C.
 
-`serve.sh` is only a file server (`python3 -m http.server`). Any static server rooted at the repo works; the page must be served from the **repo root** so that `/ui/`, `/demos/grid-stories/ui/dist/` and `/four-home-simulation/` resolve from one origin.
+`serve.sh` is only a file server (`python3 -m http.server`). Any static server rooted at the repo works; the page must be served from the **repo root** so that `/ui/` (and the archived `/previous-work/demos/grid-stories/ui/dist/` and `/previous-work/four-home-simulation/`) resolve from one origin.
 
 ## The four story pages
 
@@ -27,7 +27,7 @@ One scenario at a time, chosen on page 1 and carried through the rest. Every sce
 
 **Link parameters** (defaults are omitted): `s=<scenario id>` (for example `2026-08-23/naive`, `2026-08-23/aware/faults`, `2026-08-23/aware/worker_kill`, `2026-08-23/aware/covert`, `2026-08-23/naive/fleet=192`), `k=<step>` (minutes after 16:00: `k=390` is 22:30), `speed=0.1|0.25|0.5|1|2|4` (default 0.25×, 2.5 simulated minutes a second), `q=1..4`, `tf=<transformer index>`, `n=0..50`. An unknown `s` falls back to the default scenario with a notice. `&nowebgl=1` forces the 2D fallback.
 
-The five-minute video is `docs/demo-script.md`; its beats are `ui/data/beats.json`, one deep link each. The audited numbers, each with its label, file and field, are in `presentation/NUMBERS.md`.
+The five-minute video is `docs/demo-script.md`; its beats are `ui/data/beats.json`, one deep link each. The audited numbers, each with its label, file and field, are in `docs/NUMBERS.md`.
 
 ## Reading the screen
 
@@ -63,4 +63,4 @@ node --test ui/test/*.test.js                  # the UI tests alone
 
 On Windows (Git Bash) use the venv's Python (`PY=~/hb-overnight/.venv/Scripts/python.exe`), set `HB_LOCK_HELD=1` and `NODE_OPTIONS=--experimental-websocket`, and read text files with `encoding="utf-8"`.
 
-The prototype (`demos/grid-stories/`) and four-home (`four-home-simulation/`) are untouched and still run from the same server: http://127.0.0.1:8765/demos/grid-stories/ui/dist/ and http://127.0.0.1:8765/four-home-simulation/four-home.html.
+The prototype (`previous-work/demos/grid-stories/`) and four-home (`previous-work/four-home-simulation/`) are archived unchanged and still run from the same local server: http://127.0.0.1:8765/previous-work/demos/grid-stories/ui/dist/ and http://127.0.0.1:8765/previous-work/four-home-simulation/four-home.html (the live site serves only `ui/`).

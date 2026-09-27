@@ -1,6 +1,6 @@
 # Hugging Base: presentation startup doc (for Amy)
 
-> **Snapshot of 26 Sep, before PR #42; the root app is the submission:** see [README.md](../README.md) and [docs/run-the-demo.md](../docs/run-the-demo.md).
+> **Snapshot of 26 Sep, before PR #42; the root app is the submission:** see [README.md](../../README.md) and [docs/run-the-demo.md](../../docs/run-the-demo.md).
 
 26 Sep 2026 · RZ
 
@@ -82,7 +82,7 @@ Everything flows one way: **real data → the controller (orchestration) → the
 | Who | Folder | What it is | Where it shows up in the story |
 | --- | --- | --- | --- |
 | RZ | `simulators/rz/` | The main engine: the controller, the OpenDSS referee, real ERCOT evenings, where-to-charge, where-the-next-battery-goes, the money, the capacity planner (in progress). | Pages 2, 3 and 4: the data behind all of them. |
-| Michael | `mpalacios/` | Controller crash survival: 3 workers share the batteries; kill one and another takes over. A detector that catches a hidden (fictional) attacker from physics. | Page 1 failure choices; page 4 "what happens when pieces fail". |
+| Michael | `resilience/` | Controller crash survival: 3 workers share the batteries; kill one and another takes over. A detector that catches a hidden (fictional) attacker from physics. | Page 1 failure choices; page 4 "what happens when pieces fail". |
 | Michael | `four-home-simulation/` | The first small 4-home model the main engine grew from. | Background: "we started small". |
 | Connor | `simulators/connor/` | A four-node simulator, a simulated day, and the control-room dashboard. | The visual design of all four pages. |
 | Connor | `docs/design-handoff/` | The team's design language: colours, type, the battery-shaped fleet card, compact source tags. | How every page looks. |
@@ -128,7 +128,7 @@ Every number on screen carries one of four labels: REAL, SIM, DERIVED or ASSUMPT
 
 These come from the round-1 build report, which passed a full fresh-clone check on 26 Sep. Round 2 changed some data, so treat the SIM and DERIVED rows as drafts until the data-truth audit confirms them. Rows marked "re-check" are the most likely to move.
 
-**The audited numbers, each with its label, file and field, are in [NUMBERS.md](NUMBERS.md) (26 Sep 2026 audit). Where this table and NUMBERS.md differ, NUMBERS.md wins.**
+**The audited numbers, each with its label, file and field, are in [NUMBERS.md](../../docs/NUMBERS.md) (26 Sep 2026 audit). Where this table and NUMBERS.md differ, NUMBERS.md wins.**
 
 | Claim | Number | Label | Status |
 | --- | --- | --- | --- |

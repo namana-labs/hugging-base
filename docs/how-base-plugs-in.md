@@ -43,7 +43,7 @@ Base's zone dispatch ──► allocate(zone target, per-transformer headroom) �
 - **GVEC** (50 MW): ERCOT summer four-coincident-peak (4CP) and arbitrage.
 - **Austin Energy** (40 MW, it dispatches): system peak demand and wholesale prices.
 - **El Paso Electric** (10 MW, **outside ERCOT**): local capacity constraints, the only local-constraint programme we found.
-- **Base's own "distribution grid support" offering:** no public price (`docs/headroom/research_notes/base_power_product_and_system.md:388`).
+- **Base's own "distribution grid support" offering:** no public price (`previous-work/docs-history/headroom/research_notes/base_power_product_and_system.md:388`).
 
 So **local relief is shown as an unpriced opportunity, never as revenue**. The monthly yardstick, **$3.12/kW-month**, is a **grid-scale storage revenue benchmark** (Modo, April 2026, one month; it already **includes arbitrage**, and the trailing year is lower), not a capacity payment: ERCOT pays no capacity. With the **$8.50** figure (DERIVED from the City of Austin's Recommendation for Action of 23 Apr 2026: up to $4,080,000 a year for up to 40 MW, an **upper bound** and the city's estimate, not a published contract price) it prices only fleet kW delivered **at the price peak**, in its own card in the Engine explorer's More tab, never beside a per-evening dollar and never added to the energy value (it would count the arbitrage twice). It is never multiplied by a local-relief kW (audit R2 M5).
 
@@ -62,7 +62,7 @@ Each answer changes a labelled assumption, not the code.
 9. **Does the TDSP upsize a service transformer when a Core is installed?** One Core is about 80% of a 25 kVA can (`docs/research-report.md:584`; design.md:322). If the wires company upgrades the can on install, P2's "where NOT to put it" becomes "where an install triggers an upgrade", the cost moves to the TDSP, and the ranking changes. We assume no upgrade (the SMART-DS kVA stands).
 10. **Which utility would serve these homes?** The feeder is synthetic (NREL SMART-DS, "realistic but not real"), and its NW-Austin coordinates fall in **Pedernales Electric Cooperative** territory on the PUCT service-area layers (2023, marked "UNOFFICIAL", information purposes only: 988 of 1,010 customers, 369 of 379 transformers, 93 of 96 fleet homes, A–D and T-240), an electric co-op, not one of the four competitive TDSP areas the research report lists (`docs/research-report.md:56`). We keep the feeder as an **Oncor-suburb stand-in settled at LZ_NORTH (placeholder)**; a real deployment starts from the member's TDSP and its transformer map.
 
-## Where this app differs from the design handoff (`docs/design-handoff/`)
+## Where this app differs from the design handoff (`previous-work/docs-history/design-handoff/`)
 
 Connor's Chapter 1 handoff is the design language for new UI work, and we adopted its battery-shaped fleet card, compact provenance tags (R / S / D / A, not colour-coded), the timestamped story line, the tier-count legend, and "green never means safe" (tier 0 is sage). RZ's round-2 asks win where the two clash, so the root app differs in three places, recorded here rather than by editing the handoff:
 

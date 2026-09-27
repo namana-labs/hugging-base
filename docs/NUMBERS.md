@@ -1,10 +1,10 @@
 # NUMBERS: the audited numbers for the video
 
-Every number Amy's script may say, with its label, the committed file it comes from and the field. The values were extracted with Python from the files as committed on `main` @1890adc (the merged submission), after the data-truth audit of 26 Sep 2026 (`simulators/rz/judges/DATA-TRUTH-inputs.md`, `DATA-TRUTH-outputs.md`). **If a number is not here or on the page, don't say it. Say it with its label, as the page prints it.**
+Every number Amy's script may say, with its label, the committed file it comes from and the field. The values were extracted with Python from the files as committed on `main` @1890adc (the merged submission), after the data-truth audit of 26 Sep 2026 (`previous-work/simulators/rz/judges/DATA-TRUTH-inputs.md`, `DATA-TRUTH-outputs.md`). **If a number is not here or on the page, don't say it. Say it with its label, as the page prints it.**
 
 Labels: **REAL** sourced fact · **SIM** our simulation (OpenDSS unless marked *screening*) · **DERIVED** arithmetic on REAL or SIM · **ASSUMPTION** a named choice of ours. Money is always the **fleet's gross energy value, not Base's profit**. Every no-violation claim ends **because of batteries**.
 
-Paths are relative to the repo root. `mpalacios/out/p1/worker_kill.json` and `mpalacios/out/p3/covert.json` are copied byte for byte to `ui/data/p1/worker_kill.json` and `ui/data/p3/covert.json` by ENGINE.
+Paths are relative to the repo root. `resilience/out/p1/worker_kill.json` and `resilience/out/p3/covert.json` are copied byte for byte to `ui/data/p1/worker_kill.json` and `ui/data/p3/covert.json` by ENGINE.
 
 ## The feeder and the fleet
 
@@ -72,23 +72,23 @@ Paths are relative to the repo root. `mpalacios/out/p1/worker_kill.json` and `mp
 | Our controller stalls (time, minutes) | **22:55, 8 min** | ASSUMPTION | `ui/data/p1/meta.json` | `events.aware_faults[kind=stall]` |
 | Pieces fail: battery-caused normal-rating events | **0** | SIM | `ui/data/p1/meta.json` | `summary.aware_faults.batteryCausedNormal` |
 | Pieces fail: fleet charged by 04:00 | **99.2%** | SIM | `ui/data/p1/meta.json` | `summary.aware_faults.chargedPctBy0400` |
-| Controller crash: worker killed (time, worker) | **22:20, W2** | ASSUMPTION | `mpalacios/out/p1/worker_kill.json` | `runtime.kill.t, .worker` |
-| …takeover (time, new worker) | **22:24, W1** | SIM | `mpalacios/out/p1/worker_kill.json` | `runtime.takeover[0].t, .worker` |
-| …seconds from kill to takeover | **240 s** | SIM | `mpalacios/out/p1/worker_kill.json` | `summary.takeoverSeconds` |
-| …late commands from the killed worker | **31** | SIM | `mpalacios/out/p1/worker_kill.json` | `summary.lateCommands` |
-| …of those, refused as stale (old epoch) | **31** | SIM | `mpalacios/out/p1/worker_kill.json` | `summary.rejectedStaleEpoch` |
-| …fleet tracking error, worst minute | **0.2%** | DERIVED | `mpalacios/out/p1/worker_kill.json` | `summary.trackingMaxErrPct` |
-| …battery-caused normal-rating events | **0** | SIM | `mpalacios/out/p1/worker_kill.json` | `summary.batteryCausedNormal` |
-| …fleet charged by 04:00 | **100.0%** | SIM | `mpalacios/out/p1/worker_kill.json` | `summary.chargedPctBy0400` |
-| Hidden attacker (fictional): batteries taken | **24** | ASSUMPTION | `mpalacios/out/p3/covert.json` | `summary.shard` |
-| …hidden carrier and start | **±350 W from 22:30** | ASSUMPTION | `mpalacios/out/p3/covert.json` | `attack.t, attack.text` |
-| …seconds to flag the first unit | **180 s** | SIM | `mpalacios/out/p3/covert.json` | `summary.detectionSeconds` |
+| Controller crash: worker killed (time, worker) | **22:20, W2** | ASSUMPTION | `resilience/out/p1/worker_kill.json` | `runtime.kill.t, .worker` |
+| …takeover (time, new worker) | **22:24, W1** | SIM | `resilience/out/p1/worker_kill.json` | `runtime.takeover[0].t, .worker` |
+| …seconds from kill to takeover | **240 s** | SIM | `resilience/out/p1/worker_kill.json` | `summary.takeoverSeconds` |
+| …late commands from the killed worker | **31** | SIM | `resilience/out/p1/worker_kill.json` | `summary.lateCommands` |
+| …of those, refused as stale (old epoch) | **31** | SIM | `resilience/out/p1/worker_kill.json` | `summary.rejectedStaleEpoch` |
+| …fleet tracking error, worst minute | **0.2%** | DERIVED | `resilience/out/p1/worker_kill.json` | `summary.trackingMaxErrPct` |
+| …battery-caused normal-rating events | **0** | SIM | `resilience/out/p1/worker_kill.json` | `summary.batteryCausedNormal` |
+| …fleet charged by 04:00 | **100.0%** | SIM | `resilience/out/p1/worker_kill.json` | `summary.chargedPctBy0400` |
+| Hidden attacker (fictional): batteries taken | **24** | ASSUMPTION | `resilience/out/p3/covert.json` | `summary.shard` |
+| …hidden carrier and start | **±350 W from 22:30** | ASSUMPTION | `resilience/out/p3/covert.json` | `attack.t, attack.text` |
+| …seconds to flag the first unit | **180 s** | SIM | `resilience/out/p3/covert.json` | `summary.detectionSeconds` |
 | …units flagged (and quarantined) in that first minute: the Detector card at 22:33 | **7 of 24** | SIM | `ui/data/p3/covert.json` | `units[].flaggedStep = 392 (count); quarantine.log step 392 (count)` |
-| …seconds to flag all 24 | **900 s** | SIM | `mpalacios/out/p3/covert.json` | `summary.allDetectedSeconds` |
-| …false alarms while the attack runs | **0** | SIM | `mpalacios/out/p3/covert.json` | `summary.falsePositivesAttack` |
-| …false alarms on the clean fleet (720 min × 96) | **0** | SIM | `mpalacios/out/p3/covert.json` | `summary.falsePositivesClean` |
-| …caught by a simple 1 kW threshold (of 24) | **0** | SIM | `mpalacios/out/p3/covert.json` | `summary.fixedThresholdCompromised` |
-| …units quarantined | **24** | SIM | `mpalacios/out/p3/covert.json` | `summary.quarantined` |
+| …seconds to flag all 24 | **900 s** | SIM | `resilience/out/p3/covert.json` | `summary.allDetectedSeconds` |
+| …false alarms while the attack runs | **0** | SIM | `resilience/out/p3/covert.json` | `summary.falsePositivesAttack` |
+| …false alarms on the clean fleet (720 min × 96) | **0** | SIM | `resilience/out/p3/covert.json` | `summary.falsePositivesClean` |
+| …caught by a simple 1 kW threshold (of 24) | **0** | SIM | `resilience/out/p3/covert.json` | `summary.fixedThresholdCompromised` |
+| …units quarantined | **24** | SIM | `resilience/out/p3/covert.json` | `summary.quarantined` |
 | ERCOT frequency wander, 25 Sep 2026 (a different day), σ | **13.5 mHz** | DERIVED (from REAL samples) | `ui/data/ems/freq-series.json` | `stats.frequency.sigma_mhz` |
 | A hijack of 1,000 batteries swings | **40 MW** | DERIVED | `ui/data/story/index.json` | `constants.HIJACK_MW` |
 | Frequency moved by a 1,000-battery hijack: a band, never one value | **3–17 mHz** | DERIVED | `ui/data/story/index.json` | `constants.HIJACK_MHZ_LO, .HIJACK_MHZ_HI` |
@@ -205,7 +205,7 @@ The medians are over the transformers of each size serving homes (`sizeSummary.<
 | Running page, `2026-08-23/aware`: build time, OpenDSS solves (Windows 11 build machine) | **27.3 s, 721** | DERIVED / SIM | `ui/data/story/index.json` | `scenarios[id=2026-08-23/aware].engine.buildSeconds, .solves` |
 | Running page, `2026-08-23/aware/faults`: build time, OpenDSS solves (Windows 11 build machine) | **25.1 s, 721** | DERIVED / SIM | `ui/data/story/index.json` | `scenarios[id=2026-08-23/aware/faults].engine.buildSeconds, .solves` |
 
-Timings are wall-clock measurements on busy shared machines, and they change on every rebuild. `engine.json` was measured on a Mac (its cite: 1-minute load average 13.1 while measuring). The Running-page build times in `ui/data/story/index.json` were measured by `sim.scenarios` on the Windows 11 build machine (their cite: "load average not available on this OS"; the machine is described in `mpalacios/docs/measurements.md`). Never combine the two sets (for example `engine.json`'s per-step time with the Running page's solve count): they come from different machines. Read the build time from the Running page; the rows above are the values committed at the time of this table.
+Timings are wall-clock measurements on busy shared machines, and they change on every rebuild. `engine.json` was measured on a Mac (its cite: 1-minute load average 13.1 while measuring). The Running-page build times in `ui/data/story/index.json` were measured by `sim.scenarios` on the Windows 11 build machine (their cite: "load average not available on this OS"; the machine is described in `resilience/docs/measurements.md`). Never combine the two sets (for example `engine.json`'s per-step time with the Running page's solve count): they come from different machines. Read the build time from the Running page; the rows above are the values committed at the time of this table.
 
 ## The fleet levers: each one lever away from the default (23 Aug 2026)
 

@@ -1,7 +1,7 @@
 """Verify the worker-kill replay (house style of sim.verify_p1: [INVARIANT] lines gate, [EXPECT] lines never do).
 
-    python -m mpalacios.runtime.verify              # the committed replay and fixture, no rebuild
-    python -m mpalacios.runtime.verify --rebuild    # also rebuilds into a temp dir and byte-compares (about 2 min)
+    python -m resilience.runtime.verify              # the committed replay and fixture, no rebuild
+    python -m resilience.runtime.verify --rebuild    # also rebuilds into a temp dir and byte-compares (about 2 min)
 
 Ends with one line: "VERIFY runtime: PASS (k expectations refuted)" or "VERIFY runtime: FAIL (<invariants>)". Where it
 can, it re-derives a claim from the arrays instead of trusting the summary the build wrote.
@@ -15,7 +15,7 @@ from pathlib import Path
 from sim import contracts
 from sim.constants import DATA_FILE_CAP_MB
 
-from mpalacios.constants import LEASE_TTL_S, RUNTIME_CONSTANTS, RUNTIME_TRACKING_PCT
+from resilience.constants import LEASE_TTL_S, RUNTIME_CONSTANTS, RUNTIME_TRACKING_PCT
 from .build import FIXTURES, LIVE_OUT, OUT, PRODUCER, REL, ROOT
 
 KNOWN_PRODUCER_GAP = (f"envelope: producer '{PRODUCER}' is not sim.<module> or scripts.<name>")
@@ -43,7 +43,7 @@ def v(x):
 
 def contract_errors(doc, rel=REL):
     """sim.contracts' own checks (envelope, labels, shapes, size), less the one known gap: PRODUCER_RE admits only
-    sim.* and scripts.*, so 'mpalacios.runtime' fails it until the lead widens it (mpalacios/docs/requests.md)."""
+    sim.* and scripts.*, so 'resilience.runtime' fails it until the lead widens it (resilience/docs/requests.md)."""
     errs = [e for e in contracts.check_envelope(doc) if e != KNOWN_PRODUCER_GAP]
     le, n = contracts.audit_labels(doc)
     errs += le + contracts.check_shapes(rel, doc)
@@ -123,7 +123,7 @@ def main(argv=None):
     chk = V()
     path = OUT / REL
     if not path.exists():
-        print(f"VERIFY runtime: SKIP ({path.relative_to(ROOT)} not built: python -m mpalacios.runtime.build)")
+        print(f"VERIFY runtime: SKIP ({path.relative_to(ROOT)} not built: python -m resilience.runtime.build)")
         return 0
     doc = json.loads(path.read_text())
     rt = doc["runtime"]
@@ -149,7 +149,7 @@ def main(argv=None):
                 f"fixture {fx.relative_to(ROOT)}: fixture: true, synthetic loads named in inputs")
         check_replay(chk, fdoc, "fixture")
     else:
-        chk.inv(False, "fixture", "fixture missing: python -m mpalacios.runtime.build --fixture")
+        chk.inv(False, "fixture", "fixture missing: python -m resilience.runtime.build --fixture")
     # a live recording, when one exists (never committed)
     lp = LIVE_OUT / REL
     if lp.exists():
@@ -163,7 +163,7 @@ def main(argv=None):
     # determinism
     if "--rebuild" in argv:
         with tempfile.TemporaryDirectory(prefix="runtime-rebuild-") as tmp:
-            r = subprocess.run([sys.executable, "-m", "mpalacios.runtime.build", "--out", tmp], cwd=ROOT,
+            r = subprocess.run([sys.executable, "-m", "resilience.runtime.build", "--out", tmp], cwd=ROOT,
                                capture_output=True, text=True)
             same = r.returncode == 0 and (Path(tmp) / REL).read_bytes() == path.read_bytes()
             chk.inv(same, "determinism", f"determinism: rebuild {'byte-identical' if same else 'DIFFERS'}"

@@ -4,5 +4,5 @@
 # The smoke test never uses this port: scripts/smoke_ui.sh starts its own server on a free port.
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" || exit 2
 PORT="${PORT:-8765}"
-echo "Hugging Base: http://127.0.0.1:$PORT/ui/   (prototype: http://127.0.0.1:$PORT/demos/grid-stories/ui/dist/)"
+echo "Hugging Base: http://127.0.0.1:$PORT/ui/   (archived prototype: http://127.0.0.1:$PORT/previous-work/demos/grid-stories/ui/dist/)"
 exec python3 -m http.server "$PORT" --bind 127.0.0.1 --directory "$ROOT"

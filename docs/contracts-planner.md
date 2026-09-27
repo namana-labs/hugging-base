@@ -1,6 +1,6 @@
 # Contract: the transformer capacity planner (`ui/data/p2/planner.json`, `ui/lib/planner.js`)
 
-Owner: PLANNER lane (`docs/story-contract.md`). Binding design: `simulators/rz/research/capacity-planner/`
+Owner: PLANNER lane (`docs/story-contract.md`). Binding design: `previous-work/simulators/rz/research/capacity-planner/`
 (`DATA-SCOPE-RZ-CAPACITY-PLANNER.md` = RZ's three layers, `DESIGN-CAPACITY-PLANNER.md` §2.3 contract, §3
 computations, `CRITIQUE-CAP-base.md` must-fixes). This page is the contract **as built** on 26 Sep 2026, with every
 deviation from DESIGN §2.3 listed in section 6. Consumers: Learnings Q2 and Q3 (`ui/story/learnings.js`, UI-B).
@@ -35,7 +35,7 @@ python -m sim.planner ages         # regenerate data/planner/tf_simulated_ages.c
   outgrowing it is under 5%), `PLAN_SCREEN_SHARE_AE90` = 0.9 (REAL, Austin Energy's 90% rule, / `CORE_POWER_KW` =
   20 kW per Core) and `PLAN_SCREEN_SHARE_NAMEPLATE` = 1.0 (REAL). Each is `constants.<NAME> = {value, label, cite}`.
 - **Inputs.** Only `data/planner/` (see its `SOURCE.md`), the repo's `data/` (prices, loads, SMART-DS, fleet) and
-  `ui/data/topology.json`. Nothing is read from `simulators/rz/research/`.
+  `ui/data/topology.json`. Nothing is read from `previous-work/simulators/rz/research/`.
 
 ## 2. The file (`schema: "hb.planner.v1"`, `producer: "sim.planner"`)
 

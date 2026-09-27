@@ -3,16 +3,16 @@
 Written to be pasted into `docs/contracts.md` as sections A.6b and A.11 (request 4 in [requests.md](requests.md)).
 A.10 was free when this was drafted and `7b99d24` took it for `p1/days/index.json`, so the covert section is A.11.
 Both files follow Part A.1 and A.2: the envelope, the four labels, quantization, byte-identical rebuilds, and the
-size caps. Their producer is `mpalacios.<module>`, which `sim.contracts` will accept once request 3 lands. Until
-then, `python -m mpalacios.runtime.verify` and `python -m mpalacios.detect.verify` run every other `sim.contracts`
+size caps. Their producer is `resilience.<module>`, which `sim.contracts` will accept once request 3 lands. Until
+then, `python -m resilience.runtime.verify` and `python -m resilience.detect.verify` run every other `sim.contracts`
 check on them.
 
 Rows for the A.3 file table:
 
 | File | Producer | Body beyond the envelope |
 |---|---|---|
-| `p1/worker_kill.json` | `mpalacios.runtime` (`python -m mpalacios.runtime.build`) | A.6b; a P1 branch (A.6) plus `summary` and `runtime` |
-| `p3/covert.json` | `mpalacios.detect` (`python -m mpalacios.detect.build`) | A.11 |
+| `p1/worker_kill.json` | `resilience.runtime` (`python -m resilience.runtime.build`) | A.6b; a P1 branch (A.6) plus `summary` and `runtime` |
+| `p3/covert.json` | `resilience.detect` (`python -m resilience.detect.build`) | A.11 |
 
 ---
 
@@ -72,7 +72,7 @@ and `X` only if a command expires before the takeover (it does not in the commit
 - `sources.runtime`: SIM.
 - `series` adds `partitionTargetKW`, `partitionDeliveredKW`, `holder` and `baseline`.
 
-**Verified by `python -m mpalacios.runtime.verify`** (re-derived from the arrays where possible):
+**Verified by `python -m resilience.runtime.verify`** (re-derived from the arrays where possible):
 
 - `[INVARIANT]` lines:
   - the contract checks;
@@ -146,7 +146,7 @@ reads the legitimate-command solve. The adversary is fictional; no real company 
   `VOLTAGE_CARRIER_PU`, `PEER_MIN_HOMES`, `CHANNEL_SPAN_MIN`, `FIXED_THRESHOLD_KW`).
 - `sources`: `adversary` (ASSUMPTION, fictional) and `detector` (SIM).
 
-**Verified by `python -m mpalacios.detect.verify`.** The `[INVARIANT]` lines:
+**Verified by `python -m resilience.detect.verify`.** The `[INVARIANT]` lines:
 
 - the contract checks;
 - zero false positives on the clean fleet;

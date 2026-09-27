@@ -1,6 +1,6 @@
 # Requests to the lead
 
-Every change this work needs outside `mpalacios/`. Nothing here has been applied: each entry names the path, the lane
+Every change this work needs outside `resilience/`. Nothing here has been applied: each entry names the path, the lane
 that owns it (`scripts/lanes.json`), the exact change, and the evidence. Numbers come from
 [measurements.md](measurements.md) and were measured on 26 Sep 2026 on a Windows 11 machine (Python 3.14.0,
 numpy 2.5.3, OpenDSSDirect.py 0.9.4, Node 20.19.6). Line numbers and rules are as of `1950500`.
@@ -11,44 +11,44 @@ Entries 1 to 6 are what the kickoff expected. Entries 7 to 13 are what running t
 
 ## To promote this work
 
-### 1. REQUEST (lead): a lane for `mpalacios/`, and protect it from other lanes
+### 1. REQUEST (lead): a lane for `resilience/`, and protect it from other lanes
 
 - **Paths:** `scripts/lanes.json` and `scripts/check_paths.py` (both L0).
-- **Change, a:** add `"mpalacios": {"owns": ["mpalacios/**"], "smoke": []}` to `lanes.json`.
-- **Change, b:** add `"mpalacios/**"` to `FORBIDDEN` in `check_paths.py`, so no other lane edits this folder.
+- **Change, a:** add `"resilience": {"owns": ["resilience/**"], "smoke": []}` to `lanes.json`.
+- **Change, b:** add `"resilience/**"` to `FORBIDDEN` in `check_paths.py`, so no other lane edits this folder.
 - **Why:** `check_paths.py --lane <id>` fails any branch that touches a path outside its lane, and no lane owns
-  `mpalacios/`. The round-2 ruling on `1950500` set the precedent for a personal top-level folder: `simulators/**`,
-  `docs/design-handoff/**` and `.claude/skills/**` are forbidden to every lane so Connor's work is not edited by
-  others. `mpalacios/**` wants the same treatment. It is not in `FORBIDDEN` today, so any lane may currently edit it.
+  `resilience/`. The round-2 ruling on `1950500` set the precedent for a personal top-level folder: `previous-work/simulators/**`,
+  `previous-work/docs-history/design-handoff/**` and `.claude/skills/**` are forbidden to every lane so Connor's work is not edited by
+  others. `resilience/**` wants the same treatment. It is not in `FORBIDDEN` today, so any lane may currently edit it.
 
 ### 2. REQUEST (lead): set the OpenDSS solver tolerance
 
 - **Path:** `sim/feeder.py` (L0), and `sim/constants.py` (L0) for the constant.
-- **Change:** register `SOLVER_TOLERANCE = const("SOLVER_TOLERANCE", 1e-8, "ASSUMPTION", "four-home-simulation/four_home.py")`,
+- **Change:** register `SOLVER_TOLERANCE = const("SOLVER_TOLERANCE", 1e-8, "ASSUMPTION", "previous-work/four-home-simulation/four_home.py")`,
   and in `create()`, after `dss("Set maxcontroliter=100 maxiterations=100 mode=snapshot")`, add
-  `dss(f"Set tolerance={SOLVER_TOLERANCE:g}")`. `mpalacios/constants.py` already registers the same name and value, so
-  the two agree; delete the `mpalacios` copy when this lands.
+  `dss(f"Set tolerance={SOLVER_TOLERANCE:g}")`. `resilience/constants.py` already registers the same name and value, so
+  the two agree; delete the `resilience` copy when this lands.
 - **Evidence:** at the tolerance `sim.feeder` ships with (the OpenDSS default, 1e-4), the power balance of the
   committed P1 aware evening misses 10 W on 127 of 720 steps, worst 74.3 W. At 1e-8 the worst step is 0.58 W. The
   solver then needs 5 iterations instead of 2, and a solve costs about 25% more wall time
-  (`python -m mpalacios.physics.balance`).
-- **What it changes in committed data:** see measurements.md §B1.1 and `mpalacios/out/physics/impact-p1.json`
-  (`python -m mpalacios.physics.impact`, P1 rebuilt with the fix in a temp dir). The loading numbers move by at most
+  (`python -m resilience.physics.balance`).
+- **What it changes in committed data:** see measurements.md §B1.1 and `resilience/out/physics/impact-p1.json`
+  (`python -m resilience.physics.impact`, P1 rebuilt with the fix in a temp dir). The loading numbers move by at most
   one tenth of a percent, in a few hundred of 272,880 cells per branch. These files change bytes, so the lanes that own
   them (L2 for `ui/data/p1/**`, L3 for `ui/data/p2/**`) rebuild after it lands. The test that proves the old values
-  were wrong is `mpalacios/tests/test_power_balance.py`.
+  were wrong is `resilience/tests/test_power_balance.py`.
 - **After it lands:** `test_tolerance_as_shipped_closes_every_step` will report an unexpected success; delete its
   `@unittest.expectedFailure`.
 
-### 3. REQUEST (lead): let the contract checker accept `mpalacios.*` producers, on every OS
+### 3. REQUEST (lead): let the contract checker accept `resilience.*` producers, on every OS
 
 - **Path:** `sim/contracts.py` (L0).
-- **Change, a:** `PRODUCER_RE = r"(sim|scripts|mpalacios)\.[a-z0-9_]+"`, and the error text to match.
+- **Change, a:** `PRODUCER_RE = r"(sim|scripts|resilience)\.[a-z0-9_]+"`, and the error text to match.
 - **Change, b (a Windows bug):** in `validate()`, `snapshot = rel.startswith("ems/")` becomes
   `snapshot = rel.replace("\\", "/").startswith("ems/")`. `check_shapes()` already normalizes the separator this way.
 - **Evidence:** b is why `check_all.sh` step 1 (`test_contracts.test_committed_data_passes`) and step 4 fail on
   Windows: `ems\freq-series.json` and `ems\synth-console.json` get the full envelope check, which the `ems/` snapshot
-  is exempt from. For a, `python -m mpalacios.runtime.verify` runs every other `sim.contracts` check on the new files
+  is exempt from. For a, `python -m resilience.runtime.verify` runs every other `sim.contracts` check on the new files
   and names this as their only gap.
 
 ### 3c. REQUEST (lead): two more path-separator failures, in the round-2 history code
@@ -61,8 +61,8 @@ Entries 1 to 6 are what the kickoff expected. Entries 7 to 13 are what running t
     `days\index.json`.
 - **Change:** normalize with `.replace("\\", "/")` where those paths are built or asserted, as `check_shapes()`
   already does on its own argument.
-- **Evidence:** both fail at `7b99d24` in a scratch worktree of that commit, with `mpalacios/` absent. They are the
-  same class as 3b, and they are not caused by this work, which changes no file outside `mpalacios/`.
+- **Evidence:** both fail at `7b99d24` in a scratch worktree of that commit, with `resilience/` absent. They are the
+  same class as 3b, and they are not caused by this work, which changes no file outside `resilience/`.
 
 ### 4. REQUEST (lead): fold the new files into the contract
 
@@ -81,15 +81,15 @@ Entries 1 to 6 are what the kickoff expected. Entries 7 to 13 are what running t
   `chaos.json` is loaded today.
 - **Alternative:** `ui/data/runtime/worker_kill.json`, with its own loader.
 - **Size:** 1.99 MB and 16 KB. `ui/data` stays under its 25 MB budget: 16.29 MB today.
-- **Fixtures:** `mpalacios/fixtures/p1/worker_kill.json` and `mpalacios/fixtures/p3/covert.json` both carry
+- **Fixtures:** `resilience/fixtures/p1/worker_kill.json` and `resilience/fixtures/p3/covert.json` both carry
   `"fixture": true`, and they go to `ui/data/fixtures/` with the same paths.
 
 ### 6. REQUEST (lead): run this folder's tests in the gate
 
 - **Path:** `scripts/check_all.sh` (L0).
-- **Change:** a step that runs `"$PY" -m unittest discover -s mpalacios/tests -t .`, `"$PY" -m mpalacios.runtime.verify`
-  and `"$PY" -m mpalacios.detect.verify`. Each verifier ends in one `VERIFY ...: PASS|FAIL` line, so it can be gated
-  like `sim.verify`. Until then, `bash mpalacios/check.sh` runs them, then the repo gate.
+- **Change:** a step that runs `"$PY" -m unittest discover -s resilience/tests -t .`, `"$PY" -m resilience.runtime.verify`
+  and `"$PY" -m resilience.detect.verify`. Each verifier ends in one `VERIFY ...: PASS|FAIL` line, so it can be gated
+  like `sim.verify`. Until then, `bash resilience/check.sh` runs them, then the repo gate.
 
 ---
 
@@ -99,7 +99,7 @@ Entries 1 to 6 are what the kickoff expected. Entries 7 to 13 are what running t
 
 - **Path:** `.gitattributes` at the repo root (new file; no lane owns it).
 - **Change:** `* -text` for the data and vendored files at least (`data/** -text`, `ui/vendor/** -text`,
-  `ui/data/** -text`, `four-home-simulation/data/** -text`), or `* text=auto eol=lf` for the whole tree.
+  `ui/data/** -text`, `previous-work/four-home-simulation/data/** -text`), or `* text=auto eol=lf` for the whole tree.
 - **Evidence:** Git for Windows ships with `core.autocrlf=true` in its system config. It checks out every text file
   with CRLF, so on this machine `data/ercot/lz_north_2026.csv`, `data/smartds/*.dss`, `data/fleet.json` and the
   vendored deck.gl did not match the committed bytes. Three consequences, all measured:
@@ -144,7 +144,7 @@ Entries 1 to 6 are what the kickoff expected. Entries 7 to 13 are what running t
 - **Workaround used here:** `PY=~/hb-overnight/.venv/Scripts/python.exe`,
   `CHROME="/c/Program Files/Google/Chrome/Application/chrome.exe"`, `HB_LOCK_HELD=1`, and
   `NODE_OPTIONS=--experimental-websocket`. The smoke runner needs Node 22's global `WebSocket`, and Node 20 has it
-  behind that flag. With these, smoke passed 3/3. `mpalacios/check.sh` sets them.
+  behind that flag. With these, smoke passed 3/3. `resilience/check.sh` sets them.
 
 ### 11. REQUEST (lead): the price loader would drop an hour when DST ends
 
@@ -153,18 +153,18 @@ Entries 1 to 6 are what the kickoff expected. Entries 7 to 13 are what running t
   `price_at()` take the flag.
 - **Evidence:** `load()` keys prices by local start time. On 1 Nov 2026 ERCOT publishes hour-ending 2 twice (`rep`
   N and Y), both map to 01:00-01:59 local, and the second silently overwrites the first. The file ends 19 Sep 2026,
-  so nothing is wrong today. `mpalacios/tests/test_price_alignment.py` fails first if the file is extended past it.
+  so nothing is wrong today. `resilience/tests/test_price_alignment.py` fails first if the file is extended past it.
   Spring forward (8 Mar) is already right: ERCOT skips hour-ending 3 and the loader has no 02:xx prices.
 
 ### 12. Note (no change requested): the design's tracking tolerance cannot gate this fleet
 
-`docs/design.md` §4.2 and §8 say tracking stays inside max(2 MW, 15%). The P1 fleet is 96 Cores × 20 kW = 1.92 MW,
+`previous-work/docs-history/design.md` §4.2 and §8 say tracking stays inside max(2 MW, 15%). The P1 fleet is 96 Cores × 20 kW = 1.92 MW,
 so the 2 MW term is larger than the fleet and always passes. The runtime gates on the 15% term alone
 (`RUNTIME_TRACKING_PCT`, ASSUMPTION) and reports the design figure next to it.
 
 ### 13. Note (for the design owner): a same-transformer peer baseline cannot see this attack
 
-`docs/design.md` §5.6 asks the voltage check to compare against peers on the same transformer. Measured on this feeder
+`previous-work/docs-history/design.md` §5.6 asks the voltage check to compare against peers on the same transformer. Measured on this feeder
 (measurements.md §B3), three things block it:
 
 - 8 of the 24 dense-cohort homes are alone on their transformer;
@@ -172,18 +172,18 @@ so the 2 MW term is larger than the fleet and always passes. The runtime gates o
 - each home's own legitimate power steps (a 20 kW grant change) move its voltage about ten times more than a 350 W
   modulation does.
 
-The detector in `mpalacios/detect/` uses no privileged solve, which was the point of M6′. It corroborates with the
+The detector in `resilience/detect/` uses no privileged solve, which was the point of M6′. It corroborates with the
 home's own AMI voltage at the carrier frequency, and it records the peer ratio without gating on it. If §5.6 should say
 so, that is a design.md edit (L0).
 
-### 14. REQUEST (mpalacios, from the lead's second evaluation pass, 27 Sep 2026): two fields in `out/p1/worker_kill.json`
+### 14. REQUEST (resilience, from the lead's second evaluation pass, 27 Sep 2026): two fields in `out/p1/worker_kill.json`
 
-- **Path:** `mpalacios/runtime/` (the build that writes `mpalacios/out/p1/worker_kill.json`); the root
+- **Path:** `resilience/runtime/` (the build that writes `resilience/out/p1/worker_kill.json`); the root
   `ui/data/p1/worker_kill.json` is a byte copy of it (`docs/story-contract.md`), so the fix lands by re-copying.
 - **Change:** (1) write `summary.reserveUsedInOutage` like every other P1 branch (`docs/contracts.md` A.5r); (2) label
   `summary.feederHead.ratingA` (370 A) REAL with the same cite as the other 50 scenarios (it is labelled DERIVED here).
 - **Evidence:** `C:/w/_recovery/eval2/data_invariants.py` (1,897 of 1,901 checks pass on main 1890adc; these are two of
   the four failures). The story UI shows the reserve backup clause only when the key exists, so nothing wrong is
   displayed today; the numbers are just missing for this one scenario.
-- **Why not done tonight:** a rebuild of this file with `mpalacios.runtime` earlier did not reproduce the committed
+- **Why not done tonight:** a rebuild of this file with `resilience.runtime` earlier did not reproduce the committed
   bytes, so it needs its owner's eye rather than a blind regenerate before the deadline.

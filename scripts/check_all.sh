@@ -4,7 +4,7 @@
 # Steps, in order:
 #   1 unit      $PY -m unittest discover -s sim/tests -t .
 #   2 node      node --test ui/test/*.test.js
-#   3 keep      7.1: the prototype's and four-home's own tests, with the EXTERNAL RED classifier
+#   3 keep      7.1: the archived prototype's and four-home's own tests (previous-work/), with the EXTERNAL RED classifier
 #   4 contract  $PY -m sim.contracts                  (validity, labels, DATA_BUDGET_MB 40 / DATA_FILE_CAP_MB 4 caps; prints sizes)
 #   5 verify    $PY -m sim.verify labels, p1, p2      (committed JSON, no rebuild; SKIP before the data exists)
 #   6 paths     python3 scripts/check_paths.py --lane <id>        (only with --lane)
@@ -59,18 +59,18 @@ else fail node "no ui/test/*.test.js"; fi
 # 3 keep everything that works (7.1) ------------------------------------------------------------
 echo "== 3 keep (7.1)"
 K1=0; K2=0; K3=0
-(cd demos/grid-stories && "$PY" -m unittest sim.test_simulator) >"$LOGS/3-grid-stories-py.log" 2>&1
+(cd previous-work/demos/grid-stories && "$PY" -m unittest sim.test_simulator) >"$LOGS/3-grid-stories-py.log" 2>&1
 unittest_ok "$LOGS/3-grid-stories-py.log" && grep -q '^Ran 8 tests' "$LOGS/3-grid-stories-py.log" && K1=1
-node --test --test-reporter=tap demos/grid-stories/ui/test/*.test.js >"$LOGS/3-grid-stories-node.log" 2>&1
+node --test --test-reporter=tap previous-work/demos/grid-stories/ui/test/*.test.js >"$LOGS/3-grid-stories-node.log" 2>&1
 node_ok "$LOGS/3-grid-stories-node.log" && grep -qE '^# pass 3$' "$LOGS/3-grid-stories-node.log" && K2=1
-(cd four-home-simulation && "$PY" -m unittest test_four_home) >"$LOGS/3-four-home.log" 2>&1
+(cd previous-work/four-home-simulation && "$PY" -m unittest test_four_home) >"$LOGS/3-four-home.log" 2>&1
 unittest_ok "$LOGS/3-four-home.log" && grep -q '^Ran 17 tests' "$LOGS/3-four-home.log" && K3=1
 echo "keep: grid-stories py $( [ $K1 = 1 ] && echo ok || echo RED) ($(unittest_ran "$LOGS/3-grid-stories-py.log")) ; grid-stories node $( [ $K2 = 1 ] && echo ok || echo RED) ($(node_ran "$LOGS/3-grid-stories-node.log")) ; four-home $( [ $K3 = 1 ] && echo ok || echo RED) ($(unittest_ran "$LOGS/3-four-home.log"))"
 if [ "$K1$K2$K3" = "111" ]; then pass keep "prototype 8 + 3, four-home 17"
 else
   # The 7.1 classifier, verbatim from the build prompt (bash: an unsplit pathspec would match nothing in zsh).
   CLS="$(bash -c '
-F=(demos four-home-simulation); BASE=4bcca51
+F=(previous-work/demos previous-work/four-home-simulation demos four-home-simulation); BASE=4bcca51
 om=$(git log --first-parent --format="%s" "$BASE"..origin/main -- "${F[@]}" | grep -c "from [^ ]*/overnight/")
 git diff --quiet "$(git merge-base HEAD origin/main)" HEAD -- "${F[@]}" && ob=0 || ob=1
 git diff --quiet "$BASE" HEAD -- "${F[@]}" && ch=0 || ch=1

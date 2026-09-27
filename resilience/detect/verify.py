@@ -1,7 +1,7 @@
 """Verify the covert-channel replay ([INVARIANT] lines gate, [EXPECT] lines never do).
 
-    python -m mpalacios.detect.verify              # the committed replay and fixture
-    python -m mpalacios.detect.verify --rebuild    # also rebuilds into a temp dir and byte-compares (about 2 min)
+    python -m resilience.detect.verify              # the committed replay and fixture
+    python -m resilience.detect.verify --rebuild    # also rebuilds into a temp dir and byte-compares (about 2 min)
 
 Ends with "VERIFY covert: PASS (k expectations refuted)" or "VERIFY covert: FAIL (<invariants>)".
 """
@@ -11,8 +11,8 @@ import sys
 import tempfile
 from pathlib import Path
 
-from mpalacios.constants import COVERT_CONSTANTS, RUNTIME_TRACKING_PCT
-from mpalacios.runtime.verify import V, contract_errors, v
+from resilience.constants import COVERT_CONSTANTS, RUNTIME_TRACKING_PCT
+from resilience.runtime.verify import V, contract_errors, v
 from .build import FIXTURES, OUT, PRODUCER, REL, ROOT
 
 KNOWN_GAP = f"envelope: producer '{PRODUCER}' is not sim.<module> or scripts.<name>"
@@ -65,7 +65,7 @@ def main(argv=None):
     chk = V()
     path = OUT / REL
     if not path.exists():
-        print("VERIFY covert: SKIP (not built: python -m mpalacios.detect.build)")
+        print("VERIFY covert: SKIP (not built: python -m resilience.detect.build)")
         return 0
     doc = json.loads(path.read_text(encoding="utf-8"))
     print(f"covert {doc['window']['day']} {doc['window']['start']} + {doc['window']['steps']} min | attack {doc['attack']['t']} "
@@ -78,10 +78,10 @@ def main(argv=None):
                 f"fixture {fx.relative_to(ROOT)}: fixture: true, synthetic loads named in inputs")
         check(chk, fdoc, "fixture")
     else:
-        chk.inv(False, "fixture", "fixture missing: python -m mpalacios.detect.build --fixture")
+        chk.inv(False, "fixture", "fixture missing: python -m resilience.detect.build --fixture")
     if "--rebuild" in argv:
         with tempfile.TemporaryDirectory(prefix="covert-rebuild-") as tmp:
-            r = subprocess.run([sys.executable, "-m", "mpalacios.detect.build", "--out", tmp], cwd=ROOT,
+            r = subprocess.run([sys.executable, "-m", "resilience.detect.build", "--out", tmp], cwd=ROOT,
                                capture_output=True, text=True)
             same = r.returncode == 0 and (Path(tmp) / REL).read_bytes() == path.read_bytes()
             chk.inv(same, "determinism", f"determinism: rebuild {'byte-identical' if same else 'DIFFERS'}"

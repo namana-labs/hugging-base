@@ -1,6 +1,6 @@
 # Hugging Base: Connor's handoff (the four pages)
 
-> **Snapshot of 26 Sep, before PR #42; the root app is the submission:** see [README.md](../README.md) and [docs/run-the-demo.md](../docs/run-the-demo.md).
+> **Snapshot of 26 Sep, before PR #42; the root app is the submission:** see [README.md](../../README.md) and [docs/run-the-demo.md](../../docs/run-the-demo.md).
 
 26 Sep 2026 · RZ. Snapshot of the live doc; RZ shares the live version.
 
@@ -44,7 +44,7 @@ The data lives in `simulators/rz/ui/data/` in the repo, as plain JSON your pages
 | `p1/<policy>.json` (`none`, `naive`, `aware`, `aware_faults`) | Per minute: loading of all 379 transformers, tier codes, each battery's charge, power and state, the story ticker | About 2 MB each |
 | `p1/days/` | The other real evenings (gzipped: `*.json.gz`) and the money calendar | Small |
 | `p2/index.json`, `p2/<combo>.json` | Where the next battery goes: ranking, before/after, the flip, capacity | 0.1–0.3 MB each |
-| `mpalacios/out/p1/worker_kill.json`, `mpalacios/out/p3/covert.json` | Michael's controller crash and hidden-attacker runs | Small |
+| `resilience/out/p1/worker_kill.json`, `resilience/out/p3/covert.json` | Michael's controller crash and hidden-attacker runs | Small |
 
 How to read them without rewriting your model code:
 

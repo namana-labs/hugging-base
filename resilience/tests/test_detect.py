@@ -7,10 +7,10 @@ from pathlib import Path
 
 import numpy as np
 
-from mpalacios.constants import COVERT_SYMBOL_MIN, DETECT_WINDOW_MIN, MODULATION_KW
-from mpalacios.detect.attack import Carrier, CompromisedDevice, message_bits
-from mpalacios.detect.detector import PeerDetector, carrier_amp, lag1, peer_sets
-from mpalacios.runtime.device import EpochCommand
+from resilience.constants import COVERT_SYMBOL_MIN, DETECT_WINDOW_MIN, MODULATION_KW
+from resilience.detect.attack import Carrier, CompromisedDevice, message_bits
+from resilience.detect.detector import PeerDetector, carrier_amp, lag1, peer_sets
+from resilience.runtime.device import EpochCommand
 from sim.devices import Battery
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -80,7 +80,7 @@ class DetectorMath(unittest.TestCase):
 
 class EndToEnd(unittest.TestCase):
     def test_fixture_window(self):
-        from mpalacios.detect.build import build
+        from resilience.detect.build import build
         with tempfile.TemporaryDirectory(prefix="covert-test-") as tmp:
             s = build("fixture", out=tmp, quiet=True)["doc"]["summary"]
         self.assertEqual(s["falsePositivesClean"]["v"], 0)

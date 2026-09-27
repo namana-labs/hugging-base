@@ -1,4 +1,4 @@
-# mpalacios/: backend work that feeds the UI
+# resilience/: backend work that feeds the UI
 
 This folder does the backend work in [kickoff-backend.md](kickoff-backend.md): the computations and data the UI shows,
 no UI code. Everything lives in this folder. A change this work needs in a lane-owned path is written up as a request
@@ -19,23 +19,23 @@ From the repo root, with the shared venv (`scripts/setup.sh` makes it; on Window
 `~/hb-overnight/.venv/Scripts/python.exe`):
 
 ```sh
-python -m mpalacios.runtime.build            # the worker-kill replay, about 1 min
-python -m mpalacios.runtime.build --live     # the same with real worker processes and a real kill (camera)
-python -m mpalacios.runtime.build --fixture  # the 120-step fixture
-python -m mpalacios.runtime.verify --rebuild # every invariant, and a byte-compare rebuild
+python -m resilience.runtime.build            # the worker-kill replay, about 1 min
+python -m resilience.runtime.build --live     # the same with real worker processes and a real kill (camera)
+python -m resilience.runtime.build --fixture  # the 120-step fixture
+python -m resilience.runtime.verify --rebuild # every invariant, and a byte-compare rebuild
 
-python -m mpalacios.detect.build             # the covert replay, about 2 min (three runs of the evening)
-python -m mpalacios.detect.build --fixture
-python -m mpalacios.detect.verify --rebuild
+python -m resilience.detect.build             # the covert replay, about 2 min (three runs of the evening)
+python -m resilience.detect.build --fixture
+python -m resilience.detect.verify --rebuild
 
-python -m mpalacios.physics.balance          # power balance at the shipped and the tightened tolerance
-python -m mpalacios.physics.impact           # what the tolerance fix changes in P1's committed files
+python -m resilience.physics.balance          # power balance at the shipped and the tightened tolerance
+python -m resilience.physics.impact           # what the tolerance fix changes in P1's committed files
 
-python -m unittest discover -s mpalacios/tests -t .
-bash mpalacios/check.sh [--full]             # all of the above, then scripts/check_all.sh
+python -m unittest discover -s resilience/tests -t .
+bash resilience/check.sh [--full]             # all of the above, then scripts/check_all.sh
 ```
 
-`check.sh` ends in one line, `MPALACIOS CHECKS: PASS` or `FAIL (<steps>)`. It passes the repo gate unless the gate
+`check.sh` ends in one line, `RESILIENCE CHECKS: PASS` or `FAIL (<steps>)`. It passes the repo gate unless the gate
 fails a step that did not fail before this work. On Windows those steps are `unit` and `contract`: four tests, all of
 them either `os.getloadavg` or a `\` vs `/` path comparison, none of them this folder's. Requests 3b, 3c and 8 fix
 them.

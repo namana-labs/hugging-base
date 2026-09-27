@@ -1,6 +1,6 @@
 # simulators/connor
 
-A Python simulator following [docs/design.md](../../docs/design.md) §12, self-contained in this folder. OpenDSS is the referee for every violation; the kW view in `splitter.py` is the controller's only. The topology is a radial lateral whose size is a parameter (`lateral(n_nodes)`); **four nodes is the city we run today**, and the same code runs a bigger one when the lateral is proven.
+A Python simulator following [docs/design.md](../../docs-history/design.md) §12, self-contained in this folder. OpenDSS is the referee for every violation; the kW view in `splitter.py` is the controller's only. The topology is a radial lateral whose size is a parameter (`lateral(n_nodes)`); **four nodes is the city we run today**, and the same code runs a bigger one when the lateral is proven.
 
 ## Setup
 

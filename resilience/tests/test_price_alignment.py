@@ -79,7 +79,7 @@ class DaylightSaving(unittest.TestCase):
     def test_no_two_rows_share_a_local_start(self):
         starts = Counter(r["interval_start_local"] for r in self.rows)
         dup = [k for k, n in starts.items() if n > 1]
-        self.assertEqual(dup, [], "prices.load() keeps only the last row per start: see mpalacios/docs/requests.md")
+        self.assertEqual(dup, [], "prices.load() keeps only the last row per start: see resilience/docs/requests.md")
 
     def test_no_repeated_hour_rows(self):
         """rep = ERCOT's repeated-hour (DST end) flag. DST ends 1 Nov 2026, after this file (to 19 Sep). If the file

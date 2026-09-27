@@ -142,7 +142,7 @@
 **Other sessions** (unrelated to this hackathon) were told at 16:55Z to stop.
 
 ### Repo (https://github.com/namana-labs/hugging-base)
-**main = `432b888`**. Merged in round 2: #26, #29, #31, #32, #33 (l0-foundation) and #36 (l0 contracts for l2). Teammates merged Connor #25 and #30, and Michael pushed `mpalacios/`.
+**main = `432b888`**. Merged in round 2: #26, #29, #31, #32, #33 (l0-foundation) and #36 (l0 contracts for l2). Teammates merged Connor #25 and #30, and Michael pushed `resilience/`.
 
 **Round 2 open PRs (drafts, NOT merged, NOT judged):**
 

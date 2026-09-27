@@ -355,8 +355,8 @@ class RuleTests(unittest.TestCase):
 
 
 class ContractTests(unittest.TestCase):
-    def test_mpalacios_producer_is_accepted(self):
-        doc = {"schema": "hb.p3.covert.v1", "producer": "mpalacios.detect",
+    def test_resilience_producer_is_accepted(self):
+        doc = {"schema": "hb.p3.covert.v1", "producer": "resilience.detect",
                "inputs": {"prices_sha256": None, "loads_sha256": None, "topology_sha256": None},
                "constants": {}, "sources": {}, "series": {}}
         self.assertEqual(check_envelope(doc), [])

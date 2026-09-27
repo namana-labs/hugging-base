@@ -1,7 +1,7 @@
 """Power balance of the root feeder (kickoff B1): does substation kW equal the solved load plus the losses?
 
-    python -m mpalacios.physics.balance                  # the committed P1 aware evening, 720 steps, both tolerances
-    python -m mpalacios.physics.balance --branch none --steps 60
+    python -m resilience.physics.balance                  # the committed P1 aware evening, 720 steps, both tolerances
+    python -m resilience.physics.balance --branch none --steps 60
 
 At every step, source kW (-Circuit.TotalPower) must equal the sum of every Load element's solved kW (the 2,021 home
 loads and the 1,010 battery loads) plus Circuit.Losses. The residual, in watts, is what the solver's convergence
@@ -10,7 +10,7 @@ default leaves about 120 W on a 6.5 MW feeder and tightens it to SOLVER_TOLERANC
 
 Battery kW comes from the committed ui/data/p1/<branch>.json (tenths), loads from sim.loads, so the solves are the
 ones behind the numbers the UI shows. The measurement also reports how far each transformer's loading moves between
-the two tolerances, in the UI's own unit (tenths of a percent). Writes mpalacios/out/physics/balance-<branch>.json
+the two tolerances, in the UI's own unit (tenths of a percent). Writes resilience/out/physics/balance-<branch>.json
 (no timings: deterministic).
 """
 import argparse
@@ -22,12 +22,12 @@ from pathlib import Path
 import numpy as np
 from opendssdirect import dss
 
-from mpalacios.constants import POWER_BALANCE_TOL_W, SOLVER_TOLERANCE
+from resilience.constants import POWER_BALANCE_TOL_W, SOLVER_TOLERANCE
 from sim.constants import export
 from sim.contracts import write_json
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / "mpalacios" / "out" / "physics"
+OUT = ROOT / "resilience" / "out" / "physics"
 
 
 def balance():

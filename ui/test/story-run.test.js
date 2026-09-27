@@ -28,7 +28,7 @@ test('run: the files a scenario reads; covert adds its detector file (catalogue 
   const cov = { ...base, levers: { failure: 'covert' }, attack: 'p3/covert.json' };
   assert.equal(attackPath(cov), 'p3/covert.json');
   assert.equal(runFiles(cov).at(-1).path, 'p3/covert.json');
-  assert.equal(attackPath({ ...cov, attack: undefined, covert: '../../mpalacios/out/p3/covert.json' }), '../../mpalacios/out/p3/covert.json');
+  assert.equal(attackPath({ ...cov, attack: undefined, covert: '../../resilience/out/p3/covert.json' }), '../../resilience/out/p3/covert.json');
   // no path typed in the page: a covert scenario without one is a missing file on Running, not a guessed path
   assert.equal(attackPath({ ...cov, attack: undefined }), null);
   assert.equal(runFiles({ ...cov, attack: undefined }).at(-1).missing, true);
@@ -105,10 +105,10 @@ test('run: the engine cost line is the catalogue\'s labelled numbers; no bare nu
   assert.match(html, /34\.8 s<\/span><span class="chip chip-DERIVED" title="sim.scenarios"/);
   assert.match(html, /nothing is solved in the browser/);
   assert.match(runCostHTML({}, numHTML), /no measured engine cost/);
-  const cov = runCostHTML({ ...sc, producer: 'mpalacios.detect', attackEngine: { buildSeconds: { v: 110, label: 'DERIVED' } } }, numHTML);
-  assert.match(cov, /detector replay \(mpalacios\.detect\) took <span class="num">110 s/);
+  const cov = runCostHTML({ ...sc, producer: 'resilience.detect', attackEngine: { buildSeconds: { v: 110, label: 'DERIVED' } } }, numHTML);
+  assert.match(cov, /detector replay \(resilience\.detect\) took <span class="num">110 s/);
   assert.match(cov, /^The engine already ran this evening: /, 'the feeder run is not the detector run');
-  assert.match(runCostHTML({ ...sc, producer: 'mpalacios.runtime' }, numHTML), /^The engine already ran this evening \(mpalacios\.runtime\): /);
+  assert.match(runCostHTML({ ...sc, producer: 'resilience.runtime' }, numHTML), /^The engine already ran this evening \(resilience\.runtime\): /);
   assert.throws(() => runCostHTML({ engine: { solves: 721 } }, numHTML), LabelError);
 });
 
@@ -176,7 +176,7 @@ test('run: every committed extras file carries the rule log and the failures the
 });
 
 test('run: the covert detector card counts flagged and quarantined units from p3/covert.json', () => {
-  const cov = readJSON(path.join(REPO, 'mpalacios', 'out', 'p3', 'covert.json'));
+  const cov = readJSON(path.join(REPO, 'resilience', 'out', 'p3', 'covert.json'));
   const n = cov.window.steps;
   const d = detectorModel(cov, n);
   assert.equal(d.units.length, cov.attack.shard.length);

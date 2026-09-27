@@ -2,7 +2,7 @@
 
 26 Sep 2026 · RZ. Snapshot of the live team hub doc; RZ shares the live docs.
 
-> **Update, 27 Sep 2026: the root app is the submission, merged into `main` (PR #42).** Root `sim/` is the one engine and root `ui/` is the four story pages (Configure → Run → Results → Learnings); the old tab app is `ui/explore.html`. `simulators/rz/` stays as reference; where this hub says `simulators/rz/ui/data/` or `simulators/rz/docs/`, read the root `ui/data/` and `docs/`. Rulings and path ownership: [`docs/story-contract.md`](../docs/story-contract.md). Amy's audited numbers, each with its file and field: [`presentation/NUMBERS.md`](../presentation/NUMBERS.md).
+> **Update, 27 Sep 2026: the root app is the submission, merged into `main` (PR #42).** Root `sim/` is the one engine and root `ui/` is the four story pages (Configure → Run → Results → Learnings); the old tab app is `ui/explore.html`. `simulators/rz/` stays as reference; where this hub says `simulators/rz/ui/data/` or `simulators/rz/docs/`, read the root `ui/data/` and `docs/`. Rulings and path ownership: [`docs/story-contract.md`](../../docs/story-contract.md). Amy's audited numbers, each with its file and field: [`presentation/NUMBERS.md`](../../docs/NUMBERS.md).
 
 ## Who does what, and the one doc each person reads
 
@@ -48,13 +48,13 @@ One folder per person or path. Each can be deleted without breaking another.
 | Folder | Whose | What |
 | --- | --- | --- |
 | `simulators/rz/` | RZ + Michael | RZ's earlier copy of the app, superseded by the root app (PR #42); kept for `research/`, `judges/`, `story/`, `RULINGS.md`. |
-| `mpalacios/` | Michael | Controller-crash survival and the attacker detector (imports the root `sim/`) |
+| `resilience/` | Michael | Controller-crash survival and the attacker detector (imports the root `sim/`) |
 | `simulators/connor/` | Connor | His simulator and control-room dashboard (earlier prototype); the four story pages live in the root `ui/` |
 | `docs/design-handoff/` | Connor | The team's design language |
 | `presentation/` | Amy | Her startup doc, script, Q&A |
 | `bo/` | Bo | Design tokens and mockup |
 | `handoff/` | Everyone | This hub and the Connor and engine handoffs |
-| `sim/`, `ui/`, `scripts/`, `data/` at the root | Everyone (paths in `docs/story-contract.md`) | **The submission:** the engine (`sim/`) and the four story pages (`ui/`); `mpalacios/` imports `sim/`. Run: `docs/run-the-demo.md`. |
+| `sim/`, `ui/`, `scripts/`, `data/` at the root | Everyone (paths in `docs/story-contract.md`) | **The submission:** the engine (`sim/`) and the four story pages (`ui/`); `resilience/` imports `sim/`. Run: `docs/run-the-demo.md`. |
 | `demos/grid-stories/`, `four-home-simulation/` | Connor, Michael | Earlier prototypes, kept for history |
 
 Never commit `overnight/BASE_ENGINEER_INPUT.md`; it stays on RZ's laptop. The repo is public.

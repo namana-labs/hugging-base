@@ -9,8 +9,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from mpalacios.constants import COVERT_SEED, COVERT_SYMBOL_MIN, MODULATION_KW
-from mpalacios.runtime.device import EpochDevice
+from resilience.constants import COVERT_SEED, COVERT_SYMBOL_MIN, MODULATION_KW
+from resilience.runtime.device import EpochDevice
 
 
 def message_bits(n, seed=COVERT_SEED):

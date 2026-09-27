@@ -1,7 +1,7 @@
 # DESIGN-CAPACITY-PLANNER: "Can this transformer take more batteries?" (P2's finale)
 
 **Role:** designer, capacity-planner step of `objectives-lab-v2.js`. **Written:** 26 Sep 2026, about 17:45Z.
-**Where it gets built:** `simulators/rz/`, the self-contained copy of the root app with round 2 merged. Every code path below is relative to `simulators/rz/`. The root app (`sim/`, `ui/` on `main`) is never edited: Michael's `mpalacios/` imports the root `sim/`.
+**Where it gets built:** `simulators/rz/`, the self-contained copy of the root app with round 2 merged. Every code path below is relative to `simulators/rz/`. The root app (`sim/`, `ui/` on `main`) is never edited: Michael's `resilience/` imports the root `sim/`.
 **Scope (RZ's ruling, settled):** pick a transformer and slide 0–50 batteries; show the most that fit under naive vs feeder-aware dispatch, refereed by OpenDSS; add an "upgrade or not" card built from simulated age, a demand spread and cost. The profit-vs-reliability dial and the utility ROI are **a spec slide only** (section 5).
 **Inputs read:** `DATA-GRID-ASSETS.md`, `DATA-MARKET-PROFIT.md`, `DATA-INTERCONNECTION.md`, `DATA-ASSETS-DEMAND.md` and its evidence folder, the engineer notes (local only; nothing quoted), the app on `rz/r2-integrate` (read only: `sim/siting.py`, `sim/p2_build.py`, `sim/referee.py`, `sim/surrogate.py`, `sim/constants.py`, `ui/panels/p2.js`, `ui/lib/{data,icons,scene-model}.js`, `docs/contracts.md`), `docs/design-handoff/README.md` and `UX_SPEC_R2.md`.
 **Labels:** REAL = published data or a published fact, cited. SIM = our simulator or OpenDSS. DERIVED = arithmetic on REAL or SIM numbers, method stated. ASSUMPTION = a knob we chose. UNVERIFIED = not confirmed at its source.

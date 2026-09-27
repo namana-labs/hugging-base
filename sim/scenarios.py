@@ -20,11 +20,11 @@ process is the canonical build and reproduces every file here:
                      naive, aware in sim.p1_build's order (a battery lever's none must reproduce p1/none.json and is
                      shared; growth writes its own) into ui/data/p1/variants/<l>=<v>/ (meta.json + <branch>.json.gz in
                      the A.5/A.6 shapes, with `variant`, `fleet`, `fleetCls` and measured engine seconds) + extras.
-  worker_kill        derives the extras the committed worker-kill replay (mpalacios/out/p1/worker_kill.json) allows,
+  worker_kill        derives the extras the committed worker-kill replay (resilience/out/p1/worker_kill.json) allows,
                      from that file alone (never rebuilt here); the rest is ABSENT, never zero. Its engine cost is the
-                     measured rebuild time in mpalacios/docs/measurements.md (WORKER_KILL_SECONDS).
-The catalogue step copies mpalacios/out/p1/worker_kill.json -> ui/data/p1/worker_kill.json and
-mpalacios/out/p3/covert.json -> ui/data/p3/covert.json byte for byte, and writes ui/data/story/index.json.
+                     measured rebuild time in resilience/docs/measurements.md (WORKER_KILL_SECONDS).
+The catalogue step copies resilience/out/p1/worker_kill.json -> ui/data/p1/worker_kill.json and
+resilience/out/p3/covert.json -> ui/data/p3/covert.json byte for byte, and writes ui/data/story/index.json.
 
 Timings (engine.buildSeconds) are measured, so the variant metas, the extras' `engine` block and index.json are not
 byte-reproducible in those fields only (as ui/data/engine.json). Everything else is deterministic.
@@ -52,8 +52,8 @@ P1 = UI_DATA / "p1"
 EXTRAS = P1 / "extras"
 VARIANTS = P1 / "variants"
 STORY = UI_DATA / "story"
-MP_WORKER_KILL = ROOT / "mpalacios" / "out" / "p1" / "worker_kill.json"
-MP_COVERT = ROOT / "mpalacios" / "out" / "p3" / "covert.json"
+MP_WORKER_KILL = ROOT / "resilience" / "out" / "p1" / "worker_kill.json"
+MP_COVERT = ROOT / "resilience" / "out" / "p3" / "covert.json"
 TOPOLOGY = UI_DATA / "topology.json"
 
 EVENINGS = ("2026-08-23", "2026-07-22", "2026-08-14", "2026-08-26")
@@ -610,24 +610,24 @@ def job_variant(lever, value):
 
 WORKER_KILL_SECONDS = const(
     "WORKER_KILL_SECONDS", 55, "DERIVED",
-    "mpalacios/docs/measurements.md B1.3: `mpalacios.runtime.verify --rebuild` took 51-55 s per build on this machine "
+    "resilience/docs/measurements.md B1.3: `resilience.runtime.verify --rebuild` took 51-55 s per build on this machine "
     "(baseline + worker-kill runs, 720 steps each, OpenDSS every step), byte-identical twice; not re-measured by "
     "sim.scenarios, which copies the committed replay and never rebuilds it")
 COVERT_SECONDS = const(
     "COVERT_SECONDS", 110, "DERIVED",
-    "mpalacios/docs/measurements.md B1.3: `mpalacios.detect.verify --rebuild` took 83-110 s per build on this machine, "
+    "resilience/docs/measurements.md B1.3: `resilience.detect.verify --rebuild` took 83-110 s per build on this machine, "
     "byte-identical; not re-measured by sim.scenarios")
 
 
 def job_worker_kill():
-    """Extras for the worker-kill replay, derived only from its committed branch file (mpalacios/out/p1/worker_kill.json,
+    """Extras for the worker-kill replay, derived only from its committed branch file (resilience/out/p1/worker_kill.json,
     copied byte for byte; never rebuilt here). vTfMilli, head P/Q, the capacitor and the feeder load are not in that
     file: ABSENT (listed in `absent`), never zeros. busOrder/busDistKm are the feeder's (the same circuit), read from the
     23 Aug aware extras."""
     bd = json.loads(MP_WORKER_KILL.read_text(encoding="utf-8"))
     engine = {"buildSeconds": labelled(WORKER_KILL_SECONDS, "DERIVED", TAG["WORKER_KILL_SECONDS"]["cite"]),
               "solves": labelled(2 * (bd["steps"] + 1), "SIM",
-                                 "OpenDSS solves in mpalacios.runtime.build: baseline + worker-kill runs, one warm-up "
+                                 "OpenDSS solves in resilience.runtime.build: baseline + worker-kill runs, one warm-up "
                                  "each")}
     topo = json.loads(TOPOLOGY.read_text(encoding="utf-8"))
     base = read_json_any(UI_DATA / extras_rel(scenario_id(P1_DAY, "aware")))
@@ -855,18 +855,18 @@ def build_catalogue():
             wk = _read("p1/worker_kill.json")
             add(sid, _levers(evening=e, failure="worker_kill"), base_meta_rel(e), "p1/worker_kill.json",
                 extras_rel(sid), comp, wk["summary"], _engine_of(sid),
-                f"{date_label[e]}: feeder-aware, a controller worker is killed", producer="mpalacios.runtime")
+                f"{date_label[e]}: feeder-aware, a controller worker is killed", producer="resilience.runtime")
             sid = scenario_id(e, "aware", "covert")
             cv = _read("p3/covert.json")
             add(sid, _levers(evening=e, failure="covert"), base_meta_rel(e), base_branch_rel(e, "aware"),
                 extras_rel(scenario_id(e, "aware")), comp, meta["summary"]["aware"],
                 _engine_of(scenario_id(e, "aware")),
                 f"{date_label[e]}: feeder-aware, a fictional attacker hides a signal in the fleet",
-                attack="p3/covert.json", attackSummary=cv["summary"], producer="mpalacios.detect",
+                attack="p3/covert.json", attackSummary=cv["summary"], producer="resilience.detect",
                 plays=scenario_id(e, "aware"),
                 attackEngine={"buildSeconds": labelled(COVERT_SECONDS, "DERIVED", TAG["COVERT_SECONDS"]["cite"]),
                               "note": {"text": "the attack replay (clean, watching and quarantine runs) is "
-                                               "mpalacios.detect's; the feeder page plays the 23 Aug aware branch",
+                                               "resilience.detect's; the feeder page plays the 23 Aug aware branch",
                                        "label": "SIM"}})
     none_sid = scenario_id(P1_DAY, "none")
     base_meta = _read("p1/meta.json")
@@ -932,7 +932,7 @@ def build_catalogue():
                                     "GROWTH", "V_ANSI_LO", "V_ANSI_HI", "HIJACK_MHZ_LO", "HIJACK_MHZ_HI", "HIJACK_MW",
                                     "HIJACK_UNITS"),
                    sources={"engine": {"label": "SIM", "text": "every scenario is a committed run of sim.p1_build / "
-                                                              "sim.history / sim.scenarios / mpalacios (OpenDSS every step)"},
+                                                              "sim.history / sim.scenarios / resilience (OpenDSS every step)"},
                             "timing": {"label": "DERIVED", "text": "engine.buildSeconds measured on a shared machine; "
                                                                    "not byte-reproducible"}},
                    series={})
@@ -999,7 +999,7 @@ def refresh_extras(doc=None):
 
 
 def copy_runtime_files():
-    """mpalacios' two replays into ui/data, byte for byte (the page plays them; producer mpalacios.*)."""
+    """resilience's two replays into ui/data, byte for byte (the page plays them; producer resilience.*)."""
     out = []
     for src, rel in ((MP_WORKER_KILL, "p1/worker_kill.json"), (MP_COVERT, "p3/covert.json")):
         dst = UI_DATA / rel

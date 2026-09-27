@@ -32,7 +32,7 @@ from sim.devices import Battery, Device, discharge_limit
 from sim.orchestrator import charge_target
 from sim.p1_build import DT_H, hhmm, _ticker
 
-from mpalacios.constants import LEASE_TTL_S, RUNTIME_PARTITIONS, RUNTIME_WORKERS
+from resilience.constants import LEASE_TTL_S, RUNTIME_PARTITIONS, RUNTIME_WORKERS
 from .device import REASONS, EpochDevice
 from .lease import LeaseTable
 from .partition import partitions, split_target
@@ -85,7 +85,7 @@ def run(sc, transport, kill_step=None, doomed_group=None, pace=None, device_fact
     """One evening under the runtime. kill_step=None is the no-failure run. Returns P1's run dict (so
     sim.p1_build.summarize and branch_doc apply unchanged) plus a "runtime" dict.
 
-    Two hooks for mpalacios.detect (both None here by default, and then the run is exactly the runtime's):
+    Two hooks for resilience.detect (both None here by default, and then the run is exactly the runtime's):
       device_factory(i, battery) -> the device for battery i (a compromised one, say);
       observer(k, t_s, kw[m], setpoint[m], v_home[1010]) -> battery indices to quarantine from the next step on.
     A quarantined unit is held at zero, out of the fleet target and the split, and never commanded again."""

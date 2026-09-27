@@ -1,6 +1,6 @@
 # simulators/rz: RZ's app (P1, P2, P3)
 
-> **SUPERSEDED (27 Sep 2026): the root app is the submission since PR #42** (engine in root `sim/`, story pages in root `ui/`; see the [README](../../README.md) and [`docs/run-the-demo.md`](../../docs/run-the-demo.md)). This folder is RZ's earlier copy, kept for its `research/`, `judges/`, `story/` and `RULINGS.md`; its app, "Known gaps" and "Delete it" below describe 26 Sep, not `main`.
+> **SUPERSEDED (27 Sep 2026): the root app is the submission since PR #42** (engine in root `sim/`, story pages in root `ui/`; see the [README](../../../README.md) and [`docs/run-the-demo.md`](../../../docs/run-the-demo.md)). This folder is RZ's earlier copy, kept for its `research/`, `judges/`, `story/` and `RULINGS.md`; its app, "Known gaps" and "Delete it" below describe 26 Sep, not `main`.
 
 **Owner:** RZ. A self-contained, runnable, deletable copy of the root app (main `432b888`) **with round 2 merged**. The root app (`sim/ ui/ scripts/ data/` at the repo root) is unchanged; this folder is where RZ's work lives until the team combines the best of every folder into one submission folder.
 
@@ -65,7 +65,7 @@ scripts/check_all.sh --full       # also rebuilds every artifact and byte-compar
 | `RULINGS.md` | RZ's rulings from 26 Sep still to apply (Wi-Fi relabel, fuse rule, capacity-planner scope, team split) |
 | **Who does what** | `handoff/README.md` at the repo root: the team hub, plus `handoff/ENGINE.md` (RZ + Michael) and `handoff/CONNOR.md` |
 
-Team docs stay at the repo root: [docs/README.md](../../docs/README.md), [design.md](../../docs/design.md), [plan.md](../../docs/plan.md), [reconciliation.md](../../docs/reconciliation.md), [research-report.md](../../docs/research-report.md), [ui-brief.md](../../docs/ui-brief.md), [design-handoff/](../../docs/design-handoff/README.md).
+Team docs stay at the repo root: [docs/README.md](../../../docs/README.md), [design.md](../../docs-history/design.md), [plan.md](../../docs-history/plan.md), [reconciliation.md](../../docs-history/reconciliation.md), [research-report.md](../../../docs/research-report.md), [ui-brief.md](../../docs-history/ui-brief.md), [design-handoff/](../../docs-history/design-handoff/README.md).
 
 ## Provenance
 
@@ -97,4 +97,4 @@ Every number carries one: **REAL** (ERCOT prices, SMART-DS topology and ratings,
 
 ## Delete it
 
-`rm -rf simulators/rz`. Nothing outside this folder imports it: `mpalacios/` imports the **root** `sim/`, not this copy, and the root app, `demos/`, `four-home-simulation/` and `simulators/connor/` never reference `simulators/rz`.
+`rm -rf simulators/rz`. Nothing outside this folder imports it: `resilience/` imports the **root** `sim/`, not this copy, and the root app, `demos/`, `four-home-simulation/` and `simulators/connor/` never reference `simulators/rz`.

@@ -1,6 +1,6 @@
 # Grid stories — toy demo
 
-This standalone toy demo explores the three scenarios in the [project design](../../docs/design.md). It is a prototype for storytelling and experimentation; the main shipping app will be developed separately. Actual SMART-DS electrical topology is solved by OpenDSSDirect.py 0.9.4; no kW-only model judges violations. The browser reads precomputed solutions rather than running an AC solver.
+This standalone toy demo explores the three scenarios in the [project design](../../docs-history/design.md). It is a prototype for storytelling and experimentation; the main shipping app will be developed separately. Actual SMART-DS electrical topology is solved by OpenDSSDirect.py 0.9.4; no kW-only model judges violations. The browser reads precomputed solutions rather than running an AC solver.
 
 ## Running
 

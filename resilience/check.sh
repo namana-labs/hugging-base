@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# mpalacios/check.sh: this folder's gate, then the repo's (scripts/check_all.sh), on macOS or Windows (Git Bash).
-#   1 unit     $PY -m unittest discover -s mpalacios/tests -t .   (price alignment, power balance, runtime incl. live)
-#   2 runtime  $PY -m mpalacios.runtime.verify   [--rebuild with --full]
-#   3 covert   $PY -m mpalacios.detect.verify    [--rebuild with --full]
+# resilience/check.sh: this folder's gate, then the repo's (scripts/check_all.sh), on macOS or Windows (Git Bash).
+#   1 unit     $PY -m unittest discover -s resilience/tests -t .   (price alignment, power balance, runtime incl. live)
+#   2 runtime  $PY -m resilience.runtime.verify   [--rebuild with --full]
+#   3 covert   $PY -m resilience.detect.verify    [--rebuild with --full]
 #   4 repo     bash scripts/check_all.sh: passes unless it fails a step that did not fail before this work. On Windows
-#              the repo gate fails `unit` and `contract` before any change here (mpalacios/docs/requests.md 3b, 3c
+#              the repo gate fails `unit` and `contract` before any change here (resilience/docs/requests.md 3b, 3c
 #              and 8: four tests, all Windows path separators or os.getloadavg, none of them this folder's);
 #              HB_KNOWN_REPO_FAILS overrides that list.
-# Ends with exactly one line: "MPALACIOS CHECKS: PASS" or "MPALACIOS CHECKS: FAIL (<steps>)".
+# Ends with exactly one line: "RESILIENCE CHECKS: PASS" or "RESILIENCE CHECKS: FAIL (<steps>)".
 set -u
 ROOT="$(git rev-parse --show-toplevel)" || exit 2
 cd "$ROOT"
@@ -35,20 +35,20 @@ NODE_MAJOR="$(node --version 2>/dev/null | sed 's/^v\([0-9]*\).*/\1/')"
 if [ -n "$NODE_MAJOR" ] && [ "$NODE_MAJOR" -lt 22 ]; then
   export NODE_OPTIONS="${NODE_OPTIONS:-} --experimental-websocket"   # the smoke runner needs a global WebSocket
 fi
-LOGS="${HB_CHECK_LOGS:-$HOME/hb-overnight/tmp/check-mpalacios}"
+LOGS="${HB_CHECK_LOGS:-$HOME/hb-overnight/tmp/check-resilience}"
 mkdir -p "$LOGS"
 FAILS=()
 REB=()
 [ $FULL = 1 ] && REB=(--rebuild)
-echo "MPALACIOS CHECK py=$PY full=$FULL known-repo-fails='${KNOWN}' logs=$LOGS"
+echo "RESILIENCE CHECK py=$PY full=$FULL known-repo-fails='${KNOWN}' logs=$LOGS"
 
 echo "== 1 unit"
-"$PY" -m unittest discover -s mpalacios/tests -t . >"$LOGS/1-unit.log" 2>&1
+"$PY" -m unittest discover -s resilience/tests -t . >"$LOGS/1-unit.log" 2>&1
 if tail -n 4 "$LOGS/1-unit.log" | grep -qE '^OK( |$)'; then
   echo "STEP unit: PASS ($(grep -oE '^Ran [0-9]+ tests?' "$LOGS/1-unit.log" | tail -1); $(tail -n 1 "$LOGS/1-unit.log"))"
 else tail -n 30 "$LOGS/1-unit.log"; echo "STEP unit: FAIL"; FAILS+=(unit); fi
 
-for part in runtime:mpalacios.runtime.verify covert:mpalacios.detect.verify; do
+for part in runtime:resilience.runtime.verify covert:resilience.detect.verify; do
   name="${part%%:*}"; mod="${part#*:}"
   echo "== $name"
   "$PY" -m "$mod" ${REB[@]+"${REB[@]}"} >"$LOGS/verify-$name.log" 2>&1
@@ -74,6 +74,6 @@ case "$verdict" in
   *) FAILS+=("repo") ;;
 esac
 
-if [ ${#FAILS[@]} -eq 0 ]; then echo "MPALACIOS CHECKS: PASS"; exit 0; fi
-echo "MPALACIOS CHECKS: FAIL (${FAILS[*]})"
+if [ ${#FAILS[@]} -eq 0 ]; then echo "RESILIENCE CHECKS: PASS"; exit 0; fi
+echo "RESILIENCE CHECKS: FAIL (${FAILS[*]})"
 exit 1

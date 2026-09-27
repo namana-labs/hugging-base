@@ -19,9 +19,9 @@ simulator comparison, a CIM18 canonical layer and an LLM agent layer. This one
 keeps only the work that produces or corrects data the UI shows. Section 5 lists
 what was cut and why.
 
-**Every new file in this work goes under `mpalacios/`.** Nothing outside that
+**Every new file in this work goes under `resilience/`.** Nothing outside that
 folder is edited. A change a lane-owned path needs becomes a
-`REQUEST (lead):` entry in `mpalacios/docs/requests.md` (section 4).
+`REQUEST (lead):` entry in `resilience/docs/requests.md` (section 4).
 
 ---
 
@@ -33,7 +33,7 @@ Read these, in this order:
    them, `CLAUDE.md` wins and you say so.
 2. `docs/contracts.md`, all of it. Part A is the wire format the UI reads,
    Part B the Python APIs you will call, Part C the gate.
-3. `docs/design.md` §3 (scope), §4.5 and §5.7 (the controller runtime), §9 items
+3. `previous-work/docs-history/design.md` §3 (scope), §4.5 and §5.7 (the controller runtime), §9 items
    9 and 16, and §10 (named constants).
 4. `scripts/lanes.json`, to know which lane owns what.
 
@@ -45,7 +45,7 @@ bash scripts/build_all.sh
 bash scripts/check_all.sh
 ```
 
-Record what passed and failed in `mpalacios/docs/measurements.md`. On Windows,
+Record what passed and failed in `resilience/docs/measurements.md`. On Windows,
 the heavy targets in `build_all.sh` call `lockf` on a macOS path
 (`/private/tmp/claude-501/...`). If that fails, rerun with `HB_LOCK_HELD=1`
 (safe only when no other heavy build is running) and record it. Do not edit the
@@ -55,7 +55,7 @@ script; it belongs to L0.
 
 ## 1. What "backend" means in this repo
 
-The UI has no HTTP API and no server, by design (`docs/design.md` §9 item 9:
+The UI has no HTTP API and no server, by design (`previous-work/docs-history/design.md` §9 item 9:
 "Python computes, static files sit between, the browser draws"). It reads static
 JSON from `ui/data/` through the loaders in `ui/lib/data.js`, and it falls back
 to `ui/data/fixtures/` on a 404. So in this repo:
@@ -64,7 +64,7 @@ to `ui/data/fixtures/` on a 404. So in this repo:
   labels, the quantization and the size budget, enforced by
   `python -m sim.contracts`.
 - **The services** are the `sim/` producers that write those files, plus the one
-  live runtime in `docs/design.md` §5.7, which must record its run to the same
+  live runtime in `previous-work/docs-history/design.md` §5.7, which must record its run to the same
   replay format.
 - **The orchestration** is two things. The first is the deterministic build and
   verification pipeline (`build_all.sh`, `sim.verify`, `check_all.sh`). The
@@ -86,17 +86,17 @@ to `ui/data/fixtures/` on a 404. So in this repo:
 | `ems/**` | snapshot of `site/ems` (L5) | Done. Already carries the real 10-second ERCOT frequency |
 | `beats.json`, `footprints.json` | L5, L4 | Done |
 
-The gaps, measured against `docs/design.md` §3 Scope In:
+The gaps, measured against `previous-work/docs-history/design.md` §3 Scope In:
 
 - **Deliverable G, the controller runtime, has no code at all.** `sim/` has no
   lease table and no workers. `sim/devices.py`'s `Command` carries `seq` and an
   expiry but no controller epoch, so nothing lets a device reject a dead
   worker's late command after a takeover. Milestone M4b is not met without it.
 - **Deliverable D, the covert channel detector, exists only in the prototype**
-  (`demos/grid-stories/sim/detect.py`). The root UI links out to the prototype
+  (`previous-work/demos/grid-stories/sim/detect.py`). The root UI links out to the prototype
   for that story, so nothing breaks while it waits.
 - **Solver tolerance.** `sim/feeder.py` never sets an OpenDSS tolerance, and
-  neither do the files in `data/smartds/`. `four-home-simulation/four_home.py`
+  neither do the files in `data/smartds/`. `previous-work/four-home-simulation/four_home.py`
   found that the default leaves about 120 W of power mismatch on a 6.5 MW feeder
   and sets `tolerance=1e-8`. Every loading number the UI shows comes through
   that solver.
@@ -107,7 +107,7 @@ The gaps, measured against `docs/design.md` §3 Scope In:
 
 ### B1. Physics correctness (small and measurable, first)
 
-1. **Power balance.** Write `mpalacios/tests/test_power_balance.py`. At every
+1. **Power balance.** Write `resilience/tests/test_power_balance.py`. At every
    step, substation kW (`Circuit.TotalPower`) must equal the sum of the solved
    load element kW for homes and batteries plus `Circuit.Losses`, within
    `POWER_BALANCE_TOL_W` (10 W, the four-home figure). Use the solved element
@@ -127,7 +127,7 @@ The gaps, measured against `docs/design.md` §3 Scope In:
    interval start, `(hour−1)·60 + (interval−1)·15` minutes, and `price_at()`
    floors to the 15-minute interval that contains the time. That is the same
    rule as "the first interval ending strictly after t", so an off by one is not
-   expected. Pin it anyway in `mpalacios/tests/test_price_alignment.py`: on
+   expected. Pin it anyway in `resilience/tests/test_price_alignment.py`: on
    2026-08-23, check 19:59, 20:00, 20:14 and 20:15 against the raw CSV rows.
    - **DST.** `load()` keys the table by local start string. A repeated hour
      (DST ends 1 Nov 2026) would overwrite a row silently, and the skipped hour
@@ -144,13 +144,13 @@ The gaps, measured against `docs/design.md` §3 Scope In:
 The goal is a replay file the UI can play. It shows a worker killed mid-ramp,
 its lease moving to another worker, devices rejecting the dead worker's late
 commands, the base point still tracked, and no tier or reserve breach. The design
-is `docs/design.md` §5.7. Build it and do not redesign it.
+is `previous-work/docs-history/design.md` §5.7. Build it and do not redesign it.
 
-**Components**, under `mpalacios/runtime/`:
+**Components**, under `resilience/runtime/`:
 
 - **Lease table.** The coordinator owns it: partition → (worker, epoch,
   expires). The TTL is `LEASE_TTL_S` = 300 s, one 5-minute interval
-  (`docs/design.md` §10, ASSUMPTION), registered with `sim.constants.const()`.
+  (`previous-work/docs-history/design.md` §10, ASSUMPTION), registered with `sim.constants.const()`.
   Each grant increments that partition's epoch.
 - **Partitions.** Groups of transformers under a deterministic rule named as a
   constant. Keep focus transformer A in a single partition so the beat is
@@ -161,7 +161,7 @@ is `docs/design.md` §5.7. Build it and do not redesign it.
   splitter. The coordinator splits the fleet target across partitions by
   headroom from `sim.caps.transformer_caps`, deterministically.
 - **Epoch-aware device.** Subclass `sim.devices.Device` in
-  `mpalacios/runtime/device.py`; do not edit `sim/devices.py`, which belongs to
+  `resilience/runtime/device.py`; do not edit `sim/devices.py`, which belongs to
   L2. Commands order by (epoch, seq). A device rejects a command whose epoch is
   older than the newest it has seen, whose seq does not increase within an
   epoch, or whose expiry has passed. Count the rejections by reason.
@@ -179,18 +179,18 @@ must be rejected.
 
 **Two modes, because of the determinism contract:**
 
-- `python -m mpalacios.runtime.build` (replay, the default). Simulated clock,
+- `python -m resilience.runtime.build` (replay, the default). Simulated clock,
   workers stepped in process, the kill at a named step. It writes the committed
   replay, and a rebuild is byte-identical.
-- `python -m mpalacios.runtime.build --live` (for the camera). Real worker
+- `python -m resilience.runtime.build --live` (for the camera). Real worker
   processes using the multiprocessing `spawn` start method, so the same code
   runs on Windows and macOS, and a real `terminate()`. The lease TTL is scaled
   by a named constant so the takeover shows up in seconds on camera. It writes a
-  recording in the same shape to `mpalacios/out/live/`. That recording is
+  recording in the same shape to `resilience/out/live/`. That recording is
   exempt from byte-identical rebuilds, as `engine.json` is. It is never
   committed and never a dependency of the demo.
 
-**Proof metrics** (`docs/design.md` §4.5 and §8):
+**Proof metrics** (`previous-work/docs-history/design.md` §4.5 and §8):
 
 - seconds from kill to lease takeover;
 - base-point tracking error through the gap, in kW and as a percent of target;
@@ -217,14 +217,14 @@ entry and a card, not a new renderer. Add:
 
 Write it with `sim.contracts.envelope()` and `write_json()`. Validate it with
 `sim.contracts`'s checks for labels, envelope and size. Write a
-`python -m mpalacios.runtime.verify` in the house style: `[INVARIANT]` and
+`python -m resilience.runtime.verify` in the house style: `[INVARIANT]` and
 `[EXPECT]` lines, ending `VERIFY runtime: PASS` or `FAIL (...)`.
 
-Also produce a **fixture**, `mpalacios/fixtures/runtime/worker_kill.json`: 120
+Also produce a **fixture**, `resilience/fixtures/runtime/worker_kill.json`: 120
 steps, carrying `"fixture": true`, synthetic loads as in `sim.fixtures`. The UI
 lane can build against it before the heavy build lands.
 
-**Where the file lands.** The build writes `mpalacios/out/runtime/worker_kill.json`,
+**Where the file lands.** The build writes `resilience/out/runtime/worker_kill.json`,
 which is committed. Moving it into `ui/data/` is a `REQUEST (lead):`. Recommend a
 fifth P1 branch, `ui/data/p1/worker_kill.json`, which needs `BRANCHES` in
 `ui/lib/data.js` (L0) and `branches` in `p1/meta.json` (L2). Name
@@ -232,7 +232,7 @@ fifth P1 branch, `ui/data/p1/worker_kill.json`, which needs `BRANCHES` in
 
 ### B3. Stretch: deliverable D, the covert detector
 
-Only after B1 and B2 pass. Port the prototype's detector logic into `mpalacios/`
+Only after B1 and B2 pass. Port the prototype's detector logic into `resilience/`
 so it produces a replay on the root feeder. Voltage corroboration uses a
 **peer baseline** on the same transformer, not the legitimate-command solve,
 and the detector must show zero false positives on the clean fleet. `plan.md`
@@ -245,15 +245,15 @@ value.
 ## 4. Where the work goes
 
 ```
-mpalacios/
+resilience/
   kickoff-backend.md          this file
   __init__.py
   README.md                   what this folder is and how to run its checks
-  check.sh                    mpalacios tests, then scripts/check_all.sh
+  check.sh                    resilience tests, then scripts/check_all.sh
   docs/
     measurements.md           step 0 results, B1 residuals, determinism diff, build time
     runtime-contract.md       the Part A section for the runtime replay, ready to fold into docs/contracts.md
-    requests.md               every REQUEST (lead), one entry per change outside mpalacios/
+    requests.md               every REQUEST (lead), one entry per change outside resilience/
   runtime/                    lease.py, partition.py, worker.py, device.py, recorder.py, build.py, verify.py
   tests/                      test_power_balance.py, test_price_alignment.py, test_runtime_*.py
   fixtures/runtime/           worker_kill.json (fixture: true)
@@ -264,7 +264,7 @@ mpalacios/
 Each entry in `requests.md` names the path, the lane that owns it, the exact
 change, and the evidence. Expected entries:
 
-1. `scripts/lanes.json` (L0): add a lane `mpalacios` owning `mpalacios/**`, so
+1. `scripts/lanes.json` (L0): add a lane `resilience` owning `resilience/**`, so
    `check_paths.py` passes this branch.
 2. `sim/feeder.py` (L0): `SOLVER_TOLERANCE`, if B1 shows the default misses
    10 W.
@@ -272,7 +272,7 @@ change, and the evidence. Expected entries:
    section.
 4. `ui/lib/data.js` (L0) and `ui/data/p1/**` (L2): where the replay lives and
    how it loads.
-5. `scripts/check_all.sh` (L0): run `mpalacios/tests`.
+5. `scripts/check_all.sh` (L0): run `resilience/tests`.
 6. Any DST collision B1 finds in `sim/prices.py` (L0).
 
 ---
@@ -282,8 +282,8 @@ change, and the evidence. Expected entries:
 | Original item | Decision | Why |
 |---|---|---|
 | Phase 0: a six-part comparison of the three simulators | Replaced by `measurements.md` | Nothing in `ui/` reads prototype or four-home output. The loaders read only `sim/` files, and the prototype appears only as outbound links. That confirms the earlier prior. The numbers that change data are the residual and determinism, and B1 measures both. |
-| Phase 1: port frequency and inertia into `sim/` | Cut | `docs/design.md` §3 Out: frequency dynamics and inertia are not simulated. `ui/data/ems/freq-series.json` already carries the 10-second frequency for the ERCOT console. |
-| Phase 2: CIM18 canonical layer, projection module, `mRID` scheme, `docs/cim-profile.md` | Post-demo | `docs/design.md` §3 Out adopts CIM class names "as vocabulary in the data-contract doc only". The UI reads `hb.*.v1`, and SMART-DS ids already give stable identity (`topology.json` keys homes and transformers by id). A projection layer adds no field the UI shows, and it puts twenty modules at risk before the demo. |
+| Phase 1: port frequency and inertia into `sim/` | Cut | `previous-work/docs-history/design.md` §3 Out: frequency dynamics and inertia are not simulated. `ui/data/ems/freq-series.json` already carries the 10-second frequency for the ERCOT console. |
+| Phase 2: CIM18 canonical layer, projection module, `mRID` scheme, `docs/cim-profile.md` | Post-demo | `previous-work/docs-history/design.md` §3 Out adopts CIM class names "as vocabulary in the data-contract doc only". The UI reads `hb.*.v1`, and SMART-DS ids already give stable identity (`topology.json` keys homes and transformers by id). A projection layer adds no field the UI shows, and it puts twenty modules at risk before the demo. |
 | Phase 3: agent layer, `AGENTS.md`, `docs/orchestration.md`, a contracts Part C for agents | Post-demo | Its first job was the CIM migration. No UI data depends on it. `docs/contracts.md` already has a Part C ("The gate"), so that name would collide. The orchestration that feeds the UI is B2, and it is deterministic code. |
 | Questions 2 and 3 (`mwstack`, CIM namespace) | Moot for now | Both follow from cutting CIM. |
 
@@ -315,17 +315,17 @@ change, and the evidence. Expected entries:
   time on this machine.
 - `test_power_balance.py` and `test_price_alignment.py` pass, or they fail with
   the finding written up in `requests.md`.
-- `python -m mpalacios.runtime.build` writes `worker_kill.json`. A rebuild is
+- `python -m resilience.runtime.build` writes `worker_kill.json`. A rebuild is
   byte-identical, it passes the `sim.contracts` checks, and
-  `python -m mpalacios.runtime.verify` ends in `PASS` with all four proof
+  `python -m resilience.runtime.verify` ends in `PASS` with all four proof
   metrics.
 - The fixture exists and carries `"fixture": true`.
 - `--live` kills a real process on this Windows machine and writes a recording
   in the same shape.
-- No file outside `mpalacios/` changed. `requests.md` lists every change that is
+- No file outside `resilience/` changed. `requests.md` lists every change that is
   needed, with its evidence.
 - `bash scripts/check_all.sh` has no failure that was not there at step 0.
-  Because nothing outside `mpalacios/` is edited, every `ui/data/**` file stays
+  Because nothing outside `resilience/` is edited, every `ui/data/**` file stays
   byte-identical.
 
 ---

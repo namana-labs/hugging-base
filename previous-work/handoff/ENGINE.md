@@ -1,6 +1,6 @@
 # Hugging Base: engine handoff (RZ + Michael)
 
-> **Snapshot of 26 Sep, before PR #42; the root app is the submission:** see [README.md](../README.md) and [docs/run-the-demo.md](../docs/run-the-demo.md).
+> **Snapshot of 26 Sep, before PR #42; the root app is the submission:** see [README.md](../../README.md) and [docs/run-the-demo.md](../../docs/run-the-demo.md).
 
 26 Sep 2026 · RZ. Snapshot of the live doc; RZ shares the live version.
 
@@ -13,7 +13,7 @@ Suggested split (your call), so you never edit the same file:
 | Who | Owns | Files |
 | --- | --- | --- |
 | RZ | The scenario catalogue, page 2 (what happens), page 3 (the result), the data-truth fixes | `sim/story_export.py` (new), `sim/p1_build.py`, `sim/history.py`, `ui/data/story/`, `docs/data-sources.md` |
-| Michael | Page 4's transformer answers (the capacity planner), and your controller-crash and attacker runs as page-1 scenarios | `sim/capacity.py` (new), `ui/data/p2/planner.json`, `mpalacios/` |
+| Michael | Page 4's transformer answers (the capacity planner), and your controller-crash and attacker runs as page-1 scenarios | `sim/capacity.py` (new), `ui/data/p2/planner.json`, `resilience/` |
 | Both | The data contract, so Connor knows what's coming | `simulators/rz/docs/contracts.md`: one section each, never the same section |
 
 ## Where the code is, and how to run it on Michael's laptop
@@ -47,7 +47,7 @@ Where things are inside `simulators/rz/`:
 | `research/capacity-planner/` | The capacity planner design, its research, a critique, and the scout's per-transformer sweep outputs |
 | `RULINGS.md` | Decisions RZ made today that still need applying |
 
-**One thing to keep straight:** the root app (`sim/`, `ui/` at the repo root) is frozen, because `mpalacios/` imports the root `sim/`. New engine work goes in `simulators/rz/`. If Michael's runs need the new engine, point them at `simulators/rz/sim` rather than editing the root.
+**One thing to keep straight:** the root app (`sim/`, `ui/` at the repo root) is frozen, because `resilience/` imports the root `sim/`. New engine work goes in `simulators/rz/`. If Michael's runs need the new engine, point them at `simulators/rz/sim` rather than editing the root.
 
 ## The build list, in order
 

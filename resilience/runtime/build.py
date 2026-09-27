@@ -1,15 +1,15 @@
 """Build the worker-kill replay (deliverable G, milestone M4b).
 
-    python -m mpalacios.runtime.build             # the P1 evening, 720 x 60 s: mpalacios/out/p1/worker_kill.json
-    python -m mpalacios.runtime.build --fixture   # 120 steps, synthetic loads: mpalacios/fixtures/p1/worker_kill.json
-    python -m mpalacios.runtime.build --quick     # 60 steps from 22:00, real loads, to ~/hb-overnight/tmp/runtime-quick
-    python -m mpalacios.runtime.build --live      # real worker processes and a real kill: mpalacios/out/live/p1/...
-    python -m mpalacios.runtime.build --out DIR   # write <DIR>/p1/worker_kill.json instead (verify --rebuild uses this)
+    python -m resilience.runtime.build             # the P1 evening, 720 x 60 s: resilience/out/p1/worker_kill.json
+    python -m resilience.runtime.build --fixture   # 120 steps, synthetic loads: resilience/fixtures/p1/worker_kill.json
+    python -m resilience.runtime.build --quick     # 60 steps from 22:00, real loads, to ~/hb-overnight/tmp/runtime-quick
+    python -m resilience.runtime.build --live      # real worker processes and a real kill: resilience/out/live/p1/...
+    python -m resilience.runtime.build --out DIR   # write <DIR>/p1/worker_kill.json instead (verify --rebuild uses this)
 
 Two runs of the same evening under the runtime: without a failure (the baseline), then with the worker holding focus
 A's group killed at Tc + KILL_AFTER_MIN, Tc being the first minute the baseline grants charge (as P1's Tc). The file is
 a P1 branch (docs/contracts.md A.6, so the P1 panel can play it) plus a labelled `summary` and a `runtime` block;
-mpalacios/docs/runtime-contract.md is its contract. The replay is deterministic: a rebuild is byte-identical.
+resilience/docs/runtime-contract.md is its contract. The replay is deterministic: a rebuild is byte-identical.
 """
 import argparse
 import sys
@@ -22,21 +22,21 @@ from sim.constants import export, MIN_GRANT_KW, P1_DAY, P1_STEP_SECONDS
 from sim.contracts import inputs_sha, labelled, write_json
 from sim.p1_build import DT_H, Scenario, Window, branch_doc, constants_block, hhmm, summarize
 
-from mpalacios.constants import (KILL_AFTER_MIN, LEASE_TTL_S, LIVE_CONSTANTS, LIVE_PACE_AFTER, LIVE_PACE_BEFORE,
+from resilience.constants import (KILL_AFTER_MIN, LEASE_TTL_S, LIVE_CONSTANTS, LIVE_PACE_AFTER, LIVE_PACE_BEFORE,
                                  RUNTIME_CONSTANTS)
 from . import engine
 from .partition import partitions
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / "mpalacios" / "out"
-FIXTURES = ROOT / "mpalacios" / "fixtures"
-LIVE_OUT = ROOT / "mpalacios" / "out" / "live"
+OUT = ROOT / "resilience" / "out"
+FIXTURES = ROOT / "resilience" / "fixtures"
+LIVE_OUT = ROOT / "resilience" / "out" / "live"
 QUICK_OUT = Path.home() / "hb-overnight" / "tmp" / "runtime-quick"
 REL = "p1/worker_kill.json"
-PRODUCER = "mpalacios.runtime"
+PRODUCER = "resilience.runtime"
 P1_NAMES = ("AWARE_MARGIN", "CORE_POWER_KW", "CORE_USABLE_KWH", "CORE_RTE", "RESERVE_FLOOR", "SOC0", "BATTERY_PF",
             "MIN_DWELL_MIN", "COMMAND_TTL_S", "COMMS_STALE_S")
-RUNTIME_TEXT = ("mpalacios.runtime: RUNTIME_WORKERS workers hold leases on transformer groups and run "
+RUNTIME_TEXT = ("resilience.runtime: RUNTIME_WORKERS workers hold leases on transformer groups and run "
                 "sim.orchestrator.Controller unchanged inside each; devices order commands by (epoch, seq)")
 
 

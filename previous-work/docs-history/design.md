@@ -1,6 +1,6 @@
 # Design: feeder-aware siting, dispatch and anomaly detection for a home-battery fleet
 
-Base Power & AITX hackathon. Drafted 25 Sep 2026 from [research-report.md](research-report.md) plus conversations with Base employees on site. Revised 26 Sep 2026 to fold in the decisions of [reconciliation.md](reconciliation.md), which compared this design with the Headroom PRD and GridSpine Atlas. This is the document the group signs off on before code starts. Anything not in **Scope** is out. Sequencing and tooling live in [plan.md](plan.md).
+Base Power & AITX hackathon. Drafted 25 Sep 2026 from [research-report.md](../../docs/research-report.md) plus conversations with Base employees on site. Revised 26 Sep 2026 to fold in the decisions of [reconciliation.md](reconciliation.md), which compared this design with the Headroom PRD and GridSpine Atlas. This is the document the group signs off on before code starts. Anything not in **Scope** is out. Sequencing and tooling live in [plan.md](plan.md).
 
 Labels carried over from the research report: **UNVERIFIED** could not confirm from a primary source; **DERIVED** our own arithmetic from sourced numbers; **ASSUMPTION** a placeholder where nothing public exists.
 

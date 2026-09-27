@@ -5,15 +5,15 @@ Substation kW must equal the solved kW of every load element (homes and batterie
 POWER_BALANCE_TOL_W, at every step. The solves are the committed P1 aware evening's: sim.loads load and the battery
 kW in ui/data/p1/aware.json. The tightened solver tolerance closes it; the tolerance sim.feeder ships with does not,
 and that test is marked as an expected failure until the lead sets SOLVER_TOLERANCE in sim/feeder.py (request 2 in
-mpalacios/docs/requests.md). When that lands, it "unexpectedly succeeds": delete the decorator.
+resilience/docs/requests.md). When that lands, it "unexpectedly succeeds": delete the decorator.
 """
 import json
 import unittest
 
 import numpy as np
 
-from mpalacios.constants import POWER_BALANCE_TOL_W, SOLVER_TOLERANCE
-from mpalacios.physics.balance import ROOT, solve_window
+from resilience.constants import POWER_BALANCE_TOL_W, SOLVER_TOLERANCE
+from resilience.physics.balance import ROOT, solve_window
 
 WINDOWS = ((0, 30), (360, 30))      # 16:00-16:29 (home load only) and 22:00-22:29 (the fleet charging)
 

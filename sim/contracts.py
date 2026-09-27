@@ -40,8 +40,8 @@ HEADLINE_KEYS = {"summary", "relief", "money", "referee", "flip", "usefulCapacit
 ID_KEYS = {"rank", "home", "tf", "step", "k", "n", "index", "of", "runs", "minute", "seq", "batt"}
 ENVELOPE_KEYS = ("schema", "producer", "inputs", "constants", "sources", "series")
 # sim.<module> for simulator output; scripts.<name> for a fetcher in scripts/ (footprints.json: scripts.fetch_footprints);
-# mpalacios.<module> for the runtime and detection replays (p1/worker_kill.json, p3/covert.json; A.6b, A.11)
-PRODUCER_RE = r"(sim|scripts|mpalacios)\.[a-z0-9_]+"
+# resilience.<module> for the runtime and detection replays (p1/worker_kill.json, p3/covert.json; A.6b, A.11)
+PRODUCER_RE = r"(sim|scripts|resilience)\.[a-z0-9_]+"
 INPUT_KEYS = ("prices_sha256", "loads_sha256", "topology_sha256")
 
 
@@ -150,7 +150,7 @@ def check_envelope(doc):
     if not re.fullmatch(r"hb\.[A-Za-z0-9_.-]+\.v\d+", str(doc["schema"])):
         errs.append(f"envelope: schema {doc['schema']!r} is not hb.<name>.v<N>")
     if not re.fullmatch(PRODUCER_RE, str(doc["producer"])):
-        errs.append(f"envelope: producer {doc['producer']!r} is not sim.<module>, scripts.<name> or mpalacios.<module>")
+        errs.append(f"envelope: producer {doc['producer']!r} is not sim.<module>, scripts.<name> or resilience.<module>")
     inp = doc["inputs"]
     if not isinstance(inp, dict) or any(k not in inp for k in INPUT_KEYS):
         errs.append(f"envelope: inputs must carry {INPUT_KEYS}")

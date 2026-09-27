@@ -1,9 +1,9 @@
 """Build the covert-channel replay on the root feeder (deliverable D; milestone M6').
 
-    python -m mpalacios.detect.build             # the P1 evening, 720 x 60 s: mpalacios/out/p3/covert.json
-    python -m mpalacios.detect.build --fixture   # 120 steps, synthetic loads: mpalacios/fixtures/p3/covert.json
-    python -m mpalacios.detect.build --quick     # 60 steps from 22:00, real loads, to ~/hb-overnight/tmp/covert-quick
-    python -m mpalacios.detect.build --out DIR
+    python -m resilience.detect.build             # the P1 evening, 720 x 60 s: resilience/out/p3/covert.json
+    python -m resilience.detect.build --fixture   # 120 steps, synthetic loads: resilience/fixtures/p3/covert.json
+    python -m resilience.detect.build --quick     # 60 steps from 22:00, real loads, to ~/hb-overnight/tmp/covert-quick
+    python -m resilience.detect.build --out DIR
 
 Three runs of the same evening under the runtime (no worker failure), OpenDSS every step:
   clean       no attack, the detector watching: every flag is a false positive on the clean fleet;
@@ -24,22 +24,22 @@ from sim.contracts import envelope, inputs_sha, labelled, write_json
 from sim.fixtures import LOADS_TAG
 from sim.p1_build import Scenario, hhmm, summarize
 
-from mpalacios.constants import (CHANNEL_SPAN_MIN, COVERT_AFTER_MIN, COVERT_CONSTANTS, COVERT_SEED, COVERT_SYMBOL_MIN,
+from resilience.constants import (CHANNEL_SPAN_MIN, COVERT_AFTER_MIN, COVERT_CONSTANTS, COVERT_SEED, COVERT_SYMBOL_MIN,
                                  MODULATION_KW, VOLTAGE_NOISE_PU)
-from mpalacios.runtime import engine
-from mpalacios.runtime.build import first_charge_step, loads_for, window
-from mpalacios.runtime.device import EpochDevice
-from mpalacios.runtime.partition import partitions
+from resilience.runtime import engine
+from resilience.runtime.build import first_charge_step, loads_for, window
+from resilience.runtime.device import EpochDevice
+from resilience.runtime.partition import partitions
 
 from .attack import Carrier, CompromisedDevice, message_bits
 from .detector import PeerDetector
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / "mpalacios" / "out"
-FIXTURES = ROOT / "mpalacios" / "fixtures"
+OUT = ROOT / "resilience" / "out"
+FIXTURES = ROOT / "resilience" / "fixtures"
 QUICK_OUT = Path.home() / "hb-overnight" / "tmp" / "covert-quick"
 REL = "p3/covert.json"
-PRODUCER = "mpalacios.detect"
+PRODUCER = "resilience.detect"
 TRACE_BEFORE, TRACE_AFTER = 10, 50
 CURVE_MINUTES = list(range(0, 65, 5))
 
@@ -190,7 +190,7 @@ def assemble(sc, topo, shard, R, fixture=False):
                                      else "NREL SMART-DS 2018 AUS P1U, same calendar date; 15->1 min linear (DERIVED)"},
                             "referee": {"label": "SIM", "text": "OpenDSSDirect.py 0.9.4 AC power flow, every step, three runs"},
                             "adversary": {"label": "ASSUMPTION", "text": "a fictional adversary; no real company or person"},
-                            "detector": {"label": "SIM", "text": "mpalacios.detect.detector.PeerDetector: telemetry residual size and oscillation, corroborated by the home's own AMI voltage at the carrier frequency; no privileged solve"}},
+                            "detector": {"label": "SIM", "text": "resilience.detect.detector.PeerDetector: telemetry residual size and oscillation, corroborated by the home's own AMI voltage at the carrier frequency; no privileged solve"}},
                    series={"curve": {"label": "DERIVED", "unit": "minutes, bits, kWh"},
                            "trace": {"label": "SIM", "unit": "residual W (reported - setpoint, with telemetry noise); home AMI voltage minus its first value, 1e-6 pu"},
                            "units": {"label": "SIM", "unit": "per-unit detector record"}},

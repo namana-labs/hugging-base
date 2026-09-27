@@ -7,14 +7,14 @@ older step is discarded. Around the kill the coordinator paces the simulation cl
 time per step, so the lease runs out on camera in seconds; elsewhere it runs as fast as the workers answer.
 
 A live recording is not byte-identical by nature (wall-clock fields, possible missed deadlines): it is written to
-mpalacios/out/live/, never committed, and never a dependency of the demo.
+resilience/out/live/, never committed, and never a dependency of the demo.
 """
 import multiprocessing as mp
 import queue
 import sys
 import time
 
-from mpalacios.constants import LIVE_REPLY_DEADLINE_S, LIVE_WALL_S_PER_STEP
+from resilience.constants import LIVE_REPLY_DEADLINE_S, LIVE_WALL_S_PER_STEP
 
 from .worker import worker_main
 

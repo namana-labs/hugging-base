@@ -1,10 +1,10 @@
 # simulators/
 
-> **SUPERSEDED (27 Sep 2026): the root app is the submission since PR #42** (engine in root `sim/`, story pages in root `ui/`; see the [README](../README.md) and [`docs/run-the-demo.md`](../docs/run-the-demo.md)). These folders are earlier prototypes kept for history; `rz/` is RZ's earlier copy, kept for its research, judges, story notes and `RULINGS.md`.
+> **SUPERSEDED (27 Sep 2026): the root app is the submission since PR #42** (engine in root `sim/`, story pages in root `ui/`; see the [README](../../README.md) and [`docs/run-the-demo.md`](../../docs/run-the-demo.md)). These folders are earlier prototypes kept for history; `rz/` is RZ's earlier copy, kept for its research, judges, story notes and `RULINGS.md`.
 
 One folder per simulator. Several team members are building their own; the trial by fire picks the one the main app promotes.
 
-Each folder is self-contained: its own dependencies and lockfile, its own `sim/`, `ui/`, `data/` and tests, and a README that says how to run it and what it does not do. Nothing in one folder imports from another. Every entry keeps the rules in [`docs/README.md`](../docs/README.md): OpenDSS judges violations, replay is the spine, constants are named and labelled, the adversary is fictional, and the feeder is an Oncor-suburb stand-in at LZ_NORTH.
+Each folder is self-contained: its own dependencies and lockfile, its own `sim/`, `ui/`, `data/` and tests, and a README that says how to run it and what it does not do. Nothing in one folder imports from another. Every entry keeps the rules in [`docs/README.md`](../../docs/README.md): OpenDSS judges violations, replay is the spine, constants are named and labelled, the adversary is fictional, and the feeder is an Oncor-suburb stand-in at LZ_NORTH.
 
 | Folder | Owner | State |
 |---|---|---|

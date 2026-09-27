@@ -16,12 +16,12 @@ RUNTIME_WORKERS = const("RUNTIME_WORKERS", 3, "ASSUMPTION", "'a few worker proce
 RUNTIME_PARTITIONS = const("RUNTIME_PARTITIONS", 3, "ASSUMPTION", "one transformer group per worker at the start")
 PARTITION_RULE = const("PARTITION_RULE",
                        "fleet transformers in index order, cut into RUNTIME_PARTITIONS contiguous groups of about equal "
-                       "battery count; a transformer is never split", "ASSUMPTION", "mpalacios/runtime/partition.py")
+                       "battery count; a transformer is never split", "ASSUMPTION", "resilience/runtime/partition.py")
 SHARE_RULE = const("SHARE_RULE",
                    "each group gets its own batteries' share of the fleet target (the P1 formula per battery), capped "
                    "at the group's headroom (sim.caps H per transformer); the rest goes to groups with room left, in "
                    "proportion to that room. A group whose worker missed its last heartbeat is booked at its "
-                   "batteries' telemetry kW", "ASSUMPTION", "mpalacios/runtime/partition.py")
+                   "batteries' telemetry kW", "ASSUMPTION", "resilience/runtime/partition.py")
 KILL_AFTER_MIN = const("KILL_AFTER_MIN", 20, "ASSUMPTION",
                        "the worker holding focus A's group is killed at Tc + 20 min, mid-ramp (P1 aware charges about "
                        "590 kW then)")
@@ -30,7 +30,7 @@ LATE_BATCH_RULE = const("LATE_BATCH_RULE",
                         "devices late, right after the takeover's commands: 'a dead or paused worker' moving power late",
                         "ASSUMPTION", "docs/design.md §5.7 device acceptance rules")
 SEQ_SCOPE = const("SEQ_SCOPE", "seq restarts at 1 with every lease grant; devices order commands by (epoch, seq)",
-                  "ASSUMPTION", "mpalacios/runtime/device.py (fencing token)")
+                  "ASSUMPTION", "resilience/runtime/device.py (fencing token)")
 RUNTIME_TRACKING_PCT = const("RUNTIME_TRACKING_PCT", 15.0, "ASSUMPTION",
                              "the percentage term of docs/design.md §4.2's max(2 MW, 15%); the 2 MW term exceeds this "
                              "96-Core fleet (1.92 MW), so only the percentage gates")

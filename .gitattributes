@@ -1,12 +1,12 @@
 data/** -text
 ui/data/** -text
 ui/vendor/** -text
-four-home-simulation/data/** -text
-simulators/*/data/** -text
-simulators/*/ui/data/** -text
-simulators/*/ui/vendor/** -text
-mpalacios/out/** -text
-mpalacios/fixtures/** -text
+previous-work/four-home-simulation/data/** -text
+previous-work/simulators/*/data/** -text
+previous-work/simulators/*/ui/data/** -text
+previous-work/simulators/*/ui/vendor/** -text
+resilience/out/** -text
+resilience/fixtures/** -text
 *.sh text eol=lf
 *.npz binary
 *.gz binary

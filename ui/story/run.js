@@ -244,7 +244,7 @@ const yOf = (v, lo, hi) => clamp(100 - (v - lo) / (hi - lo) * 100, -2, 102).toFi
 /** The engine's measured cost of a run, from the catalogue (scenario.engine, and attackEngine for covert). */
 export function runCostHTML(sc, num) {
   const e = sc.engine || {}, a = sc.attackEngine || null;
-  // `producer` made the run itself (worker_kill: mpalacios.runtime), or, with an attackEngine, only the attack replay
+  // `producer` made the run itself (worker_kill: resilience.runtime), or, with an attackEngine, only the attack replay
   const by = sc.producer && !a ? ` (${esc(sc.producer)})` : '';
   const aby = sc.producer && a ? ` (${esc(sc.producer)})` : '';
   const parts = [e.solves ? `${num(e.solves)} OpenDSS power flows` : '', e.buildSeconds ? `built in ${num(e.buildSeconds, { unit: ' s' })}` : ''].filter(Boolean);
@@ -561,7 +561,7 @@ export async function mount(root, ctx) {
       <div class="l">${sm.detectionSeconds ? `First flag ${ctx.num(sm.detectionSeconds, { unit: ' s' })} after the channel opens` : ''}${sm.falsePositivesClean ? ` · false flags on the clean fleet ${ctx.num(sm.falsePositivesClean)}` : ''}</div>`;
   }
 
-  // worker_kill: the controller's workers and leases from the run's own runtime block (mpalacios.runtime replay)
+  // worker_kill: the controller's workers and leases from the run's own runtime block (resilience.runtime replay)
   function drawController() {
     if (!rt) return;
     const h = rt.holder[k] || '';

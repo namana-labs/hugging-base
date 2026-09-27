@@ -3,7 +3,7 @@
 For judges, and for teammates who are new to power. It covers what the "orchestration" is, which code does it, what we measured when parts of it failed, and what we do not claim.
 
 - **Code version.** RZ's app is on branch `rz/r2-integrate` at commit `1e7ff41` (round 2 merged). Teammates' folders are on `origin/main` at `432b888` and are also present on that branch. `origin/bo/frontend` is at `b792ddb`.
-- **Paths.** `sim/...`, `ui/...` and `scripts/...` are relative to RZ's app root. The app is being packaged as `simulators/rz/`, so after that lands, `sim/orchestrator.py` becomes `simulators/rz/sim/orchestrator.py`. `mpalacios/`, `four-home-simulation/`, `simulators/connor/` and `demos/grid-stories/` stay at the repo root.
+- **Paths.** `sim/...`, `ui/...` and `scripts/...` are relative to RZ's app root. The app is being packaged as `simulators/rz/`, so after that lands, `sim/orchestrator.py` becomes `simulators/rz/sim/orchestrator.py`. `resilience/`, `four-home-simulation/`, `simulators/connor/` and `demos/grid-stories/` stay at the repo root.
 - **Labels.** Every number carries one label.
   - **REAL**: public data (ERCOT prices, the SMART-DS feeder's ratings) or a sourced fact.
   - **SIM**: output of our simulation. OpenDSS numbers are SIM.
@@ -86,8 +86,8 @@ Fine print a judge may ask about:
    sim/chaos.py            re-runs the aware loop 50 times with seeded failures           -> ui/data/p1/chaos.json
    sim/siting.py/p2_build  the same allocation rule, month-long at 15 min, for "where the next battery goes"
                            (parity test: allocate() == per_tf_rule() to 1e-6)            -> ui/data/p2/*.json
-   mpalacios/runtime       replaces the ONE Controller with 3 workers holding leases     -> mpalacios/out/p1/worker_kill.json
-   mpalacios/detect        watches telemetry + home meters, quarantines bad units        -> mpalacios/out/p3/covert.json
+   resilience/runtime       replaces the ONE Controller with 3 workers holding leases     -> resilience/out/p1/worker_kill.json
+   resilience/detect        watches telemetry + home meters, quarantines bad units        -> resilience/out/p3/covert.json
 ```
 
 ### 2.2 Who decides what
@@ -102,8 +102,8 @@ Fine print a judge may ask about:
 | Minute loop + referee | `sim/p1_build.py:169-376` | Runs the world: loads, faults, devices, OpenDSS, protection | Allocation |
 | Chaos sweep | `sim/chaos.py:66-212` | Draws the failures and scores each run | Allocation (the same controller runs) |
 | P2 month model | `sim/siting.py:130, 162-185, 380-462` | The same grant rule over a month at 15-minute steps, to rank sites | Real-time control |
-| Worker runtime | `mpalacios/runtime/engine.py:84-326` | Which worker owns which transformer group; how the fleet target is split between groups | Per-battery allocation (each worker runs the same `Controller`, `mpalacios/runtime/worker.py:27-30`) |
-| Detector | `mpalacios/detect/detector.py:96-161` | Which units to quarantine | Setpoints |
+| Worker runtime | `resilience/runtime/engine.py:84-326` | Which worker owns which transformer group; how the fleet target is split between groups | Per-battery allocation (each worker runs the same `Controller`, `resilience/runtime/worker.py:27-30`) |
+| Detector | `resilience/detect/detector.py:96-161` | Which units to quarantine | Setpoints |
 
 ### 2.3 `allocate()` in plain words
 
@@ -181,12 +181,12 @@ On the committed P2 data (`ui/data/p2/index.json` → `referee`), OpenDSS checke
 
 These OpenDSS month runs pass `sim.verify p2`. Other P2 blocks are stale at this commit (section 7), so re-read these numbers after the P2 rebuild lands.
 
-### 2.7 Michael's runtime: many workers, one of them dies (`mpalacios/runtime`)
+### 2.7 Michael's runtime: many workers, one of them dies (`resilience/runtime`)
 
-The P1 controller is one loop. `mpalacios/runtime` makes it a small distributed system and re-runs the same evening:
+The P1 controller is one loop. `resilience/runtime` makes it a small distributed system and re-runs the same evening:
 
 ```
-                 coordinator (mpalacios/runtime/engine.py)
+                 coordinator (resilience/runtime/engine.py)
    lease table: G1->W1, G2->W2, G3->W3, each lease with an epoch, TTL 300 s (ASSUMPTION)
    split of the fleet target by group headroom (partition.py:36-82)
          |                    |                    |
@@ -201,7 +201,7 @@ The P1 controller is one loop. `mpalacios/runtime` makes it a small distributed 
 - **Leases** (`lease.py:20-65`). A worker renews its lease with every batch it sends. If a lease runs out, the coordinator hands the group to the live worker holding the fewest groups, and the handover raises the group's **epoch** (`engine.py:153-172`).
 - **Why the epoch matters** (`device.py:1-15`). A new worker's seq numbers start from 1 again. A dead worker's late batch can carry a higher seq than anything the device has seen. A device that only checks seq gets both cases wrong. Ordering by (epoch, seq) gets both right.
 
-The kill, from the committed `mpalacios/out/p1/worker_kill.json` → `summary`, `runtime`:
+The kill, from the committed `resilience/out/p1/worker_kill.json` → `summary`, `runtime`:
 
 | Measure | Value |
 |---|---|
@@ -211,12 +211,12 @@ The kill, from the committed `mpalacios/out/p1/worker_kill.json` → `summary`, 
 | Counterfactual | A seq-only device would have **accepted all 31** late commands (SIM). It would also have **refused 10,416** of W1's commands (SIM) |
 | Tracking | Worst gap between fleet target and delivered power, kill to one interval after the takeover: **1.3 kW, 0.2%** (SIM / DERIVED). Without the kill, the same minutes: 0.2% (DERIVED) |
 | Safety | 0 reserve breaches, 0 battery-caused events, 0 commands acted on after expiry (all SIM). Charged 100.0% by 04:00 (SIM) |
-| Match with P1 | With no kill, the runtime delivers within 0.02% of the energy of one-controller P1 aware (SIM; `mpalacios/README.md`) |
-| Live mode | `--live` runs 3 real OS processes and terminates W2. W1 took over **1.98 s** of wall time after the kill, at 0.5 s per simulated minute (DERIVED: Michael's measurement on his Windows machine, `mpalacios/docs/measurements.md`) |
+| Match with P1 | With no kill, the runtime delivers within 0.02% of the energy of one-controller P1 aware (SIM; `resilience/README.md`) |
+| Live mode | `--live` runs 3 real OS processes and terminates W2. W1 took over **1.98 s** of wall time after the kill, at 0.5 s per simulated minute (DERIVED: Michael's measurement on his Windows machine, `resilience/docs/measurements.md`) |
 
-### 2.8 Michael's covert-attacker detector (`mpalacios/detect`)
+### 2.8 Michael's covert-attacker detector (`resilience/detect`)
 
-- **The attack.** A **fictional** adversary controls 24 Cores (ASSUMPTION `COVERT_SHARD`). From 22:30 each adds a hidden ±350 W wobble (ASSUMPTION) that carries a secret message, one bit per 5 minutes (`mpalacios/detect/attack.py:20-43`, `mpalacios/constants.py:46-58`).
+- **The attack.** A **fictional** adversary controls 24 Cores (ASSUMPTION `COVERT_SHARD`). From 22:30 each adds a hidden ±350 W wobble (ASSUMPTION) that carries a secret message, one bit per 5 minutes (`resilience/detect/attack.py:20-43`, `resilience/constants.py:46-58`).
 - **What the detector reads.** Only what a field system has: each unit's reported kW, the setpoint we sent it, and the home's own meter voltage. It never reads a privileged physics solve (`detector.py:1-26`).
 - **When it flags a unit.** All three tests must hold over 10 minutes (ASSUMPTION):
   - the error between reported kW and setpoint is large enough;
@@ -224,7 +224,7 @@ The kill, from the committed `mpalacios/out/p1/worker_kill.json` → `summary`, 
   - the home's voltage carries the same wobble.
 - **What happens to a flagged unit.** It is **quarantined**: held at 0, removed from the fleet target and the group split, and its neighbours cover for it (`engine.py:88-91, 298-304`).
 
-Committed results (`mpalacios/out/p3/covert.json` → `summary`, all SIM unless noted):
+Committed results (`resilience/out/p3/covert.json` → `summary`, all SIM unless noted):
 
 - **24 of 24** compromised units detected;
 - the first flag comes 180 s after the channel opens, and the last by 900 s;
@@ -241,8 +241,8 @@ Committed results (`mpalacios/out/p3/covert.json` → `summary`, all SIM unless 
 | **A neighbour plugs in an EV** on transformer C: +7.2 kW for 60 min (ASSUMPTION) | 22:35 = Tc+35; `sim/p1_build.py:220-227, 251-253` | The next minute's reading shows the extra load, and C's room `H` shrinks. When C's battery's turn comes at 23:15 it gets 12.5 kW, against 19.9 kW in the no-fault run (SIM) | C holds at about 95% (SIM) and never goes above 100% | The same beat |
 | **Our controller stalls** for 8 min, longer than the 300 s command life (ASSUMPTION) | 22:55 = Tc+55; `sim/p1_build.py:228-235, 270, 322-323` | No new commands. Devices finish their last commands, which expire at 22:59. From 22:59 to 23:02 **all 96 batteries sit idle with backup armed** (SIM, `aware_faults.json` → `state`). The controller resumes at 23:03 | 0 commands acted on after expiry and 0 battery-caused events (SIM) | The same beat |
 | **Chaos sweep**: 50 seeded runs (ASSUMPTION `CHAOS_SEED`, never tuned). Each run silences 1-10 batteries, makes one random fleet transformer run hot, and stalls the controller for 1-8 min | Uniform minutes in [22:00, 03:59] (SIM window); `sim/chaos.py:66-98` | The same mechanisms, at random times and places | **0 of 50** runs with any battery-caused violation. 257/257 silent units idled at expiry. 0 reserve breaches. Worst run: 1 transformer-minute above 100% (amber, not a violation) and 99.6% charged (all SIM, `ui/data/p1/chaos.json`) | More tab, chaos card (`ui/panels/more.js:929-937`) |
-| **A worker process dies** mid-ramp | 22:20; `mpalacios/runtime/engine.py:204-214` | Section 2.7: its batteries run on their last commands, the lease expires, W1 takes over at a new epoch, and the dead worker's late commands are refused | Tracking 0.2% worst; 0 battery-caused events (SIM) | `mpalacios/out/p1/worker_kill.json`. **Not yet in the root UI** (`mpalacios/docs/requests.md` #5) |
-| **A covert attacker** in the fleet (fictional) | 22:30; `mpalacios/detect/attack.py` | Section 2.8: detect from telemetry and home meters, quarantine, neighbours cover | 24/24 detected, 0 false positives, 0 battery-caused events (SIM) | `mpalacios/out/p3/covert.json`. **Not yet in the root UI** (requests.md #5) |
+| **A worker process dies** mid-ramp | 22:20; `resilience/runtime/engine.py:204-214` | Section 2.7: its batteries run on their last commands, the lease expires, W1 takes over at a new epoch, and the dead worker's late commands are refused | Tracking 0.2% worst; 0 battery-caused events (SIM) | `resilience/out/p1/worker_kill.json`. **Not yet in the root UI** (`resilience/docs/requests.md` #5) |
+| **A covert attacker** in the fleet (fictional) | 22:30; `resilience/detect/attack.py` | Section 2.8: detect from telemetry and home meters, quarantine, neighbours cover | 24/24 detected, 0 false positives, 0 battery-caused events (SIM) | `resilience/out/p3/covert.json`. **Not yet in the root UI** (requests.md #5) |
 | **Protection opens a transformer** (fuse rule, ASSUMPTION) | Any branch; `sim/p1_build.py:358-371` | The batteries behind it carry their own homes; the controller marks them blocked | Never operated in any committed branch or chaos run (SIM). Naive came within one minute (section 2.5) | P1 scene (dark or battery-lit homes) |
 
 Known gaps, stated plainly:
@@ -258,7 +258,7 @@ These are timings of our code on a shared laptop, so they are DERIVED, not bench
 |---|---|---|---|
 | One OpenDSS solve, median | **2.13 ms** | 2.02 ms | 60 (committed) / 20 (re-measure) steps of the P1 evening |
 | One P1 step, median (set 2,021 loads + 96 batteries, solve, read out) | **4.2 ms** | 4.09 ms | The whole physics cost of one simulated minute |
-| Full P1 build (4 branches × 720 steps = 2,884 OpenDSS solves, controller included) | **12.7 s** | not re-run (heavy) | About 4.4 ms per step, DERIVED. Michael's Windows machine took 89 s (`mpalacios/docs/measurements.md`) |
+| Full P1 build (4 branches × 720 steps = 2,884 OpenDSS solves, controller included) | **12.7 s** | not re-run (heavy) | About 4.4 ms per step, DERIVED. Michael's Windows machine took 89 s (`resilience/docs/measurements.md`) |
 | `allocate()`, 96 batteries | **66.6 µs** | 69.4 µs | Stateless core, charge mode, synthetic feeder with 379 transformers |
 | `allocate()`, 1,000 | **599 µs** | 595 µs | 3,948 synthetic transformers |
 | `allocate()`, 10,000 | **6.1 ms** | 6.1 ms | 39,479 synthetic transformers |
@@ -272,7 +272,7 @@ These are timings of our code on a shared laptop, so they are DERIVED, not bench
 
 ## 5. What is NOT orchestration, or NOT claimed
 
-- **No language model makes any setpoint, target, rank or plan.** Everything in the loop is deterministic numpy and Python (`sim/orchestrator.py:3`, `mpalacios/runtime/__init__.py:12`, `simulators/connor/sim/scenarios/day.py:76`). A search of `sim/`, `ui/` (outside `vendor/`), `mpalacios/runtime`, `mpalacios/detect` and `simulators/connor` in this review found no model client or API call. The UI chip on the ticker says the same (`ui/panels/p1.js:1093`).
+- **No language model makes any setpoint, target, rank or plan.** Everything in the loop is deterministic numpy and Python (`sim/orchestrator.py:3`, `resilience/runtime/__init__.py:12`, `simulators/connor/sim/scenarios/day.py:76`). A search of `sim/`, `ui/` (outside `vendor/`), `resilience/runtime`, `resilience/detect` and `simulators/connor` in this review found no model client or API call. The UI chip on the ticker says the same (`ui/panels/p1.js:1093`).
 - **Base's real optimizer is not public, and we do not model it.** We model the signal it sees (one fleet number per zone) and what a feeder check changes. The market plan is a perfect-foresight rule on real prices (DERIVED/ASSUMPTION), not Base's bidding.
 - **Naive is an assumption.** "No feeder check, all at once" is labelled ASSUMPTION everywhere it appears (`ui/data/p1/meta.json` → `naiveLabel`).
 - **OpenDSS is not inside the controller.** It plays the world and scores it. The controller's only view is a 60 s lagged transformer reading (ASSUMPTION). A real deployment would need the utility's map of which meter sits behind which transformer.
@@ -291,7 +291,7 @@ These are timings of our code on a shared laptop, so they are DERIVED, not bench
 | `simulators/connor/` | Connor | The same question at 4 nodes: a **naive (even split) vs feeder-aware** splitter (`splitter.py:32-89`), a simulated day with volt-var and a capacitor bank, and the Chapter 1 control-room dashboard. The dashboard reads the replay plus real ERCOT frequency data | Self-contained; imports nothing from the app. Two real differences: (1) its naive **splits the target evenly** (`splitter.py:46-50`), while the app's naive runs every battery at full power at once; (2) its aware policy **asks OpenDSS inside the loop** and scales back until OpenDSS agrees (`splitter.py:69-105`). The app never does that. On the 4-node day both policies are clean, and aware's peak is higher, 58% against 23% (SIM, Connor's README), because it charges in turn on a lightly loaded lateral. Its mechanics test shows naive tripping the 110% tier |
 | `docs/design-handoff/` | Connor | The UI design; not orchestration | |
 | `four-home-simulation/` | Michael | The first physics proof: 4 homes and 2 SMART-DS transformers on real ERCOT data from 25 Sep 2026, with naive, jitter and aware policies. Its constants were promoted into the app: Core 20 kW, the 20% reserve, the 95% margin, the charge taper (`sim/constants.py:73-84`, `sim/devices.py:6-9`) | Its aware policy **water-fills**, giving equal shares within a transformer (`four_home.py:235-253`). The app instead grants emptiest-first with no equal split (`sim/orchestrator.py:25`) |
-| `mpalacios/` | Michael | **The distributed-systems half**: leases, epochs and a worker kill around the app's unchanged `Controller`; the covert detector; physics checks | Backend only. It is **not yet loaded by the root UI and not in the gate** (requests #5 and #6 in `mpalacios/docs/requests.md`). It imports the root `sim/`, so moving the app to `simulators/rz/` breaks those imports unless handled (see section 7). Its physics check found that the shipped OpenDSS tolerance misses a 10 W power balance on 127 of 720 steps, worst 74.3 W (SIM). The fix moves loadings by at most 0.1 point (SIM, request #2, not applied) |
+| `resilience/` | Michael | **The distributed-systems half**: leases, epochs and a worker kill around the app's unchanged `Controller`; the covert detector; physics checks | Backend only. It is **not yet loaded by the root UI and not in the gate** (requests #5 and #6 in `resilience/docs/requests.md`). It imports the root `sim/`, so moving the app to `simulators/rz/` breaks those imports unless handled (see section 7). Its physics check found that the shipped OpenDSS tolerance misses a 10 W power balance on 127 of 720 steps, worst 74.3 W (SIM). The fix moves loadings by at most 0.1 point (SIM, request #2, not applied) |
 | `origin/bo/frontend` | Bo | Design tokens and a town-grid mockup (`bo/mockups/01-town-grid.html`); UI only | Not orchestration |
 
 ## 7. Checks that guard these numbers, and open orchestration-side tasks
@@ -311,7 +311,7 @@ These are timings of our code on a shared laptop, so they are DERIVED, not bench
 **Open tasks on the orchestration and data side, in dependency order** (scope only; who does what is the team's call):
 
 1. Finish the P2 rebuild and get `sim.verify p2` to PASS. Section 2.6's numbers and the P2 beats depend on it.
-2. Decide how `mpalacios/` finds the app's `sim/` after packaging as `simulators/rz/`. It does `from sim.orchestrator import ...` (`mpalacios/runtime/worker.py:11`, `engine.py:28-33`). Then re-run `python -m mpalacios.runtime.verify --rebuild` and `python -m mpalacios.detect.verify --rebuild`.
+2. Decide how `resilience/` finds the app's `sim/` after packaging as `simulators/rz/`. It does `from sim.orchestrator import ...` (`resilience/runtime/worker.py:11`, `engine.py:28-33`). Then re-run `python -m resilience.runtime.verify --rebuild` and `python -m resilience.detect.verify --rebuild`.
 3. Add Michael's tests and verifiers to the gate (requests.md #6).
 4. Data first: ship `worker_kill.json` as a fifth P1 branch and `covert.json` behind an optional loader (requests.md #5). The UI cards come after, on the UI path.
 5. Decide on the OpenDSS tolerance fix (requests.md #2) **before** the freeze, or leave it until after. It changes committed bytes and forces a rebuild.
@@ -345,6 +345,6 @@ Internal (committed data read for this document):
 - P1 data: `ui/data/p1/meta.json`, `none|naive|aware|aware_faults.json`, `chaos.json`, `days/*/meta.json`
 - P2 data: `ui/data/p2/index.json`
 - Timings: `ui/data/engine.json`
-- Michael's outputs: `mpalacios/out/p1/worker_kill.json`, `mpalacios/out/p3/covert.json`, `mpalacios/docs/measurements.md`, `mpalacios/docs/requests.md`
+- Michael's outputs: `resilience/out/p1/worker_kill.json`, `resilience/out/p3/covert.json`, `resilience/docs/measurements.md`, `resilience/docs/requests.md`
 - Connor's results: `simulators/connor/README.md`
 - Four-home: `four-home-simulation/README.md`

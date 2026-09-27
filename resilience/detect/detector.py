@@ -18,7 +18,7 @@ samples it flags a unit when all three hold:
 The M6' fix, and where it departs from the letter of docs/design.md §5.6. The prototype corroborated voltage against
 the legitimate-command solve, which a field detector never has; nothing here reads any solve but the one that
 happened. §5.6 asks for a peer baseline on the same transformer. On this feeder that baseline is blind to this attack,
-measured (mpalacios/docs/measurements.md): 8 of the 24 compromised homes have no other home on their transformer, the
+measured (resilience/docs/measurements.md): 8 of the 24 compromised homes have no other home on their transformer, the
 cohort is clustered so its peers are mostly compromised too, and each home's own legitimate power steps move its
 voltage ten times more than the modulation does. So the gate uses the home's own voltage at the carrier frequency, and
 the peer comparison (the unit's carrier amplitude over its peers' median, PEER_MIN_HOMES peers) is recorded at the
@@ -28,7 +28,7 @@ import numpy as np
 
 from sim.constants import MIN_GRANT_KW
 
-from mpalacios.constants import (DETECT_WINDOW_MIN, DETECTION_CORRELATION, DETECTION_RMS_KW, FIXED_THRESHOLD_KW,
+from resilience.constants import (DETECT_WINDOW_MIN, DETECTION_CORRELATION, DETECTION_RMS_KW, FIXED_THRESHOLD_KW,
                                  PEER_MIN_HOMES, TELEMETRY_NOISE_KW, VOLTAGE_CARRIER_PU, VOLTAGE_NOISE_PU)
 
 # The carrier template over 4 one-minute samples: a third difference. It is orthogonal to any constant, linear or

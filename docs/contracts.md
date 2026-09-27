@@ -106,7 +106,7 @@ Written by L0 (the lead) on 26 Sep 2026 for the overnight build. Two halves: **P
 - `scaleLadder{text, kw{v,label:"DERIVED",cite}, rungs[3]}` (build prompt 3.4; a headline key, so `sim.contracts` refuses a bare number in it). `kw` is the same 40 kW at every rung: the batteries on A, counted from `data/fleet.json`, × the Core's 20 kW. Each rung: `{scale:"can"|"feeder"|"ercot", name, base{v, label, cite, unit:"kVA"|"MW", at?}, sharePct{v, label:"DERIVED", cite}, text}`, in that order:
   - `can`: A's nameplate kVA (REAL, `Transformers.dss`);
   - `feeder`: the head cable's rating, 370 A × √3 × 12.47 kV = 7,991.5 kVA (DERIVED, `site/ems/flow-spec.md`), a rating and not a measured load;
-  - `ercot`: the peak 5-minute ERCOT system demand in `four-home-simulation/data/demand_2026-09-25.csv` (REAL, read only; `at` is its local time). It is the only ERCOT demand series in the repo and **not the P1 day**; the cite says so.
+  - `ercot`: the peak 5-minute ERCOT system demand in `previous-work/four-home-simulation/data/demand_2026-09-25.csv` (REAL, read only; `at` is its local time). It is the only ERCOT demand series in the repo and **not the P1 day**; the cite says so.
   - `sharePct.v` = `kw` ÷ `base` × 100 (kVA and MW converted to kW at unity pf), kept to 3 significant figures, so the ERCOT rung is about 5e-05 and a one-decimal formatter would print 0.0. `text` is the rung's on-screen wording with the share already formatted; a panel should show `text` (or format small shares to 2 significant figures), not round `sharePct` to one decimal.
   - `sim.verify p1` re-derives every rung from `topology.json`, the fleet and the CSV as an [INVARIANT].
   - The envelope carries `sources.ercotDemand{label:"REAL", text}` (the CSV) and the constant `SCALE_LADDER_ERCOT{value (which statistic of that CSV is the ERCOT rung: the day's peak), label:"ASSUMPTION", cite}`.
@@ -336,10 +336,10 @@ constants: {... V_ANSI_LO 0.95, V_ANSI_HI 1.05 (REAL, ANSI C84.1-2020 Range A),
   Failures exist on 23 Aug, policy aware, default fleet only. `reserve` options never go below 20 (hard constraint).
 - `none` under a battery lever (fleet size, class, reserve, start charge) is the shared 23 Aug `none` run: `alias` names it.
   Growth changes home load, so each growth value has its own `none`.
-- `worker_kill` plays `p1/worker_kill.json` (producer `mpalacios.runtime`, A.6b), `covert` plays the 23 Aug aware branch
+- `worker_kill` plays `p1/worker_kill.json` (producer `resilience.runtime`, A.6b), `covert` plays the 23 Aug aware branch
   (`plays`) and shares its extras; `attack` = `p3/covert.json` (A.11), `attackSummary` its summary.
 - `engine.buildSeconds` is measured wall time on a shared machine (DERIVED; not byte-reproducible, like `engine.json`).
-  For `worker_kill` it is the rebuild time recorded in `mpalacios/docs/measurements.md` B1.3 (`WORKER_KILL_SECONDS`).
+  For `worker_kill` it is the rebuild time recorded in `resilience/docs/measurements.md` B1.3 (`WORKER_KILL_SECONDS`).
 
 **`p1/variants/<lever>=<value>/`**: `meta.json` in the A.5 shape plus `variant{lever, value, id, label, text, labelKind,
 noneShared, files}`, `fleet` (home indices, the fleet's order), `fleetCls`, and `engine.{buildSeconds, branchSeconds, solves}`;
@@ -378,8 +378,8 @@ from the branch file it describes, without OpenDSS (the OpenDSS series are kept)
 - A key the source cannot give is **ABSENT** (and named in `absent`), never zero. `worker_kill` is derived from its
   committed branch file alone (never rebuilt): `vTfMilli`, `headKW`, `headKVAr`, `capKVAr`, `feederLoadKW` are absent.
 
-**Copies**: `p1/worker_kill.json` ← `mpalacios/out/p1/worker_kill.json`, `p3/covert.json` ← `mpalacios/out/p3/covert.json`,
-byte for byte (`sim.scenarios --catalogue-only` refreshes them). `sim.contracts` accepts producer `mpalacios.<module>`.
+**Copies**: `p1/worker_kill.json` ← `resilience/out/p1/worker_kill.json`, `p3/covert.json` ← `resilience/out/p3/covert.json`,
+byte for byte (`sim.scenarios --catalogue-only` refreshes them). `sim.contracts` accepts producer `resilience.<module>`.
 
 **Engine API additions** (defaults unchanged; the committed P1 build stays byte-identical):
 `Scenario(win, loads, feeder, soc0=SOC0, reserve=RESERVE_FLOOR, growth=0.0)` (reserve < 0.20 raises `ValueError`; growth

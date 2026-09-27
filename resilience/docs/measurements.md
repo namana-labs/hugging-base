@@ -2,7 +2,7 @@
 
 Everything below was measured on 26 Sep 2026, on a Windows 11 machine with 8 cores, Python 3.14.0, numpy 2.5.3,
 OpenDSSDirect.py 0.9.4 and Node 20.19.6. Each result names the command that reproduces it. The raw outputs of the
-physics runs are in `mpalacios/out/physics/`. Every number here is SIM, DERIVED or a count unless it says otherwise.
+physics runs are in `resilience/out/physics/`. Every number here is SIM, DERIVED or a count unless it says otherwise.
 
 **Tree.** The measurements were taken at `4054729`, and this work is committed on `7b99d24`. `main` moved three times
 in between:
@@ -17,7 +17,7 @@ in between:
 Nothing this folder reads changed in any of them: the three input hashes still match the committed envelopes, and the
 constants this work exports are untouched. `sim/contracts.py` grew the history shapes and moved the P1 branch checks
 into `_check_p1_branch()`, which asks for exactly the fields `p1/worker_kill.json` already carries, so this folder's
-verifiers still call it unchanged. On `7b99d24`, `bash mpalacios/check.sh --full` passes and both replays still rebuild
+verifiers still call it unchanged. On `7b99d24`, `bash resilience/check.sh --full` passes and both replays still rebuild
 byte-identically.
 
 The repo's own unit suite now fails **four** tests on Windows, not the two in the table above. `7b99d24` added two more
@@ -29,7 +29,7 @@ of the same path-separator kind, both in its new history code (request 3c):
   `days\index.json`.
 
 Both fail at `7b99d24` with this folder absent, checked in a scratch worktree of that commit, and this work changes no
-file outside `mpalacios/`.
+file outside `resilience/`.
 
 The P2 and referee determinism row in B1.3 was measured at `4054729` and has not been re-run since PR #19 rebuilt that
 data.
@@ -56,8 +56,8 @@ The environment fixes were:
 - `data/**` and `ui/vendor/**` checked out again with `git -c core.autocrlf=false`. This changes the working tree
   only; `git status` stays clean.
 
-The remaining red, `unit` and `contract`, is two Windows-only bugs in lane-owned code. Nothing outside `mpalacios/`
-was edited, so they are requests, and `mpalacios/check.sh` treats them as the known baseline.
+The remaining red, `unit` and `contract`, is two Windows-only bugs in lane-owned code. Nothing outside `resilience/`
+was edited, so they are requests, and `resilience/check.sh` treats them as the known baseline.
 
 **Line endings (request 7).** Git for Windows sets `core.autocrlf=true`, so the files the input hashes read were
 CRLF on disk. `sim.contracts.inputs_sha()` gave `prices_sha256` `fb6bef40…` against `8fbbb2a5…` committed, and
@@ -66,7 +66,7 @@ files in its `inputs` block. After the LF checkout, all three hashes match.
 
 ## B1.1 Power balance
 
-`python -m mpalacios.physics.balance --branch aware|none` solves the committed P1 evening: 720 steps, `sim.loads`
+`python -m resilience.physics.balance --branch aware|none` solves the committed P1 evening: 720 steps, `sim.loads`
 loads, battery kW from `ui/data/p1/<branch>.json`. It checks source kW = Σ solved load-element kW + `Circuit.Losses`.
 
 | Branch | Tolerance | Worst residual | p99 | Median | Steps over 10 W | Iterations (median/max) |
@@ -80,10 +80,10 @@ The tightened solve takes about 25% longer (29.9 s → 37.5 s for 720 aware step
 0.01% of the feeder's load, so it is not a large error. It is about what a Core draws on standby, which is why
 four-home closed it.
 
-`mpalacios/tests/test_power_balance.py` holds the claim to 10 W over two 30-step windows (16:00 and 22:00). It passes
+`resilience/tests/test_power_balance.py` holds the claim to 10 W over two 30-step windows (16:00 and 22:00). It passes
 at 1e-8. At the shipped tolerance it fails, and that test is marked as an expected failure until request 2 lands.
 
-**What the fix would change** (`python -m mpalacios.physics.impact`: P1 rebuilt with the fix in a temp dir, compared
+**What the fix would change** (`python -m resilience.physics.impact`: P1 rebuilt with the fix in a temp dir, compared
 with `ui/data/p1`):
 
 | File | Loading cells changed | Largest change | Tier codes changed | Battery kW cells changed | Headline numbers changed |
@@ -102,7 +102,7 @@ money moves by two cents.
 
 ## B1.2 Price alignment and DST
 
-`python -m unittest mpalacios.tests.test_price_alignment` passes 7 of 7.
+`python -m unittest resilience.tests.test_price_alignment` passes 7 of 7.
 
 The tests derive "the first interval ending strictly after t" from the raw `date, hour, interval` columns, independent
 of the file's own `interval_start_local`. It equals `sim.prices.price_at(t)` at:
@@ -128,8 +128,8 @@ There is no off by one.
 | P1: meta and 4 branches | `sim.p1_build --out <tmp>`, `cmp` against `ui/data/p1` | 5 of 5 byte-identical | 89 s (recorded on the Mac: 12.7 s) |
 | P3 chaos | `sim.chaos --out <tmp>`, `cmp` | byte-identical | 1,165 s |
 | P2 and referee | `sim.verify p2 --rebuild` (in place, then `git status`) | "rebuild byte-identical (19 files)"; tree clean | 675 s |
-| Worker-kill replay | `mpalacios.runtime.verify --rebuild` | byte-identical (sha256 `9f633fca…` twice) | 51–55 s per build |
-| Covert replay | `mpalacios.detect.verify --rebuild` | byte-identical | 83–110 s per build |
+| Worker-kill replay | `resilience.runtime.verify --rebuild` | byte-identical (sha256 `9f633fca…` twice) | 51–55 s per build |
+| Covert replay | `resilience.detect.verify --rebuild` | byte-identical | 83–110 s per build |
 
 All of this holds after the LF checkout above. Before it, the `inputs` hashes alone would have differed.
 `sim.verify p1 --rebuild` itself fails on Windows because its `bash` resolves to WSL (request 10), so P1 was rebuilt
@@ -139,7 +139,7 @@ with the same two commands it runs.
 
 ## B2 The controller runtime: `out/p1/worker_kill.json`
 
-`python -m mpalacios.runtime.build`, then `python -m mpalacios.runtime.verify --rebuild` →
+`python -m resilience.runtime.build`, then `python -m resilience.runtime.verify --rebuild` →
 `VERIFY runtime: PASS (0 expectations refuted)`.
 
 | Measure | Value |
@@ -166,7 +166,7 @@ and startup 2.0 s.
 
 ## B3 The covert channel: `out/p3/covert.json`
 
-`python -m mpalacios.detect.build`, then `python -m mpalacios.detect.verify --rebuild` →
+`python -m resilience.detect.build`, then `python -m resilience.detect.verify --rebuild` →
 `VERIFY covert: PASS (0 expectations refuted)`.
 
 The fictional adversary holds 24 Cores (the dense cohort) on 16 transformers. From 22:30 (Tc + 30) they add a hidden
@@ -226,7 +226,7 @@ The peer ratio is recorded per unit, never used to decide.
 | `sim.p1_build` | 89 s |
 | `sim.chaos` | 1,165 s |
 | `sim.verify p2 --rebuild` (p2 and referee) | 675 s |
-| `mpalacios.runtime.build` / `--live` / `--fixture` | 51–55 s / 76 s / 12 s |
-| `mpalacios.detect.build` / `--fixture` | 83–110 s / 16–20 s |
-| `mpalacios.physics.balance` (720 steps, both tolerances) | 67 s |
-| `python -m unittest discover -s mpalacios/tests -t .` | See `mpalacios/check.sh` output |
+| `resilience.runtime.build` / `--live` / `--fixture` | 51–55 s / 76 s / 12 s |
+| `resilience.detect.build` / `--fixture` | 83–110 s / 16–20 s |
+| `resilience.physics.balance` (720 steps, both tolerances) | 67 s |
+| `python -m unittest discover -s resilience/tests -t .` | See `resilience/check.sh` output |

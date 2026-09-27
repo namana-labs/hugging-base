@@ -7,10 +7,10 @@ from pathlib import Path
 
 import numpy as np
 
-from mpalacios.constants import LEASE_TTL_S, RUNTIME_PARTITIONS
-from mpalacios.runtime.device import EpochCommand, EpochDevice
-from mpalacios.runtime.lease import LeaseTable
-from mpalacios.runtime.partition import partitions, split_target
+from resilience.constants import LEASE_TTL_S, RUNTIME_PARTITIONS
+from resilience.runtime.device import EpochCommand, EpochDevice
+from resilience.runtime.lease import LeaseTable
+from resilience.runtime.partition import partitions, split_target
 from sim.devices import Battery, Device
 
 
@@ -121,7 +121,7 @@ class EndToEnd(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        from mpalacios.runtime.build import build
+        from resilience.runtime.build import build
         cls.tmp = tempfile.TemporaryDirectory(prefix="runtime-test-")
         cls.a = build("fixture", out=Path(cls.tmp.name) / "a", quiet=True)
         cls.doc = cls.a["doc"]
@@ -141,19 +141,19 @@ class EndToEnd(unittest.TestCase):
             self.assertEqual(s[k]["v"], 0, k)
 
     def test_the_file_passes_the_contract_checks(self):
-        from mpalacios.runtime.verify import contract_errors
+        from resilience.runtime.verify import contract_errors
         errs, n, _ = contract_errors(self.doc)
         self.assertEqual(errs, [])
         self.assertTrue(self.doc["fixture"])
         self.assertGreater(n, 20)
 
     def test_rebuild_is_byte_identical(self):
-        from mpalacios.runtime.build import build, REL
+        from resilience.runtime.build import build, REL
         b = build("fixture", out=Path(self.tmp.name) / "b", quiet=True)
         self.assertEqual(Path(b["path"]).read_bytes(), Path(self.a["path"]).read_bytes())
 
     def test_live_mode_kills_a_real_process_and_matches_the_replay(self):
-        from mpalacios.runtime.build import build
+        from resilience.runtime.build import build
         c = build("fixture", out=Path(self.tmp.name) / "live", live=True, quiet=True)
         rec = c["doc"]["recorded"]
         self.assertEqual(rec["startMethod"], "spawn")

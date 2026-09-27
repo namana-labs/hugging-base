@@ -1,9 +1,9 @@
 """What the SOLVER_TOLERANCE fix would change in P1's committed files (evidence for the request in
-mpalacios/docs/requests.md). sim/feeder.py is not edited: the tolerance is set in this process only, right after
+resilience/docs/requests.md). sim/feeder.py is not edited: the tolerance is set in this process only, right after
 sim.feeder.create() builds the circuit, and P1 is rebuilt into a temp directory.
 
-    python -m mpalacios.physics.impact          # about 90 s on this machine; prints a per-file diff and writes
-                                                # mpalacios/out/physics/impact-p1.json
+    python -m resilience.physics.impact          # about 90 s on this machine; prints a per-file diff and writes
+                                                # resilience/out/physics/impact-p1.json
 """
 import json
 import sys
@@ -13,12 +13,12 @@ from pathlib import Path
 import numpy as np
 from opendssdirect import dss
 
-from mpalacios.constants import SOLVER_TOLERANCE
+from resilience.constants import SOLVER_TOLERANCE
 from sim.contracts import write_json
 
 ROOT = Path(__file__).resolve().parents[2]
 P1 = ROOT / "ui" / "data" / "p1"
-OUT = ROOT / "mpalacios" / "out" / "physics" / "impact-p1.json"
+OUT = ROOT / "resilience" / "out" / "physics" / "impact-p1.json"
 
 
 def tightened_create():
