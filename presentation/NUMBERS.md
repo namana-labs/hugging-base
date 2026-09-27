@@ -113,6 +113,8 @@ Paths are relative to the repo root. `mpalacios/out/p1/worker_kill.json` and `mp
 | 2026-07-22: naive worst transformer (B, 23:15) | **186.3%** | SIM | `ui/data/p1/days/index.json` | `days[date=2026-07-22].naiveMax` |
 | 2026-07-22: naive normal-rating events | **8** | SIM | `ui/data/p1/days/index.json` | `days[date=2026-07-22].naiveEvents` |
 | 2026-07-22: feeder-aware battery-caused events | **0** | SIM | `ui/data/p1/days/index.json` | `days[date=2026-07-22].awareBatteryCaused` |
+| 2026-07-22: feeder-aware worst transformer (T-322, 23:55), the close beat's Results tile | **98.0%** | SIM | `ui/data/p1/days/2026-07-22/meta.json` | `summary.aware.maxLoading` |
+| 2026-07-22: feeder-aware normal-rating events, any cause (the Results tile) | **0** | SIM | `ui/data/p1/days/2026-07-22/meta.json` | `summary.aware.normalEvents` |
 | 2026-07-22: feeder-aware ahead of naive (fleet, gross) | **$29.47** | DERIVED | `ui/data/p1/days/index.json` | `days[date=2026-07-22].awareMoreUSD` |
 | 2026-07-22: fleet gross energy value, naive | **$386.17** | DERIVED | `ui/data/p1/days/2026-07-22/meta.json` | `summary.naive.energyValueUSD` |
 | 2026-07-22: fleet gross energy value, aware | **$415.64** | DERIVED | `ui/data/p1/days/2026-07-22/meta.json` | `summary.aware.energyValueUSD` |
