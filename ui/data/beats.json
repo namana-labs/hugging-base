@@ -68,7 +68,7 @@
       "title": "Feeder-aware, the result",
       "label": "DERIVED",
       "link": "page=results&s=2026-08-23/aware&k=390",
-      "headline": "Every battery charged ({{awareCharged}}) with {{awareBatteryNormal}} battery-caused overloads; the fleet's gross energy value {{energyAware}}, not Base's profit.",
+      "headline": "The fleet charged ({{awareCharged}}) with {{awareBatteryNormal}} battery-caused overloads; the fleet's gross energy value {{energyAware}}, not Base's profit.",
       "caption": "Charged by the morning deadline: {{awareCharged}}, the member reserve held. The fleet's gross energy value tonight, not Base's profit: feeder-aware {{energyAware}}, naive {{energyNaive}}[[, {{awareMoreTonight}} more for feeder-aware]], because prices kept falling after the onset."
     },
     {
