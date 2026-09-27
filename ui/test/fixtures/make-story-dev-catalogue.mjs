@@ -1,13 +1,12 @@
 #!/usr/bin/env node
-// ui/story/dev/make-dev-catalogue.mjs (UI-A, dev only): a contract-shaped story catalogue (docs/story-contract.md,
-// `ui/data/story/index.json`, schema hb.story.v1) built from COMMITTED files only, so the story pages can be built and
-// smoke-tested before ENGINE's sim.scenarios writes the real one. It never invents a number: every value is copied
+// ui/test/fixtures/make-story-dev-catalogue.mjs (UI-A, test fixture only): a contract-shaped story catalogue
+// (docs/story-contract.md, `ui/data/story/index.json`, schema hb.story.v1) built from COMMITTED files only. The app
+// never loads it (it reads ENGINE's ui/data/story/index.json only); ui/test/story-configure.test.js checks the lever
+// logic against it. It never invents a number: every value is copied
 // from ui/data/p1/meta.json, ui/data/p1/days/**, ui/data/engine.json or mpalacios/out/** (the two runtime files the
 // contract says ENGINE copies into ui/data), with its label and cite.
 //
-//   node ui/story/dev/make-dev-catalogue.mjs            writes ui/data/story/dev-catalogue.json
-//   open ui/index.html?cat=story/dev-catalogue.json     (the app also falls back to it, with a visible notice,
-//                                                         while ui/data/story/index.json does not exist)
+//   node ui/test/fixtures/make-story-dev-catalogue.mjs     writes ui/test/fixtures/story-dev-catalogue.json
 //
 // What the dev catalogue can play: 23 Aug none/naive/aware/aware+faults (p1/*.json), the three history evenings'
 // none/naive/aware (p1/days/<date>/*.json.gz), worker_kill and covert (from mpalacios/out/, outside ui/data: fine on
@@ -189,7 +188,7 @@ const doc = {
   levers, scenarios, unavailable,
 };
 if (!scenarios.some((s) => s.id === doc.default)) throw new Error('default scenario missing');
-const out = path.join(DATA, 'story', 'dev-catalogue.json');
+const out = path.join(HERE, 'story-dev-catalogue.json');
 fs.mkdirSync(path.dirname(out), { recursive: true });
 fs.writeFileSync(out, JSON.stringify(doc));
 console.log(`wrote ${path.relative(REPO, out)}: ${scenarios.length} scenarios, ${unavailable.length} unavailable rules, ${fs.statSync(out).size} bytes`);

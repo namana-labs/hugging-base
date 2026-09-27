@@ -10,7 +10,8 @@
 // the same page with another &k=). The page's own scrubbing calls ctx.setK instead.
 //
 // ctx = {
-//   catalogue          ui/data/story/index.json (hb.story.v1) as loaded (or ?cat=<path under ui/data>)
+//   catalogue          ui/data/story/index.json (hb.story.v1) as loaded (or &cat=<path under ui/data>, tests only;
+//                      no fallback: a catalogue that does not load is an error on the page)
 //   scenario           the catalogue scenario for &s= (the catalogue default when &s= is absent or unknown: notice)
 //   params             the parsed link {page, s, k, speed, q, tf, n, cat, nowebgl}; a key not in the link is null
 //   getJSON(path)      fetch + parse a JSON file; path relative to ui/data/ (cached per path)
@@ -30,7 +31,8 @@
 //   fmt                ui/lib/format.js (the module)
 // }
 // Body flags the app owns (the smoke test reads them): data-status loading|ready|error, data-errors, data-offsite,
-// data-page. data-webgl: a page with a 3D scene sets ok|fallback itself; the app sets "none" before every mount.
+// data-page, data-placeholder (a UI-B page not merged yet). data-webgl: a page with a 3D scene sets ok|fallback
+// itself; the app sets "none" before every mount.
 // Results = ui/story/results.js and Learnings = ui/story/learnings.js are UI-B's; until a file exists the app shows
 // "page not merged yet" (a 404 on the module), never an error.
 // ==================================================================================================================
@@ -42,7 +44,6 @@ import { createShell, numHTML } from './shell.js';
 const body = document.body;
 const health = window.__hbHealth || (window.__hbHealth = { errors: 0, messages: [], onchange: null });
 const setFlag = (k, v) => { body.dataset[k] = String(v); };
-export const DEV_CATALOGUE = 'story/dev-catalogue.json';
 const PAGES = {
   configure: { file: './configure.js', fn: 'mount' },
   running: { file: './run.js', fn: 'mountRunning' },
@@ -87,16 +88,19 @@ function merged(page, params = {}) {
 }
 const linkFor = (page, params) => data.storyLinkQuery(merged(page, params), { s: app.catalogue && app.catalogue.default });
 
+/** The catalogue: ENGINE's ui/data/story/index.json (hb.story.v1), or &cat=<path under ui/data> (tests). Nothing
+ *  else: when it does not load, the page says so (never a stand-in catalogue). */
 async function loadCatalogue(params) {
   const path = params.cat || data.STORY_CATALOGUE;
+  let doc;
   try {
-    return { doc: await data.getJSON(path), path, dev: false };
+    doc = await data.getJSON(path);
   } catch (e) {
-    if (params.cat || !(e instanceof data.HttpError) || e.status !== 404) throw e;
-    // ENGINE's story/index.json is not built yet: the dev catalogue (committed files only), with a visible notice
-    const doc = await data.getJSON(DEV_CATALOGUE);
-    return { doc, path: DEV_CATALOGUE, dev: true };
+    const why = e instanceof data.HttpError && e.status === 404 ? 'it is not built' : (e && e.message) || String(e);
+    throw new Error(`the scenario catalogue ui/data/${path} did not load (${why}). Every page reads its runs from it.`);
   }
+  if (!doc || !Array.isArray(doc.scenarios) || !doc.levers) throw new Error(`ui/data/${path} is not a story catalogue (hb.story.v1)`);
+  return { doc, path };
 }
 
 function resolveScenario(cat, s) {
@@ -168,6 +172,7 @@ async function loadPage(page) {
 }
 
 function placeholder(root, page) {
+  setFlag('placeholder', page);
   root.innerHTML = `<div class="st-placeholder"><div class="st-eyebrow">${page.toUpperCase()}</div>
     <div class="st-ph-title">This page is not merged yet</div>
     <p>${page === 'results' ? 'Results' : 'Learnings'} is built by UI-B (<code>ui/story/${page}.js</code>). It mounts here as soon as the file exists.</p>
@@ -189,6 +194,7 @@ async function route() {
   setFlag('status', 'loading');
   setFlag('webgl', 'none');
   setFlag('page', params.page);
+  delete body.dataset.placeholder;
   app.shell.update({ page: params.page, scenario, catalogue: app.catalogue, link: (p, x) => linkFor(p, x), nav: (p, x) => nav(p, x) });
   if (notice) app.shell.notice(notice);
   const main = document.createElement('main');
@@ -232,10 +238,7 @@ async function boot() {
   app.main = app.shell.main;
   const cat = await loadCatalogue(params);
   app.catalogue = cat.doc;
-  if (cat.dev || cat.doc.dev) {
-    app.shell.banner('DEV CATALOGUE: built from committed files only (ui/story/dev/make-dev-catalogue.mjs). ENGINE\'s ui/data/story/index.json replaces it.');
-    setFlag('devcat', 1);
-  }
+  if (cat.path !== data.STORY_CATALOGUE) app.shell.banner(`Catalogue override: ui/data/${cat.path} (&cat=), not the engine's story/index.json.`);
   await route();
 }
 

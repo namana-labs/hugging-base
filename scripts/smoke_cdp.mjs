@@ -132,12 +132,13 @@ async function main() {
         const buf = Buffer.from(shot.data, 'base64');
         fs.writeFileSync(path.join(opt.shots, slug(q) + '.png'), buf);
         kb = Math.round(buf.length / 1024); colours = pngColours(buf);
-        if (buf.length < 50 * 1024) why.push(`shot ${kb} KB < 50 KB`);
-        if (colours >= 0 && colours < 16) why.push(`shot has ${colours} colours (blank?)`);
+        // a story page not merged yet (UI-B) is a mostly empty placeholder by design: its size says nothing
+        if (!f.placeholder && buf.length < 50 * 1024) why.push(`shot ${kb} KB < 50 KB`);
+        if (!f.placeholder && colours >= 0 && colours < 16) why.push(`shot has ${colours} colours (blank?)`);
       } catch (e) { why.push('shot:' + e.message); }
     }
     const pass = why.length === 0; if (pass) ok++;
-    const fl = ['status', 'webgl', 'errors', 'fixture', 'offsite'].map((k) => `${k}=${f[k] ?? '-'}`).join(' ');
+    const fl = ['status', 'webgl', 'errors', 'fixture', 'offsite'].map((k) => `${k}=${f[k] ?? '-'}`).join(' ') + (f.placeholder ? ` placeholder=${f.placeholder}` : '');
     console.log(`SMOKE ${q} ${pass ? 'ok' : 'FAIL ' + why.join(',')} | ${fl} | ${Date.now() - t0} ms | ${kb} KB | ${colours} colours`);
   }
   try { await send('Browser.close'); } catch {}

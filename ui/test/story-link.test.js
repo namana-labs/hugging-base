@@ -34,7 +34,7 @@ test('story link: malformed values fall back to null, never through', () => {
   assert.equal(bad.nowebgl, false);
   assert.equal(parseStoryLink('?s=2026-08-23/aware/fleet=192;alert(1)').s, null);
   assert.equal(parseStoryLink('?cat=../story/index.json').cat, null);
-  assert.equal(parseStoryLink('?cat=story/dev-catalogue.json').cat, 'story/dev-catalogue.json');
+  assert.equal(parseStoryLink('?cat=story/test-catalogue.json').cat, 'story/test-catalogue.json');
   assert.equal(parseStoryLink('?q=0').q, null);
   assert.equal(parseStoryLink('?n=50').n, 50);
 });
@@ -51,13 +51,13 @@ test('story link: defaults are omitted (page=configure, k=0, the catalogue defau
   assert.equal(storyLinkQuery({ page: 'run', s: '2026-08-23/aware', k: 0 }, { s: '2026-08-23/aware' }), '?page=run');
   assert.equal(storyLinkQuery({ page: 'run', s: '2026-08-23/naive', k: 0 }, { s: '2026-08-23/aware' }), '?page=run&s=2026-08-23/naive');
   assert.equal(storyLinkQuery({ page: 'results', cat: 'story/index.json' }), '?page=results');
-  assert.equal(storyLinkQuery({ page: 'results', cat: 'story/dev-catalogue.json' }), '?page=results&cat=story/dev-catalogue.json');
+  assert.equal(storyLinkQuery({ page: 'results', cat: 'story/test-catalogue.json' }), '?page=results&cat=story/test-catalogue.json');
 });
 
 test('story link: a full link round-trips', () => {
-  const full = { page: 'learnings', s: '2026-08-23/naive/fleet=192', k: 360, speed: 0.5, q: 3, tf: 150, n: 5, cat: 'story/dev-catalogue.json', nowebgl: true };
+  const full = { page: 'learnings', s: '2026-08-23/naive/fleet=192', k: 360, speed: 0.5, q: 3, tf: 150, n: 5, cat: 'story/test-catalogue.json', nowebgl: true };
   const q = storyLinkQuery(full);
-  assert.equal(q, '?page=learnings&s=2026-08-23/naive/fleet=192&k=360&speed=0.5&q=3&tf=150&n=5&cat=story/dev-catalogue.json&nowebgl=1');
+  assert.equal(q, '?page=learnings&s=2026-08-23/naive/fleet=192&k=360&speed=0.5&q=3&tf=150&n=5&cat=story/test-catalogue.json&nowebgl=1');
   assert.deepEqual(parseStoryLink(q), full);
   const run = parseStoryLink('?page=run&s=2026-08-23/aware/faults&k=376');
   assert.deepEqual(parseStoryLink(storyLinkQuery(run)), run);

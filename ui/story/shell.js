@@ -10,6 +10,9 @@ export const STEPS = [['configure', '1 Configure'], ['run', '2 Run'], ['results'
 export const FRAMING = 'Oncor-suburb stand-in · LZ_NORTH';
 export const STANDIN = 'Oncor-suburb stand-in on NREL\'s synthetic feeder';
 const STANDIN_CITE = 'The feeder is NREL SMART-DS 2018 AUS P1U (synthetic, CC BY 4.0), settled at ERCOT LZ_NORTH as an Oncor-suburb stand-in (ASSUMPTION). Its real buses sit in Pedernales Electric Cooperative territory.';
+/** How the feeder is tagged wherever it appears (data-truth audit #1): a REAL dataset of a synthetic feeder. */
+export const FEEDER_TAG = 'REAL dataset · synthetic feeder';
+export const FEEDER_CITE = 'NREL SMART-DS 2018 AUS P1U (CC BY 4.0) is a REAL published dataset, but its feeder is synthetic: NREL calls SMART-DS realistic, not real.';
 const NEXT = { run: ['results', 'Continue to Results →'], results: ['learnings', 'Continue to Learnings →'] };
 
 /** A provenance tag: the label word in a 1 px tag, title = cite. SCREENING is dashed (story-flow tokens). */
@@ -63,7 +66,7 @@ export function createShell(body) {
   const footer = document.createElement('footer');
   footer.className = 'st-footer';
   footer.innerHTML = `<span class="st-standin" title="${esc(STANDIN_CITE)}">${STANDIN}</span>
-    <span>Feeder: NREL SMART-DS 2018 AUS P1U, CC BY 4.0</span><span>Prices: ERCOT real-time, LZ_NORTH</span>
+    <span title="${esc(FEEDER_CITE)}">Feeder: NREL SMART-DS 2018 AUS P1U, CC BY 4.0 (${FEEDER_TAG})</span><span>Prices: ERCOT real-time, LZ_NORTH</span>
     <span>Buildings: © OpenStreetMap contributors, ODbL</span><span>Power flow: OpenDSS</span>
     <span>Every number carries its tag: REAL, SIM, DERIVED, ASSUMPTION</span>
     <a class="st-explorer" href="explore.html">Engine explorer</a>`;

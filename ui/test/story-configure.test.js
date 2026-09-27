@@ -1,6 +1,6 @@
 // ui/test/story-configure.test.js (UI-A): Configure's lever logic (ui/story/configure.js) against a catalogue fixture in
-// the hb.story.v1 shape (docs/story-contract.md), the committed dev catalogue, and ENGINE's ui/data/story/index.json
-// when it exists. Run: node --test ui/test/*.test.js
+// the hb.story.v1 shape (docs/story-contract.md), the committed-files catalogue ui/test/fixtures/story-dev-catalogue.json,
+// and ENGINE's ui/data/story/index.json when it exists. Run: node --test ui/test/*.test.js
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -179,8 +179,13 @@ function invariants(cat, where) {
   }
 }
 
-test('configure: the committed dev catalogue holds the invariants', () => {
-  invariants(readJSON('story/dev-catalogue.json'), 'dev-catalogue');
+test('configure: the committed-files fixture catalogue holds the invariants', () => {
+  invariants(JSON.parse(fs.readFileSync(path.join(UI, 'test', 'fixtures', 'story-dev-catalogue.json'), 'utf8')), 'story-dev-catalogue');
+});
+
+test('configure: no dev catalogue ships in ui/data; the app reads story/index.json (or &cat=) only', () => {
+  assert.ok(!fs.existsSync(path.join(UI, 'data', 'story', 'dev-catalogue.json')));
+  assert.ok(!/dev-catalogue/.test(fs.readFileSync(path.join(UI, 'story', 'app.js'), 'utf8')));
 });
 
 test('configure: ENGINE\'s story/index.json holds the invariants (when built)', (t) => {
@@ -190,4 +195,28 @@ test('configure: ENGINE\'s story/index.json holds the invariants (when built)', 
   invariants(cat, 'index.json');
   for (const k of ['fleet', 'cls', 'reserve', 'soc0', 'growth']) assert.ok(cat.levers[k], k);
   assert.ok(cat.levers.reserve.options.every((o) => Number(o.id) >= 20), 'the reserve is never below 20% (ruling 1)');
+});
+
+test('configure: customers, not homes (data-truth #6): read from topology counts, the residential count only when present', async () => {
+  const { customerCounts } = await import('../story/configure.js');
+  const t = JSON.parse(fs.readFileSync(path.join(UI, 'data', 'topology.json'), 'utf8'));
+  const c = customerCounts(t.meta.counts);
+  assert.equal(c.customers, t.meta.counts.homes);
+  assert.equal(c.residential, Number.isFinite(t.meta.counts.residential) ? t.meta.counts.residential : null);
+  assert.deepEqual(customerCounts({ homes: 1010, residential: 971 }), { customers: 1010, residential: 971 });
+  assert.equal(customerCounts(null), null);
+});
+
+test('configure: the evening disclosure (data-truth #9) computes both weekdays and names the clock caveat', async () => {
+  const { pairingText } = await import('../story/configure.js');
+  const meta = JSON.parse(fs.readFileSync(path.join(UI, 'data', 'p1', 'meta.json'), 'utf8'));
+  const p = pairingText('2026-08-23', meta.constants);
+  assert.equal(p.price, 'Sun 23 Aug 2026');
+  assert.equal(p.load, 'Thu 23 Aug 2018');
+  assert.equal(p.sameWeekday, false);
+  assert.match(p.text, /weekday differs \(Sun prices, Thu load\)/);
+  assert.match(p.text, /one hour early/);
+  assert.ok(p.text.includes(meta.constants.LOAD_PAIRING.value));
+  assert.equal(pairingText('2026-07-22').load, 'Sun 22 Jul 2018');
+  assert.equal(pairingText('nope'), null);
 });

@@ -9,7 +9,8 @@
 //   - the one-lever rule (ruling 1): the fleet levers are run one away from the default at a time, so moving a second
 //     one resets the first (the note says so); any other lever the move changes carries the catalogue's reason.
 // Nothing here invents a number: the Fixed column reads the scenario's meta (constants, plan, sources) and topology.
-import { tagHTML } from './shell.js';
+import { tagHTML, FEEDER_TAG, FEEDER_CITE } from './shell.js';
+import { dateLabel } from '../lib/format.js';
 
 export const LEVER_KEYS = ['evening', 'policy', 'failure', 'fleet', 'cls', 'reserve', 'soc0', 'growth'];
 export const FLEET_KEYS = ['fleet', 'cls', 'reserve', 'soc0', 'growth'];
@@ -80,6 +81,33 @@ export function applyLever(cat, current, key, value) {
   if (!st.enabled || !st.scenario) return null;
   const notes = st.changes.map((c) => `${leverLabel(cat, c.key)} ${same(c.to, defaultLevers(cat)[c.key]) ? 'back to' : 'set to'} ${optionLabel(cat, c.key, c.to)}: ${c.reason}.`);
   return { scenario: st.scenario, levers: st.levers, notes };
+}
+
+/** Customers on the feeder from topology meta.counts: every load bus is a customer (`homes` counts load buses, not
+ *  only houses). The residential count shows only when the data carries it (`residential`); never a literal. */
+export function customerCounts(counts) {
+  if (!counts || !Number.isFinite(counts.homes)) return null;
+  const res = [counts.residential, counts.homesResidential].find((x) => Number.isFinite(x));
+  return { customers: counts.homes, residential: res ?? null };
+}
+
+/** The evening's load/price pairing, disclosed (data-truth audit #9): the 2026 price date and the 2018 load date of
+ *  the same calendar day (LOAD_PAIRING), both weekdays COMPUTED from the dates, and the unverified DST clock
+ *  (PROFILE_INDEX_RULE). `constants` = the run meta's constants (their own text when present). */
+export function pairingText(date, constants = {}) {
+  const m = /^(\d{4})-(\d{2}-\d{2})$/.exec(String(date || ''));
+  if (!m) return null;
+  const price = dateLabel(date), loadDay = dateLabel(`2018-${m[2]}`);
+  if (!price || !loadDay) return null;
+  const pair = constants.LOAD_PAIRING, clock = constants.PROFILE_INDEX_RULE;
+  const sameWeekday = price.slice(0, 3) === loadDay.slice(0, 3);
+  return {
+    price, load: loadDay, sameWeekday,
+    short: `Home load: the 2018 profile of ${loadDay}`,
+    text: `Prices: ERCOT LZ_NORTH on ${price} (REAL). Home load: the NREL SMART-DS 2018 profile of the same calendar date, ${loadDay} (ASSUMPTION${pair ? `: ${pair.value}` : ''}). `
+      + (sameWeekday ? 'The weekdays match. ' : `The weekday differs (${price.slice(0, 3)} prices, ${loadDay.slice(0, 3)} load). `)
+      + `The 2018 profiles have no daylight-saving shift, so the load may sit one hour early against the CDT prices${clock ? ` (${clock.value})` : ''}.`,
+  };
 }
 
 /** The presets, in the catalogue's order: [{name, id, scenario}]. `catalogue.presets` ([{name, id}]) when present,
@@ -173,11 +201,12 @@ export async function mount(root, ctx) {
   const whyHTML = (why) => (why && why.text ? `<span class="cfg-why">${esc(why.text)} ${why.label ? tagHTML(why.label, why.cite) : ''}</span>` : '');
   const reasonHTML = (st) => (st.enabled ? '' : ` title="${esc(st.reason)}"`);
 
-  function optionButton(key, o, extraHTML = '') {
+  function optionButton(key, o, extraHTML = '', title = '') {
     const st = optionState(cat, scenario.levers, key, o.id);
     const sub = (SUBS[key] && SUBS[key][o.id]) || '';
+    const tip = [st.enabled ? '' : st.reason, title].filter(Boolean).join(' · ');
     return `<button type="button" class="cfg-opt${st.selected ? ' on' : ''}" data-key="${key}" data-val="${esc(o.id)}"
-      aria-pressed="${st.selected}"${st.enabled ? '' : ' disabled aria-disabled="true"'}${reasonHTML(st)}>
+      aria-pressed="${st.selected}"${st.enabled ? '' : ' disabled aria-disabled="true"'}${tip ? ` title="${esc(tip)}"` : ''}>
       <span class="t">${esc(o.label)}${o.tag && key !== 'evening' ? ` <span class="cfg-tagline">${esc(o.tag)}</span>` : ''}</span>
       ${sub ? `<span class="s">${esc(sub)}</span>` : ''}${extraHTML}
       ${!st.enabled ? `<span class="cfg-why-off">${esc(st.reason)}</span>` : ''}</button>`;
@@ -202,9 +231,11 @@ export async function mount(root, ctx) {
     const L = cat.levers.evening;
     $('.cfg-evenings').innerHTML = (L.options || []).map((o) => {
       const pk = peakOf(o.id);
+      const pair = pairingText(o.id, (meta && meta.constants) || {});
       const extra = `<span class="cfg-ev-tag">${esc(o.tag || '')}</span>${whyHTML(o.why)}
-        ${pk ? `<span class="cfg-ev-peak">Peak price ${ctx.num(pk, { money: true, digits: 2, unit: '/MWh' })}${pk.t ? ` at ${esc(pk.t)}` : ''}</span>` : ''}`;
-      return optionButton('evening', { ...o, tag: null }, extra);
+        ${pk ? `<span class="cfg-ev-peak">Peak price ${ctx.num(pk, { money: true, digits: 2, unit: '/MWh' })}${pk.t ? ` at ${esc(pk.t)}` : ''}</span>` : ''}
+        ${pair ? `<span class="cfg-ev-load">${esc(pair.short)}${pair.sameWeekday ? '' : ' (another weekday)'} ${tagHTML('ASSUMPTION', pair.text)}</span>` : ''}`;
+      return optionButton('evening', { ...o, tag: null }, extra, pair ? pair.text : '');
     }).join('');
   }
 
@@ -239,8 +270,16 @@ export async function mount(root, ctx) {
     const m = meta, c = (m && m.constants) || {};
     const n = (x, o) => (x ? ctx.num(x, o) : '');
     const counts = topo && topo.meta && topo.meta.counts;
+    const cc = customerCounts(counts);
+    const cite = `${FEEDER_CITE} Counts: topology.json meta.counts.`;
     const grid = [];
-    if (topo) grid.push(row('Feeder', `${esc(topo.meta.feeder ? 'NREL SMART-DS 2018 AUS P1U' : '')} · ${counts ? `${ctx.num({ v: counts.transformers, label: 'REAL', cite: 'topology.json meta.counts (SMART-DS)' })} transformers · ${ctx.num({ v: counts.homes, label: 'REAL', cite: 'topology.json meta.counts (SMART-DS)' })} homes` : ''}`));
+    if (topo) {
+      grid.push(row('Feeder', `NREL SMART-DS 2018 AUS P1U <span class="cfg-synth" title="${esc(FEEDER_CITE)}">${esc(FEEDER_TAG)}</span>`
+        + (counts && cc ? `<br>${ctx.num({ v: counts.transformers, label: 'REAL', cite })} transformers · ${ctx.num({ v: cc.customers, label: 'REAL', cite: `${cite} Every load bus is a customer; not all are houses.` })} customers`
+          + (cc.residential !== null ? ` (${ctx.num({ v: cc.residential, label: 'DERIVED', cite: `${cite} Residential load shapes.` })} homes)` : '') : '')));
+      const sh = topo.meta.shaping;
+      if (sh && sh.description) grid.push(row('Fleet placement', `a deliberate stress placement, not a neutral one ${tagHTML(sh.label || 'ASSUMPTION', sh.description)}`));
+    }
     if (c.TIER_AMBER_PCT) grid.push(row('Over nameplate', `above ${n(K(c.TIER_AMBER_PCT), { unit: '%' })} of kVA as shipped (counted, not a violation)`));
     if (c.TIER_NORMAL_PCT) grid.push(row('Normal rating', `above ${n(K(c.TIER_NORMAL_PCT), { unit: '%' })} for ${n(K(c.TIER_NORMAL_MIN), { unit: ' min' })} or more`));
     if (c.TIER_EMERGENCY_PCT) grid.push(row('Emergency', `above ${n(K(c.TIER_EMERGENCY_PCT), { unit: '%' })}`));

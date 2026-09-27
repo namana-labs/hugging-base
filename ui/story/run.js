@@ -294,6 +294,7 @@ async function makeScene(el, topology, nowebgl, onError) {
   return s;
 }
 const n0 = (doc) => (doc.loading || []).length;
+const LABEL_OK = (l) => ['REAL', 'SIM', 'DERIVED', 'ASSUMPTION', 'UNVERIFIED', 'SCREENING'].includes(l);
 const withTimeout = (p, ms, what) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(`${what} timed out after ${ms} ms`)), ms))]);
 
 const STATE_CSS = { C: '#1e4d2b', D: '#c7962b', I: '#e3dfd3', S: '#8f8b7f', X: '#8f8b7f', B: '#8fcf9f' };
@@ -340,6 +341,12 @@ export async function mount(root, ctx) {
   const kwMax = Math.max(...Array.from(S.kw, Math.abs));
   const kwHi = Math.max(2000, Math.ceil(kwMax / 1000) * 1000);
   const uid = Math.random().toString(36).slice(2, 8);
+  // data-truth audit #5: the fleet sits where it stresses these streets on purpose (topology meta.shaping; a variant's
+  // own placement rule is the catalogue's FLEET_PLACEMENT)
+  const shaping = topology.meta && topology.meta.shaping;
+  const placeC = ctx.catalogue && ctx.catalogue.constants && ctx.catalogue.constants.FLEET_PLACEMENT;
+  const placementNote = noFleet || !shaping ? '' : `<span class="note">fleet placed to stress these streets${tagHTML(shaping.label || 'ASSUMPTION',
+    [shaping.description, fleetHomes && placeC ? `This run: ${placeC.value}` : ''].filter(Boolean).join(' '))}</span>`;
   const loadLab = (doc.series && doc.series.loading && doc.series.loading.label) || 'SIM';
   const socLab = (doc.series && doc.series.soc && doc.series.soc.label) || 'SIM';
   const priceLab = (meta.series && meta.series.price && meta.series.price.label) || 'REAL';
@@ -374,7 +381,7 @@ export async function mount(root, ctx) {
           <div class="rv-lab"><span class="n">Worst transformer</span><span class="v" data-v="worst"></span></div>
           ${lane({ id: 'w', html: `<path d="${lanePath(S.worst, ...LANE_WORST)}" fill="none" stroke="#10231a" stroke-width="1.4" vector-effect="non-scaling-stroke"></path>` },
             (tiers.normal ? dash(tiers.normal, ...LANE_WORST, '#c7962b') : '') + (tiers.emergency ? dash(tiers.emergency, ...LANE_WORST, '#b23a2f') : ''))}
-          <div class="rv-lab"><span class="n">Street A–D, T-240</span><span class="v" data-v="focus"></span></div>
+          <div class="rv-lab"><span class="n">Street A–D, T-240</span><span class="v" data-v="focus"></span>${placementNote}</div>
           ${lane({ id: 'f', html: S.focus.map((f) => `<path d="${lanePath(f.pct, ...LANE_FOCUS)}" fill="none" stroke="#10231a" stroke-opacity="${f.key.length > 1 ? 0.9 : 0.55}" stroke-width="1.1" ${f.key.length > 1 ? 'stroke-dasharray="4 3"' : ''} vector-effect="non-scaling-stroke"></path>`).join('') },
             tiers.amber ? dash(tiers.amber, ...LANE_FOCUS, '#c7962b') : '')}
           <div class="rv-lab"><span class="n">Price $/MWh</span><span class="v" data-v="price"></span></div>
@@ -441,7 +448,7 @@ export async function mount(root, ctx) {
     const el = $('.rv-now');
     el.classList.toggle('failing', nowF.length > 0);
     el.innerHTML = `<div class="h"><span class="st-eyebrow">RIGHT NOW · ${stepToTime(meta, k)}</span>${tagHTML('SIM', 'the engine\'s run at this minute')}</div>
-      ${nowF.length ? `<div class="rv-failing"><div class="e">FAILING NOW · ${nowF.length}</div>${nowF.map((f) => `<button type="button" class="rv-fnow" data-seek="${f.k0}"><span class="a"><b>${esc(kindWord(f.kind))}${f.where ? ` · ${esc(f.where)}` : ''}</b><span>${span(f)}</span></span><span class="b">${esc(f.text)}</span></button>`).join('')}</div>`
+      ${nowF.length ? `<div class="rv-failing"><div class="e">FAILING NOW · ${nowF.length}</div>${nowF.map((f) => `<button type="button" class="rv-fnow" data-seek="${f.k0}"><span class="a"><b>${esc(kindWord(f.kind))}${f.where ? ` · ${esc(f.where)}` : ''}</b><span>${span(f)}</span></span><span class="b">${esc(f.text)}${LABEL_OK(f.label) ? tagHTML(f.label, f.label === 'ASSUMPTION' ? 'a scripted failure: what fails and when are assumptions' : 'from this run') : ''}</span></button>`).join('')}</div>`
         : '<div class="rv-ok"><i></i>No failures right now</div>'}
       <div class="rv-sec"><div class="r"><b>${fmtN(tot)} transformers</b><span>${fmtN(within)} within nameplate</span></div><div class="rv-tbar">${bar}</div>
         <div class="rv-tiers">${tierRows.map(([nm, v, col, bad]) => `<span class="${bad ? 'bad' : v ? '' : 'zero'}"><i style="background:${rgb(col)}"></i>${esc(nm)} ${fmtN(v)}</span>`).join('')}</div></div>
