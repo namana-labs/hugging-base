@@ -309,11 +309,15 @@ export async function mountRunning(root, ctx) {
   rn.classList.add('done');
   $('.rn-title').textContent = 'Done';
   $('.rn-stage').textContent = `Opening the run: ${meta.start} → ${stepToTime(meta, meta.steps)}, ${fmtN(meta.steps)} steps, files in ${fmtN(performance.now() - started)} ms`;
-  try { sessionStorage.setItem(AUTOPLAY_KEY, sc.id); } catch (err) { /* private mode: Run opens paused */ }
   // review-0927 M8: the "Running, honestly" beat link (&beat=running) holds this page for 6 s so it can be filmed; the
-  // judge's path (no beat) hands over to Run after 0.5 s as before
+  // judge's path (no beat) hands over to Run after 0.5 s as before. The autoplay mark is set only at the hand-over, so
+  // leaving Running early (e.g. opening the next beat link) never makes that Run link play from 16:00 (integration fix).
   const wait = /[?&]beat=running\b/.test(location.search) ? 6000 : 500;
-  timer = setTimeout(() => { if (!disposed) ctx.nav('run', { s: sc.id, k: null }, { replace: true }); }, wait);
+  timer = setTimeout(() => {
+    if (disposed) return;
+    try { sessionStorage.setItem(AUTOPLAY_KEY, sc.id); } catch (err) { /* private mode: Run opens paused */ }
+    ctx.nav('run', { s: sc.id, k: null }, { replace: true });
+  }, wait);
   return { dispose() { disposed = true; clearTimeout(timer); } };
 }
 
