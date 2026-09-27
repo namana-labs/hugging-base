@@ -35,6 +35,15 @@ TIMING = ROOT / "data" / "cache" / "p1_build_timing.json"
 SIZES = (96, 1000, 10000, 100000)
 
 
+def _la(x):
+    return "n/a" if x is None else f"{x:.0f}"
+
+
+def load_avg():
+    """The 1-minute load average, or None where the OS has none (Windows): engine.json then carries null."""
+    return os.getloadavg()[0] if hasattr(os, "getloadavg") else None
+
+
 def bench_opendss(steps=60):
     from .feeder import Feeder
     from .loads import Loads
@@ -105,14 +114,14 @@ def main(argv=None):
         write_json(OUT, doc)
         print(f"engine: relabelled {OUT} (values unchanged)")
         return 0
-    load0 = os.getloadavg()[0]
+    load0 = load_avg()
     solve_ms, step_ms = bench_opendss(20 if a.quick else 60)
     us = {}
     for m in SIZES:
         reps = 1 if (a.quick or m >= 100000) else (3 if m >= 10000 else 7)
         us[m] = bench_allocate(m, reps)
         print(f"allocate() stateless, {m} batteries: {us[m]:,.0f} us", flush=True)
-    load1 = os.getloadavg()[0]
+    load1 = load_avg()
     p1 = json.loads(TIMING.read_text()) if TIMING.exists() else None
     doc = envelope("engine", "sim.bench", inputs=inputs_sha(), constants=export("AWARE_MARGIN", "MIN_GRANT_KW", "SOC_BUCKET"),
                    sources={"referee": {"label": "SIM", "text": "OpenDSSDirect.py 0.9.4 AC power flow on this machine"}},
@@ -130,13 +139,13 @@ def main(argv=None):
         "allocate": {str(m): labelled(round(v, 1), "SIM", f"microseconds per stateless allocate() call, {m:,} batteries on "
                                                             f"{max(1, round(m * 379 / 96)):,} synthetic transformers (charge mode)")
                      for m, v in us.items()},
-        "loadAvg": labelled(round((load0 + load1) / 2, 1), "SIM", "1-minute load average while measuring (shared machine)"),
+        "loadAvg": labelled(round((load0 + load1) / 2, 1) if load0 is not None and load1 is not None else None, "SIM", "1-minute load average while measuring (shared machine)"),
     })
     doc = relabel(doc)
     out = QUICK_OUT if a.quick else OUT
     write_json(out, doc)
     print(f"engine: OpenDSS {solve_ms:.2f} ms/solve, {step_ms:.2f} ms/step ; P1 build "
-          f"{p1['seconds'] if p1 else 'n/a'} s ; load {load0:.0f}->{load1:.0f} -> {out}")
+          f"{p1['seconds'] if p1 else 'n/a'} s ; load {_la(load0)}->{_la(load1)} -> {out}")
     return 0
 
 

@@ -117,7 +117,8 @@ class HistoryContractTests(unittest.TestCase):
             (d / "meta.json").write_text(dumps(meta))
             (d / "notes.json").write_text(dumps(envelope("x", "sim.test")))
             failures, _, _, _ = validate(t, out=lambda *_: None)
-            self.assertEqual(sorted(failures), sorted([f"p1/days/2026-07-22/{f}" for f in ("naive.json.gz", "aware.json.gz", "meta.json", "notes.json")]))
+            # Windows returns p1\days\...; compare with forward slashes on every OS
+            self.assertEqual(sorted(x.replace("\\", "/") for x in failures), sorted([f"p1/days/2026-07-22/{f}" for f in ("naive.json.gz", "aware.json.gz", "meta.json", "notes.json")]))
 
     def test_index_and_calendar_shapes(self):
         row = {"date": "2026-08-23", "dow": "Sun", "tag": "The demo evening", "why": {"text": "t", "label": "REAL"}, "dir": "",
