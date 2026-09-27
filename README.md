@@ -140,7 +140,7 @@ The arrow from the engine to the app is a file, not a service: the engine runs a
 
 ## Team
 
-Connor Daly - Product Design and System Design
+Connor Daly - Product Design and System Design - connor@nanama.io
 Razaq Alagbada - Data and System Design - razaqalagbada@gmail.com
 Michael Palacios - Data and Electrical Consulting - michaelxpalacios@gmail.com
 Bo Banducci - Video Production - bobanducci90@gmail.com
