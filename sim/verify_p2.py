@@ -5,7 +5,7 @@ data/out/referee-2026-08.json, and prints 7.4's lines.
     python -m sim.verify p2 --rebuild    # heavy (the caller holds the lock): rebuild p2 + referee, byte-compare
 
 [INVARIANT] lines gate; [EXPECT] lines print `ok <measured>` or `REFUTED: <measured>` and never gate (3.5);
-[report] lines only print. Ends "VERIFY p2: PASS (k expectations refuted, see NOTES.md)" or "VERIFY p2: FAIL (...)".
+[report] lines only print. Ends "VERIFY p2: PASS (k expectations refuted, see the [EXPECT] lines above)" or "VERIFY p2: FAIL (...)".
 """
 import csv
 import json
@@ -327,7 +327,7 @@ def main(argv):
     if chk.fail:
         print(f"VERIFY p2: FAIL ({', '.join(chk.fail)})")
         return 1
-    print(f"VERIFY p2: PASS ({len(chk.refuted)} expectations refuted, see NOTES.md)")
+    print(f"VERIFY p2: PASS ({len(chk.refuted)} expectations refuted, see the [EXPECT] lines above)")
     return 0
 
 

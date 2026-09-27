@@ -1,6 +1,6 @@
 # NUMBERS: the audited numbers for the video
 
-Every number Amy's script may say, with its label, the committed file it comes from and the field. The values were extracted with Python from the files as committed on `submission` (and, for the story catalogue and the fleet-lever variants, on ENGINE's `sprint/engine` @0db9b7f, which merges into `submission`), after the data-truth audit of 26 Sep 2026 (`simulators/rz/judges/DATA-TRUTH-inputs.md`, `DATA-TRUTH-outputs.md`). **If a number is not here or on the page, don't say it. Say it with its label, as the page prints it.**
+Every number Amy's script may say, with its label, the committed file it comes from and the field. The values were extracted with Python from the files as committed on `main` @1890adc (the merged submission), after the data-truth audit of 26 Sep 2026 (`simulators/rz/judges/DATA-TRUTH-inputs.md`, `DATA-TRUTH-outputs.md`). **If a number is not here or on the page, don't say it. Say it with its label, as the page prints it.**
 
 Labels: **REAL** sourced fact · **SIM** our simulation (OpenDSS unless marked *screening*) · **DERIVED** arithmetic on REAL or SIM · **ASSUMPTION** a named choice of ours. Money is always the **fleet's gross energy value, not Base's profit**. Every no-violation claim ends **because of batteries**.
 
@@ -51,7 +51,7 @@ Paths are relative to the repo root. `mpalacios/out/p1/worker_kill.json` and `mp
 | Feeder-aware: worst transformer (T-240, 16:45, home load alone; no battery) | **119.5%** | SIM | `ui/data/p1/meta.json` | `summary.aware.maxLoading` |
 | Feeder-aware: lowest home voltage | **0.9771 pu** | SIM | `ui/data/p1/meta.json` | `summary.aware.vMinHome` |
 | Feeder-aware: fleet charged by 04:00 | **100.0%** | SIM | `ui/data/p1/meta.json` | `summary.aware.chargedPctBy0400` |
-| Feeder-aware: battery-steps below the 20% reserve | **0** | SIM | `ui/data/p1/meta.json` | `summary.aware.reserveBreaches` |
+| Feeder-aware: reserve breaches by dispatch (battery-minutes below 20% outside an outage) | **0** | SIM | `ui/data/p1/meta.json` | `summary.aware.reserveBreaches` |
 | Fleet gross energy value, naive (not Base's profit) | **$893.83** | DERIVED | `ui/data/p1/meta.json` | `money.energyValueUSD.naive` |
 | Fleet gross energy value, feeder-aware (not Base's profit) | **$916.56** | DERIVED | `ui/data/p1/meta.json` | `money.energyValueUSD.aware` |
 | Feeder-aware earned more than naive, 23 Aug (prices kept falling) | **$22.73** | DERIVED | `ui/data/p1/meta.json` | `money.costOfAwareness (negated: naive − aware)` |
@@ -71,7 +71,7 @@ Paths are relative to the repo root. `mpalacios/out/p1/worker_kill.json` and `mp
 | Our controller stalls (time, minutes) | **22:55, 8 min** | ASSUMPTION | `ui/data/p1/meta.json` | `events.aware_faults[kind=stall]` |
 | Pieces fail: battery-caused normal-rating events | **0** | SIM | `ui/data/p1/meta.json` | `summary.aware_faults.batteryCausedNormal` |
 | Pieces fail: fleet charged by 04:00 | **99.2%** | SIM | `ui/data/p1/meta.json` | `summary.aware_faults.chargedPctBy0400` |
-| Controller crash: worker killed (time, worker) | **22:20, W2** | SIM | `mpalacios/out/p1/worker_kill.json` | `runtime.kill.t, .worker` |
+| Controller crash: worker killed (time, worker) | **22:20, W2** | ASSUMPTION | `mpalacios/out/p1/worker_kill.json` | `runtime.kill.t, .worker` |
 | …takeover (time, new worker) | **22:24, W1** | SIM | `mpalacios/out/p1/worker_kill.json` | `runtime.takeover[0].t, .worker` |
 | …seconds from kill to takeover | **240 s** | SIM | `mpalacios/out/p1/worker_kill.json` | `summary.takeoverSeconds` |
 | …late commands from the killed worker | **31** | SIM | `mpalacios/out/p1/worker_kill.json` | `summary.lateCommands` |
@@ -87,8 +87,9 @@ Paths are relative to the repo root. `mpalacios/out/p1/worker_kill.json` and `mp
 | …false alarms on the clean fleet (720 min × 96) | **0** | SIM | `mpalacios/out/p3/covert.json` | `summary.falsePositivesClean` |
 | …caught by a simple 1 kW threshold (of 24) | **0** | SIM | `mpalacios/out/p3/covert.json` | `summary.fixedThresholdCompromised` |
 | …units quarantined | **24** | SIM | `mpalacios/out/p3/covert.json` | `summary.quarantined` |
-| ERCOT frequency wander, 25 Sep 2026 (a different day), σ | **13.51 mHz** | DERIVED (from REAL samples) | `ui/data/ems/freq-series.json` | `stats.frequency.sigma_mhz` |
-| Frequency moved by a 1,000-battery hijack: a band, never one value | **3–17 mHz** | DERIVED | `docs/research-report.md:311` | `(text; not in a data file)` |
+| ERCOT frequency wander, 25 Sep 2026 (a different day), σ | **13.5 mHz** | DERIVED (from REAL samples) | `ui/data/ems/freq-series.json` | `stats.frequency.sigma_mhz` |
+| A hijack of 1,000 batteries swings | **40 MW** | DERIVED | `ui/data/story/index.json` | `constants.HIJACK_MW` |
+| Frequency moved by a 1,000-battery hijack: a band, never one value | **3–17 mHz** | DERIVED | `ui/data/story/index.json` | `constants.HIJACK_MHZ_LO, .HIJACK_MHZ_HI` |
 | 50 random failure runs: runs with any battery-caused violation | **0** | SIM | `ui/data/p1/chaos.json` | `runsWithBatteryCaused` |
 | …silent batteries across the runs | **257** | SIM | `ui/data/p1/chaos.json` | `silentUnits` |
 | …of those, idle with backup armed from expiry on | **257** | SIM | `ui/data/p1/chaos.json` | `silentIdleByExpiry` |
@@ -160,7 +161,22 @@ Paths are relative to the repo root. `mpalacios/out/p1/worker_kill.json` and `mp
 | August, 96 batteries: hours above nameplate, naive (screening) | **673 h** | SIM | `ui/data/p2/index.json` | `fleetCounterfactualTotals.naive.h100` |
 | August, 96 batteries: hours above nameplate, feeder-aware (screening) | **2 h** | SIM | `ui/data/p2/index.json` | `fleetCounterfactualTotals.aware.h100` |
 
-Learnings Q2 (one transformer, 0 to 50 batteries) and Q3 (which transformers to upgrade as home load grows) read `ui/data/p2/planner.json`, which PLANNER was still rebuilding when this table was cut: read those answers from the page, with their tags, and add them here once `planner.json` is merged.
+
+### Learnings Q2 and Q3: the capacity planner (`ui/data/p2/planner.json`, August 2026, Core, D-26, from an empty feeder)
+
+| Say | Value | Label | File | Field |
+| --- | --- | --- | --- | --- |
+| 25 kVA transformers serving homes | **138** | REAL | `ui/data/p2/planner.json` | `sizeSummary.25.count` |
+| 50 kVA transformers serving homes | **158** | REAL | `ui/data/p2/planner.json` | `sizeSummary.50.count` |
+| 75 kVA transformers serving homes | **79** | REAL | `ui/data/p2/planner.json` | `sizeSummary.75.count` |
+| Median batteries a 25 / 50 / 75 kVA transformer takes, naive | **0 / 1 / 2** | SIM | `ui/data/p2/planner.json` | `sizeSummary.{25,50,75}.naive` |
+| Median batteries a 25 / 50 / 75 kVA transformer takes, the utility nameplate rule | **1 / 2 / 3** | DERIVED | `ui/data/p2/planner.json` | `sizeSummary.{25,50,75}.paper` |
+| Median batteries a 25 / 50 / 75 kVA transformer takes, feeder-aware | **2 / 4 / 6** | SIM | `ui/data/p2/planner.json` | `sizeSummary.{25,50,75}.aware` |
+| OpenDSS referee status, month solves | **checked, 13** | SIM | `ui/data/p2/planner.json` | `referee.status, referee.runs` |
+| OpenDSS agrees with the naive cap | **374 of 376** | SIM | `ui/data/p2/planner.json` | `referee.naiveAtCap.agree, .of` |
+| OpenDSS agrees with the feeder-aware cap | **376 of 376** | SIM | `ui/data/p2/planner.json` | `referee.awareAtCap.agree, .of` |
+
+The medians are over the transformers of each size serving homes (`sizeSummary.<kVA>.count`). Where OpenDSS is stricter than the screen, OpenDSS wins (`referee.rule`). Read a single transformer's answer (Q2) and the upgrade list (Q3) from the page, with their tags.
 
 ## Speed (measured on a shared machine)
 
@@ -172,13 +188,15 @@ Learnings Q2 (one transformer, 0 to 50 batteries) and Q3 (which transformers to 
 | …OpenDSS solves in that build | **2,884** | DERIVED | `ui/data/engine.json` | `p1.solves` |
 | Controller call, 96 batteries | **66.6 µs** | DERIVED | `ui/data/engine.json` | `allocate.96` |
 | Controller call, 100,000 batteries (about 65 ms) | **65,011.7 µs** | DERIVED | `ui/data/engine.json` | `allocate.100000` |
-| Running page, `2026-08-23/naive`: build time, OpenDSS solves | **26.5 s, 721** | DERIVED / SIM | ui/data/story/index.json (ENGINE, `sprint/engine` @0db9b7f) | `scenarios[id=2026-08-23/naive].engine.buildSeconds, .solves` |
-| Running page, `2026-08-23/aware`: build time, OpenDSS solves | **31 s, 721** | DERIVED / SIM | ui/data/story/index.json (ENGINE, `sprint/engine` @0db9b7f) | `scenarios[id=2026-08-23/aware].engine.buildSeconds, .solves` |
-| Running page, `2026-08-23/aware/faults`: build time, OpenDSS solves | **34.8 s, 721** | DERIVED / SIM | ui/data/story/index.json (ENGINE, `sprint/engine` @0db9b7f) | `scenarios[id=2026-08-23/aware/faults].engine.buildSeconds, .solves` |
+| Running page, `2026-08-23/naive`: build time, OpenDSS solves | **25.5 s, 721** | DERIVED / SIM | `ui/data/story/index.json` | `scenarios[id=2026-08-23/naive].engine.buildSeconds, .solves` |
+| Running page, `2026-08-23/aware`: build time, OpenDSS solves | **27.3 s, 721** | DERIVED / SIM | `ui/data/story/index.json` | `scenarios[id=2026-08-23/aware].engine.buildSeconds, .solves` |
+| Running page, `2026-08-23/aware/faults`: build time, OpenDSS solves | **25.1 s, 721** | DERIVED / SIM | `ui/data/story/index.json` | `scenarios[id=2026-08-23/aware/faults].engine.buildSeconds, .solves` |
+
+Timings are wall-clock measurements on the build machine: they change on every rebuild. Read them from the Running page; the rows above are the values committed at the time of this table.
 
 ## The fleet levers: each one lever away from the default (23 Aug 2026)
 
-Each row is a real engine run on 23 Aug, from `ui/data/p1/variants/<lever>=<value>/meta.json` (ENGINE, `sprint/engine` @0db9b7f), fields `summary.<branch>.maxLoading`, `.batteryCausedNormal`, `.batteryCausedEmergency`, `.chargedPctBy0400` (all SIM) and `.energyValueUSD` (DERIVED, fleet gross). The default row is `ui/data/p1/meta.json`. The lever itself is an ASSUMPTION.
+Each row is a real engine run on 23 Aug, from `ui/data/p1/variants/<lever>=<value>/meta.json`, fields `summary.<branch>.maxLoading`, `.batteryCausedNormal`, `.batteryCausedEmergency`, `.chargedPctBy0400` (all SIM) and `.energyValueUSD` (DERIVED, fleet gross). The default row is `ui/data/p1/meta.json`. The lever itself is an ASSUMPTION.
 
 | Lever | Naive: worst | Naive: battery-caused events / emergency tfs | Naive: charged by 04:00 | Feeder-aware: worst | Feeder-aware: battery-caused events / emergency tfs | Feeder-aware: charged | Naive $ | Feeder-aware $ |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |

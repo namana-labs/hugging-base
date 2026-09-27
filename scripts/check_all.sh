@@ -5,7 +5,7 @@
 #   1 unit      $PY -m unittest discover -s sim/tests -t .
 #   2 node      node --test ui/test/*.test.js
 #   3 keep      7.1: the prototype's and four-home's own tests, with the EXTERNAL RED classifier
-#   4 contract  $PY -m sim.contracts                  (validity, labels, 25 MB / 4 MB caps; prints sizes)
+#   4 contract  $PY -m sim.contracts                  (validity, labels, DATA_BUDGET_MB 40 / DATA_FILE_CAP_MB 4 caps; prints sizes)
 #   5 verify    $PY -m sim.verify labels, p1, p2      (committed JSON, no rebuild; SKIP before the data exists)
 #   6 paths     python3 scripts/check_paths.py --lane <id>        (only with --lane)
 #   7 smoke     scripts/smoke_ui.sh --lane <id> | canary | (--full) all under the heavy-run lock
@@ -15,8 +15,11 @@
 set -u
 ROOT="$(git rev-parse --show-toplevel)" || exit 2
 cd "$ROOT"
-PY="${PY:-$HOME/hb-overnight/.venv/bin/python}"
-LOCK="${HB_LOCK:-/private/tmp/claude-501/forge-heavy-local.lock}"
+# the venv's python: bin/python (macOS/Linux) or Scripts/python.exe (Windows)
+venv_py() { if [ -x "$1/bin/python" ]; then echo "$1/bin/python"; elif [ -x "$1/Scripts/python.exe" ]; then echo "$1/Scripts/python.exe"; else echo "$1/bin/python"; fi; }
+PY="${PY:-$(venv_py "${HB_VENV:-$HOME/hb-overnight/.venv}")}"
+LOCK="${HB_LOCK:-${TMPDIR:-/tmp}/hb-heavy.lock}"
+command -v lockf >/dev/null 2>&1 || export HB_LOCK_HELD=1   # no lockf (Linux/Windows): run heavy steps unlocked
 LANE=""
 FULL=0
 while [ $# -gt 0 ]; do
@@ -115,7 +118,8 @@ smoke_ok() { grep -E '^SMOKE: [0-9]+/[0-9]+ ok' "$1" | tail -1 | awk '{split($2,
 if [ $FULL = 1 ]; then
   # 7 + 8 in ONE hold of the heavy-run lock (it is not FIFO; batch heavy steps).
   echo "== 7+8 smoke all + rebuild (one heavy-run lock hold)"
-  lockf -k -t 2400 "$LOCK" env HB_LOCK_HELD=1 PY="$PY" nice -n 10 bash -c '
+  if [ "${HB_LOCK_HELD:-0}" = 1 ]; then LOCKCMD=(); else LOCKCMD=(lockf -k -t 2400 "$LOCK"); fi
+  "${LOCKCMD[@]}" env HB_LOCK_HELD=1 PY="$PY" nice -n 10 bash -c '
     scripts/smoke_ui.sh all > "$0/7-smoke.log" 2>&1
     scripts/build_all.sh all > "$0/8-build.log" 2>&1
     git status --porcelain -- ui/data data/out > "$0/8-dirty.log"

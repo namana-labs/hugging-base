@@ -14,7 +14,7 @@ Open **http://127.0.0.1:8765/ui/index.html** and walk four pages: **Configure** 
 
 ---
 
-> **Team:** the root app (`sim/`, `ui/`, `data/`, `scripts/`) is the submission, on branch `submission`. Who does what: [`handoff/README.md`](handoff/README.md). Amy's presentation work: [`presentation/`](presentation/START-HERE.md). RZ's round-2 app stays in [`simulators/rz/`](simulators/rz/README.md) for reference.
+> **Team:** the root app (`sim/`, `ui/`, `data/`, `scripts/`) is the submission, merged into `main` (PR #42, 27 Sep 2026). Who does what: [`handoff/README.md`](handoff/README.md). Amy's presentation work: [`presentation/`](presentation/START-HERE.md). RZ's round-2 app stays in [`simulators/rz/`](simulators/rz/README.md) for reference.
 
 ## Project documents
 

@@ -290,8 +290,8 @@ export async function mount(root, ctx) {
             <circle data-pb="ring" r="${geo.rr}" fill="none" stroke="#10231a" stroke-width="${geo.sw2}" cx="-99999" cy="-99999"/>
           </svg>
           <div class="pb-maplegend" data-pb="legend"></div>
-          <div class="pb-mapsrc" data-pb="src"></div>
         </div>
+        <div class="pb-mapsrc" data-pb="src"></div>
       </section>
       <aside class="pb-aside" data-pb="aside"></aside>
     </div>`;
@@ -308,10 +308,12 @@ export async function mount(root, ctx) {
   const num = (x, opts) => { if (!has(x)) return missingHTML(); try { return ctx.num(x, opts); } catch (e) { console.error('[learnings] unlabelled value refused', x, e); return missingHTML('unlabelled value refused'); } };
 
   // ---------------- map painting ----------------
-  function paint(colours, legend, caption, src, ringOn = true) {
+  function paint(colours, legend, caption, src, ringOn = true, countCite = null) {
     dots.forEach((d, i) => d.setAttribute('fill', colours[i] || EXCL_COL));
-    $('legend').innerHTML = legend.map((l) => `<span><i style="background:${l.c}"></i>${esc(l.name)}<b>${l.n != null ? fmtNum(l.n) : ''}</b></span>`).join('');
-    $('caption').textContent = caption;
+    // the counts are this page's tally of a file's rows: one DERIVED tag heads them, its cite names the file and field
+    $('legend').innerHTML = (legend.length && countCite ? `<span class="pb-leg-h">transformers${tagHTML('DERIVED', countCite)}</span>` : '')
+      + legend.map((l) => `<span><i style="background:${l.c}"></i>${l.html || esc(l.name)}<b>${l.n != null ? fmtNum(l.n) : ''}</b></span>`).join('');
+    $('caption').innerHTML = caption;                  // callers pass HTML (plain words, or words with a tag)
     $('src').innerHTML = src;
     const ring = $('ring'), p = st.sel != null ? geo.pts[st.sel] : null;
     ring.setAttribute('cx', ringOn && p ? p[0] : -99999); ring.setAttribute('cy', ringOn && p ? p[1] : -99999);
@@ -338,10 +340,14 @@ export async function mount(root, ctx) {
         paint(cls.map((c) => DC[c]), [
           { name: 'full under naive, room with feeder-aware', c: DC.g, n: cnt('g') }, { name: 'full under both', c: DC.f, n: cnt('f') },
           { name: 'room under both', c: DC.o, n: cnt('o') }, ...(cnt('x') ? [{ name: 'not homes (excluded)', c: EXCL_COL, n: cnt('x') }] : []),
-        ], 'What feeder-aware adds: full under naive, room under feeder-aware', srcQ1(), st.q === 2);
+        ], 'What feeder-aware adds: full under naive, room under feeder-aware', srcQ1(), st.q === 2,
+        s1.mode === 'planner' ? 'count of p2/planner.json tfs by room status under cap.naive.shown and cap.aware.shown vs installed + pending; topology transformers not in tfs are excluded'
+          : 'count of transformers by p2/naive- and aware-core-d26-g0.json baseline.peak against TIER_AMBER_PCT / TIER_NORMAL_PCT');
       } else {
         const arr = s1[view];
-        paint(statusColours(arr), statusLegend(arr, s1.names), view === 'aware' ? 'B · Feeder-aware: which transformers have room' : 'A · Naive split: which transformers have room', srcQ1(), st.q === 2);
+        paint(statusColours(arr), statusLegend(arr, s1.names), view === 'aware' ? 'B · Feeder-aware: which transformers have room' : 'A · Naive split: which transformers have room', srcQ1(), st.q === 2,
+          s1.mode === 'planner' ? `count of p2/planner.json tfs by room status: cap.${view}.shown minus installed + pending; topology transformers not in tfs are excluded`
+            : `count of transformers by p2/${view}-core-d26-g0.json baseline.peak against TIER_AMBER_PCT / TIER_NORMAL_PCT`);
       }
       if (st.q === 2) $('caption').textContent = 'Feeder-aware · room per transformer · click one to pick it';
       return;
@@ -351,20 +357,23 @@ export async function mount(root, ctx) {
       const byTf = new Map(list.map((r) => [r.tf, r]));
       const col = topo.transformers.map((_, i) => { const r = byTf.get(i); if (!rows.has(i)) return EXCL_COL; if (!r) return STATUS_COL[0]; return r.why === 'blocked' ? STATUS_COL[3] : r.why === 'onboard' ? STATUS_COL[2] : STATUS_COL[1]; });
       const c = (k) => col.filter((x) => x === k).length;
-      const H = horizon != null ? `${fmtNum(horizon)} years` : 'the horizon';
+      const Hh = horizon != null ? num(planner.money.horizonYears, { digits: 0, unit: ' years' }) : 'the horizon';
+      const gc = constOf('PLAN_GROWTH_PCTS', planner);
       paint(planner ? col : new Array(NT).fill(EXCL_COL), planner ? [
-        { name: `room for ${H}`, c: STATUS_COL[0], n: c(STATUS_COL[0]) }, { name: `may outgrow within ${H} (fast growth)`, c: STATUS_COL[1], n: c(STATUS_COL[1]) },
+        { name: 'room for the horizon', html: `room for ${Hh}`, c: STATUS_COL[0], n: c(STATUS_COL[0]) }, { name: 'may outgrow', html: `may outgrow within ${Hh} (fast growth)`, c: STATUS_COL[1], n: c(STATUS_COL[1]) },
         { name: 'full, every home already a member', c: STATUS_COL[2], n: c(STATUS_COL[2]) }, { name: 'a battery blocked today', c: STATUS_COL[3], n: c(STATUS_COL[3]) },
         { name: 'not homes (excluded)', c: EXCL_COL, n: c(EXCL_COL) },
-      ] : [], `Feeder-aware, utility rule unchanged · ${st.g ? `home load +${st.g}%` : 'today\'s load'}`,
-      planner ? `${tagHTML('DERIVED', planner.decision && planner.decision.cite)}Capacity binds at min(feeder-aware, utility rule); demand from the planner's decile curves` : missingHTML(notBuilt(plR.err, 'p2/planner.json')));
+      ] : [], `Feeder-aware, utility rule unchanged · ${st.g ? `home load +${st.g}%${gc ? tagHTML(gc.label, gc.cite) : ''}` : 'today\'s load'}`,
+      planner ? `${tagHTML('DERIVED', planner.decision && planner.decision.cite)}Capacity binds at min(feeder-aware, utility rule); demand from the planner's decile curves` : missingHTML(notBuilt(plR.err, 'p2/planner.json')),
+      true, `count of p2/planner.json rankingByGrowth.g${st.g} rows by why (blocked / onboard / the rest); tfs not listed there: room; topology transformers not in tfs are excluded`);
       return;
     }
     const rm = rankingModel(p2a, topo);
     const top = new Set(rm.tfs);
     paint(topo.transformers.map((_, i) => (top.has(i) ? '#1e4d2b' : '#d9d4c3')), [
       { name: 'a top-ranked next-battery home', c: '#1e4d2b', n: top.size }, { name: 'other transformers', c: '#d9d4c3', n: NT - top.size },
-    ], 'Feeder-aware · where the next batteries go', p2a ? `${tagHTML('SIM', 'sim.p2_build ranking (surrogate, calibrated vs OpenDSS)')}sim.p2_build ranking${month ? ` · ${esc(month)}` : ''} · feeder-aware` : missingHTML(notBuilt(p2aR.err, 'p2/aware-core-d26-g0.json')));
+    ], 'Feeder-aware · where the next batteries go', p2a ? `${tagHTML('SIM', 'sim.p2_build ranking (surrogate, calibrated vs OpenDSS)')}sim.p2_build ranking${month ? ` · ${esc(month)}` : ''} · feeder-aware` : missingHTML(notBuilt(p2aR.err, 'p2/aware-core-d26-g0.json')),
+    true, 'count of transformers in p2/aware-core-d26-g0.json ranking (the rows shown) and of the rest of topology.json transformers');
   }
 
   // ---------------- aside panels ----------------
@@ -484,19 +493,20 @@ export async function mount(root, ctx) {
         </div>`;
     }).join('');
     let head, note = '';
-    if (!st.g) head = `At today's load, ${fmtNum(blocked)} of ${fmtNum(N)} listed transformers block a battery wanted now${ruleBinds ? '; the utility\'s nameplate rule is the binding limit on every one' : ''}.`;
+    const cnt = (x, what) => `${fmtNum(x)}${tagHTML('DERIVED', `count of p2/planner.json ${what}`)}`;
+    if (!st.g) head = `At today's load, ${cnt(blocked, 'rankingByGrowth.g0 rows with why = blocked')} of ${cnt(N, 'rankingByGrowth.g0 rows')} listed transformers block a battery wanted now${ruleBinds ? '; the utility\'s nameplate rule is the binding limit on every one' : ''}.`;
     else if (!story) head = `At +${st.g}% home load: not exported by the planner.`;
     else {
       head = story.sameOrder && story.sameUnlocked
-        ? `At +${st.g}% home load the upgrade order holds: the same ${fmtNum(story.n)} transformers, in the same order, unlocking the same members.`
-        : `At +${st.g}% home load the upgrade list changes: ${fmtNum(story.n)} transformers${story.sameOrder ? ', same order' : ''}.`;
+        ? `At +${st.g}% home load the upgrade order holds: the same ${cnt(story.n, `rankingByGrowth.g${st.g} rows`)} transformers, in the same order, unlocking the same members.`
+        : `At +${st.g}% home load the upgrade list changes: ${cnt(story.n, `rankingByGrowth.g${st.g} rows`)} transformers${story.sameOrder ? ', same order' : ''}.`;
       const ch = story.changed.length;
       const dir = [story.up ? `${fmtNum(story.up)} fit more` : '', story.down ? `${fmtNum(story.down)} fit fewer` : ''].filter(Boolean).join(', ');
-      note = `${ruleBinds ? 'The utility rule still binds. ' : ''}${ch ? `Only what feeder-aware control would fit moves, on ${fmtNum(ch)} row${ch === 1 ? '' : 's'} (${dir}), marked below.` : 'What feeder-aware control would fit does not move on any row.'}${story.approx ? ` ${fmtNum(story.approx)} feeder-aware count${story.approx === 1 ? ' is' : 's are'} interpolated between grid points.` : ''} Feeder-aware counts at +${st.g}% are the surrogate screen ${tagHTML('SCREENING', gSeries || 'not OpenDSS-checked')}`;
+      note = `${ruleBinds ? 'The utility rule still binds. ' : ''}${ch ? `Only what feeder-aware control would fit moves, on ${cnt(ch, `rankingByGrowth.g${st.g} rows whose controlsFit differs from g0`)} row${ch === 1 ? '' : 's'} (${dir}), marked below.` : 'What feeder-aware control would fit does not move on any row.'}${story.approx ? ` ${fmtNum(story.approx)} feeder-aware count${story.approx === 1 ? ' is' : 's are'} interpolated between grid points.` : ''} Feeder-aware counts at +${st.g}% are the surrogate screen ${tagHTML('SCREENING', gSeries || 'not OpenDSS-checked')}`;
     }
     return `
       ${eyebrow}
-      <div class="pb-headline pb-h20">${esc(head)}</div>
+      <div class="pb-headline pb-h20">${head}</div>
       ${note ? `<div class="pb-note">${note}</div>` : ''}
       <div class="pb-growth"><span class="pb-sub">Home load growth (EVs, heat pumps)</span>${tagHTML('ASSUMPTION', constOf('PLAN_GROWTH_PCTS', planner) ? constOf('PLAN_GROWTH_PCTS', planner).cite : 'planner growth levels')}<div class="pb-seg">${seg}</div></div>
       <div class="pb-uplist">${lines || '<div class="pb-body">No transformer is at capacity at this load.</div>'}</div>

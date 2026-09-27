@@ -3,7 +3,7 @@
 - `labels`: the label audit of sim.contracts over every committed ui/data JSON (no rebuild).
   Ends "VERIFY labels: PASS (...)" or "VERIFY labels: FAIL (...)".
 - `p1` / `p2`: delegate to sim.verify_p1 / sim.verify_p2 (owned by L2 / L3), which read the committed
-  JSON and end "VERIFY p1: PASS (k expectations refuted, see NOTES.md)" or "VERIFY p1: FAIL (...)".
+  JSON and end "VERIFY p1: PASS (k expectations refuted, see the [EXPECT] lines above)" or "VERIFY p1: FAIL (...)".
   `p1 --days [--rebuild]` (round 2, HIST-R2 4.4) is passed through to sim.verify_p1, which verifies every history
   day under ui/data/p1/days/. Before those days exist it prints "VERIFY p1: SKIP (no ui/data/p1/days/index.json yet)".
   `--rebuild` (heavy, locked by the caller) is passed through for the byte-compare. A plain run prints

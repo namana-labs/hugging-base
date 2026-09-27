@@ -41,11 +41,15 @@ code { font-size: 12.5px; }
 .st-step:hover { background: var(--track); color: var(--ink); }
 .st-step.on { background: var(--brand-tint); color: var(--brand); font-weight: 700; }
 .st-step.off { color: var(--off); }
-.st-spacer { flex: 1 !important; }
-.st-framing { font-size: 13px; color: var(--muted); }
+.st-spacer { flex: 1 1 0 !important; min-width: 0; }
+/* the header never overflows: the step nav and the primary button keep their size; the pill and the framing label
+   shrink with an ellipsis (their full text is in their tooltip) */
+.st-header > .st-framing, .st-header > .st-pill { flex: 0 1 auto; min-width: 0; overflow: hidden; }
+.st-framing { font-size: 13px; color: var(--muted); text-overflow: ellipsis; }
 .st-pill { display: flex; align-items: center; gap: 9px; font-size: 13px; padding: 6px 11px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
+.st-pill > * { flex: none; }
 .st-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--healthy); }
-.st-pill .sum { color: var(--muted); max-width: 640px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st-pill .sum { flex: 0 1 auto; min-width: 0; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .st-pill .sum .chip { margin-left: 3px; }
 .st-pill b + .chip { margin-left: -4px; }
 .st-btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px; border: 0; background: var(--brand); color: var(--panel);
@@ -322,3 +326,48 @@ code { font-size: 12.5px; }
   .rn-spin, .rn-stage { animation: none; }
   .rv-fill, .rv-stripes, .cfg-opt, .cfg-seg button { transition: none; }
 }
+
+/* ---- eval2 layout fixes -------------------------------------------------------------------------------------------
+   Footer: wraps onto a second line rather than pushing a link past the edge (body is overflow:hidden). */
+.st-footer { height: auto; min-height: 30px; flex-wrap: wrap; row-gap: 2px; padding: 5px 24px; white-space: normal; overflow: visible; }
+.st-footer > * { white-space: nowrap; }
+/* Configure: the page scrolls, the columns never do (a presenter sees every lever by scrolling the page); the start
+   bar stays on screen at the bottom. */
+main.st-page-configure { overflow-y: auto; }
+.st-page-configure .cfg, .st-page-configure .cfg-body, .st-page-configure .cfg-grid { flex: none; min-height: auto; }
+.st-page-configure .cfg-grid { grid-template-rows: auto; align-items: start; }
+.st-page-configure .cfg-col { min-height: auto; }
+.st-page-configure .cfg-evenings, .st-page-configure .cfg-ctl, .st-page-configure .cfg-fleet, .st-page-configure .cfg-fixed { flex: none; min-height: auto; overflow: visible; }
+.st-page-configure .cfg-foot { position: sticky; bottom: 0; z-index: 2; background: var(--bg); padding: 10px 0; margin: 0 -24px -18px; padding-left: 24px; padding-right: 24px; border-top: 1px solid var(--border); }
+/* A tag is never inside a truncated span: text parts (.tx) shrink with an ellipsis, tags keep their size. */
+.tx { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cfg-scn-note { display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: visible; }
+.cfg-scn-note .chip, .cfg-run-id .chip { flex: none; margin-left: 2px; }
+.cfg-run-id { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 2px 4px; }
+.rv-lab .v, .rv-lab .note { display: flex; align-items: baseline; gap: 3px; overflow: visible; text-overflow: clip; }
+.rv-lab .v > .chip, .rv-lab .note > .chip { flex: none; margin-left: 0; }
+.rv-lab .v > .tx, .rv-lab .note > .tx { flex: 0 1 auto; }
+.rv-vs { overflow: visible; }
+.rv-vs > b { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.rv-vs .vs-row { display: flex; align-items: baseline; gap: 3px; min-width: 0; flex: 0 1 auto; }
+.rv-vs .vs-row > .tx { flex: 0 1 auto; }
+.rv-vs .vs-row > .num, .rv-vs .vs-row > .chip, .rv-vs .vs-row > .vs-was, .rv-vs .vs-more { flex: none; }
+.vs-was { display: inline-flex; align-items: baseline; gap: 3px; }
+.st-pill { max-width: 100%; }
+.st-pill .sum { display: flex; align-items: center; gap: 0; overflow: visible; }
+.st-pill .lv { display: flex; align-items: center; min-width: 0; flex: 0 1 auto; }
+.st-pill .lv > .tx { flex: 0 1 auto; }
+.st-pill .lv > .chip, .st-pill .sep, .st-pill .fict { flex: none; }
+.st-pill .fict { font-size: 11px; font-weight: 700; letter-spacing: .06em; padding: 1px 6px; border-radius: 4px; background: var(--ink); color: var(--panel); }
+.rv-banner .t .num { font-weight: 700; }
+.rv-banner .t .chip { color: var(--panel); border-color: rgba(255,253,248,.7); }
+.rv-frow .w { display: flex; align-items: baseline; min-width: 0; overflow: visible; }
+.rv-frow .w > .tx { flex: 0 1 auto; }
+.rv-frow .w > .tx:first-child { flex: none; max-width: 60%; }
+.rv-frow .w > .num, .rv-frow .w > .chip { flex: none; }
+/* Run aside: the cards keep their content height and the aside scrolls when they do not fit (at 1280x800 with a
+   Detector or Controller card the Right-now card was squeezed to 26 px and its failure list to 8 px) */
+.rv-aside { overflow-y: auto; overflow-x: hidden; }
+.rv-aside > .rv-card { flex-shrink: 0; }
+.rv-now { flex: 1 0 auto; overflow: visible; }
+.rv-all { flex: 1 0 auto; overflow: visible; }

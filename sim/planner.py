@@ -904,10 +904,14 @@ def build(quick=False, out=print, ref_override=None, run_ref=False):
                        "median naive cap (OpenDSS wins where checked)", p90=float(np.percentile([r["cap"]["naive"]["shown"] for r in sel], 90))),
             "aware": L(med([r["cap"]["aware"]["shown"] for r in sel]), "SIM",
                        "median feeder-aware cap (OpenDSS wins where checked)"),
-            "naiveG20": L(med([perk[20]["capNaive"][tfs.index(r["tf"])] for r in sel]), "SIM", "median naive cap, +20% home load"),
-            "awareG20": L(med([perk[20]["capAware"][tfs.index(r["tf"])] for r in sel]), "SIM", "median feeder-aware cap, +20% home load"),
-            "naiveG50": L(med([perk[50]["capNaive"][tfs.index(r["tf"])] for r in sel]), "SIM", "median naive cap, +50% home load"),
-            "awareG50": L(med([perk[50]["capAware"][tfs.index(r["tf"])] for r in sel]), "SIM", "median feeder-aware cap, +50% home load"),
+            "naiveG20": L(med([perk[20]["capNaive"][tfs.index(r["tf"])] for r in sel]), "SIM",
+                               "median naive cap, +20% home load (screening: not OpenDSS-checked)", screening=True),
+            "awareG20": L(med([perk[20]["capAware"][tfs.index(r["tf"])] for r in sel]), "SIM",
+                               "median feeder-aware cap, +20% home load (screening: not OpenDSS-checked)", screening=True),
+            "naiveG50": L(med([perk[50]["capNaive"][tfs.index(r["tf"])] for r in sel]), "SIM",
+                               "median naive cap, +50% home load (screening: not OpenDSS-checked)", screening=True),
+            "awareG50": L(med([perk[50]["capAware"][tfs.index(r["tf"])] for r in sel]), "SIM",
+                               "median feeder-aware cap, +50% home load (screening: not OpenDSS-checked)", screening=True),
         }
 
     # ---- the upgrade priority list (layer 3) ------------------------------------------------------------------------
@@ -964,7 +968,8 @@ def build(quick=False, out=print, ref_override=None, run_ref=False):
                                                         "(same function and row shape as `ranking`; g0 == ranking) with "
                                                         "the feeder-aware cap at +0 / +20 / +50% home load (perK.<g>."
                                                         "capAware, screening); g20 / g50 rows add approx = that cap is "
-                                                        "not exact on the 19-value grid; one size up at today's load"},
+                                                        "not exact on the 19-value grid, and screening: true (not "
+                                                        "OpenDSS-checked); one size up at today's load"},
         "baseline": {"label": "SIM", "text": "home load only, August: peak % and hours above 100% per transformer [379]"},
         "tfsOrder": {"label": "REAL", "text": "perK row r is transformer meta.tfOrder[r] (topology index)"},
     }
@@ -1044,7 +1049,8 @@ def upgrade_ranking(rows, curves, aware=None, exact=None):
     exceeds it; 'onboard' rows (every home already a member) say an upgrade unlocks nothing.
     aware: {tf: feeder-aware cap} at a home-load growth level (default: today's cap.aware.shown, OpenDSS wins);
     exact: {tf: bool} for that level; when given, every row gets `approx` = the aware cap was not exact on the
-    simulated k grid (the true cap may sit between grid points). One size up stays at today's load (screening)."""
+    simulated k grid (the true cap may sit between grid points) and `screening: true` (growth-level caps are not
+    OpenDSS-checked). One size up stays at today's load (screening)."""
     v = PLAN_MEMBER_VALUE_USD_YR
     C = PLAN_UPGRADE_USD
     out = []
@@ -1078,6 +1084,7 @@ def upgrade_ranking(rows, curves, aware=None, exact=None):
                     "age": L(r["age"]["v"], "DERIVED", "simulated", pRep5=r["age"]["pRep5"])})
         if exact is not None:
             out[-1]["approx"] = not exact[r["tf"]]
+            out[-1]["screening"] = True          # growth-level caps are surrogate screens, not OpenDSS-checked
     out.sort(key=lambda x: (-x["unlocked"]["v"], -(x["age"]["pRep5"]), x["tf"]))
     for i, x in enumerate(out):
         x["rank"] = i + 1

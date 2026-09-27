@@ -175,3 +175,15 @@ so the 2 MW term is larger than the fleet and always passes. The runtime gates o
 The detector in `mpalacios/detect/` uses no privileged solve, which was the point of M6′. It corroborates with the
 home's own AMI voltage at the carrier frequency, and it records the peer ratio without gating on it. If §5.6 should say
 so, that is a design.md edit (L0).
+
+### 14. REQUEST (mpalacios, from the lead's second evaluation pass, 27 Sep 2026): two fields in `out/p1/worker_kill.json`
+
+- **Path:** `mpalacios/runtime/` (the build that writes `mpalacios/out/p1/worker_kill.json`); the root
+  `ui/data/p1/worker_kill.json` is a byte copy of it (`docs/story-contract.md`), so the fix lands by re-copying.
+- **Change:** (1) write `summary.reserveUsedInOutage` like every other P1 branch (`docs/contracts.md` A.5r); (2) label
+  `summary.feederHead.ratingA` (370 A) REAL with the same cite as the other 50 scenarios (it is labelled DERIVED here).
+- **Evidence:** `C:/w/_recovery/eval2/data_invariants.py` (1,897 of 1,901 checks pass on main 1890adc; these are two of
+  the four failures). The story UI shows the reserve backup clause only when the key exists, so nothing wrong is
+  displayed today; the numbers are just missing for this one scenario.
+- **Why not done tonight:** a rebuild of this file with `mpalacios.runtime` earlier did not reproduce the committed
+  bytes, so it needs its owner's eye rather than a blind regenerate before the deadline.

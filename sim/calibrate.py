@@ -1,6 +1,6 @@
 """Calibrate the surrogate against OpenDSS and print 7.2's acceptance lines (lane L1).
 
-    lockf -k -t 2400 /private/tmp/claude-501/forge-heavy-local.lock nice -n 10 $PY -m sim.calibrate
+    $PY -m sim.calibrate   (scripts/build_all.sh calibrate takes the heavy-run lock where lockf exists)
     $PY -m sim.calibrate --quick          # < 20 s, no lock: fewer frames, 23-24 Aug census only, writes nothing
 
 Lines are tagged: [INVARIANT] gates (exit 1 on failure), [EXPECT] prints `ok <measured>` or `REFUTED: <measured>` and
@@ -295,7 +295,7 @@ def main(argv=None):
     if invariant_fail:
         print(f'CALIBRATE: FAIL ({", ".join(invariant_fail)})')
         return 1
-    print(f'CALIBRATE: PASS ({len(refuted)} expectations refuted, see NOTES.md)')
+    print(f'CALIBRATE: PASS ({len(refuted)} expectations refuted, see the [EXPECT] lines above)')
     return 0
 
 
