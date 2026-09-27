@@ -1,8 +1,8 @@
 # data/planner: inputs of the transformer capacity planner (`python -m sim.planner`)
 
 The build reads only this folder (plus the repo's own `data/` and `ui/data/topology.json`); it never reads
-`simulators/rz/research/`. The first four files are byte-exact copies of the scout's committed git blobs in
-`simulators/rz/research/capacity-planner/scout-outputs/` (checked with `git hash-object`, 26 Sep 2026).
+`previous-work/simulators/rz/research/` (archived 27 Sep 2026). The first four files are byte-exact copies of the scout's committed git blobs in
+`previous-work/simulators/rz/research/capacity-planner/scout-outputs/` (checked with `git hash-object`, 26 Sep 2026).
 
 | File | What | Label | Source |
 |---|---|---|---|

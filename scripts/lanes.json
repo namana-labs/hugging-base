@@ -10,7 +10,7 @@
       "ui/{index.html,app.js}", "ui/lib/{format,data,tip,days}.js", "ui/css/base.css", "ui/vendor/**",
       "ui/data/fixtures/**", "ui/data/topology.json", "ui/test/core.test.js",
       "data/smartds/**", "data/fleet.json", "data/ercot/**",
-      "docs/contracts.md", "docs/overnight/**"
+      "docs/contracts.md", "previous-work/docs-history/overnight/**"
     ],
     "stubs": [
       "ui/panels/{p1,p2,more}.js", "ui/lib/{scene-model,scene3d,fallback2d,charts,icons}.js", "ui/css/{p1,p2}.css"
@@ -59,7 +59,7 @@
     "smoke": ["p2", "more", "beat"]
   },
   "report": {
-    "owns": ["docs/overnight/**"],
+    "owns": ["previous-work/docs-history/overnight/**"],
     "smoke": []
   }
 }

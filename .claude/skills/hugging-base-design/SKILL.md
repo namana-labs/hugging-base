@@ -1,20 +1,20 @@
 ---
 name: hugging-base-design
-description: Hugging Base visual design system, the story-flow spec v2 (Configure, Run, Results, Learnings) and the Chapter 1 (option 3a) control-room spec. Use before building or changing any Hugging Base UI (ui/, demos/grid-stories/ui/), a mock, a slide or any visual asset, or when choosing colours, type, spacing, motion, icons or UI copy.
+description: Hugging Base visual design system, the story-flow spec v2 (Configure, Run, Results, Learnings) and the Chapter 1 (option 3a) control-room spec. Use before building or changing any Hugging Base UI (ui/, previous-work/demos/grid-stories/ui/), a mock, a slide or any visual asset, or when choosing colours, type, spacing, motion, icons or UI copy.
 user-invocable: true
 ---
 
 # Hugging Base design
 
-`docs/design-handoff/` is the authoritative design source. Where it conflicts with `docs/ui-brief.md` or with the existing prototype's look, the handoff wins. `docs/design.md` still owns scope and the project's non-negotiables.
+`previous-work/docs-history/design-handoff/` is the authoritative design source. Where it conflicts with `previous-work/docs-history/ui-brief.md` or with the existing prototype's look, the handoff wins. `previous-work/docs-history/design.md` still owns scope and the project's non-negotiables.
 
 Read, in order:
 
-1. `docs/design-handoff/README.md`: the spec. Layout, every component, interactions, state, tokens. Its values are final unless it says otherwise.
-2. `docs/design-handoff/design-system/readme.md`: brand, content rules, iconography.
-3. `docs/design-handoff/design-system/tokens/*.css` (imported by `styles.css`): use these custom properties; do not re-type hex values.
-4. `docs/design-handoff/story-flow/README.md`: the story-flow spec v2 (1a Configure, 1b Running, 2b Run, 3a Results, 4b Learnings). For those screens it wins over the Chapter 1 spec. Serve the folder over HTTP to open the `.dc.html` references; v2 ships no screenshots.
-5. `docs/design-handoff/prototype/Hugging Base Heartbeat v2.dc.html` (open with `support.js` beside it): the reference for look and motion. Option 3a is `<div class="dv-opt" id="3a">`; the logic is in the `<script data-dc-script>` block.
+1. `previous-work/docs-history/design-handoff/README.md`: the spec. Layout, every component, interactions, state, tokens. Its values are final unless it says otherwise.
+2. `previous-work/docs-history/design-handoff/design-system/readme.md`: brand, content rules, iconography.
+3. `previous-work/docs-history/design-handoff/design-system/tokens/*.css` (imported by `styles.css`): use these custom properties; do not re-type hex values.
+4. `previous-work/docs-history/design-handoff/story-flow/README.md`: the story-flow spec v2 (1a Configure, 1b Running, 2b Run, 3a Results, 4b Learnings). For those screens it wins over the Chapter 1 spec. Serve the folder over HTTP to open the `.dc.html` references; v2 ships no screenshots.
+5. `previous-work/docs-history/design-handoff/prototype/Hugging Base Heartbeat v2.dc.html` (open with `support.js` beside it): the reference for look and motion. Option 3a is `<div class="dv-opt" id="3a">`; the logic is in the `<script data-dc-script>` block.
 
 ## Rules that are easy to get wrong
 

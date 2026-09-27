@@ -3,14 +3,14 @@
 // (docs/story-contract.md, `ui/data/story/index.json`, schema hb.story.v1) built from COMMITTED files only. The app
 // never loads it (it reads ENGINE's ui/data/story/index.json only); ui/test/story-configure.test.js checks the lever
 // logic against it. It never invents a number: every value is copied
-// from ui/data/p1/meta.json, ui/data/p1/days/**, ui/data/engine.json or mpalacios/out/** (the two runtime files the
+// from ui/data/p1/meta.json, ui/data/p1/days/**, ui/data/engine.json or resilience/out/** (the two runtime files the
 // contract says ENGINE copies into ui/data), with its label and cite.
 //
 //   node ui/test/fixtures/make-story-dev-catalogue.mjs --write     writes ui/test/fixtures/story-dev-catalogue.json
 // (without --write it does nothing: `node --test ui/test/` also runs every .mjs under a test/ folder)
 //
 // What the dev catalogue can play: 23 Aug none/naive/aware/aware+faults (p1/*.json), the three history evenings'
-// none/naive/aware (p1/days/<date>/*.json.gz), worker_kill and covert (from mpalacios/out/, outside ui/data: fine on
+// none/naive/aware (p1/days/<date>/*.json.gz), worker_kill and covert (from resilience/out/, outside ui/data: fine on
 // the dev server, which serves the repo root). The fleet variants are listed as unavailable ("not built yet").
 import fs from 'node:fs';
 import path from 'node:path';
@@ -148,8 +148,8 @@ for (const d of days.days) {
   }
   if (!d.dir) {
     // the runtime files (A.6b, A.11), read where they are committed today; ENGINE copies them to p1/worker_kill.json and
-    // p3/covert.json. Paths are relative to ui/data, so "../../mpalacios/..." is the repo's mpalacios/ on the dev server.
-    const wkRel = '../../mpalacios/out/p1/worker_kill.json', cvRel = '../../mpalacios/out/p3/covert.json';
+    // p3/covert.json. Paths are relative to ui/data, so "../../resilience/..." is the repo's resilience/ on the dev server.
+    const wkRel = '../../resilience/out/p1/worker_kill.json', cvRel = '../../resilience/out/p3/covert.json';
     const wk = read(path.join(DATA, wkRel));
     const cv = read(path.join(DATA, cvRel));
     const ws = {};

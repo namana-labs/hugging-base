@@ -4,7 +4,7 @@
     {
       "name": "four-node-viewer",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "4388", "--bind", "127.0.0.1", "--directory", "simulators/connor"],
+      "runtimeArgs": ["-m", "http.server", "4388", "--bind", "127.0.0.1", "--directory", "previous-work/simulators/connor"],
       "port": 4388
     }
   ]

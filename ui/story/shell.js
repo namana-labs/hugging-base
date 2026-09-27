@@ -270,7 +270,7 @@ export function createShell(body) {
             <span class="dot"></span><b>${esc(scenario.levers ? optionWords(catalogue, 'evening', scenario.levers.evening) : scenario.id)}</b>${ev ? tagHTML(ev.label, ev.cite) : ''}<span class="sum">${scenario.levers ? leverSummaryHTML(catalogue, scenario.levers, movedKeys(catalogue, scenario.levers)) : ''}</span>${scenario.levers && scenario.levers.failure === 'covert' ? '<span class="fict">Fictional attacker</span>' : ''}</span>
           <a class="st-btn" href="${esc(link(NEXT[page][0], {}))}" data-next="${NEXT[page][0]}">${NEXT[page][1]}</a>`;
       }
-      header.innerHTML = `<div class="st-wordmark">Hugging Base</div><nav class="st-steps" aria-label="Story steps">${steps}</nav>
+      header.innerHTML = `<div class="st-wordmark"><img class="st-mark" src="assets/batter-up-mark-256.png" alt="" width="29" height="36">Batter Up</div><nav class="st-steps" aria-label="Story steps">${steps}</nav>
         <div class="st-spacer"></div>${right}`;
       // Learnings' framing: the setting its answers were computed for, as the P2 export words it (p2/index.json scope)
       const fr = header.querySelector('[data-framing="learnings"]');

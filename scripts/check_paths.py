@@ -18,7 +18,11 @@ from pathlib import Path
 FORBIDDEN = ["demos/**", "four-home-simulation/**", "docs/headroom/**", "headroom-gridspine-dossier.html",
              "docs/{design,plan,ui-brief,reconciliation,research-report}.md",
              # round 2 (RZ ruling 26 Sep): never edit Connor's folders or the design handoff he owns
-             "simulators/**", "docs/design-handoff/**", ".claude/skills/**"]
+             "simulators/**", "docs/design-handoff/**", ".claude/skills/**",
+             # 27 Sep 2026: the same files, archived under previous-work/ (moved, never deleted)
+             "previous-work/{demos,four-home-simulation,simulators,bo,handoff,presentation}/**",
+             "previous-work/docs-history/{headroom,design-handoff}/**",
+             "previous-work/docs-history/{design,plan,ui-brief,reconciliation}.md"]
 
 
 def glob_re(pat):

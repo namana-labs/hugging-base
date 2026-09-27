@@ -1,3 +1,0 @@
-# Live recordings carry wall-clock fields and are never committed (mpalacios/runtime/live.py).
-*
-!.gitignore

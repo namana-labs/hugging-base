@@ -1,0 +1,3 @@
+# Live recordings carry wall-clock fields and are never committed (resilience/runtime/live.py).
+*
+!.gitignore

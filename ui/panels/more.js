@@ -52,7 +52,7 @@ export function unscreenedChips(html) {
 export const DEFAULT_AWARE = 'aware-core-d26-g0';
 export const DEFAULT_NAIVE = 'naive-core-d26-g0';
 
-// Data-truth fix list (handoff/ENGINE.md; simulators/rz/judges/DATA-TRUTH-*.md): shared wording, never a number typed in.
+// Data-truth fix list (previous-work/handoff/ENGINE.md; previous-work/simulators/rz/judges/DATA-TRUTH-*.md): shared wording, never a number typed in.
 /** #5: the fleet placement is a deliberate stress placement (sim/constants.py FLEET_SIZE), not a neutral one. */
 export const FLEET_PLACEMENT_CITE = 'a deliberate stress placement, frozen in data/fleet.json: a cluster placed on purpose on the '
   + 'densest homes near one centre (every battery on street A-D is from it) plus random homes (demos/grid-stories/sim/'
@@ -1172,9 +1172,9 @@ export async function mount(el, ctx) {
     <div class="hb-cards more-mid">${plugInCard(ctx, S)}${engineCard(ctx, S)}</div>
     <h2 class="more-h">Everything that already worked, unchanged</h2>
     <div class="hb-cards">
-      ${STORIES.map(([t, d]) => `<div class="hb-card"><h3><a href="../demos/grid-stories/ui/dist/">${esc(t)}</a></h3><div class="hb-sub">${esc(d)} Pick it in the prototype's story menu. Connor's prototype, unchanged; its prices and loads are scripted.</div></div>`).join('')}
+      ${STORIES.map(([t, d]) => `<div class="hb-card"><h3><a href="https://github.com/namana-labs/hugging-base/tree/main/previous-work/demos/grid-stories" target="_blank" rel="noopener">${esc(t)}</a></h3><div class="hb-sub">${esc(d)} In the prototype's story menu (archived in <code>previous-work/demos/grid-stories/</code>; run it from a checkout). Connor's prototype, unchanged; its prices and loads are scripted.</div></div>`).join('')}
       <div class="hb-card more-caveat"><h3>${svg('info', { size: 16 })} Before you quote the prototype</h3><div class="hb-sub">${PROTO_CAVEAT(fmt)}</div></div>
-      <div class="hb-card"><h3><a href="../four-home-simulation/four-home.html">Four-home simulation</a></h3><div class="hb-sub">Michael's four-home model on real prices, unchanged. ${FOURHOME_CAVEAT(fmt, hijackBandHTML(fmt, storyCat))}</div></div>
+      <div class="hb-card"><h3><a href="https://github.com/namana-labs/hugging-base/tree/main/previous-work/four-home-simulation" target="_blank" rel="noopener">Four-home simulation</a></h3><div class="hb-sub">Michael's four-home model on real prices, unchanged. ${FOURHOME_CAVEAT(fmt, hijackBandHTML(fmt, storyCat))}</div></div>
       ${await chaosCard(ctx)}
     </div>
     ${await emsCards(ctx)}</div>`;
