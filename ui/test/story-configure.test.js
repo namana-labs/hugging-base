@@ -244,6 +244,22 @@ test('configure: the evening disclosure (data-truth #9) computes both weekdays a
   assert.match(p.text, /weekday differs \(Sun prices, Thu load\)/);
   assert.match(p.text, /one hour early/);
   assert.ok(p.text.includes(meta.constants.LOAD_PAIRING.value));
-  assert.equal(pairingText('2026-07-22').load, 'Sun 22 Jul 2018');
+  assert.equal(pairingText('2026-07-22', meta.constants).load, 'Sun 22 Jul 2018');
+  // the profile year is read from the data (LOAD_PAIRING, else the dataset name), never typed
+  assert.equal(pairingText('2026-07-22', {}, 'NREL SMART-DS 2018 AUS P1U').load, 'Sun 22 Jul 2018');
+  assert.equal(pairingText('2026-07-22', { LOAD_PAIRING: { value: '2019 load paired by calendar date' } }).load, 'Mon 22 Jul 2019');
+  const bare = pairingText('2026-07-22');
+  assert.equal(bare.load, null);
+  assert.equal(bare.sameWeekday, null);
+  assert.doesNotMatch(bare.text, /20\d\d profile|2018/);
   assert.equal(pairingText('nope'), null);
+});
+
+test('configure: the feeder dataset name comes from topology (FEEDER_NAME, else meta.feeder)', async () => {
+  const { feederName } = await import('../story/configure.js');
+  const t = JSON.parse(fs.readFileSync(path.join(UI, 'data', 'topology.json'), 'utf8'));
+  const f = feederName(t);
+  assert.equal(f.name, (t.constants && t.constants.FEEDER_NAME && t.constants.FEEDER_NAME.value) || t.meta.feeder);
+  assert.deepEqual(feederName({ meta: { feeder: 'X feeder' } }), { name: 'X feeder', label: 'REAL', cite: 'topology.json meta.feeder' });
+  assert.equal(feederName({}), null);
 });

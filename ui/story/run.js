@@ -49,6 +49,17 @@ export function runFiles(scenario) {
   return out;
 }
 
+/** The named places from topology: "Street A–D" (the first and last focus keys) and "T-240" (bridge[0].tf); null when
+ *  the topology does not name them (the camera button and the label are then left out, never typed). */
+export function focusLabels(topology) {
+  const keys = ((topology && topology.focus) || []).map((f) => f.key).filter(Boolean);
+  const b = topology && Array.isArray(topology.bridge) && topology.bridge[0];
+  return {
+    streetsLabel: keys.length ? `Street ${keys.length > 1 ? `${keys[0]}–${keys[keys.length - 1]}` : keys[0]}` : null,
+    bridgeLabel: b && Number.isInteger(b.tf) ? `T-${b.tf}` : null,
+  };
+}
+
 export function tfName(topology, tf) {
   const f = (topology.focus || []).find((x) => x.tf === tf);
   if (f) return `Street ${f.key}`;
@@ -351,7 +362,8 @@ export async function mount(root, ctx) {
   const kwMax = Math.max(...Array.from(S.kw, Math.abs));
   const kwHi = Math.max(2000, Math.ceil(kwMax / 1000) * 1000);
   const uid = Math.random().toString(36).slice(2, 8);
-  const vsRows = vsDefaultRows(ctx.catalogue || {}, sc);
+  const vsRows = vsDefaultRows(ctx.catalogue || {}, sc, { end: stepToTime(meta, n) });
+  const { streetsLabel, bridgeLabel } = focusLabels(topology);
   // data-truth audit #5: the fleet sits where it stresses these streets on purpose (topology meta.shaping; a variant's
   // own placement rule is the catalogue's FLEET_PLACEMENT)
   const shaping = topology.meta && topology.meta.shaping;
@@ -380,7 +392,7 @@ export async function mount(root, ctx) {
       <div class="rv-scene"><div class="rv-scene-el"></div><div class="rv-loading">Loading the feeder…</div>
         <div class="rv-over"><div class="rv-story" hidden><b></b><span></span></div><div class="rv-banner" hidden><span class="bang">!</span><span class="t"></span></div>
           ${covertOn ? `<div class="rv-fict" title="${esc((covert.sources && covert.sources.adversary && covert.sources.adversary.text) || '')}">Fictional attacker</div>` : ''}</div>
-        <div class="rv-cams" role="radiogroup" aria-label="Camera">${[['feeder', 'Whole feeder'], ['street', 'Street A–D'], ['t240', 'T-240']].map(([id, t]) => `<button type="button" data-cam="${id}" class="${id === 'feeder' ? 'on' : ''}">${t}</button>`).join('')}</div>
+        <div class="rv-cams" role="radiogroup" aria-label="Camera">${[['feeder', 'Whole feeder'], ['street', streetsLabel], ['t240', bridgeLabel]].filter(([, t]) => t).map(([id, t]) => `<button type="button" data-cam="${id}" class="${id === 'feeder' ? 'on' : ''}">${esc(t)}</button>`).join('')}</div>
         <div class="rv-legend">${legend.map(([c, t]) => `<span><i style="background:${rgb(c)}"></i>${esc(t)}</span>`).join('')}${tagHTML(loadLab, 'OpenDSS loading, as % of nameplate kVA as shipped; tiers from the engine (never re-derived here)')}</div>
       </div>
       <div class="rv-lanes">
@@ -393,7 +405,7 @@ export async function mount(root, ctx) {
           <div class="rv-lab"><span class="n">Worst transformer</span><span class="v" data-v="worst"></span></div>
           ${lane({ id: 'w', html: `<path d="${lanePath(S.worst, ...LANE_WORST)}" fill="none" stroke="#10231a" stroke-width="1.4" vector-effect="non-scaling-stroke"></path>` },
             (tiers.normal ? dash(tiers.normal, ...LANE_WORST, '#c7962b') : '') + (tiers.emergency ? dash(tiers.emergency, ...LANE_WORST, '#b23a2f') : ''))}
-          <div class="rv-lab"><span class="n">Street A–D, T-240</span><span class="v" data-v="focus"></span>${placementNote}</div>
+          <div class="rv-lab"><span class="n">${esc([streetsLabel, bridgeLabel].filter(Boolean).join(', ') || 'Named transformers')}</span><span class="v" data-v="focus"></span>${placementNote}</div>
           ${lane({ id: 'f', html: S.focus.map((f) => `<path d="${lanePath(f.pct, ...LANE_FOCUS)}" fill="none" stroke="#10231a" stroke-opacity="${f.key.length > 1 ? 0.9 : 0.55}" stroke-width="1.1" ${f.key.length > 1 ? 'stroke-dasharray="4 3"' : ''} vector-effect="non-scaling-stroke"></path>`).join('') },
             tiers.amber ? dash(tiers.amber, ...LANE_FOCUS, '#c7962b') : '')}
           <div class="rv-lab"><span class="n">Price $/MWh</span><span class="v" data-v="price"></span></div>

@@ -10,13 +10,14 @@
 //     one resets the first (the note says so); any other lever the move changes carries the catalogue's reason.
 // Nothing here invents a number: the Fixed column reads the scenario's meta (constants, plan, sources) and topology.
 import { tagHTML, FEEDER_TAG, FEEDER_CITE, vsDefaultRows, vsDefaultHTML } from './shell.js';
-import { dateLabel } from '../lib/format.js';
+import { dateLabel, stepToTime } from '../lib/format.js';
 
 export const LEVER_KEYS = ['evening', 'policy', 'failure', 'fleet', 'cls', 'reserve', 'soc0', 'growth'];
 export const FLEET_KEYS = ['fleet', 'cls', 'reserve', 'soc0', 'growth'];
 export const ONE_LEVER_REASON = 'the engine ran the fleet levers one away from the default at a time';
 export const NO_BATTERIES_REASON = 'No batteries in this run: pick a dispatch policy first';
 export const NOT_RUN_REASON = 'Not run: no engine run in the catalogue has these settings';
+const LABEL_OK = (l) => ['REAL', 'SIM', 'DERIVED', 'ASSUMPTION', 'UNVERIFIED', 'SCREENING'].includes(l);
 const same = (a, b) => String(a) === String(b);
 
 export const defaultLevers = (cat) => Object.fromEntries(LEVER_KEYS.map((k) => [k, cat.levers && cat.levers[k] ? cat.levers[k].default : undefined]));
@@ -103,23 +104,37 @@ export function customersHTML(cc, num, feederCite = '') {
   return `${total} (${t(cc.residential)} homes, ${t(cc.commercial)} small businesses)`;
 }
 
-/** The evening's load/price pairing, disclosed (data-truth audit #9): the 2026 price date and the 2018 load date of
+/** The first calendar year named in a text ("2018 SMART-DS weather-year load ..." -> 2018), or null. */
+export const yearIn = (text) => { const m = /\b(19|20)\d{2}\b/.exec(String(text || '')); return m ? m[0] : null; };
+
+/** The evening's load/price pairing, disclosed (data-truth audit #9): the price date and the load profile's date of
  *  the same calendar day (LOAD_PAIRING), both weekdays COMPUTED from the dates, and the unverified DST clock
- *  (PROFILE_INDEX_RULE). `constants` = the run meta's constants (their own text when present). */
-export function pairingText(date, constants = {}) {
+ *  (PROFILE_INDEX_RULE). `constants` = the run meta's constants; `dataset` = the feeder dataset's name (topology
+ *  FEEDER_NAME). The profile year is read from LOAD_PAIRING's text, else the dataset name; without one, no weekday. */
+export function pairingText(date, constants = {}, dataset = '') {
   const m = /^(\d{4})-(\d{2}-\d{2})$/.exec(String(date || ''));
   if (!m) return null;
-  const price = dateLabel(date), loadDay = dateLabel(`2018-${m[2]}`);
-  if (!price || !loadDay) return null;
   const pair = constants.LOAD_PAIRING, clock = constants.PROFILE_INDEX_RULE;
-  const sameWeekday = price.slice(0, 3) === loadDay.slice(0, 3);
+  const year = yearIn(pair && pair.value) || yearIn(dataset);
+  const price = dateLabel(date), loadDay = year ? dateLabel(`${year}-${m[2]}`) : null;
+  if (!price) return null;
+  const sameWeekday = loadDay ? price.slice(0, 3) === loadDay.slice(0, 3) : null;
+  const src = dataset ? `the ${dataset} load profile` : 'the feeder dataset\'s load profile';
   return {
     price, load: loadDay, sameWeekday,
-    short: `Home load: the 2018 profile of ${loadDay}`,
-    text: `Prices: ERCOT LZ_NORTH on ${price} (REAL). Home load: the NREL SMART-DS 2018 profile of the same calendar date, ${loadDay} (ASSUMPTION${pair ? `: ${pair.value}` : ''}). `
-      + (sameWeekday ? 'The weekdays match. ' : `The weekday differs (${price.slice(0, 3)} prices, ${loadDay.slice(0, 3)} load). `)
-      + `The 2018 profiles have no daylight-saving shift, so the load may sit one hour early against the CDT prices${clock ? ` (${clock.value})` : ''}.`,
+    short: loadDay ? `Home load: the profile of ${loadDay}` : 'Home load: the profile of the same calendar date',
+    text: `Prices: ERCOT LZ_NORTH on ${price} (REAL). Home load: ${src} of the same calendar date${loadDay ? `, ${loadDay}` : ''} (ASSUMPTION${pair ? `: ${pair.value}` : ''}). `
+      + (sameWeekday === null ? '' : sameWeekday ? 'The weekdays match. ' : `The weekday differs (${price.slice(0, 3)} prices, ${loadDay.slice(0, 3)} load). `)
+      + `The profiles have no daylight-saving shift, so the load may sit one hour early against the CDT prices${clock ? ` (${clock.value})` : ''}.`,
   };
+}
+
+/** The feeder dataset's name and its label: topology constants.FEEDER_NAME, else meta.feeder; null when neither. */
+export function feederName(topology) {
+  const c = topology && topology.constants && topology.constants.FEEDER_NAME;
+  if (c && c.value) return { name: String(c.value), label: c.label || 'REAL', cite: c.cite || '' };
+  const f = topology && topology.meta && topology.meta.feeder;
+  return f ? { name: String(f), label: 'REAL', cite: 'topology.json meta.feeder' } : null;
 }
 
 /** The presets, in the catalogue's order: [{name, id, scenario}]. `catalogue.presets` ([{name, id}]) when present,
@@ -228,7 +243,8 @@ export async function mount(root, ctx) {
 
   // the catalogue's vsDefault (what this run changed against the default run), shown by the lever that moved
   function movedLevers() {
-    const rows = vsDefaultRows(cat, scenario);
+    const end = meta && meta.start && meta.steps ? stepToTime(meta, meta.steps) : null;
+    const rows = vsDefaultRows(cat, scenario, { end });
     if (!rows.length) return { keys: [], rows };
     const ref = scenarioById(cat, rows[0].refId);
     return { keys: ref ? LEVER_KEYS.filter((k) => !same(ref.levers[k], scenario.levers[k])) : [], rows };
@@ -256,7 +272,8 @@ export async function mount(root, ctx) {
     const L = cat.levers.evening;
     $('.cfg-evenings').innerHTML = (L.options || []).map((o) => {
       const pk = peakOf(o.id);
-      const pair = pairingText(o.id, (meta && meta.constants) || {});
+      const fn = feederName(topo);
+      const pair = pairingText(o.id, (meta && meta.constants) || {}, fn ? fn.name : '');
       const extra = `<span class="cfg-ev-tag">${esc(o.tag || '')}</span>${whyHTML(o.why)}
         ${pk ? `<span class="cfg-ev-peak">Peak price ${ctx.num(pk, { money: true, digits: 2, unit: '/MWh' })}${pk.t ? ` at ${esc(pk.t)}` : ''}</span>` : ''}
         ${pair ? `<span class="cfg-ev-load">${esc(pair.short)}${pair.sameWeekday ? '' : ' (another weekday)'} ${tagHTML('ASSUMPTION', pair.text)}</span>` : ''}`;
@@ -299,7 +316,8 @@ export async function mount(root, ctx) {
     const cite = `${FEEDER_CITE} Counts: topology.json meta.counts.`;
     const grid = [];
     if (topo) {
-      grid.push(row('Feeder', `NREL SMART-DS 2018 AUS P1U <span class="cfg-synth" title="${esc(FEEDER_CITE)}">${esc(FEEDER_TAG)}</span>`
+      const fn = feederName(topo);
+      grid.push(row('Feeder', `${fn ? `${esc(fn.name)} ${tagHTML(LABEL_OK(fn.label) ? fn.label : 'REAL', fn.cite)}` : ''} <span class="cfg-synth" title="${esc(FEEDER_CITE)}">${esc(FEEDER_TAG)}</span>`
         + (counts && cc ? `<br>${ctx.num({ v: counts.transformers, label: 'REAL', cite })} transformers · ${customersHTML(cc, ctx.num, cite)}` : '')));
       const sh = topo.meta.shaping;
       if (sh && sh.description) grid.push(row('Fleet placement', `a deliberate stress placement, not a neutral one ${tagHTML(sh.label || 'ASSUMPTION', sh.description)}`));
