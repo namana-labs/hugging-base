@@ -14,9 +14,9 @@ Jobs (each one live OpenDSS circuit; run several processes in parallel, then --c
   variant:<l>=<v>    one fleet lever away from the default on 23 Aug (FLEET_LEVERS): naive and aware (growth also its own
                      none) into ui/data/p1/variants/<l>=<v>/ (meta.json + <branch>.json.gz in the A.5/A.6 shapes, with
                      `variant`, `fleet`, `fleetCls` and measured engine seconds) and their extras.
-  worker_kill        re-builds mpalacios.runtime's worker-kill replay into a temp dir (measures its cost; must be
-                     byte-identical to the committed copy) and derives the extras its branch file allows; the rest is
-                     ABSENT, never zero.
+  worker_kill        derives the extras the committed worker-kill replay (mpalacios/out/p1/worker_kill.json) allows,
+                     from that file alone (never rebuilt here); the rest is ABSENT, never zero. Its engine cost is the
+                     measured rebuild time in mpalacios/docs/measurements.md (WORKER_KILL_SECONDS).
 The catalogue step copies mpalacios/out/p1/worker_kill.json -> ui/data/p1/worker_kill.json and
 mpalacios/out/p3/covert.json -> ui/data/p3/covert.json byte for byte, and writes ui/data/story/index.json.
 
@@ -29,7 +29,6 @@ import json
 import os
 import shutil
 import sys
-import tempfile
 import time
 from pathlib import Path
 
@@ -51,6 +50,7 @@ MP_COVERT = ROOT / "mpalacios" / "out" / "p3" / "covert.json"
 TOPOLOGY = UI_DATA / "topology.json"
 
 EVENINGS = ("2026-08-23", "2026-07-22", "2026-08-14", "2026-08-26")
+HISTORY_ORDER = ("2026-07-22", "2026-08-26", "2026-08-14")     # sim.history.DAYS order without 23 Aug (build order)
 POLICIES = ("none", "naive", "aware")
 FAILURES = ("none", "faults", "worker_kill", "covert")
 LEVER_ORDER = ("evening", "policy", "failure", "fleet", "cls", "reserve", "soc0", "growth")
@@ -89,6 +89,8 @@ FLEET_LEVERS = (
     + [("soc0", s) for s in STORY_SOC0_PCT if s != 90]
     + [("growth", g) for g in STORY_GROWTH_PCT if g != 0])
 FOCUS = {150: "A", 357: "B", 246: "C", 156: "D"}
+# An evening whose extras cannot be reproduced is listed here with the evidence and stays out of the catalogue.
+EVENING_PENDING = {}
 PRESETS = [("The demo evening", f"{P1_DAY}/aware"), ("Record demand", "2026-07-22/aware"),
            ("Priciest evening", "2026-08-26/aware"), ("Pieces fail", f"{P1_DAY}/aware/faults"),
            ("Controller crash", f"{P1_DAY}/aware/worker_kill"), ("Hidden attacker", f"{P1_DAY}/aware/covert")]
@@ -537,28 +539,30 @@ def job_variant(lever, value, feeder=None, none_run=None):
     return runs
 
 
-def job_worker_kill(measure=True):
-    """Extras for the worker-kill replay (from its committed branch file) and its measured engine cost."""
-    src = MP_WORKER_KILL
-    bd = json.loads(src.read_text(encoding="utf-8"))
-    engine = engine_block(None, 2 * (bd["steps"] + 1),
-                          "not measured in this build (mpalacios.runtime replay, baseline + kill runs)")
-    if measure:
-        from mpalacios.runtime import build as rb
-        with tempfile.TemporaryDirectory() as tmp:
-            t0 = time.time()
-            rb.build("full", out=tmp, quiet=True)
-            secs = time.time() - t0
-            same = (Path(tmp) / rb.REL).read_bytes() == src.read_bytes()
-        if not same:
-            raise SystemExit("mpalacios.runtime rebuilt worker_kill.json differently from mpalacios/out/p1: stop")
-        engine = engine_block(secs, 2 * (bd["steps"] + 1),
-                              "mpalacios.runtime.build: baseline + worker-kill runs, 720 steps each, OpenDSS every "
-                              "step; the rebuild is byte-identical to the committed replay")
-        print(f"worker_kill: rebuilt byte-identical in {secs:.1f} s", flush=True)
+WORKER_KILL_SECONDS = const(
+    "WORKER_KILL_SECONDS", 55, "DERIVED",
+    "mpalacios/docs/measurements.md B1.3: `mpalacios.runtime.verify --rebuild` took 51-55 s per build on this machine "
+    "(baseline + worker-kill runs, 720 steps each, OpenDSS every step), byte-identical twice; not re-measured by "
+    "sim.scenarios, which copies the committed replay and never rebuilds it")
+COVERT_SECONDS = const(
+    "COVERT_SECONDS", 110, "DERIVED",
+    "mpalacios/docs/measurements.md B1.3: `mpalacios.detect.verify --rebuild` took 83-110 s per build on this machine, "
+    "byte-identical; not re-measured by sim.scenarios")
+
+
+def job_worker_kill():
+    """Extras for the worker-kill replay, derived only from its committed branch file (mpalacios/out/p1/worker_kill.json,
+    copied byte for byte; never rebuilt here). vTfMilli, head P/Q, the capacitor and the feeder load are not in that
+    file: ABSENT (listed in `absent`), never zeros. busOrder/busDistKm are the feeder's (the same circuit), read from the
+    23 Aug aware extras."""
+    bd = json.loads(MP_WORKER_KILL.read_text(encoding="utf-8"))
+    engine = {"buildSeconds": labelled(WORKER_KILL_SECONDS, "DERIVED", TAG["WORKER_KILL_SECONDS"]["cite"]),
+              "solves": labelled(2 * (bd["steps"] + 1), "SIM",
+                                 "OpenDSS solves in mpalacios.runtime.build: baseline + worker-kill runs, one warm-up "
+                                 "each")}
     topo = json.loads(TOPOLOGY.read_text(encoding="utf-8"))
-    from .feeder import Feeder
-    bus = bus_order(Feeder())
+    base = read_json_any(UI_DATA / extras_rel(scenario_id(P1_DAY, "aware")))
+    bus = (base["busOrder"], base["busDistKm"])
     labels = [h["label"] for h in topo["homes"]]
     fleet_labels = [labels[h] for h in topo["fleet"]]
     rt = bd["runtime"]
@@ -577,6 +581,7 @@ def job_worker_kill(measure=True):
     sid = scenario_id(P1_DAY, "aware", "worker_kill")
     doc = extras_from_branch_doc(bd, "16:00", sid, bus, fleet_labels, mom, fail, engine)
     _write_extras(sid, doc)
+    return doc
 
 
 def all_jobs():
@@ -597,17 +602,26 @@ def job_of(token):
     raise SystemExit(f"unknown job or scenario id {token!r}; jobs: {', '.join(all_jobs())}")
 
 
-def run_jobs(jobs, measure_runtime=True):
+def run_jobs(jobs):
     """Run jobs in order, sharing one default-fleet circuit (OpenDSS is one circuit per process)."""
     from .feeder import Feeder
     feeder = None
     none_run = None
-    base_first = sorted(jobs, key=lambda j: (not j.startswith("base:"), j.startswith("variant:fleet")
-                                              or j.startswith("variant:cls"), j == "worker_kill"))
+    if any(j.startswith("base:") and j[5:] != P1_DAY for j in jobs):
+        # The history evenings are re-run exactly as `python -m sim.history` built them: one fresh circuit, the days in
+        # sim.history.DAYS order (22 Jul, 26 Aug, 14 Aug), three branches each. OpenDSS starts every solve from the
+        # last solution, so a day's loading reproduces bit for bit only from the same circuit state: 26 Aug run after
+        # 14 Aug differs in 38 cells (j_days.log), after 22 Jul it matches (the committed build's order).
+        hist_feeder = Feeder()
+        for e in HISTORY_ORDER:
+            job_base(e, feeder=hist_feeder)
+        del hist_feeder
+    base_first = sorted((j for j in jobs if not (j.startswith("base:") and j[5:] != P1_DAY)),
+                        key=lambda j: (not j.startswith("base:"), j.startswith("variant:fleet")
+                                       or j.startswith("variant:cls"), j == "worker_kill"))
     for j in base_first:
         if j.startswith("base:"):
-            if feeder is None:
-                feeder = Feeder()
+            feeder = Feeder()                                  # sim.p1_build's order on a fresh circuit
             runs, _ = job_base(j[5:], feeder=feeder)
             if j[5:] == P1_DAY:
                 none_run = runs["none"]
@@ -627,8 +641,7 @@ def run_jobs(jobs, measure_runtime=True):
                                           faults={"dwell": MIN_DWELL_MIN})
                 job_variant(lv, v, feeder=feeder, none_run=none_run)
         elif j == "worker_kill":
-            feeder = None
-            job_worker_kill(measure=measure_runtime)
+            job_worker_kill()
 
 
 # ---- the catalogue (ui/data/story/index.json) -------------------------------------------------------------------
@@ -723,6 +736,23 @@ def _engine_of(sid, fallback_rel=None):
     return read_json_any(p).get("engine")
 
 
+HEADLINE = ("batteryCausedNormal", "batteryCausedEmergency", "batteryCausedAmberMin", "energyValueUSD", "maxLoading",
+            "normalEvents", "emergencyTfs", "chargedPctBy0400", "reserveBreaches", "protectionOperated", "homesDark")
+
+
+def vs_default(summary, ref, ref_id):
+    """{key: {v, ref, refId}} for the headline keys whose value differs from the reference scenario's (the same policy on
+    the default evening and fleet): what this scenario's lever actually moved. Values only; labels stay in `summary`."""
+    out = {}
+    for k in HEADLINE:
+        a, b = summary.get(k), ref.get(k)
+        if not isinstance(a, dict) or not isinstance(b, dict):
+            continue
+        if a.get("v") != b.get("v"):
+            out[k] = {"v": a.get("v"), "ref": b.get("v"), "refId": ref_id}
+    return out
+
+
 def build_catalogue():
     """ui/data/story/index.json from the files on disk. Every path it names must exist."""
     days = _read("p1/days/index.json")
@@ -739,7 +769,12 @@ def build_catalogue():
                   "engine": engine or engine_block(None, 0, "not measured")})
         scen.append(s)
 
+    pending = {}
     for e in EVENINGS:
+        miss = [b for b in POLICIES if not (UI_DATA / extras_rel(scenario_id(e, b))).exists()]
+        if miss:
+            pending[e] = miss
+            continue
         meta = _read(base_meta_rel(e))
         comp = {b: base_branch_rel(e, b) for b in POLICIES}
         for b in POLICIES:
@@ -763,7 +798,11 @@ def build_catalogue():
                 _engine_of(scenario_id(e, "aware")),
                 f"{date_label[e]}: feeder-aware, a fictional attacker hides a signal in the fleet",
                 attack="p3/covert.json", attackSummary=cv["summary"], producer="mpalacios.detect",
-                plays=scenario_id(e, "aware"))
+                plays=scenario_id(e, "aware"),
+                attackEngine={"buildSeconds": labelled(COVERT_SECONDS, "DERIVED", TAG["COVERT_SECONDS"]["cite"]),
+                              "note": {"text": "the attack replay (clean, watching and quarantine runs) is "
+                                               "mpalacios.detect's; the feeder page plays the 23 Aug aware branch",
+                                       "label": "SIM"}})
     none_sid = scenario_id(P1_DAY, "none")
     base_meta = _read("p1/meta.json")
     for lv, v in FLEET_LEVERS:
@@ -786,6 +825,11 @@ def build_catalogue():
                 extras_rel(none_sid), {"none": base_branch_rel(P1_DAY, "none"), **{b: comp[b] for b in pols}},
                 base_meta["summary"]["none"], _engine_of(none_sid),
                 f"{date_label[P1_DAY]}: {POLICY_LABEL['none']} (a battery lever does not change it)", alias=none_sid)
+    by_id = {s["id"]: s for s in scen}
+    for s in scen:
+        ref_id = scenario_id(P1_DAY, s["levers"]["policy"])
+        if s["id"] != ref_id and ref_id in by_id and s.get("alias") != ref_id:
+            s["vsDefault"] = vs_default(s["summary"], by_id[ref_id]["summary"], ref_id)
     ids = [s["id"] for s in scen]
     if len(set(ids)) != len(ids):
         raise AssertionError("duplicate scenario ids")
@@ -797,7 +841,10 @@ def build_catalogue():
     off = {lv: [o["id"] for o in levers_block(days)[lv]["options"] if o["id"] != DEFAULT_LEVERS[lv]]
            for lv in fleet_levers}
     others = [e for e in EVENINGS if e != P1_DAY]
-    unavailable = [
+    unavailable = [{"levers": {"evening": [e]},
+                    "reason": EVENING_PENDING.get(e, "This evening's Results exports are not built yet")}
+                   for e in pending]
+    unavailable += [
         {"levers": {"evening": others, "failure": ["faults", "worker_kill", "covert"]},
          "reason": "Failures are scripted on 23 Aug only: the failure script is tuned to that evening (HIST-R2 D2)"},
         {"levers": {"policy": ["none", "naive"], "failure": ["faults", "worker_kill", "covert"]},
@@ -821,7 +868,9 @@ def build_catalogue():
                             "timing": {"label": "DERIVED", "text": "engine.buildSeconds measured on a shared machine; "
                                                                    "not byte-reproducible"}},
                    series={})
+    preset_list = [{"name": name, "id": sid} for name, sid in PRESETS if sid in by_id]
     doc.update({"default": DEFAULT_ID, "levers": levers_block(days), "leverOrder": list(LEVER_ORDER),
+                "presets": preset_list, "headline": list(HEADLINE),
                 "match": "a scenario is found by its id; otherwise the first `unavailable` row whose every lever "
                          "matches (a list = any of) gives the reason",
                 "scenarios": scen, "unavailable": unavailable})
@@ -860,7 +909,6 @@ def main(argv=None):
     ap.add_argument("--only", action="append", default=None, help="a job name or a scenario id (repeatable)")
     ap.add_argument("--catalogue-only", action="store_true", help="copies + index.json from files on disk")
     ap.add_argument("--no-catalogue", action="store_true", help="run the jobs only")
-    ap.add_argument("--no-runtime-measure", action="store_true", help="worker_kill: skip the mpalacios rebuild")
     ap.add_argument("--list", action="store_true", help="print the jobs")
     a = ap.parse_args(argv)
     if a.list:
@@ -869,7 +917,7 @@ def main(argv=None):
     t0 = time.time()
     if not a.catalogue_only:
         jobs = sorted({job_of(t) for t in a.only}) if a.only else all_jobs()
-        run_jobs(jobs, measure_runtime=not a.no_runtime_measure)
+        run_jobs(jobs)
     if not a.no_catalogue:
         write_catalogue()
     print(f"sim.scenarios: {time.time() - t0:.1f} s", flush=True)

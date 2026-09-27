@@ -134,8 +134,15 @@ class CatalogueTests(unittest.TestCase):
 
     def test_default_presets_and_ids(self):
         self.assertEqual(self.doc["default"], "2026-08-23/aware")
-        self.assertEqual({s["id"]: s["preset"] for s in self.doc["scenarios"] if "preset" in s},
-                         {sid: name for name, sid in S.PRESETS})
+        shown = {sid: name for name, sid in S.PRESETS if sid in self.by_id}
+        self.assertEqual({s["id"]: s["preset"] for s in self.doc["scenarios"] if "preset" in s}, shown)
+        self.assertEqual(self.doc["presets"], [{"name": n, "id": i} for n, i in S.PRESETS if i in shown])
+        for name, sid in S.PRESETS:                    # a preset not in the catalogue has its evening's reason
+            if sid not in shown:
+                ev = sid.split("/")[0]
+                self.assertTrue(any(u["levers"] == {"evening": [ev]} for u in self.doc["unavailable"]), sid)
+        self.assertIn("Priciest evening", {p["name"] for p in self.doc["presets"]} | {
+            n for n, i in S.PRESETS if any(u["levers"] == {"evening": [i.split("/")[0]]} for u in self.doc["unavailable"])})
         for s in self.doc["scenarios"]:
             lv = s["levers"]
             lever = next(((k, lv[k]) for k in ("fleet", "cls", "reserve", "soc0", "growth")
@@ -147,11 +154,13 @@ class CatalogueTests(unittest.TestCase):
         lv = self.doc["levers"]
 
         def resolve(levers):
-            lever = next(((k, levers[k]) for k in ("fleet", "cls", "reserve", "soc0", "growth")
-                          if levers[k] != S.DEFAULT_LEVERS[k]), (None, None))
-            sid = S.scenario_id(levers["evening"], levers["policy"], levers["failure"], *lever)
-            if sid in self.by_id:
-                return "scenario"
+            moved = [(k, levers[k]) for k in ("fleet", "cls", "reserve", "soc0", "growth")
+                     if levers[k] != S.DEFAULT_LEVERS[k]]
+            if len(moved) <= 1:
+                sid = S.scenario_id(levers["evening"], levers["policy"], levers["failure"], *(moved[0] if moved else
+                                                                                            (None, None)))
+                if sid in self.by_id:
+                    return "scenario"
             for u in self.doc["unavailable"]:
                 if all(levers[k] in (v if isinstance(v, list) else [v]) for k, v in u["levers"].items()):
                     return "unavailable"
@@ -198,6 +207,23 @@ class CatalogueTests(unittest.TestCase):
                 self.assertEqual(d["absent"], [])
                 self.assertEqual(len(d["vTfMilli"]), d["steps"])
                 self.assertEqual(d["moments"][-1]["rule"], "end")
+
+    def test_vs_default_names_what_moved(self):
+        s = self.by_id.get("2026-08-23/naive/fleet=192")
+        if s is None:
+            self.skipTest("fleet=192 not built")
+        self.assertIn("energyValueUSD", s["vsDefault"])
+        self.assertEqual(s["vsDefault"]["energyValueUSD"]["refId"], "2026-08-23/naive")
+        self.assertNotIn("vsDefault", self.by_id["2026-08-23/aware"])
+        for sid, x in self.by_id.items():
+            for k, d in x.get("vsDefault", {}).items():
+                self.assertIn(k, self.doc["headline"])
+                self.assertNotEqual(d["v"], d["ref"], (sid, k))
+
+    def test_history_order_is_sim_history_days(self):
+        from sim.history import DAYS
+        from sim.constants import P1_DAY
+        self.assertEqual(S.HISTORY_ORDER, tuple(r["date"] for r in DAYS if r["date"] != P1_DAY))
 
     def test_copies_are_byte_identical(self):
         for src, dst in ((S.MP_WORKER_KILL, "p1/worker_kill.json"), (S.MP_COVERT, "p3/covert.json")):
