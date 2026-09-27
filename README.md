@@ -78,9 +78,11 @@ More detail, including every page link and how to read the screen: [docs/run-the
 
 ## Team
 
-RZ, Michael, Connor, Amy, Bo, Jeff.
-
-Engine: RZ and Michael. Visuals: Connor. Presentation: Amy. Design: Bo.
+Connor Daly - Product Design and System Design
+Razaq Alagbada - Data and System Design - razaqalagbada@gmail.com
+Michael Palacios - Data and Electrical Consulting - michaelxpalacios@gmail.com
+Bo Banducci - Video Production - bobanducci90@gmail.com
+Ashley I. - Presentation Production
 
 ## Data and licences
 
