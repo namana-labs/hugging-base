@@ -45,7 +45,8 @@ export const VS_WORDS = {
   maxLoading: ['worst transformer', { unit: '%', digits: 1 }],
   normalEvents: ['normal-rating events', {}],
   emergencyTfs: ['transformers above emergency', {}],
-  chargedPctBy0400: ['fleet charged by 04:00', { unit: '%', digits: 1 }],
+  // the data key names 04:00; the words take the run's own end time (start + steps x stepSeconds) when known
+  chargedPctBy0400: [({ end }) => (end ? `fleet charged by ${end}` : 'fleet charged by the end of the run'), { unit: '%', digits: 1 }],
   reserveBreaches: ['reserve breaches (battery-minutes)', {}],
   protectionOperated: ['protection operations', {}],
   homesDark: ['homes dark', {}],
@@ -53,8 +54,9 @@ export const VS_WORDS = {
 
 /** The rows of a scenario's `vsDefault` in the catalogue's `headline` order: [{key, words, opts, now, ref, refId,
  *  refTitle}], `now` and `ref` labelled from the two runs' own summaries (a row whose label is missing is dropped:
- *  never a bare number). [] for the default run, an alias, or a scenario without `vsDefault`. */
-export function vsDefaultRows(cat, scenario) {
+ *  never a bare number). [] for the default run, an alias, or a scenario without `vsDefault`. `clock.end` = the run's
+ *  end time ("04:00", from its meta), for the words of a time-named key. */
+export function vsDefaultRows(cat, scenario, clock = {}) {
   const vs = scenario && scenario.vsDefault;
   if (!vs || typeof vs !== 'object') return [];
   const order = Array.isArray(cat.headline) ? cat.headline : Object.keys(vs);
@@ -68,7 +70,8 @@ export function vsDefaultRows(cat, scenario) {
     const nowL = lab(scenario), refL0 = lab(refS);
     if (!nowL || !LABELS.includes(nowL.label)) continue;
     const refL = refL0 && LABELS.includes(refL0.label) ? refL0 : nowL;
-    const [words, opts] = VS_WORDS[key] || [key, {}];
+    const [w, opts] = VS_WORDS[key] || [key, {}];
+    const words = typeof w === 'function' ? w(clock || {}) : w;
     out.push({ key, words, opts, refId: d.refId, refTitle: refS ? refS.title || refS.id : d.refId,
       now: { v: d.v, label: nowL.label, cite: nowL.cite }, ref: { v: d.ref, label: refL.label, cite: refL.cite } });
   }
@@ -87,6 +90,22 @@ export function vsDefaultHTML(rows, { max = Infinity } = {}) {
   const more = rows.length - shown.length;
   return shown.map((r) => `<span class="vs-row" title="${esc(`vs ${r.refTitle}`)}">${esc(r.words)} ${numHTML(r.now, r.opts)} <span class="vs-was">default run ${esc(fmtValue(r.ref, r.opts))}</span></span>`).join('')
     + (more > 0 ? `<span class="vs-more" title="${esc(vsDefaultText(rows.slice(max)))}">+${more} more</span>` : '');
+}
+
+// ---- customers: every load bus is a customer; topology homes[].use says "residential" or "commercial" (DERIVED,
+// topology meta.customerUse). A single customer keeps its "Home 0xxx" id; a commercial one is marked a small business.
+export const SMALL_BUSINESS = 'small business';
+/** "Home 0225 (small business)" for a commercial customer, else its label ("Home 0001"). `h` = index into homes. */
+export function customerName(topology, h) {
+  const x = topology && topology.homes && topology.homes[h];
+  if (!x) return `Home ${h}`;
+  return x.use === 'commercial' ? `${x.label} (${SMALL_BUSINESS})` : x.label;
+}
+/** The engine's own text with every commercial customer's "Home 0xxx" marked "(small business)"; nothing else changes. */
+export function markCustomers(text, topology) {
+  const com = new Set(((topology && topology.homes) || []).filter((x) => x.use === 'commercial').map((x) => x.label));
+  if (!com.size || !text) return text;
+  return String(text).replace(/Home \d{4}(?! \(small business\))/g, (m) => (com.has(m) ? `${m} (${SMALL_BUSINESS})` : m));
 }
 
 /** Lever words for the run pill, from the catalogue's own option labels. */
@@ -128,7 +147,7 @@ export function createShell(body) {
 
   const api = {
     main,
-    update({ page, scenario, catalogue, link, nav }) {
+    update({ page, scenario, catalogue, link, nav, getJSON }) {
       notice.hidden = true;
       notice.textContent = '';
       const running = page === 'running';
@@ -140,7 +159,7 @@ export function createShell(body) {
       }).join('');
       let right = '';
       if (page === 'configure') right = `<span class="st-framing">${FRAMING}</span>`;
-      else if (page === 'learnings') right = '<span class="st-framing">Core batteries · D-26 onset · today\'s load</span>';
+      else if (page === 'learnings') right = '<span class="st-framing" data-framing="learnings"></span>';
       else if (NEXT[page] && scenario) {
         const idx = (catalogue.scenarios || []).indexOf(scenario) + 1;
         const vs = vsDefaultText(vsDefaultRows(catalogue, scenario));
@@ -150,6 +169,14 @@ export function createShell(body) {
       }
       header.innerHTML = `<div class="st-wordmark">Hugging Base</div><nav class="st-steps" aria-label="Story steps">${steps}</nav>
         <div class="st-spacer"></div>${right}`;
+      // Learnings' framing: the setting its answers were computed for, as the P2 export words it (p2/index.json scope)
+      const fr = header.querySelector('[data-framing="learnings"]');
+      if (fr && getJSON) {
+        getJSON('p2/index.json').then((p2) => {
+          const t = p2 && ((p2.scope && p2.scope.text) || (p2.usefulCapacity && p2.usefulCapacity.scopeText));
+          if (t) fr.textContent = t; else fr.remove();
+        }).catch(() => fr.remove());
+      } else if (fr) fr.remove();
       // in-app navigation (the hrefs still work with a middle click)
       for (const a of header.querySelectorAll('a[data-page], a[data-next]')) {
         a.addEventListener('click', (ev) => {

@@ -15,7 +15,7 @@
 // Transformer count, steps, start time, fleet size, tiers and the reserve are all read from the data.
 import { TIER_RGB, STATE_RGB, buildSceneModel, frameFromP1 } from '../lib/scene-model.js';
 import { stepToTime, timeToStep } from '../lib/format.js';
-import { tagHTML, vsDefaultRows, vsDefaultHTML, vsDefaultText } from './shell.js';
+import { tagHTML, vsDefaultRows, vsDefaultHTML, vsDefaultText, customerName, markCustomers } from './shell.js';
 
 export const SPEEDS = [0.1, 0.25, 0.5, 1, 2, 4];
 export const DEFAULT_SPEED = 0.25;         // 0.25x = 2.5 simulated minutes per second (story contract ruling 5)
@@ -47,6 +47,17 @@ export function runFiles(scenario) {
   if (scenario.extras) out.push({ path: scenario.extras, what: 'the rule log, failures, feeder readouts', optional: true });
   if (attackPath(scenario)) out.push({ path: attackPath(scenario), what: 'the detector run (fictional attacker)', optional: false });
   return out;
+}
+
+/** The named places from topology: "Street A–D" (the first and last focus keys) and "T-240" (bridge[0].tf); null when
+ *  the topology does not name them (the camera button and the label are then left out, never typed). */
+export function focusLabels(topology) {
+  const keys = ((topology && topology.focus) || []).map((f) => f.key).filter(Boolean);
+  const b = topology && Array.isArray(topology.bridge) && topology.bridge[0];
+  return {
+    streetsLabel: keys.length ? `Street ${keys.length > 1 ? `${keys[0]}–${keys[keys.length - 1]}` : keys[0]}` : null,
+    bridgeLabel: b && Number.isInteger(b.tf) ? `T-${b.tf}` : null,
+  };
 }
 
 export function tfName(topology, tf) {
@@ -114,7 +125,7 @@ export const kindWord = (kind) => KIND[kind] || String(kind || '').replace(/_/g,
  *  network-limit intervals of the counts series (codes 3/4/5) and stale/expired batteries (state S/X). */
 export function fallbackFailures({ meta, doc, series, topology, branch, covert = null }) {
   const n = series.n, out = [];
-  const home = (h) => (topology.homes[h] ? topology.homes[h].label : `Home ${h}`);
+  const home = (h) => customerName(topology, h);
   for (const e of (meta.events && meta.events[branch]) || []) {
     const k1 = e.kind === 'comms_lost' ? (e.coveredStep ?? e.expiredStep ?? e.step) : e.kind === 'stall' ? (e.resumeStep ?? e.step) : e.kind === 'hot' && e.minutes ? e.step + e.minutes : e.step;
     const where = e.kind === 'comms_lost' ? home(e.home) : e.tf !== undefined ? tfName(topology, e.tf) : e.kind === 'stall' ? 'our controller' : '';
@@ -303,6 +314,7 @@ const LABEL_OK = (l) => ['REAL', 'SIM', 'DERIVED', 'ASSUMPTION', 'UNVERIFIED', '
 const withTimeout = (p, ms, what) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(`${what} timed out after ${ms} ms`)), ms))]);
 
 const STATE_CSS = { C: '#1e4d2b', D: '#c7962b', I: '#e3dfd3', S: '#8f8b7f', X: '#8f8b7f', B: '#8fcf9f' };
+const STATE_WORDS = { C: 'charging', D: 'discharging', I: 'idle', S: 'stale: no telemetry', X: 'command expired', B: 'carrying its home (backup)' };
 
 export async function mount(root, ctx) {
   const sc = ctx.scenario;
@@ -330,23 +342,28 @@ export async function mount(root, ctx) {
   // a variant run may place its batteries on other homes (meta.fleet / doc.fleet: home indices)
   const fleetHomes = (Array.isArray(meta.fleet) && meta.fleet) || (Array.isArray(doc.fleet) && doc.fleet) || null;
   let topoRun = topology;
+  const batteryHomes = (fleetHomes && fleetHomes.length === S.fleetN ? fleetHomes : (topology.fleet || []).length === S.fleetN ? topology.fleet : [])
+    .map((f) => (typeof f === 'number' ? f : f && Number.isInteger(f.home) ? f.home : undefined));
   let hideBatteries = noFleet;
   if (fleetHomes && fleetHomes.length === S.fleetN) topoRun = { ...topology, fleet: fleetHomes };
   else if (S.fleetN !== (topology.fleet || []).length) hideBatteries = true;
   // the engine's rule log and failure list (extras); the covert attack lives in its own file (p3/covert.json), so its
   // line and interval are added here from that file's own text and steps
-  const moments = extras && Array.isArray(extras.moments)
-    ? [...extras.moments, ...covertMoments(covert)].sort((a, b) => a.k - b.k) : fallbackMoments({ meta, doc, branch, covert });
-  const failures = extras && Array.isArray(extras.failures)
+  const moments = (extras && Array.isArray(extras.moments)
+    ? [...extras.moments, ...covertMoments(covert)].sort((a, b) => a.k - b.k) : fallbackMoments({ meta, doc, branch, covert }))
+    .map((m) => ({ ...m, text: markCustomers(m.text, topology) }));
+  const failures = (extras && Array.isArray(extras.failures)
     ? [...extras.failures, ...covertFailures(covert, n0(doc))].sort((a, b) => a.k0 - b.k0 || a.k1 - b.k1)
-    : fallbackFailures({ meta, doc, series: S, topology, branch, covert });
+    : fallbackFailures({ meta, doc, series: S, topology, branch, covert }))
+    .map((f) => ({ ...f, where: markCustomers(f.where, topology), text: markCustomers(f.text, topology) }));
   const worstMax = Math.max(...S.worst);
   const priceMax = S.price ? Math.max(...S.price) : 0;
   const priceHi = Math.max(600, Math.ceil(priceMax / 100) * 100);
   const kwMax = Math.max(...Array.from(S.kw, Math.abs));
   const kwHi = Math.max(2000, Math.ceil(kwMax / 1000) * 1000);
   const uid = Math.random().toString(36).slice(2, 8);
-  const vsRows = vsDefaultRows(ctx.catalogue || {}, sc);
+  const vsRows = vsDefaultRows(ctx.catalogue || {}, sc, { end: stepToTime(meta, n) });
+  const { streetsLabel, bridgeLabel } = focusLabels(topology);
   // data-truth audit #5: the fleet sits where it stresses these streets on purpose (topology meta.shaping; a variant's
   // own placement rule is the catalogue's FLEET_PLACEMENT)
   const shaping = topology.meta && topology.meta.shaping;
@@ -375,7 +392,7 @@ export async function mount(root, ctx) {
       <div class="rv-scene"><div class="rv-scene-el"></div><div class="rv-loading">Loading the feeder…</div>
         <div class="rv-over"><div class="rv-story" hidden><b></b><span></span></div><div class="rv-banner" hidden><span class="bang">!</span><span class="t"></span></div>
           ${covertOn ? `<div class="rv-fict" title="${esc((covert.sources && covert.sources.adversary && covert.sources.adversary.text) || '')}">Fictional attacker</div>` : ''}</div>
-        <div class="rv-cams" role="radiogroup" aria-label="Camera">${[['feeder', 'Whole feeder'], ['street', 'Street A–D'], ['t240', 'T-240']].map(([id, t]) => `<button type="button" data-cam="${id}" class="${id === 'feeder' ? 'on' : ''}">${t}</button>`).join('')}</div>
+        <div class="rv-cams" role="radiogroup" aria-label="Camera">${[['feeder', 'Whole feeder'], ['street', streetsLabel], ['t240', bridgeLabel]].filter(([, t]) => t).map(([id, t]) => `<button type="button" data-cam="${id}" class="${id === 'feeder' ? 'on' : ''}">${esc(t)}</button>`).join('')}</div>
         <div class="rv-legend">${legend.map(([c, t]) => `<span><i style="background:${rgb(c)}"></i>${esc(t)}</span>`).join('')}${tagHTML(loadLab, 'OpenDSS loading, as % of nameplate kVA as shipped; tiers from the engine (never re-derived here)')}</div>
       </div>
       <div class="rv-lanes">
@@ -388,7 +405,7 @@ export async function mount(root, ctx) {
           <div class="rv-lab"><span class="n">Worst transformer</span><span class="v" data-v="worst"></span></div>
           ${lane({ id: 'w', html: `<path d="${lanePath(S.worst, ...LANE_WORST)}" fill="none" stroke="#10231a" stroke-width="1.4" vector-effect="non-scaling-stroke"></path>` },
             (tiers.normal ? dash(tiers.normal, ...LANE_WORST, '#c7962b') : '') + (tiers.emergency ? dash(tiers.emergency, ...LANE_WORST, '#b23a2f') : ''))}
-          <div class="rv-lab"><span class="n">Street A–D, T-240</span><span class="v" data-v="focus"></span>${placementNote}</div>
+          <div class="rv-lab"><span class="n">${esc([streetsLabel, bridgeLabel].filter(Boolean).join(', ') || 'Named transformers')}</span><span class="v" data-v="focus"></span>${placementNote}</div>
           ${lane({ id: 'f', html: S.focus.map((f) => `<path d="${lanePath(f.pct, ...LANE_FOCUS)}" fill="none" stroke="#10231a" stroke-opacity="${f.key.length > 1 ? 0.9 : 0.55}" stroke-width="1.1" ${f.key.length > 1 ? 'stroke-dasharray="4 3"' : ''} vector-effect="non-scaling-stroke"></path>`).join('') },
             tiers.amber ? dash(tiers.amber, ...LANE_FOCUS, '#c7962b') : '')}
           <div class="rv-lab"><span class="n">Price $/MWh</span><span class="v" data-v="price"></span></div>
@@ -443,10 +460,11 @@ export async function mount(root, ctx) {
     const nowF = failures.filter((f) => f.k0 <= k && k <= f.k1);
     const st = noFleet ? '' : (doc.state[k] || '');
     const cnt = { C: 0, D: 0, I: 0, F: 0 };
-    const cells = Array.from(st).map((ch) => {
+    const cells = Array.from(st).map((ch, j) => {
       const bad = ch === 'S' || ch === 'X';
       if (bad) cnt.F += 1; else if (ch in cnt) cnt[ch] += 1;
-      return `<i class="${bad ? 'bad' : ''}" style="background:${STATE_CSS[ch] || '#e3dfd3'}"></i>`;
+      const who = batteryHomes[j] !== undefined ? customerName(topology, batteryHomes[j]) : `battery ${j + 1}`;
+      return `<i class="${bad ? 'bad' : ''}" style="background:${STATE_CSS[ch] || '#e3dfd3'}" title="${esc(`${who} · ${STATE_WORDS[ch] || ch}`)}"></i>`;
     }).join('');
     const tierRows = [['over nameplate', c[0], TIER_RGB[1], false], [`above ${tiers.normal ?? ''}%`, c[1] + c[2], TIER_RGB[3], c[2] > 0],
       ['emergency', c[3], TIER_RGB[4], c[3] > 0], ['open', c[4], TIER_RGB[5], c[4] > 0]];
@@ -477,7 +495,7 @@ export async function mount(root, ctx) {
     const flagged = det.flaggedAt(k), quarantined = det.quarantinedAt(k);
     const cells = det.units.map((u) => {
       const st = k < a.step ? 'off' : u.quarantinedStep !== null && u.quarantinedStep <= k ? 'held' : u.flaggedStep !== null && u.flaggedStep <= k ? 'flag' : 'on';
-      return `<i class="${st}" title="${esc(`battery ${u.batt} (home ${u.home}) · ${DET_WORDS[st]}${u.flaggedStep !== null ? ` · flagged ${stepToTime(meta, u.flaggedStep)}` : ''}`)}"></i>`;
+      return `<i class="${st}" title="${esc(`${u.home !== null ? customerName(topology, u.home) : `battery ${u.batt}`} · ${DET_WORDS[st]}${u.flaggedStep !== null ? ` · flagged ${stepToTime(meta, u.flaggedStep)}` : ''}`)}"></i>`;
     }).join('');
     const cx = det.x(k);
     $('.rv-det').innerHTML = `<div class="h"><span class="e">DETECTOR · FICTIONAL ATTACKER</span>${tagHTML(det.label, (covert.sources && covert.sources.detector && covert.sources.detector.text) || 'detector run')}</div>

@@ -144,9 +144,11 @@ async function main() {
         const buf = Buffer.from(shot.data, 'base64');
         fs.writeFileSync(path.join(opt.shots, slug(q) + '.png'), buf);
         kb = Math.round(buf.length / 1024); colours = pngColours(buf);
-        // a story page not merged yet (UI-B) is a mostly empty placeholder by design: its size says nothing
-        if (!f.placeholder && buf.length < 50 * 1024) why.push(`shot ${kb} KB < 50 KB`);
-        if (!f.placeholder && colours >= 0 && colours < 16) why.push(`shot has ${colours} colours (blank?)`);
+        // a story page not merged yet (UI-B) is a mostly empty placeholder by design, and Running hands over to Run by
+        // itself (the shot may land on Run's loading line): their size says nothing
+        const sparse = f.placeholder || page === 'running';
+        if (!sparse && buf.length < 50 * 1024) why.push(`shot ${kb} KB < 50 KB`);
+        if (!sparse && colours >= 0 && colours < 16) why.push(`shot has ${colours} colours (blank?)`);
       } catch (e) { why.push('shot:' + e.message); }
     }
     // a story page not merged yet: the app's probe of its module (a 404) is how it knows; nothing else is excused

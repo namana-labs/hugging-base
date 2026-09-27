@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { SPEEDS, DEFAULT_SPEED, MERGE_GAP, runFiles, attackPath, ranges, kindWord, KIND, buildSeries, fallbackFailures,
+import { SPEEDS, DEFAULT_SPEED, MERGE_GAP, focusLabels, runFiles, attackPath, ranges, kindWord, KIND, buildSeries, fallbackFailures,
   fallbackMoments, covertFailures, covertMoments, detectorModel, momentAt, runCostHTML, tierNames } from '../story/run.js';
 import { numHTML, tagHTML, leverSummary, STEPS } from '../story/shell.js';
 import { LabelError } from '../lib/format.js';
@@ -184,4 +184,19 @@ test('shell: vsDefault rows follow the catalogue headline order, labelled from t
   assert.match(vsDefaultHTML(rows, { max: 1 }), /\+1 more/);
   assert.deepEqual(vsDefaultRows(cat, cat.scenarios[0]), []);
   assert.deepEqual(vsDefaultRows(cat, { id: 'x', vsDefault: {} }), []);
+});
+
+test('run: the named places come from topology (focus keys, bridge tf), or are left out', () => {
+  assert.deepEqual(focusLabels(topology), { streetsLabel: `Street ${topology.focus[0].key}–${topology.focus.at(-1).key}`, bridgeLabel: `T-${topology.bridge[0].tf}` });
+  assert.deepEqual(focusLabels({ focus: [{ key: 'Q' }] }), { streetsLabel: 'Street Q', bridgeLabel: null });
+  assert.deepEqual(focusLabels({}), { streetsLabel: null, bridgeLabel: null });
+});
+
+test("shell: a time-named headline key takes its run's end time, or 'the end of the run'", async () => {
+  const { vsDefaultRows } = await import('../story/shell.js');
+  const sum = (v) => ({ v, label: 'SIM', cite: 'c' });
+  const cat = { headline: ['chargedPctBy0400'], scenarios: [{ id: 'd', summary: { chargedPctBy0400: sum(100) } },
+    { id: 'x', summary: { chargedPctBy0400: sum(99.2) }, vsDefault: { chargedPctBy0400: { v: 99.2, ref: 100, refId: 'd' } } }] };
+  assert.equal(vsDefaultRows(cat, cat.scenarios[1], { end: '04:00' })[0].words, 'fleet charged by 04:00');
+  assert.equal(vsDefaultRows(cat, cat.scenarios[1])[0].words, 'fleet charged by the end of the run');
 });

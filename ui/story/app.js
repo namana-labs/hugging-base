@@ -195,7 +195,7 @@ async function route() {
   setFlag('webgl', 'none');
   setFlag('page', params.page);
   delete body.dataset.placeholder;
-  app.shell.update({ page: params.page, scenario, catalogue: app.catalogue, link: (p, x) => linkFor(p, x), nav: (p, x) => nav(p, x) });
+  app.shell.update({ page: params.page, scenario, catalogue: app.catalogue, link: (p, x) => linkFor(p, x), nav: (p, x) => nav(p, x), getJSON: data.getJSON });
   if (notice) app.shell.notice(notice);
   const main = document.createElement('main');
   main.className = `st-main st-page-${params.page}`;
