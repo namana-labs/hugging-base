@@ -172,13 +172,37 @@ export function movedKeys(catalogue, levers) {
   return ['policy', 'failure', 'fleet', 'cls', 'reserve', 'soc0', 'growth']
     .filter((k) => k === 'policy' || (L[k] && levers[k] !== undefined && String(levers[k]) !== String(L[k].default)));
 }
-/** Tags for the settings a run title names beyond the defaults (its evening and every moved lever). */
-export function settingTags(catalogue, levers) {
-  if (!levers) return '';
-  return ['evening', ...movedKeys(catalogue, levers).filter((k) => k !== 'policy')].map((k) => {
-    const t = leverTag(catalogue, k, levers[k]);
-    return t ? tagHTML(t.label, `${optionWords(catalogue, k, levers[k])}: ${t.cite}`) : '';
-  }).join('');
+/** The naive policy's tag when the run's meta gives none (meta.naiveLabel is the data's own: ASSUMPTION). */
+export const NAIVE_CITE = "our assumption of one number, no feeder check; Base's real split is not public, and Base may not charge this way (build prompt 12 Q5)";
+/** A run's title with each tag beside the words it labels (review-0927 M3), e.g. "23 Aug 2026 [REAL] · Naive: our
+ *  assumption of one number, no feeder check [ASSUMPTION] · 48 batteries [ASSUMPTION]": the date (the title up to its
+ *  first ": ") carries the evening's tag; the naive policy words carry `naive` (the run's meta.naiveLabel), else
+ *  ASSUMPTION with NAIVE_CITE; the rest of the title carries the tags of the other moved levers. `prefix` goes before
+ *  the date ("Your own settings: "). Text parts are .tx spans (they may shrink); a tag never does. */
+export function runTitleHTML(catalogue, sc, { prefix = '', naive = null } = {}) {
+  const title = String((sc && (sc.title || sc.id)) || '');
+  const lv = sc && sc.levers;
+  const tx = (s) => `<span class="tx">${esc(s)}</span>`;
+  if (!lv) return tx(prefix + title);
+  const tagOf = (k) => { const t = leverTag(catalogue, k, lv[k]); return t ? tagHTML(t.label, `${optionWords(catalogue, k, lv[k])}: ${t.cite}`) : ''; };
+  const others = movedKeys(catalogue, lv).filter((k) => k !== 'policy').map(tagOf).join('');
+  const i = title.indexOf(': ');
+  const parts = [];
+  let rest = title, lead = prefix;
+  if (i > 0) { parts.push(tx(prefix + title.slice(0, i)) + tagOf('evening')); rest = title.slice(i + 2); lead = ''; }
+  if (lv.policy === 'naive') {
+    const L = (catalogue && catalogue.levers && catalogue.levers.policy) || {};
+    const o = (L.options || []).find((x) => String(x.id) === 'naive');
+    const words = o && rest.startsWith(o.label) ? o.label : rest;
+    rest = rest.slice(words.length).replace(/^,\s*/, '');
+    const nt = naive && TAG_LABELS.includes(naive.label) ? tagHTML(naive.label, [naive.text, naive.cite].filter(Boolean).join(' · ')) : tagHTML('ASSUMPTION', NAIVE_CITE);
+    parts.push(tx(lead + words) + nt);
+    lead = '';
+  }
+  const tail = others + (i > 0 ? '' : tagOf('evening'));   // a title with no date: the evening's tag goes last
+  if (rest || lead || !parts.length) parts.push(tx(lead + rest) + tail);
+  else parts[parts.length - 1] += tail;
+  return parts.join('<span class="sep">·</span>');
 }
 /** A run by name: "23 Aug 2026 · Naive · default settings", or "... · 192 batteries" for a moved fleet lever. */
 export function runName(catalogue, sc) {

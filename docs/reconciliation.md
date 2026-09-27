@@ -4,7 +4,7 @@ Drafted 26 Sep 2026. Three designs exist in this repo:
 
 - **Hugging Base** — `docs/design.md`, the working prototype in `demos/grid-stories/`, and `docs/plan.md` (merged into `docs/` on 26 Sep 2026).
 - **Headroom PRD v1** — `docs/headroom/PRD.md`, merged from five proposals and two critiques.
-- **GridSpine Atlas v0.2** — Part I–IV of `headroom-gridspine-dossier.html` on `main`.
+- **GridSpine Atlas v0.2** — Part I–IV of `docs/headroom/headroom-gridspine-dossier.html` on `main` (moved from the repo root on 27 Sep 2026).
 
 No document wins by default. For each disagreement we picked what best serves the goal the team set in the room, plus what Base employees told us on site. Each doc keeps a role (see the end).
 
@@ -166,7 +166,7 @@ And from Headroom: report hosting as **useful capacity**, meaning batteries adde
 | `docs/plan.md` | Stack, work split, milestones. |
 | `demos/grid-stories/` | The working prototype and the fastest path to the spine. |
 | `docs/headroom/PRD.md` | Depth for the pieces we adopted: device acceptance rules (§7.5), detector definitions (§6.4), metrics (§9), Track 1 methods (§9.5), risks and early tests (§12). |
-| `headroom-gridspine-dossier.html` (Atlas) | The design for the stretch transmission layer and the CIM vocabulary. |
+| `docs/headroom/headroom-gridspine-dossier.html` (Atlas) | The design for the stretch transmission layer and the CIM vocabulary. |
 | Research report | Every number and label. |
 
 ## Still open for Base on site

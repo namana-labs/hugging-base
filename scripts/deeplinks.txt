@@ -57,10 +57,10 @@ beat page=run&s=2026-08-23/aware&k=390&beat=run-aware
 beat page=results&s=2026-08-23/aware&k=390&beat=results-aware
 beat page=run&s=2026-08-23/aware/faults&k=376&beat=faults
 beat page=run&s=2026-08-23/aware/worker_kill&k=384&beat=worker-kill
-beat page=run&s=2026-08-23/aware/covert&k=392&beat=covert
+beat page=run&s=2026-08-23/aware/covert&k=393&beat=covert
 beat page=results&s=2026-08-23/aware/covert&beat=covert-results
 beat page=learnings&q=1&beat=learnings-q1
-beat page=learnings&q=2&tf=150&beat=learnings-q2
+beat page=learnings&q=2&tf=34&beat=learnings-q2
 beat page=learnings&q=3&beat=learnings-q3
 beat page=learnings&q=4&beat=learnings-q4
 beat page=results&s=2026-07-22/aware&beat=close

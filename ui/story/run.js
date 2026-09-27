@@ -17,6 +17,7 @@
 import { TIER_RGB, STATE_RGB, STATE_WORDS, buildSceneModel, frameFromP1 } from '../lib/scene-model.js';
 import { stepToTime, timeToStep } from '../lib/format.js';
 import { tagHTML, vsDefaultInfo, vsDefaultHTML, vsDefaultText, customerName, markCustomers, leverTag } from './shell.js';
+import { COMMS_LOSS_CITE, COMMS_TIMING_CITE } from '../panels/more.js';
 
 export const SPEEDS = [0.1, 0.25, 0.5, 1, 2, 4];
 export const DEFAULT_SPEED = 0.25;         // 0.25x = 2.5 simulated minutes per second (story contract ruling 5)
@@ -160,13 +161,15 @@ export const KIND = { comms_lost: 'Battery silent', hot: 'Load spike', stall: 'C
   normal: 'Normal rating exceeded', emergency: 'Emergency rating', protection: 'Protection open', worker_kill: 'Worker killed',
   takeover: 'Lease taken over', late: 'Late commands refused', covert: 'Hidden carrier' };
 export const kindWord = (kind) => KIND[kind] || String(kind || '').replace(/_/g, ' ');
+/** "+-350 W" as "±350 W" (review-0927 S7): the detector file's ASCII plus-minus, shown as the sign it means. */
+export const plusMinus = (s) => String(s ?? '').replace(/\+-(?=\s*\d)/g, '±');
 /** The covert attack as a failure interval: the channel opens at attack.step and runs until the last quarantine. */
 export function covertFailures(covert, n) {
   if (!covert || !covert.attack) return [];
   const q = (covert.quarantine && covert.quarantine.log) || [];
   const end = q.length ? Math.max(...q.map((x) => x[0])) : n - 1;
   const adv = covert.sources && covert.sources.adversary;
-  return [{ kind: 'covert', where: `${(covert.attack.shard || []).length} batteries (fictional attacker)`, k0: covert.attack.step, k1: Math.min(n - 1, end), text: covert.attack.text || '', label: adv && LABEL_OK(adv.label) ? adv.label : null }];
+  return [{ kind: 'covert', where: `${(covert.attack.shard || []).length} batteries (fictional attacker)`, k0: covert.attack.step, k1: Math.min(n - 1, end), text: plusMinus(covert.attack.text || ''), label: adv && LABEL_OK(adv.label) ? adv.label : null }];
 }
 export const DET_WORDS = { off: 'channel not open yet', on: 'carrying the hidden signal, not flagged yet', flag: 'flagged by the detector', held: 'quarantined: held at zero' };
 /** The Detector card's model from p3/covert.json: the shard's units, flagged and quarantined counts per step, and two
@@ -200,7 +203,7 @@ export function detectorModel(covert, n) {
 export function covertMoments(covert) {
   if (!covert || !covert.attack) return [];
   const adv = covert.sources && covert.sources.adversary;
-  return [{ k: covert.attack.step, t: covert.attack.t, text: covert.attack.text, label: adv && LABEL_OK(adv.label) ? adv.label : null, rule: 'covert channel opens' }];
+  return [{ k: covert.attack.step, t: covert.attack.t, text: plusMinus(covert.attack.text), label: adv && LABEL_OK(adv.label) ? adv.label : null, rule: 'covert channel opens' }];
 }
 
 /** "+0.59" / "−3.84" / "0.00": the fleet's signed power in MW from kW. */
@@ -251,6 +254,19 @@ export function runCostHTML(sc, num) {
   return `${html} This page replays that output; nothing is solved in the browser.`;
 }
 
+/** What a silent battery does next (review-0927 M7): the behaviour is REAL (Base engineer, on site; COMMS_LOSS_CITE),
+ *  our stale / expiry timings are the run's own constants (COMMS_STALE_S, COMMAND_TTL_S: ASSUMPTION), read from the
+ *  meta, never typed; a timing the data does not give is left out. */
+export function commsLossLine(constants, num) {
+  const c = (name) => { const x = constants && constants[name]; return x && x.value != null && LABEL_OK(x.label) ? { v: x.value, label: x.label, cite: `${name}: ${x.cite || ''}` } : null; };
+  const xs = [['stale after', c('COMMS_STALE_S')], ['expires at', c('COMMAND_TTL_S')]].filter(([, x]) => x);
+  // one tag for the pair when both carry the same label (the review's line), else each number its own
+  const one = xs.length && xs.every(([, x]) => x.label === xs[0][1].label);
+  const t = xs.map(([w, x]) => `${w} ${one ? `${fmtN(x.v)} s` : num(x, { unit: ' s' })}`).join(', ');
+  return `When its command expires it idles in backup-only mode: it never discharges to the grid and only backs up its own home ${tagHTML('REAL', COMMS_LOSS_CITE)}`
+    + (t ? ` · ${t}${one ? ` ${tagHTML(xs[0][1].label, [COMMS_TIMING_CITE, ...xs.map(([, x]) => x.cite)].join('; '))}` : ''}` : '');
+}
+
 // ------------------------------------------------------------------------------------------------ 1b Running
 export async function mountRunning(root, ctx) {
   const sc = ctx.scenario;
@@ -293,8 +309,15 @@ export async function mountRunning(root, ctx) {
   rn.classList.add('done');
   $('.rn-title').textContent = 'Done';
   $('.rn-stage').textContent = `Opening the run: ${meta.start} → ${stepToTime(meta, meta.steps)}, ${fmtN(meta.steps)} steps, files in ${fmtN(performance.now() - started)} ms`;
-  try { sessionStorage.setItem(AUTOPLAY_KEY, sc.id); } catch (err) { /* private mode: Run opens paused */ }
-  timer = setTimeout(() => { if (!disposed) ctx.nav('run', { s: sc.id, k: null }, { replace: true }); }, 500);
+  // review-0927 M8: the "Running, honestly" beat link (&beat=running) holds this page for 6 s so it can be filmed; the
+  // judge's path (no beat) hands over to Run after 0.5 s as before. The autoplay mark is set only at the hand-over, so
+  // leaving Running early (e.g. opening the next beat link) never makes that Run link play from 16:00 (integration fix).
+  const wait = /[?&]beat=running\b/.test(location.search) ? 6000 : 500;
+  timer = setTimeout(() => {
+    if (disposed) return;
+    try { sessionStorage.setItem(AUTOPLAY_KEY, sc.id); } catch (err) { /* private mode: Run opens paused */ }
+    ctx.nav('run', { s: sc.id, k: null }, { replace: true });
+  }, wait);
   return { dispose() { disposed = true; clearTimeout(timer); } };
 }
 
@@ -500,7 +523,7 @@ export async function mount(root, ctx) {
     const el = $('.rv-now');
     el.classList.toggle('failing', nowF.length > 0);
     el.innerHTML = `<div class="h"><span class="st-eyebrow">RIGHT NOW · ${stepToTime(meta, k)}</span>${tagOpt(cntLab, cntCite)}</div>
-      ${nowF.length ? `<div class="rv-failing"><div class="e">FAILING NOW · ${nowF.length}${rulesTag}</div>${nowF.map((f) => `<button type="button" class="rv-fnow" data-seek="${f.k0}"><span class="a"><b>${esc(kindWord(f.kind))}${f.where ? ` · ${whereHTML(f)}` : ''}</b><span>${span(f)}</span></span><span class="b">${esc(f.text)}${tagOpt(f.label, f.label === 'ASSUMPTION' ? 'a scripted failure: what fails and when are assumptions' : 'from this run')}</span></button>`).join('')}</div>`
+      ${nowF.length ? `<div class="rv-failing"><div class="e">FAILING NOW · ${nowF.length}${rulesTag}</div>${nowF.map((f) => `<button type="button" class="rv-fnow" data-seek="${f.k0}"><span class="a"><b>${esc(kindWord(f.kind))}${f.where ? ` · ${whereHTML(f)}` : ''}</b><span>${span(f)}</span></span><span class="b">${esc(f.text)}${tagOpt(f.label, f.label === 'ASSUMPTION' ? 'a scripted failure: what fails and when are assumptions' : 'from this run')}</span>${f.kind === 'comms_lost' ? `<span class="b rv-comms">${commsLossLine(meta.constants, ctx.num)}</span>` : ''}</button>`).join('')}</div>`
         : failures ? `<div class="rv-ok"><i></i>No failures right now${batQual}</div>` : '<div class="rv-ok">Failures: not exported for this run</div>'}
       <div class="rv-sec"><div class="r"><b>${fmtN(tot)} transformers</b><span>${fmtN(B.within)} within nameplate${tagOpt(cntLab, cntCite)}</span></div><div class="rv-tbar">${bar}</div>
         <div class="rv-tiers">${B.bands.map((b) => `<span class="${b.bad ? 'bad' : b.n ? '' : 'zero'}"><i style="background:${rgb(b.rgb)}"></i>${esc(b.name)} ${fmtN(b.n)}${b.key === 'above' && b.past ? ` (${fmtN(b.past)} ${T.normalMin ? `past ${fmtN(T.normalMin.v)} min` : 'normal rating exceeded'})` : ''}</span>`).join('')}${tagOpt(cntLab, cntCite)}</div></div>

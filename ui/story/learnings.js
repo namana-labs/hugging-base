@@ -403,7 +403,7 @@ export async function mount(root, ctx) {
       </div>
       <div class="pb-body">Useful capacity is how many batteries fit, placed one at a time from an empty feeder in the same order, before the next one causes a problem.</div>
       <div class="pb-body"><b>Naive</b> is our assumption of one number, no feeder check: every battery charges at once when the price drops. OpenDSS stepped it one battery at a time: ${has(N) ? num(N, { digits: 0 }) : '—'} hold for the whole month${of}${fail != null ? `; battery ${fmtNum(fail)} brings ${esc(whyFail || 'a violation')}${nTag}` : ''}.</div>
-      <div class="pb-body"><b>Feeder-aware</b> charges each transformer only into the room it has, so it places ${has(A) && eligible != null && A.v === eligible ? `a battery at every one of the ${num(A, { digits: 0 })} eligible homes` : `${has(A) ? num(A, { digits: 0 }) : '—'} batteries`} with no transformer event because of batteries (OpenDSS, ${esc(every)}${esc(of)})${uc.cap && has(uc.cap) ? `; it would stop if the feeder had to give up more than ${num({ ...uc.cap, v: uc.cap.v * 100 }, { digits: 0, unit: '%' })} of its charge` : ''}.</div>
+      <div class="pb-body"><b>Feeder-aware</b> charges each transformer only into the room it has, so it places ${has(A) && eligible != null && A.v === eligible ? `a battery at every one of the ${num(A, { digits: 0 })} eligible customers` : `${has(A) ? num(A, { digits: 0 }) : '—'} batteries`} with no transformer event because of batteries (OpenDSS, ${esc(every)}${esc(of)})${uc.cap && has(uc.cap) ? `; it would stop if the feeder had to give up more than ${num({ ...uc.cap, v: uc.cap.v * 100 }, { digits: 0, unit: '%' })} of its charge` : ''}.</div>
       <div class="pb-foot">${esc(uc.scopeText || '')} · sim.p2_build usefulCapacity · aware ${has(A) ? tagHTML(A.label, A.cite) : ''} naive ${has(N) ? tagHTML(N.label, N.cite) : ''}</div>`;
   }
 
@@ -439,11 +439,16 @@ export async function mount(root, ctx) {
       </div>`;
     const age = has(t.age) ? `about ${fmtNum(t.age.v)} years old (${t.age.source === 'utility' ? 'utility' : 'simulated'}) ${tagHTML(t.age.label, `${t.age.cite || ''}${t.age.p10 != null ? `; could be ${t.age.p10}–${t.age.p90} years` : ''}`)}` : '';
     const fitsA = ca && n <= ca.v, fitsN = cn && n <= cn.v, fitsP = cp && n <= cp.v;
-    const earnTxt = earn ? `${fmtNum(earn.v * 100)}%` : null;
+    const earnTxt = earn ? num({ ...earn, v: earn.v * 100 }, { digits: 0, unit: '%' }) : null;
+    // HTML: each cap with its own tag (review-0927 M4); n is the slider's value (an input, shown bare as in "at n:"),
+    // tagged as the feeder-aware cap when it is that cap
+    const nHTML = ca && n === ca.v ? num(ca, { digits: 0 }) : fmtNum(n);
+    const more = has(t.installed) ? Math.max(0, n - t.installed.v) : null;
+    const moreTxt = more != null ? ` (${fmtNum(more)}${tagHTML('DERIVED', `batteries here minus our batteries today (${t.installed.label}: ${t.installed.cite || 'installed'})`)} more than today)` : '';
     let answer;
     if (n === 0) answer = 'Slide to add batteries to this transformer.';
-    else if (fitsA) answer = `${n} batter${n === 1 ? 'y fits' : 'ies fit'} here with feeder-aware charging${!fitsN && cn ? `; a naive split tops out at ${fmtNum(cn.v)}` : ''}${!fitsP && cp ? `, and the utility's nameplate rule allows only ${fmtNum(cp.v)} today` : ''}.`;
-    else answer = `${n} is too many even for feeder-aware: past ${ca ? fmtNum(ca.v) : '—'}, each extra battery earns less${earnTxt ? ` than ${earnTxt} of an unconstrained one` : ''}. Feeder-aware never overloads the transformer because of batteries; it charges less instead, so this limit is about money, not safety.`;
+    else if (fitsA) answer = `${nHTML} batter${n === 1 ? 'y fits' : 'ies fit'} here with feeder-aware charging${moreTxt}${!fitsN && cn ? `; a naive split tops out at ${num(cn, { digits: 0 })}` : ''}${!fitsP && cp ? `, and the utility's nameplate rule allows only ${num(cp, { digits: 0 })} today` : ''}.`;
+    else answer = `${fmtNum(n)} is too many even for feeder-aware: past ${ca ? num(ca, { digits: 0 }) : '—'}, each extra battery earns less${earnTxt ? ` than ${earnTxt} of an unconstrained one` : ''}. Feeder-aware never overloads the transformer because of batteries; it charges less instead, so this limit is about money, not safety.`;
     const perHome = constOf('PLAN_HYPOTHETICAL_PER_HOME', planner);
     const hypoTxt = perHome && firstHypo > 0 && n >= firstHypo ? ` From ${fmtNum(firstHypo)} on, more than ${num(perHome, { digits: 0 })} per home: hypothetical (faded).` : '';
     return `
@@ -455,7 +460,7 @@ export async function mount(root, ctx) {
       ${limitRow('Naive', 'fits', cn, nPeak != null ? `at ${n}: month peak ${fmtNum(nPeak / 10, 0)}% of nameplate, ${esc(TIER[nTier] || '')} ${tagHTML(sl('naivePeak'), planner.series && planner.series.naivePeak && planner.series.naivePeak.text, true)}` : missingHTML('per-k peaks not exported'))}
       ${limitRow('Utility rule', 'allows', cp, `nameplate vs kVA: it does not look at when batteries charge ${cp ? tagHTML(cp.label, cp.cite) : ''}`)}
       ${limitRow('Feeder-aware', 'fits', ca, aPeak != null ? `at ${n}: month peak ${fmtNum(aPeak / 10, 0)}% of nameplate, earning like ${fmtNum(aEff / 100, 1)} full batteries ${tagHTML(sl('awarePeak'), planner.series && planner.series.awareEff && planner.series.awareEff.text, true)}` : missingHTML('per-k peaks not exported'))}
-      <div class="pb-body">${esc(answer)}${hypoTxt}</div>
+      <div class="pb-body">${answer}${hypoTxt}</div>
       <div class="pb-foot">${esc(planner.meta.naiveWords || 'Naive: our assumption of one number, no feeder check')}. ${esc(planner.meta.awareWords || '')}${earn ? ` ${tagHTML(earn.label, earn.cite)}` : ''} ${esc(planner.meta.scope || '')}</div>`;
   }
 
@@ -510,7 +515,7 @@ export async function mount(root, ctx) {
       ${note ? `<div class="pb-note">${note}</div>` : ''}
       <div class="pb-growth"><span class="pb-sub">Home load growth (EVs, heat pumps)</span>${tagHTML('ASSUMPTION', constOf('PLAN_GROWTH_PCTS', planner) ? constOf('PLAN_GROWTH_PCTS', planner).cite : 'planner growth levels')}<div class="pb-seg">${seg}</div></div>
       <div class="pb-uplist">${lines || '<div class="pb-body">No transformer is at capacity at this load.</div>'}</div>
-      <div class="pb-foot">sim.planner rankingByGrowth · upgrade cost ${has(money.upgradeUSD) ? num(money.upgradeUSD, { money: true, digits: 0 }) : missingHTML()} per transformer · member value ${has(money.memberValueUSDYr) ? num(money.memberValueUSDYr, { money: true, digits: 0 }) : missingHTML()}/yr per battery is gross energy value, not Base's profit, and assumes perfect price foresight · unlocked = members over today's cap that one size up serves (typical growth; slow–fast) · feeder-aware control would fit = the cap if the utility counted our control (UNVERIFIED in Texas) · verdict = least worst regret over slow, typical and fast growth (planner.js decide)</div>`;
+      <div class="pb-foot">sim.planner rankingByGrowth · upgrade cost ${has(money.upgradeUSD) ? num(money.upgradeUSD, { money: true, digits: 0 }) : missingHTML()} per transformer · member value ${has(money.memberValueUSDYr) ? num(money.memberValueUSDYr, { money: true, digits: 0 }) : missingHTML()}/yr per battery is gross energy value, not Base's profit, planned on public day-ahead prices (2025 LZ_NORTH) · unlocked = members over today's cap that one size up serves (typical growth; slow–fast) · feeder-aware control would fit = the cap if the utility counted our control (UNVERIFIED in Texas) · verdict = least worst regret over slow, typical and fast growth (planner.js decide)</div>`;
   }
 
   function q4HTML() {
