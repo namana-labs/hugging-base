@@ -239,6 +239,7 @@ async function boot() {
   const cat = await loadCatalogue(params);
   app.catalogue = cat.doc;
   if (cat.path !== data.STORY_CATALOGUE) app.shell.banner(`Catalogue override: ui/data/${cat.path} (&cat=), not the engine's story/index.json.`);
+  data.getJSON('topology.json').then((t) => app.shell.setFeeder(t)).catch(() => { /* the footer keeps its words */ });
   await route();
 }
 

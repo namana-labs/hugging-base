@@ -45,7 +45,9 @@ code { font-size: 12.5px; }
 .st-framing { font-size: 13px; color: var(--muted); }
 .st-pill { display: flex; align-items: center; gap: 9px; font-size: 13px; padding: 6px 11px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
 .st-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--healthy); }
-.st-pill .sum { color: var(--muted); max-width: 520px; overflow: hidden; text-overflow: ellipsis; }
+.st-pill .sum { color: var(--muted); max-width: 640px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st-pill .sum .chip { margin-left: 3px; }
+.st-pill b + .chip { margin-left: -4px; }
 .st-btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px; border: 0; background: var(--brand); color: var(--panel);
   font-size: 14px; font-weight: 700; text-decoration: none; cursor: pointer; transition: background .3s var(--ease); }
 .st-btn:hover { background: var(--brand-hover); color: var(--panel); }

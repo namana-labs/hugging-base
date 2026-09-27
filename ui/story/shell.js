@@ -9,10 +9,9 @@ export const TAG_LABELS = [...LABELS, 'UNVERIFIED', 'SCREENING'];
 export const STEPS = [['configure', '1 Configure'], ['run', '2 Run'], ['results', '3 Results'], ['learnings', '4 Learnings']];
 export const FRAMING = 'Oncor-suburb stand-in · LZ_NORTH';
 export const STANDIN = 'Oncor-suburb stand-in on NREL\'s synthetic feeder';
-const STANDIN_CITE = 'The feeder is NREL SMART-DS 2018 AUS P1U (synthetic, CC BY 4.0), settled at ERCOT LZ_NORTH as an Oncor-suburb stand-in (ASSUMPTION). Its real buses sit in Pedernales Electric Cooperative territory.';
-/** How the feeder is tagged wherever it appears (data-truth audit #1): a REAL dataset of a synthetic feeder. */
+/** How the feeder is tagged wherever it appears (data-truth audit #1): a REAL dataset of a synthetic feeder. Its name,
+ *  licence and the long disclosure are read from topology.json (constants.FEEDER_NAME / STAND_IN, meta.license). */
 export const FEEDER_TAG = 'REAL dataset · synthetic feeder';
-export const FEEDER_CITE = 'NREL SMART-DS 2018 AUS P1U (CC BY 4.0) is a REAL published dataset, but its feeder is synthetic: NREL calls SMART-DS realistic, not real.';
 const NEXT = { run: ['results', 'Continue to Results →'], results: ['learnings', 'Continue to Learnings →'] };
 
 /** A provenance tag: the label word in a 1 px tag, title = cite. SCREENING is dashed (story-flow tokens). */
@@ -72,25 +71,28 @@ export function vsDefaultRows(cat, scenario, clock = {}) {
     const refL = refL0 && LABELS.includes(refL0.label) ? refL0 : nowL;
     const [w, opts] = VS_WORDS[key] || [key, {}];
     const words = typeof w === 'function' ? w(clock || {}) : w;
-    out.push({ key, words, opts, refId: d.refId, refTitle: refS ? refS.title || refS.id : d.refId,
-      now: { v: d.v, label: nowL.label, cite: nowL.cite }, ref: { v: d.ref, label: refL.label, cite: refL.cite } });
+    out.push({ key, words, opts, refId: d.refId, refTitle: refS ? refS.title || refS.id : d.refId, refName: refS ? runName(cat, refS) : d.refId,
+      now: { v: d.v, label: nowL.label, cite: nowL.cite }, ref: { v: d.ref, label: refL.label, cite: `${d.refId}: ${refL.cite || ''}`.trim() } });
   }
   return out;
 }
 
-/** Plain text of the rows ("fleet gross energy value $1,845.39 (default run $916.56)"), for a tooltip. */
+/** Plain text of the rows ("fleet gross energy value $1,845.39 (23 Aug 2026 · Naive · default settings: $893.83)"). */
 export function vsDefaultText(rows) {
-  return rows.map((r) => `${r.words} ${fmtValue(r.now, r.opts)} (default run ${fmtValue(r.ref, r.opts)})`).join('; ');
+  return rows.map((r) => `${r.words} ${fmtValue(r.now, r.opts)} (${r.refName}: ${fmtValue(r.ref, r.opts)})`).join('; ');
 }
 
-/** HTML of the rows, each value with its tag. `max` rows at most (the rest in the title). */
+/** HTML of the rows, each value and its reference value with their tags; the reference run is named by the caller
+ *  (vsDefaultHead). `max` rows at most (the rest in the title). */
 export function vsDefaultHTML(rows, { max = Infinity } = {}) {
   if (!rows.length) return '';
   const shown = rows.slice(0, max);
   const more = rows.length - shown.length;
-  return shown.map((r) => `<span class="vs-row" title="${esc(`vs ${r.refTitle}`)}">${esc(r.words)} ${numHTML(r.now, r.opts)} <span class="vs-was">default run ${esc(fmtValue(r.ref, r.opts))}</span></span>`).join('')
+  return shown.map((r) => `<span class="vs-row" title="${esc(`vs ${r.refTitle}`)}">${esc(r.words)} ${numHTML(r.now, r.opts)} <span class="vs-was">vs ${numHTML(r.ref, r.opts)}</span></span>`).join('')
     + (more > 0 ? `<span class="vs-more" title="${esc(vsDefaultText(rows.slice(max)))}">+${more} more</span>` : '');
 }
+/** "vs 23 Aug 2026 · Naive · default settings": the reference run of the rows, by name. */
+export const vsDefaultHead = (rows) => (rows.length ? `vs ${rows[0].refName}` : '');
 
 // ---- customers: every load bus is a customer; topology homes[].use says "residential" or "commercial" (DERIVED,
 // topology meta.customerUse). A single customer keeps its "Home 0xxx" id; a commercial one is marked a small business.
@@ -108,19 +110,54 @@ export function markCustomers(text, topology) {
   return String(text).replace(/Home \d{4}(?! \(small business\))/g, (m) => (com.has(m) ? `${m} (${SMALL_BUSINESS})` : m));
 }
 
+/** A lever option's short words: its catalogue label up to the first ": " or " (" ("Controller crash: a worker ..."
+ *  -> "Controller crash"). */
+export function optionWords(catalogue, key, value) {
+  const L = (catalogue && catalogue.levers) || {};
+  const o = ((L[key] && L[key].options) || []).find((x) => String(x.id) === String(value));
+  return o ? String(o.label).split(/: | \(/)[0].trim() : String(value);
+}
+// the catalogue constant that holds each fleet lever's option set (its label says where the set comes from)
+const LEVER_SET = { fleet: 'STORY_FLEET_SIZES', reserve: 'STORY_RESERVES_PCT', soc0: 'STORY_SOC0_PCT', growth: 'STORY_GROWTH_PCT' };
+/** The tag of a lever setting: the option's own `why` label, else its lever's catalogue constant; null when the data
+ *  gives none (no tag is then shown). */
+export function leverTag(catalogue, key, value) {
+  const L = (catalogue && catalogue.levers) || {};
+  const o = ((L[key] && L[key].options) || []).find((x) => String(x.id) === String(value));
+  if (o && o.why && TAG_LABELS.includes(o.why.label)) return { label: o.why.label, cite: [o.why.text, o.why.cite].filter(Boolean).join(' · ') };
+  const c = catalogue && catalogue.constants && catalogue.constants[LEVER_SET[key]];
+  return c && TAG_LABELS.includes(c.label) ? { label: c.label, cite: c.cite || '' } : null;
+}
+/** The levers that describe a run, in reading order (no fleet levers without batteries; growth only when moved). */
+function summaryKeys(catalogue, levers) {
+  const L = (catalogue && catalogue.levers) || {};
+  const keys = ['policy'];
+  if (levers.failure && levers.failure !== 'none') keys.push('failure');
+  if (levers.policy !== 'none') keys.push('fleet', 'cls', 'reserve', 'soc0');
+  if (levers.growth !== undefined && String(levers.growth) !== String(L.growth && L.growth.default)) keys.push('growth');
+  return keys;
+}
 /** Lever words for the run pill, from the catalogue's own option labels. */
 export function leverSummary(catalogue, levers) {
-  const L = (catalogue && catalogue.levers) || {};
-  // the option's label up to its first ":" or " (" ("Controller crash: a worker is ..." -> "Controller crash")
-  const lab = (key) => {
-    const o = ((L[key] && L[key].options) || []).find((x) => String(x.id) === String(levers[key]));
-    return o ? String(o.label).split(/: | \(/)[0].trim() : String(levers[key]);
-  };
   if (!levers) return '';
-  const parts = [lab('policy')];
-  if (levers.failure && levers.failure !== 'none') parts.push(lab('failure'));
-  if (levers.policy !== 'none') parts.push(`${lab('fleet')}, ${lab('cls')}`, lab('reserve'), lab('soc0'));
-  if (levers.growth !== undefined && String(levers.growth) !== String(L.growth && L.growth.default)) parts.push(lab('growth'));
+  return summaryKeys(catalogue, levers).map((k) => optionWords(catalogue, k, levers[k])).join(' · ');
+}
+/** The same, each setting with its tag (leverTag). */
+export function leverSummaryHTML(catalogue, levers) {
+  if (!levers) return '';
+  return summaryKeys(catalogue, levers).map((k) => {
+    const t = leverTag(catalogue, k, levers[k]);
+    return `<span class="lv">${esc(optionWords(catalogue, k, levers[k]))}${t ? tagHTML(t.label, t.cite) : ''}</span>`;
+  }).join('<span class="sep"> · </span>');
+}
+/** A run by name: "23 Aug 2026 · Naive · default settings", or "... · 192 batteries" for a moved fleet lever. */
+export function runName(catalogue, sc) {
+  const L = (catalogue && catalogue.levers) || {};
+  const lv = sc.levers || {};
+  const parts = [optionWords(catalogue, 'evening', lv.evening), optionWords(catalogue, 'policy', lv.policy)];
+  if (lv.failure && lv.failure !== 'none') parts.push(optionWords(catalogue, 'failure', lv.failure));
+  const moved = ['fleet', 'cls', 'reserve', 'soc0', 'growth'].filter((k) => L[k] && lv[k] !== undefined && String(lv[k]) !== String(L[k].default));
+  parts.push(...(moved.length ? moved.map((k) => optionWords(catalogue, k, lv[k])) : ['default settings']));
   return parts.join(' · ');
 }
 
@@ -138,8 +175,8 @@ export function createShell(body) {
   main.className = 'st-main';
   const footer = document.createElement('footer');
   footer.className = 'st-footer';
-  footer.innerHTML = `<span class="st-standin" title="${esc(STANDIN_CITE)}">${STANDIN}</span>
-    <span title="${esc(FEEDER_CITE)}">Feeder: NREL SMART-DS 2018 AUS P1U, CC BY 4.0 (${FEEDER_TAG})</span><span>Prices: ERCOT real-time, LZ_NORTH</span>
+  footer.innerHTML = `<span class="st-standin">${STANDIN}</span>
+    <span class="st-feeder">Feeder: ${FEEDER_TAG}</span><span>Prices: ERCOT real-time, LZ_NORTH</span>
     <span>Buildings: © OpenStreetMap contributors, ODbL</span><span>Power flow: OpenDSS</span>
     <span>Every number carries its tag: REAL, SIM, DERIVED, ASSUMPTION</span>
     <a class="st-explorer" href="explore.html">Engine explorer</a>`;
@@ -147,6 +184,16 @@ export function createShell(body) {
 
   const api = {
     main,
+    /** The footer's feeder line and stand-in note, from topology.json (constants FEEDER_NAME / STAND_IN, meta.license). */
+    setFeeder(topology) {
+      const c = (topology && topology.constants) || {}, m = (topology && topology.meta) || {};
+      const lic = (topology && topology.sources && topology.sources.topology && topology.sources.topology.text) || m.license;
+      const fe = footer.querySelector('.st-feeder');
+      if (fe && lic) fe.textContent = `Feeder: ${lic} (${FEEDER_TAG})`;
+      if (fe && c.FEEDER_NAME && c.FEEDER_NAME.cite) fe.title = `${c.FEEDER_NAME.value}: ${c.FEEDER_NAME.cite}`;
+      const si = footer.querySelector('.st-standin');
+      if (si && c.STAND_IN) si.title = `${c.STAND_IN.value} (${c.STAND_IN.label}): ${c.STAND_IN.cite || ''}`;
+    },
     update({ page, scenario, catalogue, link, nav, getJSON }) {
       notice.hidden = true;
       notice.textContent = '';
@@ -161,10 +208,10 @@ export function createShell(body) {
       if (page === 'configure') right = `<span class="st-framing">${FRAMING}</span>`;
       else if (page === 'learnings') right = '<span class="st-framing" data-framing="learnings"></span>';
       else if (NEXT[page] && scenario) {
-        const idx = (catalogue.scenarios || []).indexOf(scenario) + 1;
         const vs = vsDefaultText(vsDefaultRows(catalogue, scenario));
-        right = `<span class="st-pill" title="${esc(`A static replay of the engine's run ${scenario.id} (ui/data). No simulator runs in the page.${vs ? ` Versus the default run: ${vs}.` : ''}`)}">
-            <span class="dot"></span><b>Run #${idx}</b><span class="sum">${esc(leverSummary(catalogue, scenario.levers))}</span></span>
+        const ev = scenario.levers ? leverTag(catalogue, 'evening', scenario.levers.evening) : null;
+        right = `<span class="st-pill" title="${esc(`${scenario.title || scenario.id} (${scenario.id}): a static replay of the engine's run (ui/data). No simulator runs in the page.${vs ? ` Against the reference run: ${vs}.` : ''}`)}">
+            <span class="dot"></span><b>${esc(scenario.levers ? optionWords(catalogue, 'evening', scenario.levers.evening) : scenario.id)}</b>${ev ? tagHTML(ev.label, ev.cite) : ''}<span class="sum">${leverSummaryHTML(catalogue, scenario.levers)}</span></span>
           <a class="st-btn" href="${esc(link(NEXT[page][0], {}))}" data-next="${NEXT[page][0]}">${NEXT[page][1]}</a>`;
       }
       header.innerHTML = `<div class="st-wordmark">Hugging Base</div><nav class="st-steps" aria-label="Story steps">${steps}</nav>
