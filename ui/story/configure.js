@@ -9,7 +9,7 @@
 //   - the one-lever rule (ruling 1): the fleet levers are run one away from the default at a time, so moving a second
 //     one resets the first (the note says so); any other lever the move changes carries the catalogue's reason.
 // Nothing here invents a number: the Fixed column reads the scenario's meta (constants, plan, sources) and topology.
-import { tagHTML, FEEDER_TAG, vsDefaultRows, vsDefaultHTML, vsDefaultHead, leverTag } from './shell.js';
+import { tagHTML, FEEDER_TAG, vsDefaultInfo, vsDefaultHTML, leverTag } from './shell.js';
 import { dateLabel, stepToTime } from '../lib/format.js';
 
 export const LEVER_KEYS = ['evening', 'policy', 'failure', 'fleet', 'cls', 'reserve', 'soc0', 'growth'];
@@ -243,17 +243,18 @@ export async function mount(root, ctx) {
   const changedBadge = (key) => (!same(scenario.levers[key], cat.levers[key].default) ? '<span class="cfg-changed">changed</span>' : '');
 
   // the catalogue's vsDefault (what this run changed against the default run), shown by the lever that moved
+  // the catalogue's reference run (vsDefaultRef) and what this run moved against it, shown by the lever(s) that differ
   function movedLevers() {
     const end = meta && meta.start && meta.steps ? stepToTime(meta, meta.steps) : null;
-    const rows = vsDefaultRows(cat, scenario, { end });
-    if (!rows.length) return { keys: [], rows };
-    const ref = scenarioById(cat, rows[0].refId);
-    return { keys: ref ? LEVER_KEYS.filter((k) => !same(ref.levers[k], scenario.levers[k])) : [], rows };
+    const info = vsDefaultInfo(cat, scenario, { end });
+    if (!info || !info.ref) return { keys: [], info };
+    return { keys: LEVER_KEYS.filter((k) => !same(info.ref.levers[k], scenario.levers[k])), info };
   }
   const vsBlock = (key) => {
     const m = movedLevers();
-    if (!m.keys.includes(key)) return '';
-    return `<div class="cfg-vs"><div class="cfg-vs-h" title="${esc(m.rows[0].refTitle)}">What this changed ${esc(vsDefaultHead(m.rows))}</div>${vsDefaultHTML(m.rows)}</div>`;
+    if (!m.keys.includes(key) || key !== m.keys[m.keys.length - 1]) return '';
+    const body = m.info.rows.length ? vsDefaultHTML(m.info.rows) : '<span class="vs-row">no headline value moved</span>';
+    return `<div class="cfg-vs"><div class="cfg-vs-h" title="${esc(m.info.refId)}">vs ${esc(m.info.refTitle)}</div>${body}</div>`;
   };
   function leverCard(key, bodyHTML, { desc = '', compact = false } = {}) {
     const L = cat.levers[key];

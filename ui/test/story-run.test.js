@@ -5,9 +5,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import zlib from 'node:zlib';
 
-import { SPEEDS, DEFAULT_SPEED, MERGE_GAP, focusLabels, runFiles, attackPath, ranges, kindWord, KIND, buildSeries, fallbackFailures,
-  fallbackMoments, covertFailures, covertMoments, detectorModel, momentAt, runCostHTML, tierNames } from '../story/run.js';
+import { SPEEDS, DEFAULT_SPEED, focusLabels, runFiles, attackPath, kindWord, KIND, buildSeries, covertFailures, covertMoments,
+  detectorModel, momentAt, runCostHTML, tierNames, tierConsts, tierBands, laneRange, signedMW, reserveHTML } from '../story/run.js';
 import { numHTML, tagHTML, leverSummary, STEPS } from '../story/shell.js';
 import { LabelError } from '../lib/format.js';
 
@@ -18,15 +19,6 @@ const readJSON = (p) => JSON.parse(fs.readFileSync(p, 'utf8'));
 test('run: the six speeds of ruling 5, default 0.25x', () => {
   assert.deepEqual(SPEEDS, [0.1, 0.25, 0.5, 1, 2, 4]);
   assert.equal(DEFAULT_SPEED, 0.25);
-  assert.equal(MERGE_GAP, 5);
-});
-
-test('run: ranges merge runs of steps when the gap is 5 or less', () => {
-  const on = new Set([3, 4, 5, 9, 10, 20]);
-  assert.deepEqual(ranges(30, (k) => on.has(k)), [[3, 10], [20, 20]]);
-  assert.deepEqual(ranges(30, (k) => on.has(k), 2), [[3, 5], [9, 10], [20, 20]]);
-  assert.deepEqual(ranges(10, () => false), []);
-  assert.deepEqual(ranges(4, () => true), [[0, 3]]);
 });
 
 test('run: the files a scenario reads; covert adds its detector file (catalogue `attack`)', () => {
@@ -37,6 +29,9 @@ test('run: the files a scenario reads; covert adds its detector file (catalogue 
   assert.equal(attackPath(cov), 'p3/covert.json');
   assert.equal(runFiles(cov).at(-1).path, 'p3/covert.json');
   assert.equal(attackPath({ ...cov, attack: undefined, covert: '../../mpalacios/out/p3/covert.json' }), '../../mpalacios/out/p3/covert.json');
+  // no path typed in the page: a covert scenario without one is a missing file on Running, not a guessed path
+  assert.equal(attackPath({ ...cov, attack: undefined }), null);
+  assert.equal(runFiles({ ...cov, attack: undefined }).at(-1).missing, true);
   assert.equal(runFiles({ ...base, extras: null }).length, 4);
 });
 
@@ -46,11 +41,56 @@ test('run: every failure kind the engine writes has display words', () => {
   assert.equal(kindWord('new_kind'), 'new kind');
 });
 
-test('run: tier names read the run\'s own thresholds', () => {
-  const t = tierNames({ amber: 100, normal: 110, normalMinutes: 30, emergency: 150 });
-  assert.equal(t.length, 6);
-  assert.match(t[3], /30\+ min/);
-  assert.match(t[4], /150%/);
+test('run: tier thresholds come from the TIER_* constants (extras first, then meta, then meta.tiers), never typed', () => {
+  const T = tierConsts(meta);
+  assert.deepEqual([T.amber.v, T.normal.v, T.normalMin.v, T.emergency.v],
+    [meta.constants.TIER_AMBER_PCT.value, meta.constants.TIER_NORMAL_PCT.value, meta.constants.TIER_NORMAL_MIN.value, meta.constants.TIER_EMERGENCY_PCT.value]);
+  assert.equal(T.normalMin.label, meta.constants.TIER_NORMAL_MIN.label);
+  const X = tierConsts(meta, { constants: { TIER_EMERGENCY_PCT: { value: 160, label: 'ASSUMPTION', cite: 'x' } } });
+  assert.equal(X.emergency.v, 160);
+  const bare = tierConsts({});
+  assert.deepEqual(bare, { amber: null, normal: null, normalMin: null, emergency: null });
+  const names = tierNames(bare);
+  assert.equal(names.length, 6);
+  assert.ok(names.every((x) => !/\d/.test(x)), 'no number without data');
+  assert.match(tierNames(T)[3], new RegExp(`${meta.constants.TIER_NORMAL_MIN.value}\\+ min`));
+});
+
+test('run: ONE definition of the transformer counts: exclusive bands, the same text for the hero and Right now', () => {
+  const T = tierConsts(meta);
+  const B = tierBands([10, 6, 5, 3, 1], 379, T);
+  assert.deepEqual(B.bands.map((b) => [b.key, b.n]), [['over', 10], ['above', 11], ['emergency', 3], ['open', 1]]);
+  assert.equal(B.within, 379 - 25);
+  assert.equal(B.text, '100%–110% 10 · 110%–150% 11 (5 past 30 min) · above 150% 3 · protection open 1');
+  assert.equal(B.bands.reduce((s2, b) => s2 + b.n, 0) + B.within, 379, 'the bands and within add up: nothing counted twice');
+  assert.doesNotMatch(tierBands([1, 1, 1, 1, 1], 10, tierConsts({})).text, /\d+%/);
+});
+
+test('run: lane ranges come from the data (the worst peaks are never flattened)', () => {
+  assert.deepEqual(laneRange([60, 215.5], [110, 150]), [60, 230]);
+  assert.ok(laneRange([60, 215.5], [110, 150])[1] > 215.5);
+  assert.deepEqual(laneRange([20, 98], [100], { floor: 0 }), [0, 110]);
+  assert.deepEqual(laneRange([], []), [0, 1]);
+});
+
+test('run: the fleet power is signed, never a threshold word', () => {
+  assert.equal(signedMW(593.6), '+0.59');
+  assert.equal(signedMW(-3840), '−3.84');
+  assert.equal(signedMW(0), '0.00');
+  assert.equal(signedMW(2), '+0.00');
+});
+
+test('run: the reserve note: the floor, "never breached by dispatch" and the backup use in outages, labels from the data', () => {
+  const reserveC = { value: 0.2, label: 'REAL', cite: 'floor' };
+  const summary = { reserveBreaches: { v: 0, label: 'SIM', cite: 'b' }, reserveUsedInOutage: { v: 1948, label: 'SIM', cite: 'o' } };
+  const h = reserveHTML({ reserveC, summary, num: numHTML });
+  assert.match(h, /20%<\/span><span class="chip chip-REAL" title="floor">REAL/);
+  assert.match(h, /never breached by dispatch <span class="chip chip-SIM" title="b">SIM/);
+  assert.match(h, /used for home backup during outages: <span class="num">1,948<\/span><span class="chip chip-SIM" title="o">SIM<\/span> battery-minutes/);
+  assert.doesNotMatch(h, /never used/);
+  assert.doesNotMatch(reserveHTML({ reserveC, summary: { ...summary, reserveUsedInOutage: { v: 0, label: 'SIM' } }, num: numHTML }), /outages/);
+  assert.match(reserveHTML({ reserveC, summary: { reserveBreaches: { v: 3, label: 'SIM' } }, num: numHTML }), /breached by dispatch <span class="num">3/);
+  assert.equal(reserveHTML({ reserveC: null, summary, num: numHTML }), '');
 });
 
 test('run: the engine cost line is the catalogue\'s labelled numbers; no bare number passes', () => {
@@ -87,7 +127,7 @@ test('shell: the run pill summary uses the catalogue labels, cut at ": " or " ("
     reserve: { options: [{ id: 20, label: '20% reserve' }] }, soc0: { options: [{ id: 90, label: '90% at 16:00' }] },
     growth: { default: 0, options: [{ id: 0, label: "Today's load" }, { id: 20, label: '+20% home load' }] } } };
   const L = { policy: 'aware', failure: 'worker_kill', fleet: 96, cls: 'core', reserve: 20, soc0: 90, growth: 0 };
-  assert.equal(leverSummary(cat, L), 'Feeder-aware · Controller crash · 96 batteries, Core · 20% reserve · 90% at 16:00');
+  assert.equal(leverSummary(cat, L), 'Feeder-aware · Controller crash · 96 batteries · Core · 20% reserve · 90% at 16:00');
   assert.equal(leverSummary(cat, { ...L, policy: 'none', failure: 'none', growth: 20 }), 'No batteries · +20% home load');
 });
 
@@ -113,33 +153,21 @@ test('run: series from the committed aware_faults branch: steps, transformers an
   assert.equal(SX.wtf[5], 7);
 });
 
-test('run: the fallback story and failures (no extras) use the files\' own text; another branch\'s faults stay out', () => {
-  const doc = readJSON(path.join(UI, 'data', 'p1', 'aware_faults.json'));
-  const S = buildSeries(doc, meta, topology);
-  const f = fallbackFailures({ meta, doc, series: S, topology, branch: 'aware_faults' });
-  const scripted = (meta.events.aware_faults || []).map((e) => e.kind);
-  for (const k of scripted) assert.ok(f.some((x) => x.kind === k), `scripted ${k}`);
-  for (const x of f) { assert.ok(x.k0 <= x.k1, JSON.stringify(x)); assert.ok(kindWord(x.kind)); }
-  const m = fallbackMoments({ meta, doc, branch: 'aware_faults' });
-  for (let i = 1; i < m.length; i++) assert.ok(m[i - 1].k <= m[i].k);
-  const aware = readJSON(path.join(UI, 'data', 'p1', 'aware.json'));
-  const ma = fallbackMoments({ meta, doc: aware, branch: 'aware' });
-  const faultTexts = new Set((meta.events.aware_faults || []).map((e) => e.text));
-  assert.ok(!ma.some((x) => faultTexts.has(x.text)), 'the aware branch shows no aware_faults event');
-  assert.equal(momentAt(m, -1), null);
-  assert.equal(momentAt(m, S.n), m.at(-1));
-});
-
-test('run: worker_kill fallback reads the kill from its runtime block', () => {
-  const doc = readJSON(path.join(REPO, 'mpalacios', 'out', 'p1', 'worker_kill.json'));
-  const S = buildSeries(doc, meta, topology);
-  const f = fallbackFailures({ meta, doc, series: S, topology, branch: 'worker_kill' });
-  const kill = f.find((x) => x.kind === 'worker_kill');
-  assert.equal(kill.k0, doc.runtime.kill.step);
-  assert.equal(kill.k1, doc.runtime.takeover[0].step);
-  assert.equal(kill.text, doc.runtime.kill.text);
-  const m = fallbackMoments({ meta, doc, branch: 'worker_kill' });
-  assert.ok(m.some((x) => x.text === doc.runtime.takeover[0].text));
+test('run: every committed extras file carries the rule log and the failures the page shows (no fallback re-derives them)', () => {
+  const cat = readJSON(path.join(UI, 'data', 'story', 'index.json'));
+  const seen = new Set();
+  for (const sc of cat.scenarios) {
+    assert.ok(sc.extras, `${sc.id} names its extras`);
+    if (seen.has(sc.extras)) continue;
+    seen.add(sc.extras);
+    const x = JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(UI, 'data', sc.extras))));
+    assert.ok(Array.isArray(x.moments) && Array.isArray(x.failures), sc.extras);
+    for (const f of x.failures) { assert.ok(f.k0 <= f.k1, `${sc.extras} ${JSON.stringify(f)}`); assert.ok(kindWord(f.kind)); }
+  }
+  const m = [{ k: 3, text: 'a' }, { k: 9, text: 'b' }];
+  assert.equal(momentAt(m, 2), null);
+  assert.equal(momentAt(m, 5).text, 'a');
+  assert.equal(momentAt(m, 99).text, 'b');
 });
 
 test('run: the covert detector card counts flagged and quarantined units from p3/covert.json', () => {
@@ -180,10 +208,22 @@ test('shell: vsDefault rows follow the catalogue headline order, labelled from t
   assert.deepEqual(rows.map((r) => r.key), ['batteryCausedNormal', 'energyValueUSD'], 'headline order; a value without a label is dropped');
   assert.deepEqual(rows[1].now, { v: 1789.11, label: 'DERIVED', cite: 'c' });
   assert.equal(rows[1].refTitle, 'Naive');
-  assert.match(vsDefaultText(rows), /fleet gross energy value, not Base's profit \$1,789\.11 \(default run \$893\.83\)/);
+  assert.match(vsDefaultText(rows), /fleet gross energy value, not Base's profit \$1,789\.11 \(Naive: \$893\.83\)/);
+  assert.match(vsDefaultHTML(rows), /vs <span class="num">\$893\.83<\/span><span class="chip chip-DERIVED"/, 'the reference value is tagged');
   assert.match(vsDefaultHTML(rows, { max: 1 }), /\+1 more/);
   assert.deepEqual(vsDefaultRows(cat, cat.scenarios[0]), []);
   assert.deepEqual(vsDefaultRows(cat, { id: 'x', vsDefault: {} }), []);
+  // the catalogue's vsDefaultRef and per-entry label win
+  const { vsDefaultInfo } = await import('../story/shell.js');
+  const s3 = { id: 'e/naive', title: 'E', summary: { batteryCausedNormal: sum(8) }, vsDefaultRef: 'd/naive', vsDefault: { batteryCausedNormal: { v: 8, ref: 11, label: 'SIM' } } };
+  const info = vsDefaultInfo({ ...cat, scenarios: [...cat.scenarios, s3] }, s3);
+  assert.equal(info.refId, 'd/naive');
+  assert.equal(info.refTitle, 'Naive');
+  assert.deepEqual(info.rows.map((r) => [r.now.v, r.now.label, r.ref.v, r.ref.label]), [[8, 'SIM', 11, 'SIM']]);
+  const moved = vsDefaultInfo(cat, { id: 'z', vsDefaultRef: 'd/naive', vsDefault: {} });
+  assert.equal(moved.refTitle, 'Naive', 'nothing moved, but the reference is still named');
+  assert.deepEqual(moved.rows, []);
+  assert.equal(vsDefaultInfo(cat, { id: 'd/naive', vsDefault: {} }), null, 'the default run has no reference');
 });
 
 test('run: the named places come from topology (focus keys, bridge tf), or are left out', () => {

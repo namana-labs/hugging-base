@@ -203,8 +203,10 @@ test('configure: customers, not homes (data-truth #6): "N customers (R homes, C 
   const meta = { counts: { homes: 10, residential: 8, commercial: 2, fleetOnCommercial: 1 }, customerUse: { label: 'DERIVED', cite: 'Loads.dss shapes' } };
   const cc = customerCounts(meta);
   assert.deepEqual(cc, { customers: 10, residential: 8, commercial: 2, fleetOnCommercial: 1, label: 'DERIVED', cite: 'Loads.dss shapes' });
-  const html = customersHTML(cc, numHTML, 'feeder');
-  assert.match(html, /^<span class="num">10<\/span><span class="chip chip-REAL"[^>]*>REAL<\/span> customers \(<span class="num">8<\/span><span class="chip chip-DERIVED" title="Loads.dss shapes">DERIVED<\/span> homes, <span class="num">2<\/span>.*small businesses\)$/);
+  const html = customersHTML(cc, numHTML);
+  // the total is not labelled in the data: no tag (the page never assigns one); the split carries customerUse's label
+  assert.match(html, /^<span class="num"[^>]*>10<\/span> customers \(<span class="num">8<\/span><span class="chip chip-DERIVED" title="Loads.dss shapes">DERIVED<\/span> homes, <span class="num">2<\/span>.*small businesses\)$/);
+  assert.doesNotMatch(html, /chip-REAL/);
   // without the split in the data: the total only, never a typed number
   assert.equal(customerCounts({ counts: { homes: 10 } }).residential, null);
   assert.match(customersHTML(customerCounts({ counts: { homes: 10 } }), numHTML), /customers$/);
@@ -260,6 +262,6 @@ test('configure: the feeder dataset name comes from topology (FEEDER_NAME, else 
   const t = JSON.parse(fs.readFileSync(path.join(UI, 'data', 'topology.json'), 'utf8'));
   const f = feederName(t);
   assert.equal(f.name, (t.constants && t.constants.FEEDER_NAME && t.constants.FEEDER_NAME.value) || t.meta.feeder);
-  assert.deepEqual(feederName({ meta: { feeder: 'X feeder' } }), { name: 'X feeder', label: 'REAL', cite: 'topology.json meta.feeder' });
+  assert.deepEqual(feederName({ meta: { feeder: 'X feeder' } }), { name: 'X feeder', label: null, cite: 'topology.json meta.feeder' }, 'no label in the data: none shown');
   assert.equal(feederName({}), null);
 });

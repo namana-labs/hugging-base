@@ -58,21 +58,26 @@ export const VS_WORDS = {
 export function vsDefaultRows(cat, scenario, clock = {}) {
   const vs = scenario && scenario.vsDefault;
   if (!vs || typeof vs !== 'object') return [];
+  const refDefault = scenario.vsDefaultRef || null;
   const order = Array.isArray(cat.headline) ? cat.headline : Object.keys(vs);
   const keys = [...order.filter((k) => k in vs), ...Object.keys(vs).filter((k) => !order.includes(k))];
   const out = [];
   for (const key of keys) {
     const d = vs[key];
     if (!d || typeof d !== 'object' || !('v' in d)) continue;
-    const refS = (cat.scenarios || []).find((x) => x.id === d.refId) || null;
-    const lab = (sc) => (sc && sc.summary && sc.summary[key] && TAG_LABELS.includes(sc.summary[key].label) ? sc.summary[key] : null);
-    const nowL = lab(scenario), refL0 = lab(refS);
-    if (!nowL || !LABELS.includes(nowL.label)) continue;
-    const refL = refL0 && LABELS.includes(refL0.label) ? refL0 : nowL;
+    const refId = d.refId || refDefault;
+    const refS = (cat.scenarios || []).find((x) => x.id === refId) || null;
+    const lab = (sc) => (sc && sc.summary && sc.summary[key] && LABELS.includes(sc.summary[key].label) ? sc.summary[key] : null);
+    // this run's value: the entry's own label (catalogue), else this run's summary; the reference value: the reference
+    // run's own summary label. A value without a label is dropped, never shown bare.
+    const own = lab(scenario);
+    const nowL = LABELS.includes(d.label) ? { label: d.label, cite: own ? own.cite : '' } : own;
+    const refL = lab(refS);
+    if (!nowL || !refL) continue;
     const [w, opts] = VS_WORDS[key] || [key, {}];
     const words = typeof w === 'function' ? w(clock || {}) : w;
-    out.push({ key, words, opts, refId: d.refId, refTitle: refS ? refS.title || refS.id : d.refId, refName: refS ? runName(cat, refS) : d.refId,
-      now: { v: d.v, label: nowL.label, cite: nowL.cite }, ref: { v: d.ref, label: refL.label, cite: `${d.refId}: ${refL.cite || ''}`.trim() } });
+    out.push({ key, words, opts, refId, refTitle: refS ? refS.title || refS.id : refId, refName: refS ? runName(cat, refS) : refId,
+      now: { v: d.v, label: nowL.label, cite: nowL.cite }, ref: { v: d.ref, label: refL.label, cite: `${refId}: ${refL.cite || ''}` } });
   }
   return out;
 }
@@ -93,6 +98,16 @@ export function vsDefaultHTML(rows, { max = Infinity } = {}) {
 }
 /** "vs 23 Aug 2026 · Naive · default settings": the reference run of the rows, by name. */
 export const vsDefaultHead = (rows) => (rows.length ? `vs ${rows[0].refName}` : '');
+/** The scenario's reference run (catalogue `vsDefaultRef`) and what moved against it: {ref, refTitle, refName, rows};
+ *  null for the default run itself (no reference). rows = [] when nothing in the headline moved. */
+export function vsDefaultInfo(cat, scenario, clock = {}) {
+  if (!scenario) return null;
+  const rows = vsDefaultRows(cat, scenario, clock);
+  const refId = scenario.vsDefaultRef || (rows[0] && rows[0].refId) || null;
+  if (!refId || refId === scenario.id) return null;
+  const ref = (cat.scenarios || []).find((x) => x.id === refId) || null;
+  return { refId, ref, refTitle: ref ? ref.title || ref.id : refId, refName: ref ? runName(cat, ref) : refId, rows };
+}
 
 // ---- customers: every load bus is a customer; topology homes[].use says "residential" or "commercial" (DERIVED,
 // topology meta.customerUse). A single customer keeps its "Home 0xxx" id; a commercial one is marked a small business.
@@ -153,7 +168,8 @@ export function leverSummaryHTML(catalogue, levers) {
 /** A run by name: "23 Aug 2026 · Naive · default settings", or "... · 192 batteries" for a moved fleet lever. */
 export function runName(catalogue, sc) {
   const L = (catalogue && catalogue.levers) || {};
-  const lv = sc.levers || {};
+  if (!sc.levers || !L.evening) return sc.title || sc.id;
+  const lv = sc.levers;
   const parts = [optionWords(catalogue, 'evening', lv.evening), optionWords(catalogue, 'policy', lv.policy)];
   if (lv.failure && lv.failure !== 'none') parts.push(optionWords(catalogue, 'failure', lv.failure));
   const moved = ['fleet', 'cls', 'reserve', 'soc0', 'growth'].filter((k) => L[k] && lv[k] !== undefined && String(lv[k]) !== String(L[k].default));
@@ -208,7 +224,8 @@ export function createShell(body) {
       if (page === 'configure') right = `<span class="st-framing">${FRAMING}</span>`;
       else if (page === 'learnings') right = '<span class="st-framing" data-framing="learnings"></span>';
       else if (NEXT[page] && scenario) {
-        const vs = vsDefaultText(vsDefaultRows(catalogue, scenario));
+        const info = vsDefaultInfo(catalogue, scenario);
+        const vs = info ? `${info.refTitle}: ${info.rows.length ? vsDefaultText(info.rows) : 'no headline value moved'}` : '';
         const ev = scenario.levers ? leverTag(catalogue, 'evening', scenario.levers.evening) : null;
         right = `<span class="st-pill" title="${esc(`${scenario.title || scenario.id} (${scenario.id}): a static replay of the engine's run (ui/data). No simulator runs in the page.${vs ? ` Against the reference run: ${vs}.` : ''}`)}">
             <span class="dot"></span><b>${esc(scenario.levers ? optionWords(catalogue, 'evening', scenario.levers.evening) : scenario.id)}</b>${ev ? tagHTML(ev.label, ev.cite) : ''}<span class="sum">${leverSummaryHTML(catalogue, scenario.levers)}</span></span>
