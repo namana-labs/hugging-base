@@ -15,6 +15,43 @@ export const FEEDER_TAG = 'REAL dataset · synthetic feeder';
 const NEXT = { run: ['results', 'Continue to Results →'], results: ['learnings', 'Continue to Learnings →'] };
 
 /** A provenance tag: the label word in a 1 px tag, title = cite. SCREENING is dashed (story-flow tokens). */
+/** The Engine explorer link for where the reader is now: the same evening, policy and minute (explorer views p1/p2),
+ *  plus from=<this story URL> so the explorer's Back button returns to this exact page. Built at click time, because
+ *  the Run page moves k as it plays. Variants the explorer has no run for (fleet size, growth, ...) open its standard
+ *  run of the same policy; "faults" opens its aware_faults branch. */
+export function explorerHref(search = (typeof location !== 'undefined' ? location.search : '')) {
+  const q = new URLSearchParams(search);
+  const page = q.get('page') || 'configure';
+  const s = (q.get('s') || '').split('/');
+  const out = new URLSearchParams();
+  const view = page === 'learnings' ? 'p2' : 'p1';
+  out.set('view', view);
+  if (view === 'p1') {
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(s[0] || '') ? s[0] : null;
+    const pol = ['none', 'naive', 'aware'].includes(s[1]) ? s[1] : null;
+    const branch = pol === 'aware' && s.slice(2).includes('faults') ? 'aware_faults' : pol;
+    if (branch) out.set('branch', branch);
+    if (date && date !== '2026-08-23') out.set('date', date);
+    const k = q.get('k');
+    if (k != null && /^\d+$/.test(k)) {
+      const m = 16 * 60 + Number(k);
+      out.set('t', `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`);
+    }
+  }
+  out.set('from', String(search).replace(/^\?/, '') || 'page=configure');
+  return `explore.html?${out.toString()}`;
+}
+
+function wireExplore(root) {
+  for (const a of root.querySelectorAll('a[data-explore]')) {
+    const refresh = () => { a.href = explorerHref(); };
+    a.addEventListener('mouseenter', refresh);
+    a.addEventListener('focus', refresh);
+    a.addEventListener('mousedown', refresh);
+    a.addEventListener('click', refresh);
+  }
+}
+
 export function tagHTML(label, cite) {
   if (!TAG_LABELS.includes(label)) throw new LabelError(`unknown label ${label}`);
   return `<span class="chip chip-${label}"${cite ? ` title="${esc(cite)}"` : ''}>${label}</span>`;
@@ -234,8 +271,9 @@ export function createShell(body) {
     <span class="st-feeder">Feeder: ${FEEDER_TAG}</span><span>Prices: ERCOT real-time, LZ_NORTH</span>
     <span>Buildings: © OpenStreetMap contributors, ODbL</span><span>Power flow: OpenDSS</span>
     <span>Every number carries its tag: REAL, SIM, DERIVED, ASSUMPTION</span>
-    <a class="st-explorer" href="explore.html">Engine explorer</a>`;
+    <a class="st-explorer" href="explore.html" data-explore>Engine explorer</a>`;
   body.append(header, banner, notice, main, footer);
+  wireExplore(footer);
 
   const api = {
     main,
@@ -271,6 +309,7 @@ export function createShell(body) {
           <a class="st-btn" href="${esc(link(NEXT[page][0], {}))}" data-next="${NEXT[page][0]}">${NEXT[page][1]}</a>`;
       }
       header.innerHTML = `<div class="st-wordmark"><img class="st-mark" src="assets/batter-up-mark-256.png" alt="" width="29" height="36">Batter Up</div><nav class="st-steps" aria-label="Story steps">${steps}</nav>
+        <a class="st-explore" href="${esc(explorerHref())}" data-explore title="Engine explorer: the full-control view of the same engine. Every branch, every transformer and every labelled number on one screen. Opens at this evening, policy and minute; its Back button returns you here.">Engine explorer</a>
         <div class="st-spacer"></div>${right}`;
       // Learnings' framing: the setting its answers were computed for, as the P2 export words it (p2/index.json scope)
       const fr = header.querySelector('[data-framing="learnings"]');
@@ -281,6 +320,7 @@ export function createShell(body) {
         }).catch(() => fr.remove());
       } else if (fr) fr.remove();
       // in-app navigation (the hrefs still work with a middle click)
+      wireExplore(header);
       for (const a of header.querySelectorAll('a[data-page], a[data-next]')) {
         a.addEventListener('click', (ev) => {
           if (ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
