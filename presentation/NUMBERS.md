@@ -15,7 +15,8 @@ Paths are relative to the repo root. `mpalacios/out/p1/worker_kill.json` and `mp
 | Service transformers | **379** | REAL | `ui/data/topology.json` | `transformers (length)` |
 | Batteries in the fleet (a deliberate stress placement) | **96** | ASSUMPTION | `ui/data/topology.json` | `fleet (length); constant FLEET_SIZE` |
 | Fleet penetration | **9.5%** | DERIVED | `ui/data/topology.json` | `fleet / homes` |
-| Eligible homes (the capacity ceiling) | **1,007** | DERIVED | `ui/data/topology.json` | `homes[].eligible (count)` |
+| Eligible customers (the capacity ceiling) | **1,007** | DERIVED | `ui/data/topology.json` | `homes[].eligible (count); meta.counts.eligible` |
+| …of which homes / small businesses | **969 / 38** | DERIVED | `ui/data/topology.json` | `homes[] with eligible = true, by use = residential / commercial (count)` |
 | Core battery power | **20 kW** | REAL | `ui/data/p1/meta.json` | `constants.CORE_POWER_KW` |
 | Member backup reserve (hard floor) | **20%** | REAL | `ui/data/p1/meta.json` | `constants.RESERVE_FLOOR` |
 | State of charge at 16:00 | **90%** | ASSUMPTION | `ui/data/p1/meta.json` | `constants.SOC0` |
@@ -82,6 +83,7 @@ Paths are relative to the repo root. `mpalacios/out/p1/worker_kill.json` and `mp
 | Hidden attacker (fictional): batteries taken | **24** | ASSUMPTION | `mpalacios/out/p3/covert.json` | `summary.shard` |
 | …hidden carrier and start | **±350 W from 22:30** | ASSUMPTION | `mpalacios/out/p3/covert.json` | `attack.t, attack.text` |
 | …seconds to flag the first unit | **180 s** | SIM | `mpalacios/out/p3/covert.json` | `summary.detectionSeconds` |
+| …units flagged (and quarantined) in that first minute: the Detector card at 22:33 | **7 of 24** | SIM | `ui/data/p3/covert.json` | `units[].flaggedStep = 392 (count); quarantine.log step 392 (count)` |
 | …seconds to flag all 24 | **900 s** | SIM | `mpalacios/out/p3/covert.json` | `summary.allDetectedSeconds` |
 | …false alarms while the attack runs | **0** | SIM | `mpalacios/out/p3/covert.json` | `summary.falsePositivesAttack` |
 | …false alarms on the clean fleet (720 min × 96) | **0** | SIM | `mpalacios/out/p3/covert.json` | `summary.falsePositivesClean` |
@@ -111,6 +113,8 @@ Paths are relative to the repo root. `mpalacios/out/p1/worker_kill.json` and `mp
 | 2026-07-22: naive worst transformer (B, 23:15) | **186.3%** | SIM | `ui/data/p1/days/index.json` | `days[date=2026-07-22].naiveMax` |
 | 2026-07-22: naive normal-rating events | **8** | SIM | `ui/data/p1/days/index.json` | `days[date=2026-07-22].naiveEvents` |
 | 2026-07-22: feeder-aware battery-caused events | **0** | SIM | `ui/data/p1/days/index.json` | `days[date=2026-07-22].awareBatteryCaused` |
+| 2026-07-22: feeder-aware worst transformer (T-322, 23:55), the close beat's Results tile | **98.0%** | SIM | `ui/data/p1/days/2026-07-22/meta.json` | `summary.aware.maxLoading` |
+| 2026-07-22: feeder-aware normal-rating events, any cause (the Results tile) | **0** | SIM | `ui/data/p1/days/2026-07-22/meta.json` | `summary.aware.normalEvents` |
 | 2026-07-22: feeder-aware ahead of naive (fleet, gross) | **$29.47** | DERIVED | `ui/data/p1/days/index.json` | `days[date=2026-07-22].awareMoreUSD` |
 | 2026-07-22: fleet gross energy value, naive | **$386.17** | DERIVED | `ui/data/p1/days/2026-07-22/meta.json` | `summary.naive.energyValueUSD` |
 | 2026-07-22: fleet gross energy value, aware | **$415.64** | DERIVED | `ui/data/p1/days/2026-07-22/meta.json` | `summary.aware.energyValueUSD` |
@@ -141,7 +145,7 @@ Paths are relative to the repo root. `mpalacios/out/p1/worker_kill.json` and `mp
 | --- | --- | --- | --- | --- |
 | Q1 naive: largest build that holds (OpenDSS) | **100** | SIM | `ui/data/p2/index.json` | `usefulCapacity.naiveOpenDSS` |
 | Q1 naive: first build that fails (OpenDSS; head cable 100.7%) | **101** | SIM | `ui/data/p2/index.json` | `usefulCapacity.naiveOpenDSS.failAt` |
-| Q1 feeder-aware: batteries that fit (every eligible home) | **1,007** | SIM | `ui/data/p2/index.json` | `usefulCapacity.aware` |
+| Q1 feeder-aware: batteries that fit (every eligible customer: 969 homes, 38 small businesses) | **1,007** | SIM | `ui/data/p2/index.json` | `usefulCapacity.aware` |
 | Q1 feeder-aware: battery-caused events in OpenDSS | **0** | SIM | `ui/data/p2/index.json` | `usefulCapacity.opendss.aware.causedNormal` |
 | Q1 feeder-aware: head cable, worst step (OpenDSS) | **95.9%** | SIM | `ui/data/p2/index.json` | `usefulCapacity.opendss.aware.headMaxPct` |
 | Q1 feeder-aware: lowest home voltage (just under the 0.95 floor; voltage is not in the harm test) | **0.9498 pu** | SIM | `ui/data/p2/index.json` | `usefulCapacity.opendss.aware.vMinPu` |
@@ -152,6 +156,7 @@ Paths are relative to the repo root. `mpalacios/out/p1/worker_kill.json` and `mp
 | Q4 #1: T-240's August peak without the battery (OpenDSS) | **119.5%** | SIM | `ui/data/p2/aware-core-d26-g0.json` | `ranking[0].opendss.before.peakPct` |
 | Q4 #1: …with the top-5 build (OpenDSS) | **96.9%** | SIM | `ui/data/p2/aware-core-d26-g0.json` | `ranking[0].opendss.after.peakPct` |
 | Q4 #1: hours above nameplate it relieves (screening) | **1.25 h** | SIM | `ui/data/p2/aware-core-d26-g0.json` | `ranking[0].stressAvoidedH` |
+| Q4 #1: T-240's August month peak with its battery, as the Q4 page prints it (screening, not the OpenDSS 96.9%) | **96.8%** | SIM | `ui/data/p2/aware-core-d26-g0.json` | `ranking[0].peakWithPct` |
 | Q4: candidates placed only by id (ties) | **802** | SIM | `ui/data/p2/index.json` | `ties.byId` |
 | …out of | **911** | SIM | `ui/data/p2/index.json` | `ties.of` |
 | The flip: #1 feeder-aware home's rank under naive | **345 of 353** | DERIVED | `ui/data/p2/index.json` | `flip.movers[2].rankNaive, flip.entries` |
@@ -175,24 +180,32 @@ Paths are relative to the repo root. `mpalacios/out/p1/worker_kill.json` and `mp
 | OpenDSS referee status, month solves | **checked, 13** | SIM | `ui/data/p2/planner.json` | `referee.status, referee.runs` |
 | OpenDSS agrees with the naive cap | **374 of 376** | SIM | `ui/data/p2/planner.json` | `referee.naiveAtCap.agree, .of` |
 | OpenDSS agrees with the feeder-aware cap | **376 of 376** | SIM | `ui/data/p2/planner.json` | `referee.awareAtCap.agree, .of` |
+| Q2 beat transformer T-34: nameplate, homes | **75 kVA, 6** | REAL | `ui/data/p2/planner.json` | `tfs[tf=34].kva, .homes` |
+| …our batteries there today | **0** | ASSUMPTION | `ui/data/p2/planner.json` | `tfs[tf=34].installed` |
+| …batteries that fit with feeder-aware charging (OpenDSS agrees) | **6** | SIM | `ui/data/p2/planner.json` | `tfs[tf=34].cap.aware.shown (opendss = agree)` |
+| …where a naive split tops out (OpenDSS agrees) | **2** | SIM | `ui/data/p2/planner.json` | `tfs[tf=34].cap.naive.shown (opendss = agree)` |
+| …what the utility nameplate rule allows (no power flow) | **3** | DERIVED | `ui/data/p2/planner.json` | `tfs[tf=34].cap.paper` |
+| Q3: upgrade cost per transformer (Base's figure in its PUCT filing, 54224 item 49; not a quote) | **$10,000** | REAL | `ui/data/p2/planner.json` | `money.upgradeUSD (= ranking[0].costUSD)` |
+| Q3: value per battery a year (one Core, 2025 LZ_NORTH, planned on public day-ahead prices; gross energy value, not Base's profit; not the $284.68 perfect-foresight 2026 per-Core year) | **$631/yr** | DERIVED | `ui/data/p2/planner.json` | `money.memberValueUSDYr (= ranking[0].valueUSDYr)` |
+| Q3: payback of the #1 upgrade (the same on #1–#4, Streets A–D) | **15.8 yr** | DERIVED | `ui/data/p2/planner.json` | `ranking[0].paybackYears` |
 
 The medians are over the transformers of each size serving homes (`sizeSummary.<kVA>.count`). Where OpenDSS is stricter than the screen, OpenDSS wins (`referee.rule`). Read a single transformer's answer (Q2) and the upgrade list (Q3) from the page, with their tags.
 
-## Speed (measured on a shared machine)
+## Speed (measured on two different shared machines: `engine.json` on a Mac, the Running-page catalogue on the Windows 11 build machine)
 
 | Say | Value | Label | File | Field |
 | --- | --- | --- | --- | --- |
-| One OpenDSS solve (one power flow) | **2.13 ms** | DERIVED | `ui/data/engine.json` | `opendss.msPerSolve` |
-| One step (set every load and battery, solve, read out) | **4.2 ms** | DERIVED | `ui/data/engine.json` | `opendss.msPerStep` |
-| The committed 23 Aug build, four branches | **12.7 s** | DERIVED | `ui/data/engine.json` | `p1.buildSeconds` |
-| …OpenDSS solves in that build | **2,884** | DERIVED | `ui/data/engine.json` | `p1.solves` |
-| Controller call, 96 batteries | **66.6 µs** | DERIVED | `ui/data/engine.json` | `allocate.96` |
-| Controller call, 100,000 batteries (about 65 ms) | **65,011.7 µs** | DERIVED | `ui/data/engine.json` | `allocate.100000` |
-| Running page, `2026-08-23/naive`: build time, OpenDSS solves | **25.5 s, 721** | DERIVED / SIM | `ui/data/story/index.json` | `scenarios[id=2026-08-23/naive].engine.buildSeconds, .solves` |
-| Running page, `2026-08-23/aware`: build time, OpenDSS solves | **27.3 s, 721** | DERIVED / SIM | `ui/data/story/index.json` | `scenarios[id=2026-08-23/aware].engine.buildSeconds, .solves` |
-| Running page, `2026-08-23/aware/faults`: build time, OpenDSS solves | **25.1 s, 721** | DERIVED / SIM | `ui/data/story/index.json` | `scenarios[id=2026-08-23/aware/faults].engine.buildSeconds, .solves` |
+| One OpenDSS solve (one power flow) (Mac) | **2.13 ms** | DERIVED | `ui/data/engine.json` | `opendss.msPerSolve` |
+| One step (set every load and battery, solve, read out) (Mac) | **4.2 ms** | DERIVED | `ui/data/engine.json` | `opendss.msPerStep` |
+| The committed 23 Aug build, four branches (Mac) | **12.7 s** | DERIVED | `ui/data/engine.json` | `p1.buildSeconds` |
+| …OpenDSS solves in that build (Mac) | **2,884** | DERIVED | `ui/data/engine.json` | `p1.solves` |
+| Controller call, 96 batteries (Mac) | **66.6 µs** | DERIVED | `ui/data/engine.json` | `allocate.96` |
+| Controller call, 100,000 batteries (about 65 ms) (Mac) | **65,011.7 µs** | DERIVED | `ui/data/engine.json` | `allocate.100000` |
+| Running page, `2026-08-23/naive`: build time, OpenDSS solves (Windows 11 build machine) | **25.5 s, 721** | DERIVED / SIM | `ui/data/story/index.json` | `scenarios[id=2026-08-23/naive].engine.buildSeconds, .solves` |
+| Running page, `2026-08-23/aware`: build time, OpenDSS solves (Windows 11 build machine) | **27.3 s, 721** | DERIVED / SIM | `ui/data/story/index.json` | `scenarios[id=2026-08-23/aware].engine.buildSeconds, .solves` |
+| Running page, `2026-08-23/aware/faults`: build time, OpenDSS solves (Windows 11 build machine) | **25.1 s, 721** | DERIVED / SIM | `ui/data/story/index.json` | `scenarios[id=2026-08-23/aware/faults].engine.buildSeconds, .solves` |
 
-Timings are wall-clock measurements on the build machine: they change on every rebuild. Read them from the Running page; the rows above are the values committed at the time of this table.
+Timings are wall-clock measurements on busy shared machines, and they change on every rebuild. `engine.json` was measured on a Mac (its cite: 1-minute load average 13.1 while measuring). The Running-page build times in `ui/data/story/index.json` were measured by `sim.scenarios` on the Windows 11 build machine (their cite: "load average not available on this OS"; the machine is described in `mpalacios/docs/measurements.md`). Never combine the two sets (for example `engine.json`'s per-step time with the Running page's solve count): they come from different machines. Read the build time from the Running page; the rows above are the values committed at the time of this table.
 
 ## The fleet levers: each one lever away from the default (23 Aug 2026)
 
@@ -223,8 +236,10 @@ Read the growth rows with care: at +50% home load, feeder-aware still causes 0 b
 - "−15.9 → −45.8 MW" or "ERCOT's base point". It is Base's set point, 0 → −45.8 MW in 15 minutes; the fleet realized −44.7 MW.
 - "3–5 mHz" or any single frequency value. It is the 3–17 mHz band.
 - "1,010 homes". It is 1,010 customers (971 homes, 39 small businesses).
+- "1,007 homes" or "every eligible home". It is 1,007 eligible customers (969 homes, 38 small businesses).
 - "No overload" without "because of batteries": T-240 goes over nameplate on home load alone.
 - A dollar figure without "fleet" and "gross, not Base's profit"; the per-Core year without "perfect foresight".
 - "1.5% of this feeder". 2,663.8 kVA is one conductor of the head cable; the head's three-phase rating is 7,991.5 kVA.
 - "Earned more" on 14 Aug without the sign: both policies lost money that evening; feeder-aware lost less.
 - A real company as the attacker. The attacker is fictional.
+- "Nothing is priced" on Q3. Every upgrade is priced at Base's $10,000 (REAL) against $631/yr per battery (DERIVED, gross, not Base's profit).

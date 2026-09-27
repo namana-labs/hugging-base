@@ -97,7 +97,7 @@
       "t1": "3:15",
       "title": "Hidden attacker",
       "label": "SIM",
-      "link": "page=run&s=2026-08-23/aware/covert&k=392",
+      "link": "page=run&s=2026-08-23/aware/covert&k=393",
       "headline": "A fictional attacker hides a signal in two dozen Cores' charging; the detector reads physics, not command logs, and quarantines them.",
       "caption": "A fictional attacker {{chip:ASSUMPTION:a fictional adversary; no real company or person}} takes a shard of Cores and hides a small carrier in their charging. Our detector compares each battery's telemetry with its peers and with its home's own voltage {{chip:SIM:ui/data/p3/covert.json summary}}: read how fast it flags the first unit and the whole shard, the false alarms, and what a simple fixed threshold would have caught, from the quarantine list."
     },
@@ -127,19 +127,19 @@
       "t1": "4:10",
       "title": "One transformer, zero to fifty",
       "label": "SIM",
-      "link": "page=learnings&q=2&tf=150",
+      "link": "page=learnings&q=2&tf=34",
       "headline": "How many more batteries one transformer can take under feeder-aware charging: read the answer sentence as the page prints it.",
-      "caption": "Transformer A, zero to fifty batteries, feeder-aware {{chip:SIM:ui/data/p2/planner.json, the planner's layer two; each number keeps the tag the page shows}}. The fit strip shows where it stops fitting."
+      "caption": "One transformer with room and none of our batteries yet, zero to fifty batteries {{chip:SIM:ui/data/p2/planner.json tfs cap, the planner's layer two; each number keeps the tag the page shows}}: what feeder-aware charging fits, where a naive split tops out, and what the utility's nameplate rule allows {{chip:DERIVED:utility rule, nameplate against kVA (cap.paper); not a power flow}}, each with its fit strip. OpenDSS checked the feeder-aware and naive caps {{chip:SIM:planner.json referee, month solves}}."
     },
     {
       "id": "learnings-q3",
       "t0": "4:10",
       "t1": "4:25",
       "title": "Which transformers to upgrade",
-      "label": "SIM",
+      "label": "DERIVED",
       "link": "page=learnings&q=3",
-      "headline": "As home load grows, the tightest transformers run out of room first; an upgrade is worth most where demand stands behind it.",
-      "caption": "Home-load growth moves the map {{chip:ASSUMPTION:growth levels are ours (GROWTH)}}; the list names the tightest transformers with the growth an upgrade unlocks {{chip:SIM:ui/data/p2/planner.json, layer three}}. A full transformer whose homes are all members already is worth little; a full one with demand behind it is worth a lot. No replacement cost is sourced {{chip:ASSUMPTION:TRANSFORMER_REPLACEMENT_USD is unset}}, so nothing is priced."
+      "headline": "Every upgrade is priced at Base's own figure against the gross energy value of the batteries it unlocks; more home load does not change the list, because the utility's nameplate rule binds.",
+      "caption": "Each upgrade is priced at Base's own per-transformer figure {{chip:REAL:PLAN_UPGRADE_USD: Base's figure in its PUCT filing (docket 54224 item 49), not a quote; ui/data/p2/planner.json money.upgradeUSD}}, against each battery's yearly gross energy value, not Base's profit {{chip:DERIVED:PLAN_MEMBER_VALUE_USD_YR: one Core, 2025 LZ_NORTH, planned on public day-ahead prices; planner.json money.memberValueUSDYr}}: read the cost, value and payback on each row. The top four are Streets A–D, over the utility's nameplate rule only because our stress placement put one battery more on each than the rule allows {{chip:ASSUMPTION:the prototype's stress placement (planner.json tfs installed)}}; every home there is already a member, so the verdict is tell the member, don't upgrade {{chip:DERIVED:planner.json rankingByGrowth; the verdict from ui/lib/planner.js decide}}. More home load does not change the list {{chip:ASSUMPTION:growth levels are ours (PLAN_GROWTH_PCTS)}}: the utility's nameplate rule binds, not the physics {{chip:SIM:planner.json rankingByGrowth: the same transformers, in the same order, at every growth level}}."
     },
     {
       "id": "learnings-q4",

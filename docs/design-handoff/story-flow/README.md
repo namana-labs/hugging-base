@@ -150,7 +150,7 @@ Purpose: watch the evening (16:00 → 04:00, 720 one-minute steps) in 3D with th
     - A home-load-growth slider, 0–150% (default +20%, the GROWTH constant used by the P2 runs).
     - The map colours by spare batteries after one per home: needs upgrade `#b23a2f`, no spare `#c7962b`, 1–2 spare `#d9d4c3`, 3 or more `#8aa58f`.
     - A list of the 8 tightest transformers with spare now and after an upgrade.
-    - A cost input. No cost is sourced (`TRANSFORMER_REPLACEMENT_USD` is null), so nothing is priced until one is entered.
+    - A cost input (not built). The built page prices every upgrade at Base's own figure, $10,000 per transformer (REAL, PUCT 54224 item 49; `p2/planner.json` `money.upgradeUSD`), against $631/yr per battery (DERIVED, gross energy value, not Base's profit).
   - **Q4**: a headline naming the #1 home and why, plus a scrollable list of the top 10 from `p2/aware-core-d26-g0.json` `ranking`, showing rank, home, transformer, hours over nameplate removed, peak with it, and energy value. The top-10 transformers are shown in brand green on the map.
 
 ## Interactions and behaviour
