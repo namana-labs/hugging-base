@@ -290,8 +290,8 @@ export async function mount(root, ctx) {
             <circle data-pb="ring" r="${geo.rr}" fill="none" stroke="#10231a" stroke-width="${geo.sw2}" cx="-99999" cy="-99999"/>
           </svg>
           <div class="pb-maplegend" data-pb="legend"></div>
-          <div class="pb-mapsrc" data-pb="src"></div>
         </div>
+        <div class="pb-mapsrc" data-pb="src"></div>
       </section>
       <aside class="pb-aside" data-pb="aside"></aside>
     </div>`;
