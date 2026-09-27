@@ -40,7 +40,7 @@ Tracks: **Orchestration** is our main one ("coordinate many independent things; 
 
 ## The one problem, in plain words
 
-ERCOT, the Texas grid operator, tells Base's fleet of home batteries one number per price zone, such as "charge this many megawatts now". It never looks at the equipment on your street. Each street has small transformers, each serving a handful of homes (about 3 on average on our feeder: 1,010 homes on 379 transformers). When prices crash at night and every battery charges at once, those small transformers overload, while the market sees "all good".
+ERCOT, the Texas grid operator, tells Base's fleet of home batteries one number per price zone, such as "charge this many megawatts now". It never looks at the equipment on your street. Each street has small transformers, each serving a handful of homes (about 3 on average on our feeder: 1,010 customers (971 homes, 39 small businesses) on 379 transformers). When prices crash at night and every battery charges at once, those small transformers overload, while the market sees "all good".
 
 Base asked us two questions on site. **Where should batteries charge, given this?** And, the CEO's priority, **where should the next battery go?** A Base engineer then added the business pain: installs get blocked late because the utility says the street transformer needs an upgrade.
 
@@ -48,7 +48,7 @@ Base asked us two questions on site. **Where should batteries charge, given this
 | --- | --- |
 | ERCOT | The operator of the Texas grid and its electricity market. Publishes real prices every 15 minutes. |
 | Load zone (LZ_NORTH) | A region that shares one market price. We use LZ_NORTH as a placeholder zone. |
-| Feeder | One neighbourhood circuit coming out of a substation. Ours serves 1,010 homes. |
+| Feeder | One neighbourhood circuit coming out of a substation. Ours serves 1,010 customers (971 homes, 39 small businesses). |
 | Service transformer | The box or can on your street that steps power down for a few homes. We have 379 of them. |
 | kVA / kW | The size of a transformer (kVA) and power being used (kW). A 25 kVA transformer is a common small one. |
 | Base battery (Core) | Base's home battery: 20 kW. It keeps 20% in reserve for the home's backup. |
@@ -126,20 +126,22 @@ Every number on screen carries one of four labels: REAL, SIM, DERIVED or ASSUMPT
 
 These come from the round-1 build report, which passed a full fresh-clone check on 26 Sep. Round 2 changed some data, so treat the SIM and DERIVED rows as drafts until the data-truth audit confirms them. Rows marked "re-check" are the most likely to move.
 
+**The audited numbers, each with its label, file and field, are in [NUMBERS.md](NUMBERS.md) (26 Sep 2026 audit). Where this table and NUMBERS.md differ, NUMBERS.md wins.**
+
 | Claim | Number | Label | Status |
 | --- | --- | --- | --- |
-| Our feeder | 1,010 homes, 379 street transformers, 96 Base batteries | REAL (feeder); ASSUMPTION (where batteries sit) | Stable |
+| Our feeder | 1,010 customers (971 homes, 39 small businesses), 379 street transformers, 96 Base batteries | REAL (feeder); ASSUMPTION (where batteries sit) | Stable |
 | Base battery | 20 kW each, 20% kept for home backup | REAL | Stable |
-| Naive charging, 23 Aug, 22:30 | Transformer A at 201.2% of its rating; 11 violations; 3 transformers in emergency | SIM | Re-check |
-| Feeder-aware, same evening | 0 overloads caused by batteries; every battery 100% charged by 04:00; reserve never breached | SIM | Re-check |
+| Naive charging, 23 Aug, 22:30 | Transformer A at 201.2% of nameplate; 11 normal-rating events; 3 transformers past emergency (150%) | SIM | Re-check |
+| Feeder-aware, same evening | 0 overloads caused by batteries; fleet charged 100.0% by 04:00; the 20% reserve never breached by dispatch | SIM | Re-check |
 | Pieces fail (23 Aug) | A battery goes silent at 22:15; the controller stalls; still 0 overloads caused by batteries | SIM | Re-check |
-| 50 random failure runs | 0 overloads caused by batteries in all 50; the fleet still charged at least 99.6% | SIM | Re-check |
-| August, 96 batteries | Hours above transformer rating: 673 naive vs 2 feeder-aware | SIM | Re-check |
+| 50 random failure runs | 0 battery-caused normal-rating or emergency events in all 50; batteries that never went silent charged at least 99.6% | SIM | Re-check |
+| August, 96 batteries | Hours above nameplate (screening): 673 naive vs 2 feeder-aware | SIM | Re-check |
 | Where the next battery goes | #1 is Home 0409: its transformer's month peak falls from 119.5% to 96.9% (OpenDSS-checked) | SIM | Re-check |
 | How charging changes siting | The top-10 homes differ between naive and feeder-aware: 7 of 10 overlap | DERIVED | Re-check |
-| How many batteries fit, empty feeder | Feeder-aware: 1,007 (OpenDSS-checked). Naive: the quick screen said 383, and OpenDSS proved even that is too many. | SIM | Re-check: round 2 changed how naive is measured |
+| How many batteries fit, empty feeder | Feeder-aware: 1,007 (OpenDSS-checked). Naive: 100 hold and the 101st takes the feeder-head cable over its rating (OpenDSS). | SIM | Re-check: round 2 changed how naive is measured |
 | Money, 23 Aug | $893.83 naive vs $916.56 feeder-aware: being careful earned slightly more | DERIVED (gross, not profit) | Re-check |
-| Real price crashes, 2026 | 27 times the price fell by half or more within 15 minutes (from $60 or more); 13 in the evening | REAL | Stable |
+| Real price crashes, 2026 | 27 times the price fell by half or more within 15 minutes (from $60 or more); 13 in the evening | DERIVED | Stable |
 | Scale | A 40 kW battery burst is 160% of a 25 kVA street transformer, but 0.000049% of ERCOT's peak | DERIVED | Stable |
 | Speed | 2.13 ms per OpenDSS solve; 66.6 µs per controller call at 96 batteries; about 65 ms at 100,000 | DERIVED (measured on a shared laptop) | Re-check |
 
