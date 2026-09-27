@@ -56,7 +56,7 @@ AGES_CSV = DATA / "tf_simulated_ages.csv"
 ASSETS_SIM = DATA / "assets.sim.csv"
 ASSETS_LOCAL = DATA / "assets.local.csv"
 DESIGN = "simulators/rz/research/capacity-planner/DESIGN-CAPACITY-PLANNER.md"
-SIZE_CAP_BYTES = 1.2 * 1024 * 1024
+SIZE_CAP_BYTES = 2.0 * 1024 * 1024   # lead ruling 26 Sep: raised from 1.2 MB so perK.g20 / g50 stay (Learnings Q3)
 SWEEP_VERSION = "planner-sweep-1"   # bump when the sweep code in this file changes (it keys data/cache/planner/)
 
 # =================================================================================================================
@@ -526,12 +526,16 @@ def growth_levels():
 
 def physics(inp, quick=False, out=print):
     """All sweeps. Returns {one, rev_one, g{g: {naive, aware}}, up{naive, aware}, kva_up}."""
-    one, rev_one = one_core_schedule(inp)
+    if quick:
+        one, rev_one = one_core_schedule(inp)
+    else:
+        oc = cached("one-core", lambda: dict(zip(("one", "rev"), one_core_schedule(inp))))
+        one, rev_one = oc["one"], oc["rev"]
     tfs = inp.res if not quick else [i for i in (0, 54, 61, 95, 200, 240, 253, 12, 30, 100, 150, 300) if i in inp.res]
     res = {"one": one, "rev_one": rev_one, "tfs": tfs, "g": {}}
     for g, f in growth_levels().items():
         t0 = time.perf_counter()
-        nv = naive_sweep(inp, one, f)
+        nv = naive_sweep(inp, one, f) if quick else cached(f"naive-g{g}", lambda: naive_sweep(inp, one, f))
         full = (g == 0) and not quick
         ks = KS if full else K_GRID
         tag = f"aware-g{g}-{'full' if full else 'grid'}{'-quick' if quick else ''}"
@@ -542,7 +546,7 @@ def physics(inp, quick=False, out=print):
     t0 = time.perf_counter()
     kva_up, cu = up_params(inp)
     res["kva_up"] = kva_up
-    nu = naive_sweep(inp, one, 1.0, kva_up, cu, ks=list(range(16)))
+    nu = naive_sweep(inp, one, 1.0, kva_up, cu, ks=list(range(16))) if quick else         cached("naive-up", lambda: naive_sweep(inp, one, 1.0, kva_up, cu, ks=list(range(16))))
     upks = K_GRID[:15] if not quick else [0, 1, 2, 3, 4, 5, 6, 8, 10]
     au = cached("aware-up-grid", lambda: aware_sweep(inp, tfs, upks, 1.0, kva_up, cu, rev_one=rev_one, out=out)) \
         if not quick else aware_sweep(inp, tfs, upks, 1.0, kva_up, cu, rev_one=rev_one, out=out)
@@ -714,7 +718,8 @@ def verdicts(ref, tf, capN, capA):
 # the document
 # =================================================================================================================
 def L(v, label, cite=None, **extra):
-    return labelled(v, label, cite, **extra)
+    """A labelled number; extras that are None are left out (the file stays small and the UI tests `in`)."""
+    return labelled(v, label, cite, **{k: x for k, x in extra.items() if x is not None})
 
 
 def money_block():
@@ -774,6 +779,11 @@ def build(quick=False, out=print, ref_override=None, run_ref=False):
                    "naiveTier": [raw["tier"][t].tolist() for t in rows],
                    "awarePeak": ap.tolist(), "awareEff": ae.tolist(),
                    "awareGrid": None if ph["g"][g]["aware"]["ks"] == KS else ph["g"][g]["aware"]["ks"]}
+        if perk[g]["awareGrid"] is not None:
+            # lead ruling 26 Sep: grid resolution is acceptable for g20 / g50 when marked. naive* are exact at every k.
+            perk[g]["awareInterp"] = ("awarePeak / awareEff were simulated at awareGrid only and are linear between "
+                                      "grid points: show a k off the grid as approximate (≈). capAware is the "
+                                      "conservative grid cap (capAwareExact = 0 when the true cap may sit in a gap).")
     nv0, aw0 = caps[0]
     capN = {t: int(nv0["cap"][t]) for t in tfs}
     capA = {t: aw0[t][0] for t in tfs}
@@ -801,7 +811,7 @@ def build(quick=False, out=print, ref_override=None, run_ref=False):
         for qn, q in (("q0", 0.0), ("q30", PLAN_Q_REFERRAL)):
             dec, (p10, p50, p90), mean = demand_curves(M, n, q, seed=[PLAN_SEED, M, n, int(q * 100)])
             cur[qn] = dec.tolist()
-            ad[qn] = L(p50, "DERIVED", "Gamma-Poisson neighbourhood model (DESIGN §3.3), additions in 5 years",
+            ad[qn] = L(p50, "DERIVED", "additions in 5 years (meta.cites.demand)",
                        p10=p10, p90=p90, mean=round(mean, 2))
         curves[key] = cur
         adds[key] = ad
@@ -810,8 +820,8 @@ def build(quick=False, out=print, ref_override=None, run_ref=False):
     screen = PLAN_SCREEN
     share = next(s["share"] for s in SCREENS if s["id"] == screen)
     rows = []
-    cite_n = f"surrogate sweep, August: no battery-caused > {TIER_NORMAL_PCT:g}% for {TIER_NORMAL_MIN}+ min (meta.cites.naive)"
-    cite_a = f"surrogate sweep, August: each Core earns >= {PLAN_AWARE_EARN_MIN:.0%} (meta.cites.aware)"
+    cite_n = f"August sweep: no battery-caused >{TIER_NORMAL_PCT:g}% {TIER_NORMAL_MIN}+ min (meta.cites.naive)"
+    cite_a = f"August sweep: each Core earns >= {PLAN_AWARE_EARN_MIN:.0%} (meta.cites.aware)"
     ref_cite = "OpenDSS (sim.planner referee, every 15-min step of August)"
     for t in tfs:
         tr = inp.topo["transformers"][t]
@@ -836,7 +846,7 @@ def build(quick=False, out=print, ref_override=None, run_ref=False):
             "homes": homes,
             "installed": L(int(inp.installed[t]), "ASSUMPTION", "prototype 96-Core placement"),
             "pending": L(0, "ASSUMPTION", "no pipeline in the sim"),
-            "age": L(age, "DERIVED", "simulated (meta.cites.age); a utility value replaces it",
+            "age": L(age, "DERIVED", "simulated (meta.cites.age)",
                      source="simulated", p10=ag["p10"], p50=ag["p50"], p90=ag["p90"],
                      pRep5=round(p_replace(5, age), 4)),
             "cap": {
@@ -922,6 +932,8 @@ def build(quick=False, out=print, ref_override=None, run_ref=False):
         "capNaive": {"label": "SIM", "text": "naive cap per transformer at this growth level (surrogate screen)"},
         "capAware": {"label": "SIM", "text": "feeder-aware cap per transformer at this growth level (surrogate screen)"},
         "capAwareExact": {"label": "SIM", "text": "1 when capAware is exact on the simulated k grid"},
+        "perK": {"label": "SIM", "text": "perK.g0 / g20 / g50: per-transformer arrays at +0 / +20 / +50% home load "
+                                         "(surrogate screen; only g0 caps are OpenDSS-refereed)"},
         "survival": {"label": "DERIVED", "text": "DOE retirement function r(age), age 0..60 (DESIGN §3.2)"},
         "demandCurves": {"label": "DERIVED", "text": "per-home cumulative join probability, pointwise deciles p10..p90 "
                                                      "at months 0, 12, ..., 60 per neighbourhood key"},
@@ -964,7 +976,11 @@ def build(quick=False, out=print, ref_override=None, run_ref=False):
                            "up": "the same rules with the next standard size's kVA and that size's median surrogate "
                                  "coefficients (100 kVA: the 75 kVA medians scaled by kVA, ASSUMPTION); screening, "
                                  "not OpenDSS-checked",
-                           "age": "ACS 2024 B25034 year built per census tract x DOE retirement function (renewal "
+                           "demand": "Gamma-Poisson neighbourhood model with a referral term (DESIGN §3.3; "
+                                     "DATA-ASSETS-DEMAND.md §3.2): lambda ~ Gamma(k + n, k / lambda_bar + M T0), monthly "
+                                     "hazard lambda + q N / M, 4,000 paths, seed [20260926, M, n, 100 q]; eligible homes "
+                                     "within PLAN_RADIUS_M of the transformer",
+                           "age": "a utility value replaces it (label REAL). ACS 2024 B25034 year built per census tract x DOE retirement function (renewal "
                                   "Monte Carlo, 4,000 draws, seed 20260926); one seeded draw, p10/p50/p90 of the draws "
                                   "(data/planner/tf_simulated_ages.csv)"},
                  "quick": bool(quick)},
@@ -1091,7 +1107,10 @@ def check_shape(doc):
         need(isinstance(doc["ranking"], list), "planner: ranking missing")
         need(doc["meta"]["tfOrder"] == tfs, "planner: meta.tfOrder != tfs order")
         n = len(tfs)
+        need(sorted(doc["perK"]) == sorted(f"g{g}" for g in PLAN_GROWTH_PCTS), "planner: perK must hold g0, g20, g50")
         for g, blk in doc["perK"].items():
+            for k in ("naivePeak", "naiveCaused", "naiveTier", "awarePeak", "awareEff"):
+                need(k in blk, f"planner: perK.{g}.{k} missing")
             for k in ("capNaive", "capAware"):
                 need(len(blk[k]) == n, f"planner: perK.{g}.{k} length != {n}")
             for k in ("naivePeak", "naiveCaused", "naiveTier", "awarePeak", "awareEff"):
@@ -1111,14 +1130,12 @@ def check_shape(doc):
 
 
 def fit_budget(doc, out=print):
-    """Keep the file <= 1.2 MB: drop per-k detail for g50, then g20 (caps stay)."""
-    for g in ("g50", "g20"):
-        if len(dumps(doc).encode("utf-8")) <= SIZE_CAP_BYTES:
-            break
-        for k in ("naivePeak", "naiveCaused", "naiveTier", "awarePeak", "awareEff"):
-            doc["perK"][g].pop(k, None)
-        doc["perK"][g]["dropped"] = "per-k detail dropped for the 1.2 MB budget; caps kept"
-        out(f"planner: dropped perK.{g} per-k detail for the size budget")
+    """The file must stay <= SIZE_CAP_BYTES (2.0 MB, lead ruling). perK.g20 / g50 are never dropped any more (Learnings
+    Q3 needs them); an oversize file is reported and the CLI exits 1. (The 18:49 build exited 1 because the old 1.2 MB cap
+    was still exceeded after dropping both growth levels' per-k detail: 1,291,630 > 1,258,291 bytes.)"""
+    size = len(dumps(doc).encode("utf-8"))
+    if size > SIZE_CAP_BYTES:
+        out(f"planner: {size / 1048576:.2f} MB is over the {SIZE_CAP_BYTES / 1048576:.1f} MB cap")
     return doc
 
 
