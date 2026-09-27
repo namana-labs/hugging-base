@@ -9,7 +9,7 @@ scripts/serve.sh      # a static server from the repo root, port 8765 (scripts/s
 Open **http://127.0.0.1:8765/ui/index.html** and walk four pages: **Configure** a scenario → **Run** the evening in 3D → **Results** → **Learnings** (how many batteries fit, where the next one helps).
 
 - **Every number is labelled** REAL, SIM, DERIVED or ASSUMPTION and comes from a committed file the engine wrote. The audited numbers, each with its file and field: [`presentation/NUMBERS.md`](presentation/NUMBERS.md).
-- **OpenDSS referees.** An AC power flow on NREL's synthetic SMART-DS feeder (an Oncor-suburb stand-in) judges every violation; deterministic code, never a language model, sets every command.
+- **OpenDSS referees.** An AC power flow on NREL's synthetic SMART-DS feeder (an Oncor-suburb stand-in) judges every violation in the evening runs; month and growth counts are marked SCREENING. Deterministic code, never a language model, sets every command.
 - The attacker is fictional; money is gross energy value, not Base's profit. More: [run the demo](docs/run-the-demo.md) · [the video script](docs/demo-script.md) · [data sources and labels](docs/data-sources.md).
 
 ---
@@ -29,25 +29,11 @@ Open **http://127.0.0.1:8765/ui/index.html** and walk four pages: **Configure** 
 
 The root app is a static web app fed by committed JSON: no server logic, no network at view time. The data contracts are in [`docs/contracts.md`](docs/contracts.md) and [`docs/story-contract.md`](docs/story-contract.md). Page links and how to read the screen: [`docs/run-the-demo.md`](docs/run-the-demo.md). The earlier tab app is kept as the **Engine explorer** at `ui/explore.html` (footer link). The gate is `scripts/check_all.sh` (it ends `ALL CHECKS: PASS`).
 
-## Simulators
+## Earlier prototypes (history, not the submission)
 
-Candidate simulators live one per folder under [`simulators/`](simulators/README.md); the trial by fire picks the one the main app promotes. Each is self-contained. For example, the four-node mechanics test in `simulators/connor/`:
+Kept so the path to the root app can be traced; the root app above is what is judged.
 
-```sh
-cd simulators/connor
-uv sync --group dev
-.venv/bin/python -m sim.scenarios.four_node
-python3 -m http.server 4388 --bind 127.0.0.1 --directory .
-```
-
-Open **http://127.0.0.1:4388/ui/four-node.html**. Tests: `.venv/bin/python -m pytest`.
-
-## Run the toy demo
-
-From the repository root:
-
-```sh
-python3 -m http.server 4387 --bind 127.0.0.1 --directory demos/grid-stories/ui/dist
-```
-
-Open **http://127.0.0.1:4387**. The bundled replay needs no dependency installation. See the [demo README](demos/grid-stories/README.md) for regeneration, tests, and model limitations.
+- [`demos/grid-stories/`](demos/grid-stories/README.md): the first toy demo; root `sim/` promoted its device and feeder code.
+- [`four-home-simulation/`](four-home-simulation/README.md): Michael's four-home street on real ERCOT data for 25 Sep 2026.
+- [`simulators/connor/`](simulators/connor/README.md): Connor's four-node mechanics test and control-room dashboard.
+- [`simulators/rz/`](simulators/rz/README.md): RZ's earlier copy of the app, superseded by the root app (PR #42); kept for its research, judges, story notes and `RULINGS.md`.
