@@ -17,6 +17,7 @@
 import { TIER_RGB, STATE_RGB, STATE_WORDS, buildSceneModel, frameFromP1 } from '../lib/scene-model.js';
 import { stepToTime, timeToStep } from '../lib/format.js';
 import { tagHTML, vsDefaultInfo, vsDefaultHTML, vsDefaultText, customerName, markCustomers, leverTag } from './shell.js';
+import { COMMS_LOSS_CITE, COMMS_TIMING_CITE } from '../panels/more.js';
 
 export const SPEEDS = [0.1, 0.25, 0.5, 1, 2, 4];
 export const DEFAULT_SPEED = 0.25;         // 0.25x = 2.5 simulated minutes per second (story contract ruling 5)
@@ -249,6 +250,19 @@ export function runCostHTML(sc, num) {
     : 'The catalogue has no measured engine cost for this run.';
   if (a && a.buildSeconds) html += ` The detector replay${aby} took ${num(a.buildSeconds, { unit: ' s' })} to build.`;
   return `${html} This page replays that output; nothing is solved in the browser.`;
+}
+
+/** What a silent battery does next (review-0927 M7): the behaviour is REAL (Base engineer, on site; COMMS_LOSS_CITE),
+ *  our stale / expiry timings are the run's own constants (COMMS_STALE_S, COMMAND_TTL_S: ASSUMPTION), read from the
+ *  meta, never typed; a timing the data does not give is left out. */
+export function commsLossLine(constants, num) {
+  const c = (name) => { const x = constants && constants[name]; return x && x.value != null && LABEL_OK(x.label) ? { v: x.value, label: x.label, cite: `${name}: ${x.cite || ''}` } : null; };
+  const xs = [['stale after', c('COMMS_STALE_S')], ['expires at', c('COMMAND_TTL_S')]].filter(([, x]) => x);
+  // one tag for the pair when both carry the same label (the review's line), else each number its own
+  const one = xs.length && xs.every(([, x]) => x.label === xs[0][1].label);
+  const t = xs.map(([w, x]) => `${w} ${one ? `${fmtN(x.v)} s` : num(x, { unit: ' s' })}`).join(', ');
+  return `When its command expires it idles in backup-only mode: it never discharges to the grid and only backs up its own home ${tagHTML('REAL', COMMS_LOSS_CITE)}`
+    + (t ? ` · ${t}${one ? ` ${tagHTML(xs[0][1].label, [COMMS_TIMING_CITE, ...xs.map(([, x]) => x.cite)].join('; '))}` : ''}` : '');
 }
 
 // ------------------------------------------------------------------------------------------------ 1b Running
@@ -500,7 +514,7 @@ export async function mount(root, ctx) {
     const el = $('.rv-now');
     el.classList.toggle('failing', nowF.length > 0);
     el.innerHTML = `<div class="h"><span class="st-eyebrow">RIGHT NOW · ${stepToTime(meta, k)}</span>${tagOpt(cntLab, cntCite)}</div>
-      ${nowF.length ? `<div class="rv-failing"><div class="e">FAILING NOW · ${nowF.length}${rulesTag}</div>${nowF.map((f) => `<button type="button" class="rv-fnow" data-seek="${f.k0}"><span class="a"><b>${esc(kindWord(f.kind))}${f.where ? ` · ${whereHTML(f)}` : ''}</b><span>${span(f)}</span></span><span class="b">${esc(f.text)}${tagOpt(f.label, f.label === 'ASSUMPTION' ? 'a scripted failure: what fails and when are assumptions' : 'from this run')}</span></button>`).join('')}</div>`
+      ${nowF.length ? `<div class="rv-failing"><div class="e">FAILING NOW · ${nowF.length}${rulesTag}</div>${nowF.map((f) => `<button type="button" class="rv-fnow" data-seek="${f.k0}"><span class="a"><b>${esc(kindWord(f.kind))}${f.where ? ` · ${whereHTML(f)}` : ''}</b><span>${span(f)}</span></span><span class="b">${esc(f.text)}${tagOpt(f.label, f.label === 'ASSUMPTION' ? 'a scripted failure: what fails and when are assumptions' : 'from this run')}</span>${f.kind === 'comms_lost' ? `<span class="b rv-comms">${commsLossLine(meta.constants, ctx.num)}</span>` : ''}</button>`).join('')}</div>`
         : failures ? `<div class="rv-ok"><i></i>No failures right now${batQual}</div>` : '<div class="rv-ok">Failures: not exported for this run</div>'}
       <div class="rv-sec"><div class="r"><b>${fmtN(tot)} transformers</b><span>${fmtN(B.within)} within nameplate${tagOpt(cntLab, cntCite)}</span></div><div class="rv-tbar">${bar}</div>
         <div class="rv-tiers">${B.bands.map((b) => `<span class="${b.bad ? 'bad' : b.n ? '' : 'zero'}"><i style="background:${rgb(b.rgb)}"></i>${esc(b.name)} ${fmtN(b.n)}${b.key === 'above' && b.past ? ` (${fmtN(b.past)} ${T.normalMin ? `past ${fmtN(T.normalMin.v)} min` : 'normal rating exceeded'})` : ''}</span>`).join('')}${tagOpt(cntLab, cntCite)}</div></div>

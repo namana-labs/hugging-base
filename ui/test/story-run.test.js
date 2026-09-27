@@ -245,3 +245,22 @@ test("shell: a time-named headline key takes its run's end time, or 'the end of 
   assert.equal(vsDefaultRows(cat, cat.scenarios[1], { end: '04:00' })[0].words, 'fleet charged by 04:00');
   assert.equal(vsDefaultRows(cat, cat.scenarios[1])[0].words, 'fleet charged by the end of the run');
 });
+
+test('run: a silent battery says what it does next, REAL, with our stale/expiry timings from the meta (review-0927 M7)', async () => {
+  const { commsLossLine } = await import('../story/run.js');
+  const { COMMS_LOSS_CITE } = await import('../panels/more.js');
+  const meta = readJSON(path.join(UI, 'data', 'p1', 'meta.json'));
+  const c = meta.constants;
+  const h = commsLossLine(c, numHTML);
+  assert.match(h, /idles in backup-only mode: it never discharges to the grid and only backs up its own home <span class="chip chip-REAL"/);
+  assert.ok(h.includes(`title="${COMMS_LOSS_CITE.replace(/'/g, '&#39;')}"`));
+  // the timings are the meta's own numbers and label (ASSUMPTION), never typed here
+  assert.ok(h.includes(`stale after ${c.COMMS_STALE_S.value} s, expires at ${c.COMMAND_TTL_S.value} s <span class="chip chip-${c.COMMS_STALE_S.label}"`));
+  assert.equal(c.COMMS_STALE_S.label, 'ASSUMPTION');
+  // without the constants: the REAL behaviour only, no number
+  assert.doesNotMatch(commsLossLine({}, numHTML), /\d s/);
+  // the faults run's extras has a comms_lost failure (the Right-now card draws the line for it)
+  const ex = JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(UI, 'data', 'p1', 'extras', '2026-08-23_aware_faults.json.gz'))));
+  assert.ok(ex.failures.some((f) => f.kind === 'comms_lost'));
+});
+
