@@ -18,7 +18,7 @@
 
 import { chartHTML } from '../lib/charts.js';
 import { svg } from '../lib/icons.js';
-import { calendarStripHTML } from '../lib/days.js';
+import { calendarStripHTML, loadPairingNote } from '../lib/days.js';
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const LABELS = ['REAL', 'SIM', 'DERIVED', 'ASSUMPTION'];
@@ -52,6 +52,24 @@ export function unscreenedChips(html) {
 export const DEFAULT_AWARE = 'aware-core-d26-g0';
 export const DEFAULT_NAIVE = 'naive-core-d26-g0';
 
+// Data-truth fix list (handoff/ENGINE.md; simulators/rz/judges/DATA-TRUTH-*.md): shared wording, never a number typed in.
+/** #5: the fleet placement is a deliberate stress placement (sim/constants.py FLEET_SIZE), not a neutral one. */
+export const FLEET_PLACEMENT_CITE = 'a deliberate stress placement, frozen in data/fleet.json: a cluster placed on purpose on the '
+  + 'densest homes near one centre (every battery on street A-D is from it) plus random homes (demos/grid-stories/sim/'
+  + 'build_replays.py; seed FLEET_SEED); far denser than Base installs a year (sim/constants.py FLEET_SIZE)';
+/** #1: NREL's SMART-DS is a real published dataset of a synthetic feeder ("realistic but not real"). */
+export const FEEDER_TAG = 'REAL dataset · synthetic feeder';
+export const FEEDER_CITE = "NREL SMART-DS 2018 AUS P1U, CC BY 4.0: NREL's published files, byte-identical to OEDI. NREL calls "
+  + "SMART-DS 'realistic but not real' (https://www.nlr.gov/grid/smart-ds.html): a synthetic, statistically realistic Austin "
+  + 'feeder, not a utility circuit (sim/constants.py FEEDER_NAME)';
+/** The comms-loss behaviour is REAL (Base engineers, on site); our timings stay ASSUMPTION (sim/constants.py
+ *  COMMS_LOSS_BEHAVIOUR, COMMS_STALE_S, COMMAND_TTL_S). */
+export const COMMS_LOSS_CITE = 'Base engineer, on site, 26 Sep 2026 (verbal): a battery that loses its connection idles in '
+  + 'backup-only mode; it does not charge, never discharges to the grid, and only backs up its own home (sim/constants.py COMMS_LOSS_BEHAVIOUR)';
+export const COMMS_TIMING_CITE = 'COMMS_STALE_S and COMMAND_TTL_S are our timings, not sourced (sim/constants.py)';
+/** #9: the 2018-load / 2026-price weekday mismatch and the possible one-hour clock offset (ui/lib/days.js). */
+export { loadPairingNote };
+
 function tfName(topology, i) {
   const t = topology && topology.transformers[i];
   if (!t) return i == null ? null : `T-${i}`;
@@ -65,6 +83,14 @@ function constOf(doc, name, o) {
 function rankOf(doc, hi) {
   for (const e of (doc && doc.ranking) || []) if (e.home === hi || (e.alsoOnTf || []).includes(hi)) return e;
   return null;
+}
+/** Fix list #14: a rank always says "of N", N read from the data. collapsed: one entry per transformer (index.flip
+ *  .entries, the flip movers' scale); else every candidate (index.ties.of). [] when the index does not carry N. */
+export function rankOfN(S, collapsed) {
+  const n = collapsed ? get(S, 'p2index.flip.entries') : get(S, 'p2index.ties.of');
+  if (isL(n)) return [' of ', { ...n, o: {} }];
+  if (typeof n === 'number') return [' of ', L(n, 'DERIVED', collapsed ? 'transformers with candidates (collapsed entries, index.flip)' : 'eligible homes without a battery (index.ties.of)', {})];
+  return [];
 }
 function hhmm(min) { const m = ((min % 1440) + 1440) % 1440; return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; }
 function stepTime(meta, k) {
@@ -236,7 +262,8 @@ function scanEngine(eng, re) {
 export const FACTS = {
   streetTfs: [['topology'], (S) => L((S.topology.focus || []).length, 'REAL', 'SMART-DS topology: A-D by transformer id')],
   streetHomes: [['topology'], (S) => L((S.topology.focus || []).reduce((s, f) => s + S.topology.transformers[f.tf].homes.length, 0), 'REAL', 'SMART-DS topology')],
-  fleetSize: [['topology'], (S) => L((S.topology.fleet || []).length, 'ASSUMPTION', "the prototype's 96-Core placement, seed 17263")],
+  // Fix list #5: the placement is a deliberate stress placement, never a neutral one (sim/constants.py FLEET_SIZE)
+  fleetSize: [['topology'], (S) => L((S.topology.fleet || []).length, 'ASSUMPTION', FLEET_PLACEMENT_CITE)],
   reliefT: [['p1meta'], (S) => (relief(S) ? L(relief(S).t, 'SIM', 'OpenDSS peak interval on A, no batteries') : null)],
   reliefNone: [['p1meta'], (S) => withO(relief(S) && relief(S).none, { unit: '%', digits: 1 })],
   reliefAware: [['p1meta'], (S) => withO(relief(S) && relief(S).aware, { unit: '%', digits: 1 })],
@@ -245,6 +272,8 @@ export const FACTS = {
   reliefKW: [['p1meta'], (S) => withO(relief(S) && relief(S).reliefKW, { unit: ' kW', digits: 1 })],
   reliefKWh: [['p1meta'], (S) => withO(relief(S) && relief(S).reliefKWh, { unit: ' kWh', digits: 1 })],
   // The scale ladder (build prompt 3.4, DERIVED): meta.scaleLadder's kW and its rungs, each share with its base.
+  // Fix list #13 (DATA-TRUTH-outputs #9): the WHOLE rung name, so the feeder rung reads "this feeder: one conductor of
+  // the head cable" (its base is one phase conductor, 2,663.8 kVA, not the feeder's 7,991.5 kVA three-phase rating).
   scaleLadderKW: [['p1meta'], (S) => withO(get(S, 'p1meta.scaleLadder.kw'), { unit: ' kW', digits: 0 })],
   scaleLadder: [['p1meta'], (S) => {
     const rungs = get(S, 'p1meta.scaleLadder.rungs');
@@ -253,8 +282,8 @@ export const FACTS = {
     for (const r of rungs) {
       if (!r || !isL(r.sharePct) || !isL(r.base)) continue;
       if (parts.length) parts.push('; ');
-      const head = String(r.name || r.scale || '').split(':')[0].trim();
-      parts.push({ ...r.sharePct, o: { unit: '%', digits: shareDigits(r.sharePct.v) } }, ` of ${head} (`,
+      const name = String(r.name || r.scale || '').trim();
+      parts.push({ ...r.sharePct, o: { unit: '%', digits: shareDigits(r.sharePct.v) } }, ` of ${name} (`,
         { v: r.base.v, label: r.base.label, cite: r.base.cite, o: { unit: r.base.unit ? ` ${r.base.unit}` : '', digits: Number.isInteger(r.base.v) ? 0 : 1 } },
         r.base.at ? ` on ${String(r.base.at).slice(0, 10)}` : '', ')');
     }
@@ -437,7 +466,7 @@ export const FACTS = {
     const e = rankOf(nd, a.home);
     if (e) {
       const viol = e.noNewViolation && e.noNewViolation.v === false;
-      return [`naive rank `, L(e.rank, 'SIM', 'naive ranking'), viol ? ', and it adds a violation there (where NOT to put it)' : ''];
+      return [`naive rank `, L(e.rank, 'SIM', 'naive ranking'), ...rankOfN(S, false), viol ? ', and it adds a violation there (where NOT to put it)' : ''];
     }
     // outside the naive top 50: the collapsed rank (flip.movers) and the naive with/without peak (index.bridge)
     const mv = (get(S, 'p2index.flip.movers') || []).find((m) => m.home === a.home);
@@ -445,7 +474,7 @@ export const FACTS = {
     const bn = br && br.naive && br.naive.home === a.home ? br.naive : null;
     const parts = [];
     parts.push(mv && isL(mv.rankNaive) ? 'naive rank ' : 'outside the naive top fifty');
-    if (mv && isL(mv.rankNaive)) parts.push({ ...mv.rankNaive, o: {} }, isL(mv.rankAware) ? ' (feeder-aware rank ' : '', isL(mv.rankAware) ? { ...mv.rankAware, o: {} } : '', isL(mv.rankAware) ? ')' : '');
+    if (mv && isL(mv.rankNaive)) parts.push({ ...mv.rankNaive, o: {} }, ...rankOfN(S, true), isL(mv.rankAware) ? ' (feeder-aware rank ' : '', isL(mv.rankAware) ? { ...mv.rankAware, o: {} } : '', isL(mv.rankAware) ? ')' : '');
     if (bn && isL(bn.peakWithoutPct) && isL(bn.peakWithPct)) parts.push('; managed naively, a battery there takes its month peak from ', { ...bn.peakWithoutPct, o: { unit: '%', digits: 1 } }, ' to ', { ...bn.peakWithPct, o: { unit: '%', digits: 1 } });
     if (bn && bn.noNewViolation && bn.noNewViolation.v === false) parts.push(' and adds a violation (where NOT to put it)');
     return parts;
@@ -455,9 +484,9 @@ export const FACTS = {
     const a = get(S, `p2:${DEFAULT_AWARE}.ranking.0`), nd = S[`p2:${DEFAULT_NAIVE}`];
     if (!a || !nd) return null;
     const e = rankOf(nd, a.home);
-    if (e) return ['rank ', L(e.rank, 'SIM', 'naive ranking (sim.p2_build)')];
+    if (e) return ['rank ', L(e.rank, 'SIM', 'naive ranking (sim.p2_build)'), ...rankOfN(S, false)];
     const mv = (get(S, 'p2index.flip.movers') || []).find((m) => m.home === a.home);
-    return mv && isL(mv.rankNaive) ? ['rank ', { ...mv.rankNaive, o: {} }] : 'outside the top fifty';
+    return mv && isL(mv.rankNaive) ? ['rank ', { ...mv.rankNaive, o: {} }, ...rankOfN(S, true)] : 'outside the top fifty';
   }, ['p2index']],
   flipHeadline: [['p2index'], (S) => {
     const f = get(S, 'p2index.flip');
@@ -490,10 +519,16 @@ export const FACTS = {
     if (!cases && !Array.isArray(fleet)) return null;
     const cs = cases || [], fl = Array.isArray(fleet) ? fleet : [];
     const dark = new Set([...cs.flatMap((c) => c.homesDark || []), ...fl.flatMap((c) => c.homesDark || [])]);
-    const parts = [L(cs.length, 'SIM', 'naive candidate placements where the ASSUMPTION rule operates (one 15-min interval above 200%)'), ' naive candidate placement' + (cs.length === 1 ? '' : 's')];
+    // Fix list #14: the candidate placements come from surrogate peaks only (screening chip); the existing fleet's are
+    // confirmed only when the OpenDSS fleet month (index.referee.fleet) lists the same transformers.
+    const csScreen = cs.some((c) => isScreening(c.peakWithPct) || !isL(c.peakWithPct));
+    const parts = [L(cs.length, 'SIM', `naive candidate placements where the ASSUMPTION rule operates (one 15-min interval above 200%)${csScreen ? '; surrogate peaks, screening only, not OpenDSS-checked' : ''}`), ' naive candidate placement' + (cs.length === 1 ? '' : 's')];
     if (cs.length) parts.push(' (' + cs.map((c) => `${c.label || homeLabel(S.topology, c.home)} on ${tfName(S.topology, c.tf)}`).join(', ') + ')');
     if (Array.isArray(fleet)) {
-      parts.push(' and ', L(fl.length, 'SIM', 'transformers where the rule operates with the existing fleet managed naively'), ' transformer' + (fl.length === 1 ? '' : 's') + ' with the existing fleet managed naively');
+      const ref = get(S, `p2index.referee.fleet.${DEFAULT_NAIVE}.protectionTfs`);
+      const same = isL(ref) && Array.isArray(ref.tfs) && ref.tfs.length === fl.length && fl.every((c) => ref.tfs.includes(c.tf));
+      parts.push(' and ', L(fl.length, 'SIM', same ? `transformers where the rule operates with the existing fleet managed naively; the same transformers in the OpenDSS fleet month (${ref.cite})`
+        : 'transformers where the rule operates with the existing fleet managed naively; surrogate peaks, screening only, not OpenDSS-checked'), ' transformer' + (fl.length === 1 ? '' : 's') + ' with the existing fleet managed naively');
       if (fl.length) parts.push(' (' + fl.map((c) => tfName(S.topology, c.tf)).join(', ') + ')');
     }
     parts.push('. Battery-less homes that would go dark: ');
@@ -514,10 +549,12 @@ export const FACTS = {
 
   // ---- round 2 -------------------------------------------------------------------------------------------------
   // Adopt #2: Base's real Houston charge block. The meta constant when l2 exports it (docs/contracts.md A.5r); until
-  // then the same constant as sim/constants.py (ui/test/p2.test.js pins the two equal), with its source.
+  // then the same constant as sim/constants.py (ui/test/p2.test.js pins the two equal), with its source. Fix list #2:
+  // it is Base's SET POINT, from zero, within one 15-minute window (never "-15.9 ->", an earlier block's value).
   houstonBlock: [['topology'], (S) => {
     const c = constOf(S.p1meta, 'BASE_HOUSTON_CHARGE_BLOCK_MW', { unit: ' MW', digits: 1 });
-    return [c || { ...HOUSTON_BLOCK_MW, o: { unit: ' MW', digits: 1 } }, ' within fifteen minutes on ', L(HOUSTON_BLOCK_DATE, 'REAL', HOUSTON_BLOCK_MW.cite)];
+    return [c || { ...HOUSTON_BLOCK_MW, o: { unit: ' MW', digits: 1 } }, ' from zero within fifteen minutes, ',
+      L(`${HOUSTON_BLOCK_WINDOW} on ${HOUSTON_BLOCK_DATE}`, 'REAL', HOUSTON_BLOCK_MW.cite)];
   }, ['p1meta']],
   // Adopt #3: what feeder-aware held back at the price-collapse onset (meta.onsetDeferral, l2)
   onsetDeferredKW: [['p1meta'], (S) => withO(get(S, 'p1meta.onsetDeferral.deferredKW'), { unit: ' kW', digits: 0 })],
@@ -577,7 +614,12 @@ export const FACTS = {
 /** Base's Houston charge block (adopt #2, REAL): the same constant as sim/constants.py BASE_HOUSTON_CHARGE_BLOCK_MW
  *  (l0), used until l2 exports it in p1/meta.json constants. ui/test/p2.test.js pins the value to the Python file. */
 export const HOUSTON_BLOCK_MW = { v: -45.8, label: 'REAL',
-  cite: "Base blog 'Aggregated DERs and the capacity crunch' (Jul 2026): Base's Houston charge block reached -45.8 MW within 15 minutes on 22 Jul 2026 (docs/research-report.md:207-212, 297; sim/constants.py BASE_HOUSTON_CHARGE_BLOCK_MW)" };
+  cite: "Base blog 'Aggregated DERs and the capacity crunch' (https://www.basepowercompany.com/blog/aggregated-ders-and-the-capacity-crunch), "
+    + "the table's Set point column for Base's Houston partition (lz-houston-ader): the set point Base dispatched went from 0 to "
+    + '-45.8 MW within 15 minutes (23:30-23:45 CT) on 22 Jul 2026; the fleet realized -44.7 MW. It is Base\'s set point, not '
+    + "ERCOT's base point; zone level (sim/constants.py BASE_HOUSTON_CHARGE_BLOCK_MW; data-truth fix list #2)" };
+/** The set point's 15-minute window and day, as sim/constants.py cites them (ui/test/p2.test.js pins the two equal). */
+export const HOUSTON_BLOCK_WINDOW = '23:30–23:45 CT';
 export const HOUSTON_BLOCK_DATE = '22 Jul 2026';
 const DEFAULT_DAY = '2026-08-23';
 function daysOf(S) { return (S.p1days && Array.isArray(S.p1days.days)) ? S.p1days.days : []; }
@@ -781,14 +823,15 @@ function moneyCard(ctx, S) {
   const more = evalFact('awareMoreTonight', S);
   const cost = m && isL(m.costOfAwareness) ? m.costOfAwareness : null;
   const safe = m && S.p1meta.summary && S.p1meta.summary.aware && isL(S.p1meta.summary.aware.batteryCausedNormal) ? S.p1meta.summary.aware.batteryCausedNormal : null;
-  const moreLine = more ? `<div class="money-more">${svg('turns', { size: 15 })}<span>Feeder-aware earned ${more.map((x) => renderPart(x, fmt, true)).join('')} more than naive tonight${safe ? `, with ${fmt.fmtHTML(safe)} battery-caused overloads` : ''}.</span></div>`
-    : cost ? `<div class="money-more"><span>Cost of awareness (naive − feeder-aware; negative means feeder-aware earned more): ${fmt.fmtHTML(cost, { money: true, digits: 2 })}</span></div>` : '';
+  // fix list #12: every money headline says "fleet" and "gross, not Base's profit"
+  const moreLine = more ? `<div class="money-more">${svg('turns', { size: 15 })}<span>Feeder-aware's fleet earned ${more.map((x) => renderPart(x, fmt, true)).join('')} more than naive tonight (gross energy value, not Base's profit)${safe ? `, with ${fmt.fmtHTML(safe)} battery-caused overloads` : ''}.</span></div>`
+    : cost ? `<div class="money-more"><span>Cost of awareness for the fleet (naive − feeder-aware, gross; negative means feeder-aware earned more): ${fmt.fmtHTML(cost, { money: true, digits: 2 })}</span></div>` : '';
   const r = m && m.relief;
   const relief = r && isL(r.opportunityUpperUSD)
     ? `<p class="hb-sub">A's local relief on this evening (one home's spike) would have earned at most ${fmt.fmtHTML(r.opportunityUpperUSD, { money: true, digits: 2 })} at the price peak: it is <b>not paid for today</b> ${fmt.chip('ASSUMPTION', 'no sourced price for local transformer relief anywhere in our material (build prompt 5.4.6)')}.</p>` : '';
   const note = m && m.systemCapacityPerMonth && m.systemCapacityPerMonth.note ? '' : '';
-  return `<div class="hb-card more-money" data-beat="money"><h3>${svg('money', { size: 18 })} Money tonight, ${esc(day)}</h3>
-    <div class="hb-sub">Batteries earn by <span class="k-sold">selling</span> in the evening's priciest intervals and <span class="k-bought">buying back</span> after the price falls. Gross energy value, not Base's profit.</div>
+  return `<div class="hb-card more-money" data-beat="money"><h3>${svg('money', { size: 18 })} The fleet's money tonight, ${esc(day)} (gross, not Base's profit)</h3>
+    <div class="hb-sub">Batteries earn by <span class="k-sold">selling</span> in the evening's priciest intervals and <span class="k-bought">buying back</span> after the price falls. The whole fleet's gross energy value, not Base's profit; the plan knows the evening's prices in advance (perfect foresight ${fmt.chip('ASSUMPTION', 'sim.prices.discharge_plan sells the highest-priced intervals the usable energy covers')}).</div>
     <div class="money-rows">${rows.join('') || '<span class="beat-na">P1 money not built yet</span>'}</div>
     ${moreLine}${relief}${note}</div>`;
 }
@@ -811,7 +854,7 @@ function daysCard(ctx, S) {
     const peakTip = isL(d.peak) ? `<b>ERCOT LZ_NORTH, 16:00 to 04:00</b><br>evening peak ${fmt.fmtHTML(d.peak, { digits: 2, unit: ' $/MWh' })}${d.peak.t ? ` at ${esc(d.peak.t)}` : ''}` : '';
     const href = ctx.href({ view: 'p1', date: d.date, branch: 'aware', t: d.peak && d.peak.t ? d.peak.t : null, combo: null, home: null, n: null });
     return `<a class="day-row" href="${href}" data-date="${esc(d.date)}">
-      <span class="day-d"><b>${esc(dateText(d.date))}</b>${fmt.chip('REAL', 'a real ERCOT evening: LZ_NORTH prices for this date; the load is the 2018 SMART-DS weather year on the same calendar date (ASSUMPTION)')}<span class="day-tag">${esc(d.tag || '')}</span></span>
+      <span class="day-d"><b>${esc(dateText(d.date))}</b>${fmt.chip('REAL', `a real ERCOT evening: LZ_NORTH prices for this date. ${loadPairingNote(d.date, idx.constants) || ''}`)}<span class="day-tag">${esc(d.tag || '')}</span></span>
       <span class="day-spark"${peakTip ? ` data-tip-html="${esc(peakTip)}"` : ''}>${sparkSVG(d.sparkline)}${spk ? fmt.chip(spk, 'ERCOT RTM SPP LZ_NORTH, 15-min, 16:00 to 04:00') : ''}</span>
       <span class="day-money${isL(pb) && pb.v < 0 ? ' lose' : ''}" data-tip-html="${esc(`<b>Money per battery tonight</b> (gross, not Base's profit)<br>feeder-aware ${moneyHTML(fmt, pb, 2)}<br>naive ${moneyHTML(fmt, pn, 2)}${isL(d.awareMoreUSD) ? `<br>feeder-aware earned ${fmt.fmtHTML(d.awareMoreUSD, { money: true, digits: 2 })} more (fleet)` : ''}`)}"><span class="day-bar" style="width:${w}%"></span><b>${moneyHTML(fmt, pb, 2)}</b></span>
       <span class="day-naive" data-tip-html="${esc(nmTip)}">${isL(nm) ? svg('meter', { size: 22, pct: nm.v, tier: nm.tier ?? 4 }) : ''}</span>
@@ -820,8 +863,8 @@ function daysCard(ctx, S) {
   const f = (name) => { const p = evalFact(name, S); return p ? p.map((x) => renderPart(x, fmt, true)).join('') : null; };
   const best = f('daysBest'), worst = f('daysWorst'), every = f('daysAwareMoreEvery'), safe = f('daysAwareSafe'), broke = f('daysNaiveBroke'), n = f('daysCount');
   const lines = [];
-  if (best && worst) lines.push(`${svg('money', { size: 15 })}<span>The money is lumpy: ${best} on the best evening, ${worst} on the worst.</span>`);
-  if (every && safe) lines.push(`${svg('check', { size: 15 })}<span>Feeder-aware earned more than naive ${every}, ${safe}.</span>`);
+  if (best && worst) lines.push(`${svg('money', { size: 15 })}<span>The money is lumpy (gross, not Base's profit): ${best} on the best evening, ${worst} on the worst.</span>`);
+  if (every && safe) lines.push(`${svg('check', { size: 15 })}<span>Feeder-aware's fleet earned more than naive (gross) ${every}, ${safe}.</span>`);
   if (broke && n) lines.push(`${svg('warn', { size: 15 })}<span>Naive caused a transformer overload on ${broke} of ${n} evenings, even on a night that lost money.</span>`);
   const cal = S.p1cal ? calendarStripHTML(S.p1cal, ctx.link.date || DEFAULT_DAY) : '';
   return `<div class="hb-card more-days" data-beat="days"><h3>${svg('calendar', { size: 18 })} Real Texas evenings: where the money is, and what it costs the street</h3>
@@ -904,6 +947,16 @@ function engineCard(ctx, S) {
     <p class="hb-sub">${mn ? `${esc(mn.charAt(0).toUpperCase() + mn.slice(1))}. ` : ''}A solve is one OpenDSS power flow; a step also sets every load and battery and reads the result. All static: the browser replays committed JSON; no server, no network at view time.</p></div>`;
 }
 
+/** The comms-loss sentence: the behaviour is REAL (Base engineers, on site), the timings are ours (ASSUMPTION), each
+ *  timing read from p1/meta.json constants when built. HTML. */
+export function commsLossHTML(fmt, S) {
+  const r = (name) => { const p = evalFact(name, S); return p ? p.map((x) => renderPart(x, fmt, true)).join('') : null; };
+  const stale = r('staleS'), ttl = r('ttlS');
+  const timings = stale && ttl ? ` after ${stale} without a signal, and its last command expires after ${ttl}` : '';
+  return `A battery that loses its connection idles in backup-only mode: it never discharges to the grid and only backs up its own home ${fmt.chip('REAL', COMMS_LOSS_CITE)}. `
+    + `Our controller marks it stale${timings} ${fmt.chip('ASSUMPTION', COMMS_TIMING_CITE)}.`;
+}
+
 function plugInCard(ctx, S) {
   const cv = evalFact('controllerView', S);
   return `<div class="hb-card" data-beat="plug-in"><h3>How Base plugs it in tomorrow</h3>
@@ -911,7 +964,7 @@ function plugInCard(ctx, S) {
       <li><b>Where the next battery goes:</b> <code>data/out/siting-2026-08.csv</code> sits beside the install queue. Base still schedules installs by demand; the file adds the grid lens.</li>
       <li><b>Where to charge:</b> <code>allocate()</code> sits behind the zone base point and splits it by transformer headroom, deterministically, with no model in the loop.</li>
       <li><b>What it needs to see:</b> ${cv ? cv.map((x) => renderPart(x, ctx.fmt, true)).join('') : 'total transformer load'}, which needs a utility meter-to-transformer map. On street A–D every home is a member, so member meters are enough there.</li>
-      <li><b>Devices:</b> commands carry a sequence number and an expiry; a silent unit goes stale, then idles with backup armed.</li>
+      <li><b>Devices:</b> commands carry a sequence number and an expiry. ${commsLossHTML(ctx.fmt, S)}</li>
     </ol><p class="hb-sub">See <code>docs/how-base-plugs-in.md</code>.</p></div>`;
 }
 
@@ -924,7 +977,19 @@ const STORIES = [
 /** Adopt #5 (TEAMMATES_REVIEW, RZ's list): honest caveats on the teammate cards, in OUR copy only; their folders are
  *  untouched. Numbers are facts about their code, read and re-run by our review, each with its source. */
 const PROTO_CAVEAT = (fmt) => `Caveats from our review: its battery loads run at ${fmt.fmtHTML({ v: 0.88, label: 'REAL', cite: "read from the prototype's battery() (it writes kW only, so OpenDSS applies pf 0.88); overnight/REVIEW-connor-proto.md W1" }, { digits: 2 })} power factor, so its voltage sag and trade-off figures are artefacts (at unity power factor the naive rebound shows no voltage violation); its detector has a privileged voltage baseline and is keyed to a fixed ${fmt.fmtHTML({ v: 350, label: 'REAL', cite: 'build_replays.py:69, the fixed alternating attack wave; overnight/REVIEW-connor-proto.md W3' }, { unit: ' W', digits: 0 })} alternating wave. Connor's newer simulator (simulators/connor) fixes the power factor.`;
-const FOURHOME_CAVEAT = (fmt) => `Caveat from our review: its frequency figure uses the retired ${fmt.fmtHTML({ v: '3–5 mHz', label: 'DERIVED', cite: 'four_home_constants.py:73-74 F_SENS 0.075/0.12 mHz/MW x a 40 MW swing; the team corrected it to 3-17 mHz on 26 Sep (docs/research-report.md:308-318)' })} band for a thousand-battery swing, and its naive branch is not labelled an assumption.`;
+// CLAUDE.md: a 1,000-battery hijack moves ERCOT frequency by the corrected band (HIJACK_MHZ_LO to HIJACK_MHZ_HI, read
+// from ui/data/story/index.json constants when built); the four-home model's older, narrower figure is never quoted.
+const FOURHOME_FREQ_CITE = "four_home_constants.py F_SENS applied to a 40 MW swing gives a narrower band than the team's; the team's corrected band is in docs/research-report.md (frequency section): quote the band, never one value";
+const HIJACK_CITE_UI = 'HIJACK_MHZ_LO to HIJACK_MHZ_HI (ui/data/story/index.json constants): a thousand-battery swing, range set by load damping and the governor deadband (docs/research-report.md); a band, never one value';
+/** The corrected hijack band as HTML ("3 to 17 mHz", each end labelled), from the story catalogue's constants; null
+ *  when the catalogue is not built. */
+export function hijackBandHTML(fmt, cat) {
+  const c = cat && cat.constants;
+  const lo = c && c.HIJACK_MHZ_LO, hi = c && c.HIJACK_MHZ_HI;
+  if (!lo || !hi || typeof lo.value !== 'number' || typeof hi.value !== 'number' || !LABELS.includes(lo.label) || !LABELS.includes(hi.label)) return null;
+  return `${fmt.fmtHTML({ v: lo.value, label: lo.label, cite: HIJACK_CITE_UI }, { digits: 0 })} to ${fmt.fmtHTML({ v: hi.value, label: hi.label, cite: HIJACK_CITE_UI }, { unit: ' mHz', digits: 0 })}`;
+}
+const FOURHOME_CAVEAT = (fmt, band) => `Caveat from our review: its frequency figure for a thousand-battery swing is a narrower band than the one the team corrected it to${band ? `, ${band}` : ''} ${fmt.chip('DERIVED', FOURHOME_FREQ_CITE)}; quote the corrected band, never one value. Its naive branch is not labelled an assumption.`;
 
 async function chaosCard(ctx) {
   const doc = await ctx.data.getOptional('p1/chaos.json').catch(() => null);
@@ -1082,6 +1147,7 @@ export async function mount(el, ctx) {
   const beats = beatsList(await ctx.data.loadBeats());
   const S = await loadSources(ctx, [...new Set([...sourcesFor(beats.flatMap((b) => [b.caption, b.headline || ''])), 'p1meta', 'engine', 'p1days', 'p1cal'])]);
   const beatBar = ctx.link.beat ? await beatBarHTML(ctx) : '';
+  const storyCat = await ctx.data.getOptional('story/index.json').catch(() => null);
   const beatRows = beats.map((b) => `<li class="beat-item${b.id === ctx.link.beat ? ' on' : ''}">
       <div class="beat-h"><span class="beat-t">${esc(b.t0)}–${esc(b.t1)}</span> <a href="${beatHref(b)}"><b>${esc(b.title)}</b></a>${b.label ? fmt.chip(b.label) : ''}</div>
       ${b.headline ? `<div class="beat-headline">${resolveCaption(b.headline, S, fmt)}</div>` : ''}
@@ -1100,7 +1166,7 @@ export async function mount(el, ctx) {
     <div class="hb-cards">
       ${STORIES.map(([t, d]) => `<div class="hb-card"><h3><a href="../demos/grid-stories/ui/dist/">${esc(t)}</a></h3><div class="hb-sub">${esc(d)} Pick it in the prototype's story menu. Connor's prototype, unchanged; its prices and loads are scripted.</div></div>`).join('')}
       <div class="hb-card more-caveat"><h3>${svg('info', { size: 16 })} Before you quote the prototype</h3><div class="hb-sub">${PROTO_CAVEAT(fmt)}</div></div>
-      <div class="hb-card"><h3><a href="../four-home-simulation/four-home.html">Four-home simulation</a></h3><div class="hb-sub">Michael's four-home model on real prices, unchanged. ${FOURHOME_CAVEAT(fmt)}</div></div>
+      <div class="hb-card"><h3><a href="../four-home-simulation/four-home.html">Four-home simulation</a></h3><div class="hb-sub">Michael's four-home model on real prices, unchanged. ${FOURHOME_CAVEAT(fmt, hijackBandHTML(fmt, storyCat))}</div></div>
       ${await chaosCard(ctx)}
     </div>
     ${await emsCards(ctx)}</div>`;

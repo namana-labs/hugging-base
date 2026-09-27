@@ -304,7 +304,12 @@ test('money card: every line labelled; the system-capacity band has left P1 (aud
   };
   const h = moneyHTML(fmt, money, 'aware');
   assert.match(h, /\$916\.56/);
-  assert.match(h, /Feeder-aware earned .*\$22\.73.* more than naive tonight/s);
+  // fix list #12: the money headline says "fleet" and "gross, not Base's profit"
+  assert.match(h, /Feeder-aware's fleet earned .*\$22\.73.* more than naive tonight \(gross, not Base's profit\)/s);
+  assert.match(h, /The fleet tonight, feeder-aware .*not Base's profit.*perfect foresight/s);
+  // with both splits, the reason is the measured sold / bought difference (DERIVED), not an assertion
+  const both = { ...money, split: { ...money.split, naive: { sold: { v: 1014.74, label: 'DERIVED' }, bought: { v: 120.91, label: 'DERIVED' }, net: { v: 893.83, label: 'DERIVED' } } } };
+  assert.match(moneyHTML(fmt, both, 'aware'), /because prices kept falling after the onset: it sold <span class="num">\$13\.63<\/span><span class="chip chip-DERIVED"[^>]*>DERIVED<\/span> less at the peak but bought back <span class="num">\$36\.36<\/span>/);
   assert.match(h, /Sold into the evening peak.*\$1,001\.11/s);
   assert.match(h, /Bought back when cheap.*\$84\.55/s);
   assert.ok(!/5,893|16,055/.test(h), 'the band never renders on P1');

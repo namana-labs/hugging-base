@@ -7,7 +7,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import * as fmt from '../lib/format.js';
-import { parseLink, VIEWS } from '../lib/data.js';
+import * as dataModule from '../lib/data.js';
+import { parseLink } from '../lib/data.js';
 import {
   parseCombo, comboId, counterpart, findCandidate, rankOf, flipVerdict, fleetTotals, counterfactualParts,
   counterfactualText, counterfactualHTML, tfName, FLIP_HEADLINE_MAX_OVERLAP, bulk, p2SceneModel,
@@ -22,6 +23,8 @@ const fx = (p) => readJSON('fixtures/' + p);
 const index = fx('p2/index.json');
 const beatsDoc = readJSON('beats.json');
 const beats = beatsDoc.beats;
+// the retired frequency band, in any dash or spacing ("3–5 mHz", "3-5 mHz", "3 – 5 mHz", "3 to 5 mHz")
+const RETIRED_BAND = /\b3\s*(?:–|-|—|to)\s*5\s*mHz/i;
 
 // Digits allowed in prose only as parts of ids: home labels, transformer names, SMART-DS profile names, the month.
 const ID_TOKENS = [/Home \d{4}/g, /T-\d+/g, /(res|com)_kw(ar)?_\d+_pu/g, /\b\d{4}-\d{2}(-\d{2})?\b/g, /[A-Z][a-z]+ \d{4}\b/g];
@@ -123,7 +126,8 @@ test('p2: the counterfactual says "where NOT to put it" and names dark homes onl
   const txt = counterfactualText({ entry: e, doc, index, topology, combo: 'naive-core-d26-g0' }, fmt);
   assert.match(txt, /under naive dispatch \(no feeder check\)/);
   assert.match(txt, /It adds a new violation \(1\.50 h SIM of added stress\): where NOT to put it\./);
-  assert.match(txt, /Protection may operate here \(ASSUMPTION rule\): Home 0562 go dark while battery homes island and stay lit\./);
+  // fix list #14: this entry has no OpenDSS month, so its protection call is labelled screening
+  assert.match(txt, /Protection may operate here \(ASSUMPTION rule; screening, not OpenDSS-checked\): Home 0562 go dark while battery homes island and stay lit\./);
   // not stressed: no driver claim, no "spent ... above nameplate"
   const calm = stressedEntry(doc);
   calm.before = { peakPct: { v: 61.2, label: 'SIM' }, h100: { v: 0, label: 'SIM' } };
@@ -198,19 +202,90 @@ test('beats.json: every placeholder is a known fact or a chip with a valid label
   }
 });
 
-test('beats.json: every link is a valid deep link (view, branch, combo) and the naive beats carry the ASSUMPTION chip', () => {
+// The story URL scheme (docs/story-contract.md): ui/index.html?page=...&s=<scenario id>&k=<step>&speed&q&tf&n.
+// Pages and speeds come from ui/lib/data.js once UI-A's story exports land; until then, from the contract.
+const STORY_PAGES = dataModule.STORY_PAGES || ['configure', 'running', 'run', 'results', 'learnings'];
+const STORY_KEYS = ['page', 's', 'k', 'speed', 'q', 'tf', 'n'];
+const LEGACY_KEYS = ['view', 'branch', 'combo', 't', 'date', 'home', 'cam'];
+// <evening>/<policy>[/<failure>][/<lever>=<value>]; failures only on the P1 evening with feeder-aware (ruling 1)
+const SCENARIO_ID = /^(\d{4}-\d{2}-\d{2})\/(none|naive|aware)(?:\/(faults|worker_kill|covert))?(?:\/(fleet|cls|reserve|soc0|growth)=([a-z0-9_.]+))?$/;
+const storyCatalogue = (() => { try { return readJSON('story/index.json'); } catch { return null; } })();
+/** The P1 meta the scenario plays (the catalogue's `meta` when built; else the committed evening's meta), or null. */
+function scenarioMeta(sid) {
+  const sc = storyCatalogue && (storyCatalogue.scenarios || []).find((x) => x.id === sid);
+  if (sc && sc.meta) { try { return readJSON(sc.meta); } catch { return null; } }
+  const m = SCENARIO_ID.exec(sid);
+  if (!m) return null;
+  const p1 = readJSON('p1/meta.json');
+  if (m[1] === p1.day) return p1;
+  try { return readJSON(`p1/days/${m[1]}/meta.json`); } catch { return null; }
+}
+
+test('beats.json: every link uses the story URL scheme, names a playable scenario, and keeps its step in range', () => {
+  assert.ok(beats.length > 0);
+  const p1day = readJSON('p1/meta.json').day;
+  const pagesSeen = new Set();
   for (const b of beats) {
+    assert.ok(!/^\?|[?#]/.test(b.link) && !/^(\.\.\/)?ui\/|index\.html/.test(b.link), `${b.id}: the link is a bare query (no "?", path or hash)`);
     const q = new URLSearchParams(b.link);
-    const l = parseLink('?' + b.link);
-    assert.ok(VIEWS.includes(q.get('view')) && l.view === q.get('view'), `${b.id}: view`);
-    if (q.has('branch')) assert.equal(l.branch, q.get('branch'), `${b.id}: branch`);
-    if (q.has('t')) assert.equal(l.t, q.get('t'), `${b.id}: t`);
-    if (q.has('combo')) assert.ok(index.combos.includes(q.get('combo')), `${b.id}: combo`);
+    const keys = [...q.keys()];
+    for (const k of keys) assert.ok(STORY_KEYS.includes(k), `${b.id}: "${k}" is not a story-link parameter`);
+    for (const k of LEGACY_KEYS) assert.ok(!q.has(k), `${b.id}: old explorer parameter "${k}"`);
+    assert.equal(new Set(keys).size, keys.length, `${b.id}: a parameter repeats`);
+    assert.ok(STORY_PAGES.includes(q.get('page')), `${b.id}: page ${q.get('page')}`);
+    pagesSeen.add(q.get('page'));
+    // a scenario page names its scenario; learnings is feeder-wide and needs none
+    if (['running', 'run', 'results'].includes(q.get('page'))) assert.ok(q.has('s'), `${b.id}: ${q.get('page')} without a scenario`);
+    if (q.has('s')) {
+      const sid = q.get('s');
+      const m = SCENARIO_ID.exec(sid);
+      assert.ok(m, `${b.id}: malformed scenario id ${sid}`);
+      assert.ok(!Number.isNaN(Date.parse(m[1])), `${b.id}: evening ${m[1]}`);
+      if (m[3]) assert.ok(m[1] === p1day && m[2] === 'aware', `${b.id}: failures exist on ${p1day}, feeder-aware only (${sid})`);
+      if (storyCatalogue) assert.ok(storyCatalogue.scenarios.some((x) => x.id === sid), `${b.id}: ${sid} is not in ui/data/story/index.json`);
+      const meta = scenarioMeta(sid);
+      assert.ok(meta, `${b.id}: no committed evening for ${sid}`);
+      if (q.has('k')) {
+        assert.match(q.get('k'), /^\d+$/, `${b.id}: k`);
+        assert.ok(Number(q.get('k')) < meta.steps, `${b.id}: k=${q.get('k')} is past the evening's ${meta.steps} steps`);
+      }
+    } else assert.ok(!q.has('k'), `${b.id}: a step without a scenario`);
+    if (q.has('q')) assert.ok(/^[1-4]$/.test(q.get('q')), `${b.id}: q=${q.get('q')}`);
+    if (q.has('tf')) assert.ok(/^\d+$/.test(q.get('tf')) && Number(q.get('tf')) < topology.transformers.length, `${b.id}: tf=${q.get('tf')}`);
+    if (q.has('n')) assert.ok(/^\d+$/.test(q.get('n')) && Number(q.get('n')) <= 50, `${b.id}: n=${q.get('n')}`);
+    if (q.has('speed')) assert.ok((dataModule.SPEEDS || []).includes(Number(q.get('speed'))), `${b.id}: speed=${q.get('speed')}`);
+    // UI-A's parser, once it lands, reads the link back unchanged
+    if (typeof dataModule.parseStoryLink === 'function') {
+      const l = dataModule.parseStoryLink('?' + b.link);
+      assert.equal(l.page, q.get('page'), `${b.id}: parseStoryLink page`);
+      if (q.has('s')) assert.equal(l.s, q.get('s'), `${b.id}: parseStoryLink s`);
+      if (q.has('k')) assert.equal(l.k, Number(q.get('k')), `${b.id}: parseStoryLink k`);
+    }
     assert.equal(beatHref(b), `?${b.link}&beat=${b.id}`);
   }
-  const problem = beats.find((b) => b.id === 'problem');
-  assert.match(problem.caption, /no feeder check, all at once at the onset \{\{chip:ASSUMPTION:/);
-  assert.match(beats.find((b) => b.id === 'money').caption, /not local relief/);
+  // the cut walks the story: configure, run, results and learnings each open in some beat
+  for (const p of ['configure', 'run', 'results', 'learnings']) assert.ok(pagesSeen.has(p), `no beat opens page=${p}`);
+  // the admit half: the old explorer links and a malformed id are caught
+  assert.equal(SCENARIO_ID.exec('2026-08-23/naive/faults') && SCENARIO_ID.exec('2026-08-23/naive/faults')[3], 'faults');
+  assert.equal(SCENARIO_ID.exec('view=p1&branch=naive'), null);
+  assert.equal(SCENARIO_ID.exec('2026-08-23/aware/fleet=192/extra'), null);
+});
+
+test('beats.json: the naive policy carries its ASSUMPTION chip, money says gross, no-violation claims say "because of batteries"', () => {
+  const naive = beats.filter((b) => /one number, no feeder check/.test(b.caption));
+  assert.ok(naive.length > 0, 'some beat defines the naive policy');
+  for (const b of naive) assert.match(b.caption, /no feeder check[^{]*\{\{chip:ASSUMPTION:/, `${b.id}: naive without its ASSUMPTION chip`);
+  const money = beats.filter((b) => /\{\{(energyAware|energyNaive|awareMoreTonight)\}\}/.test(b.caption + b.headline));
+  assert.ok(money.length > 0, 'some beat shows the money');
+  for (const b of money) {
+    assert.match(b.caption, /not Base's profit/, `${b.id}: money without "not Base's profit"`);
+    assert.match(b.caption, /\bfleet\b/, `${b.id}: money without "fleet"`);
+  }
+  for (const b of beats) {
+    for (const s of [stripPlaceholders(b.caption), stripPlaceholders(b.headline)]) {
+      for (const m of s.matchAll(/no (service )?transformer pass\w* its limit[^.]*/gi)) assert.match(m[0], /because of batter/, `${b.id}: ${m[0]}`);
+    }
+  }
 });
 
 test('beats.json: captions resolve against the committed fixtures, with a label on every value', () => {
@@ -376,10 +451,14 @@ test('faults beat (F6), REAL data: the clause matches aware_faults focus.C, the 
   assert.ok(txt.includes(`peaked at ${peak.toFixed(1)}% SIM`), `peak ${peak} not in: ${txt}`);
 });
 
-test('rebound-aware beat: states the measured order charge reaches A-D (the rotation EXPECT is refuted), no "down the street" claim', () => {
-  const b = beats.find((x) => x.id === 'rebound-aware');
-  assert.ok(!/down the street|A → B → C → D|A-B-C-D|rotat/i.test(stripPlaceholders(b.caption)), stripPlaceholders(b.caption));
-  assert.ok(b.caption.includes('{{chargeOrder}}'));
+test('the feeder-aware run beat: states the measured order charge reaches A-D (the rotation EXPECT is refuted), no "down the street" claim', () => {
+  const withOrder = beats.filter((x) => x.caption.includes('{{chargeOrder}}'));
+  assert.ok(withOrder.length > 0, 'a beat states the measured charge order');
+  for (const x of beats) {
+    for (const s of [stripPlaceholders(x.caption), stripPlaceholders(x.headline)]) {
+      assert.ok(!/down the street|A → B → C → D|A-B-C-D|rotat/i.test(s), `${x.id}: ${s}`);
+    }
+  }
   const meta = realJSON('p1/meta.json'), aw = realJSON('p1/aware.json');
   if (!meta || !aw) return;
   const o = chargeOrder(meta, aw, topology);
@@ -414,14 +493,29 @@ test('beats.json on the REAL committed data: every placeholder resolves (no "(no
       assert.ok(!/\[\[|\]\]|\{\{/.test(txt), `${b.id}: leftover template syntax: ${txt}`);
     }
   }
-  // spot values that sim.verify p1/p2 print (the screen equals the JSON)
-  const t = (id) => resolveCaption(beats.find((b) => b.id === id).caption, S, fmt, { html: false });
+  // spot values that sim.verify p1/p2 print (the screen equals the JSON), on every beat that names the fact
   const m = S.p1meta;
-  assert.ok(t('peak-relief').includes(`${m.relief.none.v.toFixed(1)}% SIM`));
-  assert.ok(t('rebound-naive').includes(`${m.summary.naive.maxLoading.v.toFixed(1)}% SIM`));
-  assert.ok(t('p2-capacity').includes(`${S.p2index.usefulCapacity.naive.v} SIM`));
-  // the flip headline follows the measured flip (7/10 on this data: partial), never asserted
-  assert.equal(/How you charge decides/.test(t('p2-flip')), flipVerdict(S.p2index.flip).supports);
+  const spots = {
+    reliefNone: `${m.relief.none.v.toFixed(1)}% SIM`,
+    naiveMax: `${m.summary.naive.maxLoading.v.toFixed(1)}% SIM`,
+    capNaiveScreen: `${S.p2index.usefulCapacity.naive.v} SIM`,
+    capAware: `${S.p2index.usefulCapacity.aware.v.toLocaleString('en-US')} SIM`,
+    onsetT: `${m.plan.onset} DERIVED`,
+  };
+  let checked = 0;
+  for (const b of beats) {
+    for (const tpl of [b.caption, b.headline]) {
+      const txt = resolveCaption(tpl, S, fmt, { html: false });
+      for (const [f, want] of Object.entries(spots)) {
+        if (!requiredPart(tpl).includes(`{{${f}}}`)) continue;
+        assert.ok(txt.includes(want), `${b.id}: {{${f}}} should read ${want}: ${txt}`);
+        checked += 1;
+      }
+      // the flip headline follows the measured flip (7/10 on this data: partial), never asserted
+      if (tpl.includes('{{flipHeadline}}')) assert.equal(/How you charge decides/.test(txt), flipVerdict(S.p2index.flip).supports);
+    }
+  }
+  assert.ok(checked > 0, 'no beat names a spot-checked fact');
 });
 
 test('ranking table: refereed rows show the OpenDSS peak, screening rows the surrogate (judge R0: no screening mark on OpenDSS-able rows)', async () => {
@@ -562,30 +656,33 @@ test('F8: the P1 handoff merges into the T-240 label (no overlapping second labe
   assert.ok(/T-240/.test(at[0].text));
 });
 
-// F4: the problem beat carries the scale ladder, templated from p1/meta.json scaleLadder.
-test('F4: the problem caption templates every scale-ladder rung from the data, with labels', () => {
-  const b = beats.find((x) => x.id === 'problem');
-  assert.ok(b.caption.includes('{{scaleLadder}}') && b.caption.includes('{{scaleLadderKW}}'));
+// F4: the scale ladder ({{scaleLadderKW}} and {{scaleLadder}}, the explorer's facts), templated from p1/meta.json
+// scaleLadder. Audit DATA-TRUTH-outputs #9 / fix list #13: each rung shows its WHOLE name, so the feeder rung says
+// "one conductor of the head cable" (the name was cut at ":", which read as "1.5% of this feeder").
+test('F4: the scale-ladder facts template every rung from the data, with labels and the whole rung name', () => {
+  for (const b of beats) if (b.caption.includes('{{scaleLadder}}')) assert.ok(b.caption.includes('{{scaleLadderKW}}'), `${b.id}: rungs without the kW they divide`);
   const meta = realJSON('p1/meta.json');
   if (!meta || !meta.scaleLadder) return;
-  const txt = resolveCaption(b.caption, { topology, p1meta: meta }, fmt, { html: false });
+  const txt = resolveCaption('The same {{scaleLadderKW}}: {{scaleLadder}}.', { topology, p1meta: meta }, fmt, { html: false });
   assert.ok(!/not built yet/.test(txt), txt);
   for (const r of meta.scaleLadder.rungs) {
     const s = fmt.fmt(r.sharePct, { unit: '%', digits: shareDigits(r.sharePct.v) });
     assert.ok(txt.includes(s), `rung ${r.scale}: ${s} missing from ${txt}`);
     assert.ok(!/^0\.0+% /.test(s), `rung ${r.scale} prints as zero: ${s}`);
     assert.ok(txt.includes(`${fmt.fmtValue(r.base, { digits: Number.isInteger(r.base.v) ? 0 : 1 })} ${r.base.unit} ${r.base.label}`), `rung ${r.scale} base`);
+    assert.ok(txt.includes(String(r.name)), `rung ${r.scale}: the whole name "${r.name}" is missing from ${txt}`);
   }
+  const feeder = meta.scaleLadder.rungs.find((r) => r.scale === 'feeder');
+  if (feeder && /conductor/.test(feeder.name)) assert.match(txt, /one conductor of the head cable/);
+  assert.ok(!/of this feeder \(/.test(txt), `the per-phase base reads as the whole feeder: ${txt}`);
   assert.equal(shareDigits(4.9e-5), 6);
   assert.equal(shareDigits(0.501), 2);
   assert.equal(shareDigits(160), 0);
 });
 
 // F7: "discharge up to X kW (HH:MM)", both read from the feeder-aware branch the gauge draws.
-test('F7: the relief caption gives the largest relief discharge and its minute, as the aware branch measured', () => {
-  const b = beats.find((x) => x.id === 'peak-relief');
-  assert.ok(b.caption.includes('up to {{reliefKWPeak}}'));
-  assert.ok(!/discharge \{\{reliefKW\}\}/.test(b.caption), 'the peak kW without its time must not be read as the kW at the relief step');
+test('F7: the relief fact gives the largest relief discharge and its minute, as the aware branch measured', () => {
+  for (const b of beats) assert.ok(!/discharge \{\{reliefKW\}\}/.test(b.caption), `${b.id}: the peak kW without its time must not be read as the kW at the relief step`);
   const meta = realJSON('p1/meta.json'), aw = realJSON('p1/aware.json');
   if (!meta || !aw) return;
   const p = reliefPeak(meta, aw, topology);
@@ -593,7 +690,7 @@ test('F7: the relief caption gives the largest relief discharge and its minute, 
   const kw = aw.focus[p.key].batKW;
   for (let k = p.from; k <= p.to; k++) assert.ok(kw[k] >= kw[p.step]);
   if (meta.relief.reliefKW) assert.equal(p.kw.toFixed(1), meta.relief.reliefKW.v.toFixed(1), 'the aware series and meta.relief.reliefKW agree');
-  const txt = resolveCaption(b.caption, { topology, p1meta: meta, 'p1:aware': aw }, fmt, { html: false });
+  const txt = resolveCaption('A discharges up to {{reliefKWPeak}}.', { topology, p1meta: meta, 'p1:aware': aw }, fmt, { html: false });
   const [h, m] = meta.start.split(':').map(Number);
   const t = h * 60 + m + p.step * meta.stepSeconds / 60;
   const hhmm = `${String(Math.floor(t / 60) % 24).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
@@ -678,7 +775,7 @@ test('P3: the More view renders the console and the rest of More, with every scr
 });
 
 // ------------------------------------------------------------------------------------ round 2 (UX_SPEC_R2 7, AUDIT-R2)
-import { backfeed, HOUSTON_BLOCK_MW, machineNote, dateText } from '../panels/more.js';
+import { backfeed, HOUSTON_BLOCK_MW, HOUSTON_BLOCK_WINDOW, HOUSTON_BLOCK_DATE, machineNote, dateText } from '../panels/more.js';
 import { inIndexScope, handoffRow, headReading, capacityParts, peakWord, flipLineHTML, secHTML, BEAT_SECTION } from '../panels/p2.js';
 
 test('R2 optional clauses: dropped whole when a fact inside is not built, kept (brackets removed) when it is (both halves)', () => {
@@ -704,7 +801,18 @@ test('R2 adopt #2: the Houston charge block the caption shows equals sim/constan
   // the meta constant wins once l2 exports it
   const p2 = evalFact('houstonBlock', { topology, p1meta: { constants: { BASE_HOUSTON_CHARGE_BLOCK_MW: { value: -45.8, label: 'REAL', cite: 'meta' } } } });
   assert.equal(p2[0].cite, 'meta');
-  assert.ok(beats.find((b) => b.id === 'problem').caption.includes('{{houstonBlock}}'));
+  assert.ok(beats.some((b) => (b.caption + b.headline).includes('{{houstonBlock}}')), 'a beat shows the Houston block');
+  // fix list #2 (DATA-TRUTH-inputs 2): it is Base's SET POINT, from zero, in 15 minutes; never "ERCOT's base point"
+  assert.match(HOUSTON_BLOCK_MW.cite, /set point/i);
+  assert.ok(!/ERCOT's base point|base point/i.test(HOUSTON_BLOCK_MW.cite.replace(/not ERCOT's base point/i, '')), HOUSTON_BLOCK_MW.cite);
+  assert.ok(!/15\.9/.test(HOUSTON_BLOCK_MW.cite), 'the -15.9 belongs to an earlier charge block');
+  // the window the screen prints is the one sim/constants.py cites (from 0, within 15 minutes, HH:MM-HH:MM CT)
+  const cite = /BASE_HOUSTON_CHARGE_BLOCK_MW\s*=\s*const\([\s\S]*?\n\S/.exec(py)[0];
+  const w = /\((\d\d:\d\d)-(\d\d:\d\d) CT\)/.exec(cite);
+  assert.ok(w && /from 0 to/.test(cite) && /within 15 minutes/.test(cite), 'sim/constants.py cites the from-0 window');
+  assert.equal(HOUSTON_BLOCK_WINDOW, `${w[1]}–${w[2]} CT`);
+  const txt = resolveCaption('{{houstonBlock}}', { topology, p1meta: null }, fmt, { html: false });
+  assert.equal(txt, `${fmt.fmt(HOUSTON_BLOCK_MW, { unit: ' MW', digits: 1 })} from zero within fifteen minutes, ${HOUSTON_BLOCK_WINDOW} on ${HOUSTON_BLOCK_DATE} REAL`);
 });
 
 test('R2 audit M4: back-feed is net P < 0 (homes + batteries), never a minute the transformer imports', { skip: !realJSON('p1/aware.json') && 'no real P1' }, () => {
@@ -733,20 +841,44 @@ test('R2 audit H1: the capacity card and beat never headline the refuted naive c
   const u = idx.usefulCapacity;
   const cp = capacityParts(u, topology);
   const txt = cp.naive.map((x) => (typeof x === 'string' ? x : fmt.fmt(x, x.o || {}))).join('');
-  assert.match(txt, /cable passes its rating at /);
+  // fix list #3 (DATA-TRUTH-outputs #1): the naive answer leads with OpenDSS (naiveOpenDSS), the estimate after it
+  if (u.naiveOpenDSS) {
+    const n = u.naiveOpenDSS;
+    assert.ok(txt.startsWith(`holds at ${n.v} ${n.label} batteries in OpenDSS; at ${n.failAt} ${n.label} the feeder cable passes its rating`), txt);
+    const row = n.checks.find((r) => r[n.checkCols.indexOf('n')] === n.failAt);
+    assert.ok(txt.includes(`${row[n.checkCols.indexOf('headMaxPct')].toFixed(1)}% ${n.label}`), txt);
+    if (u.feederHead && u.feederHead.naive && u.feederHead.naive.overAt) {
+      const est = `the quick per-phase estimate said ${u.feederHead.naive.overAt.v} ${u.feederHead.naive.overAt.label}`;
+      assert.ok(txt.includes(est) && txt.indexOf(est) > txt.indexOf('in OpenDSS'), 'the estimate follows the OpenDSS answer');
+    }
+  } else assert.match(txt, /cable passes its rating at /);
   if (u.opendss && u.opendss.naive) {
-    assert.ok(txt.includes(`OpenDSS found ${u.opendss.naive.causedNormal.v} SIM battery-caused events`), txt);
+    assert.ok(txt.includes(`refuted: OpenDSS found ${u.opendss.naive.causedNormal.v} SIM battery-caused events`), txt);
     assert.ok(txt.includes(`${u.opendss.naive.headMaxPct.v.toFixed(1)}% SIM`), txt);
+  }
+  // fix list #4 (DATA-TRUTH-outputs #2): below 0.95 pu is below the floor, never "at the edge"; voltage is out of the harm test
+  const aw = cp.aware.map((x) => (typeof x === 'string' ? x : fmt.fmt(x, x.o || {}))).join('');
+  assert.ok(!/at the ANSI|ANSI Range A edge/.test(aw), aw);
+  if (u.opendss && u.opendss.aware && u.opendss.aware.vMinPu && u.opendss.aware.vMinPu.v < 0.95) {
+    if (u.opendss.aware.homesBelow095 && u.opendss.aware.homesBelow095.v === 1) assert.match(aw, /one home dips just under 0\.95 pu/);
+    assert.match(aw, /voltage is not in this harm test/);
   }
   const { html } = await mountP2('?view=p2&combo=aware-core-d26-g0&n=10&beat=p2-capacity');
   const sec = html.slice(html.indexOf('data-sec="capacity"'));
   assert.ok(sec.includes('How many batteries fit before the grid is harmed?'));
   assert.ok(sec.includes(`${SCREEN_CHIP}`), 'the screening count carries the screening tag');
-  assert.ok(/data-sec="capacity" data-beat="p2-capacity" open/.test(html), 'the beat opens its section');
+  assert.ok(/data-sec="capacity" data-beat="p2-capacity" open/.test(html), 'the explorer beat id still opens its section');
+  if (u.naiveOpenDSS) assert.ok(html.includes(`naive: holds at ${fmt.fmtHTML(u.naiveOpenDSS)}`), 'the capacity teaser leads with OpenDSS');
+  // the story beat that answers "how many fit" (whichever id it has) never headlines the refuted count
   const S = { topology, p1meta: realJSON('p1/meta.json'), p2index: idx, 'p2:aware-core-d26-g0': realJSON('p2/aware-core-d26-g0.json'), 'p2:naive-core-d26-g0': realJSON('p2/naive-core-d26-g0.json') };
-  const cap = resolveCaption(beats.find((b) => b.id === 'p2-capacity').caption, S, fmt, { html: false });
-  assert.ok(!/naive dispatch fits/.test(cap), cap);
-  assert.match(cap, /OpenDSS found/);
+  const capBeats = beats.filter((b) => b.caption.includes('{{capNaiveScreen}}'));
+  assert.ok(capBeats.length > 0, 'a beat answers how many batteries fit');
+  for (const b of capBeats) {
+    const cap = resolveCaption(b.caption, S, fmt, { html: false });
+    assert.ok(!/naive dispatch fits/.test(cap), cap);
+    assert.match(cap, /OpenDSS found/);
+    assert.match(b.caption, /naiveOpenDSS/, `${b.id}: the naive answer must point at OpenDSS's naiveOpenDSS`);
+  }
 });
 
 test('R2 audit M1, M2, M6, M3: a +20% page reads its OWN ranking, fleet and cable; index blocks carry a scope label', { skip: !realJSON('p2/index.json') && 'no real P2' }, async () => {
@@ -808,8 +940,28 @@ test('R2 audit M5, L4, adopt #5: More keeps the storage benchmark away from per-
   if (eng) assert.ok(machineNote(eng));
   assert.match(h, /0\.88/);
   assert.match(h, /privileged voltage baseline/);
-  assert.match(h, /3–5 mHz/);
+  // CLAUDE.md: quote the 3–17 mHz band for a thousand-battery hijack, never 3–5 mHz and never one value. The four-home
+  // caveat names the corrected band (from the story catalogue when built) and never prints the retired one.
+  assert.doesNotMatch(h, RETIRED_BAND, 'the Engine explorer prints the retired band');
+  assert.match(h, /narrower band than the one the team corrected it to/);
+  if (realJSON('story/index.json') && realJSON('story/index.json').constants && realJSON('story/index.json').constants.HIJACK_MHZ_HI) assert.match(h, /mHz<\/span>/);
   assert.equal(dateText('2026-08-23'), 'Sun 23 Aug 2026');
+});
+
+test('CLAUDE.md: no panel, lib or stylesheet source carries the retired 3–5 mHz band', () => {
+  const dirs = ['panels', 'lib', 'css'].map((d) => path.join(UI, d));
+  let n = 0;
+  for (const dir of dirs) {
+    for (const f of fs.readdirSync(dir).filter((x) => /\.(js|css)$/.test(x))) {
+      const src = fs.readFileSync(path.join(dir, f), 'utf8');
+      assert.doesNotMatch(src, RETIRED_BAND, `${path.basename(dir)}/${f} carries the retired band`);
+      n += 1;
+    }
+  }
+  assert.ok(n > 5, 'the scan read the panels, libs and stylesheets');
+  // the admit half
+  for (const s of ['3–5 mHz', '3-5 mHz', '3 – 5 mHz', '3 to 5 mHz']) assert.match(s, RETIRED_BAND);
+  for (const s of ['3–17 mHz', '13-5 mHz', '0.3 mHz']) assert.doesNotMatch(s, RETIRED_BAND);
 });
 
 test('R2 More: the real-evenings facts read p1/days/index.json, labelled; absent index means not built', async () => {
