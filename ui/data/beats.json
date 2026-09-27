@@ -136,10 +136,10 @@
       "t0": "4:10",
       "t1": "4:25",
       "title": "Which transformers to upgrade",
-      "label": "SIM",
+      "label": "DERIVED",
       "link": "page=learnings&q=3",
-      "headline": "As home load grows, the tightest transformers run out of room first; an upgrade is worth most where demand stands behind it.",
-      "caption": "Home-load growth moves the map {{chip:ASSUMPTION:growth levels are ours (GROWTH)}}; the list names the tightest transformers with the growth an upgrade unlocks {{chip:SIM:ui/data/p2/planner.json, layer three}}. A full transformer whose homes are all members already is worth little; a full one with demand behind it is worth a lot. No replacement cost is sourced {{chip:ASSUMPTION:TRANSFORMER_REPLACEMENT_USD is unset}}, so nothing is priced."
+      "headline": "Every upgrade is priced at Base's own figure against the gross energy value of the batteries it unlocks; more home load does not change the list, because the utility's nameplate rule binds.",
+      "caption": "Each upgrade is priced at Base's own per-transformer figure {{chip:REAL:PLAN_UPGRADE_USD: Base's figure in its PUCT filing (docket 54224 item 49), not a quote; ui/data/p2/planner.json money.upgradeUSD}}, against each battery's yearly gross energy value, not Base's profit {{chip:DERIVED:PLAN_MEMBER_VALUE_USD_YR: one Core, 2025 LZ_NORTH, planned on public day-ahead prices; planner.json money.memberValueUSDYr}}: read the cost, value and payback on each row. The top four are Streets A–D, over the utility's nameplate rule only because our stress placement put one battery more on each than the rule allows {{chip:ASSUMPTION:the prototype's stress placement (planner.json tfs installed)}}; every home there is already a member, so the verdict is tell the member, don't upgrade {{chip:DERIVED:planner.json rankingByGrowth; the verdict from ui/lib/planner.js decide}}. More home load does not change the list {{chip:ASSUMPTION:growth levels are ours (PLAN_GROWTH_PCTS)}}: the utility's nameplate rule binds, not the physics {{chip:SIM:planner.json rankingByGrowth: the same transformers, in the same order, at every growth level}}."
     },
     {
       "id": "learnings-q4",

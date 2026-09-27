@@ -175,6 +175,9 @@ Paths are relative to the repo root. `mpalacios/out/p1/worker_kill.json` and `mp
 | OpenDSS referee status, month solves | **checked, 13** | SIM | `ui/data/p2/planner.json` | `referee.status, referee.runs` |
 | OpenDSS agrees with the naive cap | **374 of 376** | SIM | `ui/data/p2/planner.json` | `referee.naiveAtCap.agree, .of` |
 | OpenDSS agrees with the feeder-aware cap | **376 of 376** | SIM | `ui/data/p2/planner.json` | `referee.awareAtCap.agree, .of` |
+| Q3: upgrade cost per transformer (Base's figure in its PUCT filing, 54224 item 49; not a quote) | **$10,000** | REAL | `ui/data/p2/planner.json` | `money.upgradeUSD (= ranking[0].costUSD)` |
+| Q3: value per battery a year (one Core, 2025 LZ_NORTH, planned on public day-ahead prices; gross energy value, not Base's profit; not the $284.68 perfect-foresight 2026 per-Core year) | **$631/yr** | DERIVED | `ui/data/p2/planner.json` | `money.memberValueUSDYr (= ranking[0].valueUSDYr)` |
+| Q3: payback of the #1 upgrade (the same on #1–#4, Streets A–D) | **15.8 yr** | DERIVED | `ui/data/p2/planner.json` | `ranking[0].paybackYears` |
 
 The medians are over the transformers of each size serving homes (`sizeSummary.<kVA>.count`). Where OpenDSS is stricter than the screen, OpenDSS wins (`referee.rule`). Read a single transformer's answer (Q2) and the upgrade list (Q3) from the page, with their tags.
 
@@ -228,3 +231,4 @@ Read the growth rows with care: at +50% home load, feeder-aware still causes 0 b
 - "1.5% of this feeder". 2,663.8 kVA is one conductor of the head cable; the head's three-phase rating is 7,991.5 kVA.
 - "Earned more" on 14 Aug without the sign: both policies lost money that evening; feeder-aware lost less.
 - A real company as the attacker. The attacker is fictional.
+- "Nothing is priced" on Q3. Every upgrade is priced at Base's $10,000 (REAL) against $631/yr per battery (DERIVED, gross, not Base's profit).
