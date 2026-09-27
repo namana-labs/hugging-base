@@ -93,6 +93,8 @@ HIJACK_CITE = ("docs/research-report.md: ~40 MW swing from 1,000 batteries; rang
 HIJACK_MHZ_LO = const("HIJACK_MHZ_LO", 3, "DERIVED", HIJACK_CITE)
 HIJACK_MHZ_HI = const("HIJACK_MHZ_HI", 17, "DERIVED", HIJACK_CITE)
 HIJACK_MW = const("HIJACK_MW", 40, "DERIVED", HIJACK_CITE)
+HIJACK_UNITS = const("HIJACK_UNITS", 1000, "ASSUMPTION",
+                     "docs/research-report.md: a hijacked slice of 1,000 batteries (~40 MW); design.md §frequency")
 EXTRAS_CONSTANTS = ("FAILURE_MERGE_MIN", "FLEET_MOVE_KW", "TIER_AMBER_PCT", "TIER_NORMAL_PCT", "TIER_NORMAL_MIN",
                     "TIER_EMERGENCY_PCT", "FUSE_PCT", "FUSE_MINUTES", "HEAD_LINE", "V_ANSI_LO", "V_ANSI_HI")
 FLEET_MOVE_KW = const("FLEET_MOVE_KW", 1.0, "ASSUMPTION",
@@ -914,7 +916,8 @@ def build_catalogue():
     doc = envelope("story", "sim.scenarios", inputs=inputs_sha(),
                    constants=export("STORY_FLEET_SIZES", "STORY_RESERVES_PCT", "STORY_SOC0_PCT", "STORY_GROWTH_PCT",
                                     "FLEET_PLACEMENT", "FLEET_PLACEMENT_SEED", "RESERVE_FLOOR", "SOC0", "FLEET_SIZE",
-                                    "GROWTH", "V_ANSI_LO", "V_ANSI_HI", "HIJACK_MHZ_LO", "HIJACK_MHZ_HI", "HIJACK_MW"),
+                                    "GROWTH", "V_ANSI_LO", "V_ANSI_HI", "HIJACK_MHZ_LO", "HIJACK_MHZ_HI", "HIJACK_MW",
+                                    "HIJACK_UNITS"),
                    sources={"engine": {"label": "SIM", "text": "every scenario is a committed run of sim.p1_build / "
                                                               "sim.history / sim.scenarios / mpalacios (OpenDSS every step)"},
                             "timing": {"label": "DERIVED", "text": "engine.buildSeconds measured on a shared machine; "

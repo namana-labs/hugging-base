@@ -275,6 +275,7 @@ class CatalogueTests(unittest.TestCase):
         self.assertEqual(c["V_ANSI_LO"]["label"], "REAL")
         self.assertEqual((c["HIJACK_MHZ_LO"]["value"], c["HIJACK_MHZ_HI"]["value"], c["HIJACK_MW"]["value"]), (3, 17, 40))
         self.assertTrue(all(c[k]["label"] == "DERIVED" for k in ("HIJACK_MHZ_LO", "HIJACK_MHZ_HI", "HIJACK_MW")))
+        self.assertEqual((c["HIJACK_UNITS"]["value"], c["HIJACK_UNITS"]["label"]), (1000, "ASSUMPTION"))
         for p in sorted({s["extras"] for s in self.doc["scenarios"]}):
             d = read_json_any(UI_DATA / p)
             self.assertEqual(d["constants"]["V_ANSI_LO"], c["V_ANSI_LO"], p)
