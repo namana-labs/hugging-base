@@ -1141,7 +1141,8 @@ export async function mount(el, ctx) {
       const ok = s.homesBelow095 && s.homesBelow095.v === 0;
       set('grid', `${ok ? `<span class="t-ok">${svg('check', { size: 14 })}</span> voltage in range · ` : ''}cable max ${fmt.fmtHTML(L(s.feederHead.v, s.feederHead.label, s.feederHead.cite), { unit: '%', digits: 1 })}`);
     }
-    set('scale', 'one home\'s two batteries vs A, the feeder, ERCOT');
+    // fix list #13: the feeder rung is one conductor of the head cable (per phase), not the whole feeder
+    set('scale', 'A\'s batteries vs A, one head-cable conductor, ERCOT');
     set('log', doc.ticker ? `${nv(fmt, L(doc.ticker.length, seriesLabel(doc, 'ticker', 'SIM')))} commands ${fmt.chip(seriesLabel(doc, 'ticker', 'SIM'), 'sim.orchestrator.allocate(): deterministic, no model in the loop')}` : '');
     set('sources', 'ERCOT · SMART-DS · OSM · OpenDSS · named assumptions');
   }

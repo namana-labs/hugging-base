@@ -593,6 +593,14 @@ export const FACTS = {
   top10Share: [['p1cal'], (S) => withO(get(S, 'p1cal.headline.top10Share2026'), { unit: '%', digits: 0 })],
   losingNights: [['p1cal'], (S) => withO(get(S, 'p1cal.headline.losingNights2026'))],
   // Audit R2 H1: the useful-capacity figures OpenDSS measured on each build (index.usefulCapacity.opendss)
+  // fix list #3: OpenDSS's naive answer (holds at N, fails at N+1) leads; capNaiveCableAt is the quick estimate
+  capNaiveOpenDSS: [['p2index'], (S) => {
+    const n = get(S, 'p2index.usefulCapacity.naiveOpenDSS');
+    if (!isL(n)) return null;
+    return typeof n.failAt === 'number'
+      ? [{ ...n, o: {} }, ' (OpenDSS: holds at that many, the cable passes its rating at ', L(n.failAt, n.label, 'usefulCapacity.naiveOpenDSS.failAt: the first naive build OpenDSS fails', {}), ')']
+      : [{ ...n, o: {} }];
+  }],
   capNaiveCableAt: [['p2index'], (S) => withO(get(S, 'p2index.usefulCapacity.feederHead.naive.overAt'))],
   capNaiveScreen: [['p2index'], (S) => {
     const x = get(S, 'p2index.usefulCapacity.naive');

@@ -419,3 +419,38 @@ test('history days (checkpoint b): the panel reads &date=; every simulated eveni
     }
   }
 });
+
+// ------------------------------------------------------------------------------------ data-truth fix list (lead, 26 Sep)
+import { noViolationClaim, commsLossTip } from '../panels/p1.js';
+import { loadPairingNote } from '../lib/days.js';
+
+test('fix list #10: the no-violation claim names the tier rule, says "because of batteries", and admits over-nameplate', () => {
+  const s = { normalEvents: { v: 0, label: 'SIM', cite: 'OpenDSS' }, emergencyTfs: { v: 0, label: 'SIM' },
+    maxLoading: { v: 119.5, label: 'SIM', tf: 240, t: '16:45' } };
+  const h = noViolationClaim(fmt, meta, s, { branch: 'aware', tfName: (tf) => `T-${tf}`, homeOnly: () => true });
+  assert.match(h, /No service transformer passed its limit this evening/);
+  assert.match(h, /So none because of batteries\./);
+  if (meta.constants && meta.constants.TIER_NORMAL_MIN) assert.match(h, /for <span class="num">30 minutes<\/span>/);
+  if (meta.constants && meta.constants.TIER_AMBER_PCT) assert.match(h, /T-240 still went over nameplate on its homes' load alone \(<span class="num">119\.5%<\/span>/);
+  assert.match(noViolationClaim(fmt, meta, s, { branch: 'none' }), /This scenario has no batteries\./);
+});
+
+test('comms-loss tooltip: the behaviour is REAL (Base engineer, on site), the timings ASSUMPTION, read from the meta', () => {
+  for (const st of ['S', 'X']) {
+    const h = commsLossTip(fmt, meta, st);
+    assert.match(h, /backup-only mode, never discharges to the grid/);
+    assert.match(h, /chip-REAL" title="Base engineer, on site, 26 Sep 2026 \(verbal\)/);
+    assert.match(h, /chip-ASSUMPTION" title="COMMS_STALE_S and COMMAND_TTL_S are our timings/);
+    if (meta.constants && meta.constants.COMMAND_TTL_S) assert.ok(h.includes(`${meta.constants.COMMAND_TTL_S.value} s`), h);
+    assert.ok(!/3\+ minutes|\(5 min\)/.test(h), 'no typed timings');
+  }
+});
+
+test('fix list #9: the evening note computes both weekdays and flags the one-hour clock caveat', () => {
+  const c = { LOAD_PAIRING: { value: '2018 SMART-DS weather-year load paired with 2026 prices by calendar date', label: 'ASSUMPTION' } };
+  assert.match(loadPairingNote('2026-08-23', c), /this Sun's \(REAL\); home loads are the same calendar date in the SMART-DS 2018 year, a Thu, a different weekday/);
+  assert.match(loadPairingNote('2026-07-22', c), /this Wed's .* a Sun, a different weekday/);
+  assert.match(loadPairingNote('2026-08-23', c), /one hour early against the CDT prices/);
+  assert.match(loadPairingNote('2026-08-23', null), /can fall on a different weekday/);
+  assert.equal(loadPairingNote('not a date', c), null);
+});

@@ -1003,3 +1003,31 @@ test('R2 lazyDetails: a closed section body leaves the live DOM and comes back o
   assert.equal(lazyDetails(root, 'details', '.x'), 0, 'idempotent');
   assert.equal(lazyDetails({ innerHTML: '' }, 'details', '.x'), 0, 'no DOM (node stub): nothing to do');
 });
+
+// ------------------------------------------------------------------------------------ data-truth fix list (lead, 26 Sep)
+import { commsLossHTML, rankOfN, FLEET_PLACEMENT_CITE } from '../panels/more.js';
+
+test('fix list #3, #5, #14 and the comms-loss ruling, on the committed data', { skip: !(realJSON('p1/meta.json') && realJSON('p2/index.json')) && 'real data not built' }, () => {
+  const idx = realJSON('p2/index.json'), meta = realJSON('p1/meta.json');
+  const S = { topology, p1meta: meta, p2index: idx, 'p2:aware-core-d26-g0': realJSON('p2/aware-core-d26-g0.json'), 'p2:naive-core-d26-g0': realJSON('p2/naive-core-d26-g0.json') };
+  const say = (t) => resolveCaption(t, S, fmt, { html: false });
+  // #3: OpenDSS's naive answer, from naiveOpenDSS
+  const n = idx.usefulCapacity.naiveOpenDSS;
+  if (n) assert.equal(say('{{capNaiveOpenDSS}}'), `${n.v} ${n.label} (OpenDSS: holds at that many, the cable passes its rating at ${n.failAt} ${n.label})`);
+  // #14: every rank says "of N", N from the index
+  const r = say('{{awareTop1NaiveRank}}');
+  if (idx.flip && idx.flip.entries && !/outside/.test(r)) assert.match(r, new RegExp(`of ${idx.flip.entries.v} ${idx.flip.entries.label}$`));
+  assert.deepEqual(rankOfN({ p2index: {} }, true), []);
+  // #14: the naive candidate placements from surrogate peaks carry the screening chip
+  const pw = resolveCaption('{{protectionWhere}}', S, fmt, { html: true });
+  if ((S['p2:naive-core-d26-g0'].protectionCases || []).length) assert.match(pw, /^<span class="num">\d+<\/span><span class="chip chip-SIM"[^>]*>SIM<\/span><span class="p2-badge screen/);
+  assert.deepEqual(unscreenedChips(pw), []);
+  // #5: the fleet is a deliberate stress placement
+  assert.match(FLEET_PLACEMENT_CITE, /deliberate stress placement/);
+  assert.equal(evalFact('fleetSize', S)[0].cite, FLEET_PLACEMENT_CITE);
+  // comms loss: behaviour REAL, timings ASSUMPTION with the meta's seconds
+  const c = commsLossHTML(fmt, S);
+  assert.match(c, /chip-REAL" title="Base engineer, on site, 26 Sep 2026 \(verbal\)/);
+  assert.match(c, /chip-ASSUMPTION/);
+  if (meta.constants.COMMS_STALE_S) assert.ok(c.includes(`${meta.constants.COMMS_STALE_S.value} s`), c);
+});
