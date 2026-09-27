@@ -179,7 +179,8 @@ export function rankingFor(planner, growth = 0) {
     const why = k0 > c ? 'blocked' : mm === 0 ? 'onboard' : unl.p50 >= 0.5 ? 'unlocks' : 'little';
     const r2 = (x) => Math.round(x * 100) / 100;
     const val = V != null ? unl.p50 * V : null;
-    out.push({ tf: r.tf, why, k0, c, cUp,
+    const exact = growth ? pct(blk.capAwareExact, rows.get(r.tf)) : 1;
+    out.push({ tf: r.tf, why, k0, c, cUp, approx: growth ? exact === 0 && aw <= paper : false,
       blockedToday: { v: Math.max(0, k0 - c), label: 'DERIVED', cite: 'installed + pending over min(feeder-aware cap, utility rule)' },
       wanted5y: { v: r2(want.p50), label: 'DERIVED', cite: 'installed + pending + non-member homes x F_p50(horizon)', p10: r2(want.p10), p90: r2(want.p90) },
       unlocked: { v: r2(unl.p50), label: 'DERIVED', cite: 'min(wanted, cap one size up) - min(wanted, cap)', p10: r2(unl.p10), p90: r2(unl.p90) },
@@ -469,6 +470,7 @@ export async function mount(root, ctx) {
     const seg = levels.map((l) => `<button type="button" class="pb-seg-b${l.g === st.g ? ' on' : ''}" data-g="${l.g}"${l.ok ? '' : ' disabled title="not exported by the planner"'}>${l.g ? `+${l.g}%` : 'Today\'s load'}${l.ok ? '' : ' · not exported'}</button>`).join('');
     const H = horizon != null ? `${fmtNum(horizon)} years` : 'the horizon';
     const N = all.length;
+    const interp = st.g && planner.perK && planner.perK[`g${st.g}`] ? planner.perK[`g${st.g}`].awareInterp || null : null;
     const upCite = planner.meta && planner.meta.cites && planner.meta.cites.up;
     const lines = list.map((r) => {
       const t = planner.tfs[rows.get(r.tf)] || {};
@@ -479,14 +481,15 @@ export async function mount(root, ctx) {
       const ageTxt = r.age && has(r.age) ? ` · age ${num(r.age, { digits: 0, unit: ' y' })}${t.age && t.age.source !== 'utility' ? ' (simulated)' : ''}` : '';
       return `
         <div class="pb-up${r.tf === st.sel ? ' on' : ''}${r.why === 'onboard' ? ' pb-dim' : ''}" data-tf="${r.tf}">
-          <div class="pb-up-h"><span class="pb-rank-n">${r.rank != null ? `${r.rank}<small> of ${fmtNum(N)}</small>` : ''}</span><b>${esc(tfName(topo, r.tf))}</b><span class="pb-sub">${has(t.kva) ? fmtNum(t.kva.v) : '—'}${t.up && has(t.up.kva) ? ` → ${fmtNum(t.up.kva.v)}` : ''} kVA · ${fmtNum(t.homes)} home${t.homes === 1 ? '' : 's'} · ${fmtNum(r.k0)} wanted now, fits ${fmtNum(r.c)}</span><span class="pb-right pb-verdict-w${vw && /^Upgrade/.test(vw.word) ? ' pb-go' : ''}">${esc(vw ? vw.word : '')}</span></div>
+          <div class="pb-up-h"><span class="pb-rank-n">${r.rank != null ? `${r.rank}<small> of ${fmtNum(N)}</small>` : ''}</span><b>${esc(tfName(topo, r.tf))}</b><span class="pb-sub">${has(t.kva) ? fmtNum(t.kva.v) : '—'}${t.up && has(t.up.kva) ? ` → ${fmtNum(t.up.kva.v)}` : ''} kVA · ${fmtNum(t.homes)} home${t.homes === 1 ? '' : 's'} · ${fmtNum(r.k0)} wanted now, fits ${r.approx ? '≈' : ''}${fmtNum(r.c)}${r.approx ? ' (interpolated)' : ''}</span></div>
+          <div class="pb-up-v"><span class="pb-verdict-w${vw && /^Upgrade/.test(vw.word) ? ' pb-go' : ''}">${esc(vw ? vw.word : '')}</span>${vw && vw.why ? ` <span class="pb-sub">${esc(vw.why)}</span>` : ''}</div>
           <div class="pb-up-b">${r.why === 'onboard' ? 'every home here is already a member: an upgrade unlocks no one' : `unlocks <b>${unl}</b> member${has(u) && u.v === 1 ? '' : 's'} ${has(u) ? tagHTML(u.label, `${u.cite}; one size up: ${upCite || 'screening'}`, true) : ''} within ${esc(H)}${r.valueUSDYr && has(r.valueUSDYr) && r.valueUSDYr.v ? `, worth ${num(r.valueUSDYr, { money: true, digits: 0 })}/yr` : ''}${has(r.paybackYears) ? ` · pays back in ${num(r.paybackYears, { digits: 1, unit: ' yr' })}` : ''}`}${ageTxt}${r.screening ? ` ${tagHTML('SCREENING', 'caps at this home-load growth are the surrogate screen (not OpenDSS-checked); one size up stays at today\'s load')}` : ''}</div>
-          ${vw && vw.why ? `<div class="pb-sub">${esc(vw.why)}</div>` : ''}
         </div>`;
     }).join('');
     return `
       ${eyebrow}
       <div class="pb-headline pb-h20">${st.g ? `At +${st.g}% home load` : 'At today\'s load'}, ${fmtNum(blocked)} transformer${blocked === 1 ? ' blocks' : 's block'} a battery wanted now, feeder-aware with the utility rule unchanged.</div>
+      ${st.g ? `<div class="pb-note">At least as many batteries still fit with feeder-aware charging as home load grows; the upgrade verdict carries the growth story. Caps at +${st.g}% are the surrogate screen${interp ? ', feeder-aware values between grid points interpolated' : ''} ${tagHTML('SCREENING', interp || 'not OpenDSS-checked')}</div>` : ''}
       <div class="pb-growth"><span class="pb-sub">Home load growth (EVs, heat pumps)</span>${tagHTML('ASSUMPTION', constOf('PLAN_GROWTH_PCTS', planner) ? constOf('PLAN_GROWTH_PCTS', planner).cite : 'planner perK growth levels')}<div class="pb-seg">${seg}</div></div>
       <div class="pb-uplist">${lines || '<div class="pb-body">No transformer is at capacity at this load.</div>'}</div>
       <div class="pb-foot">Upgrade cost ${has(money.upgradeUSD) ? num(money.upgradeUSD, { money: true, digits: 0 }) : missingHTML()} per transformer · member value ${has(money.memberValueUSDYr) ? num(money.memberValueUSDYr, { money: true, digits: 0 }) : missingHTML()}/yr per battery is gross energy value, not Base's profit, and assumes perfect price foresight · unlocked = members over today's cap that one size up serves (typical growth; slow–fast) · verdict = least worst regret over slow, typical and fast growth (planner.js decide)</div>`;

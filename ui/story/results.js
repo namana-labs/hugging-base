@@ -52,7 +52,7 @@ export function timeTicks(tm, maxTicks = 7) {
   if (!tm) return [];
   const [h, m] = tm.start.split(':').map(Number);
   const m0 = h * 60 + m, stepMin = tm.stepS / 60, total = tm.n * stepMin;
-  const every = [30, 60, 120, 180, 240, 360].find((e) => total / e <= maxTicks - 1) || 720;
+  const every = [30, 60, 120, 180, 240, 360].find((e) => total / e <= maxTicks - 1) || total;
   const out = [];
   for (let k = 0; k < tm.n; k++) {
     const t = m0 + k * stepMin;
