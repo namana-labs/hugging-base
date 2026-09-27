@@ -1,4 +1,4 @@
-# Hugging Base
+# Batter Up (formerly Hugging Base)
 
 > **The root app is the submission** (merged into `main` 27 Sep 2026, PR #42): engine in `sim/`, four story pages in `ui/`, the controller-crash and attacker-detector replays in `resilience/`, judge docs in `docs/` (index: `docs/README.md`), run it per `docs/run-the-demo.md`, sprint contract `docs/story-contract.md`. Everything else (earlier prototypes, design history, hand-offs) was archived, not deleted, in `previous-work/` on 27 Sep 2026; see `previous-work/README.md`.
 

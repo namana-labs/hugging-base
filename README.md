@@ -1,12 +1,16 @@
-# Hugging Base
+# Batter Up
+
+<p align="center"><img src="ui/assets/batter-up-logo.png" alt="Batter Up: a bat holding a battery like a baseball bat" width="480"></p>
+
+*Formerly "Hugging Base"; the repository keeps its original name.*
 
 **Feeder-aware charging for a fleet of home batteries.** Base Power × AITX hackathon, Sep 2026.
 
-**Live demo:** LIVE_URL_PLACEHOLDER
+**Live demo: https://batter-up-grid.vercel.app** (opens the story app; also at https://hugging-base.vercel.app). No install, no sign-in: static files on Vercel.
 
 ## The problem
 
-When the ERCOT price crashes in the evening, a fleet of home batteries that all start charging at once can overload the street transformers that feed those homes, even while the wider grid is fine. ERCOT dispatch sees the price zone, not the neighbourhood: the feeder and the service transformer on the pole. Hugging Base checks each transformer's room before it sends a charge command, and shows on a feeder model refereed by OpenDSS that the fleet still charges, with no overload caused by batteries.
+When the ERCOT price crashes in the evening, a fleet of home batteries that all start charging at once can overload the street transformers that feed those homes, even while the wider grid is fine. ERCOT dispatch sees the price zone, not the neighbourhood: the feeder and the service transformer on the pole. Batter Up checks each transformer's room before it sends a charge command, and shows on a feeder model refereed by OpenDSS that the fleet still charges, with no overload caused by batteries.
 
 ## The four pages
 
@@ -84,3 +88,7 @@ Engine: RZ and Michael. Visuals: Connor. Presentation: Amy. Design: Bo.
 - **deck.gl** (vendored in `ui/vendor/`): MIT.
 
 Details and attribution: [docs/data-sources.md](docs/data-sources.md).
+
+## Hosting
+
+The live demo is the static `ui/` folder on Vercel (config: `vercel.json`, `.vercelignore`). No server, no database: every number is committed JSON the engine wrote. To redeploy from the repo root: `vercel deploy --prod`, then `vercel alias set <deployment-url> batter-up-grid.vercel.app`.

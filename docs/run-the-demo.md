@@ -1,6 +1,6 @@
 # Run the demo
 
-Hugging Base is a static web app. A Python simulator (`sim/`) wrote every number the page shows into committed JSON under `ui/data/`; the browser only reads those files. No server logic, no network at view time, no language model anywhere in the numbers, and **OpenDSS is the referee** of every violation.
+Batter Up is a static web app. A Python simulator (`sim/`) wrote every number the page shows into committed JSON under `ui/data/`; the browser only reads those files. No server logic, no network at view time, no language model anywhere in the numbers, and **OpenDSS is the referee** of every violation.
 
 ## Two commands
 

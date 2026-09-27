@@ -35,7 +35,8 @@ code { font-size: 12.5px; }
 /* ---- shared chrome ---- */
 .st-header { height: 60px; flex: none; display: flex; align-items: center; gap: 18px; padding: 0 24px; border-bottom: 1px solid var(--border); }
 .st-header > * { flex: none; white-space: nowrap; }
-.st-wordmark { font-weight: 700; font-size: 21px; letter-spacing: -.02em; color: var(--brand); }
+.st-wordmark { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 21px; letter-spacing: -.02em; color: var(--brand); white-space: nowrap; }
+.st-mark { height: 36px; width: auto; mix-blend-mode: multiply; flex: none; }
 .st-steps { display: flex; gap: 2px; padding: 3px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
 .st-step { padding: 5px 10px; border-radius: 6px; color: var(--ink); text-decoration: none; }
 .st-step:hover { background: var(--track); color: var(--ink); }

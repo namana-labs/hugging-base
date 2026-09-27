@@ -324,7 +324,7 @@ test('shell: ui/index.html is the story app; the old tab app moved to ui/explore
   assert.match(story, /<script type="module" src="story\/app\.js"><\/script>/);
   assert.match(story, /href="story\/story\.css"/);
   assert.match(explore, /<script type="module" src="app\.js"><\/script>/);
-  assert.match(explore, /<title>Hugging Base · Engine explorer<\/title>/);
+  assert.match(explore, /<title>Batter Up · Engine explorer<\/title>/);
   // a round-1/2 link (?view= or &beat=) on ui/ still opens the old app, with its query
   assert.match(story, /q\.has\('view'\) \|\| q\.has\('beat'\)/);
   assert.match(story, /location\.replace\('explore\.html' \+ location\.search/);
