@@ -15,6 +15,7 @@ export const LEVER_KEYS = ['evening', 'policy', 'failure', 'fleet', 'cls', 'rese
 export const FLEET_KEYS = ['fleet', 'cls', 'reserve', 'soc0', 'growth'];
 export const ONE_LEVER_REASON = 'the engine ran the fleet levers one away from the default at a time';
 export const NO_BATTERIES_REASON = 'No batteries in this run: pick a dispatch policy first';
+export const NOT_RUN_REASON = 'Not run: no engine run in the catalogue has these settings';
 const same = (a, b) => String(a) === String(b);
 
 export const defaultLevers = (cat) => Object.fromEntries(LEVER_KEYS.map((k) => [k, cat.levers && cat.levers[k] ? cat.levers[k].default : undefined]));
@@ -30,12 +31,14 @@ export function optionOf(cat, key, value) {
 export const optionLabel = (cat, key, value) => { const o = optionOf(cat, key, value); return o ? o.label : String(value); };
 export const leverLabel = (cat, key) => (cat.levers && cat.levers[key] ? cat.levers[key].label : key);
 
-/** The first `unavailable` reason whose partial levers all match `levers`, else null. */
+/** The first `unavailable` reason whose partial levers all match `levers` (a list = any of), else null. This is the
+ *  catalogue's own `match` rule: "a scenario is found by its id; otherwise the first unavailable row whose every lever
+ *  matches gives the reason". */
 export function unavailableReason(cat, levers) {
   for (const u of cat.unavailable || []) {
     const p = u.levers || {};
     const keys = Object.keys(p);
-    if (keys.length && keys.every((k) => same(p[k], levers[k]))) return u.reason;
+    if (keys.length && keys.every((k) => (Array.isArray(p[k]) ? p[k].some((x) => same(x, levers[k])) : same(p[k], levers[k])))) return u.reason;
   }
   return null;
 }
@@ -47,46 +50,28 @@ export function offDefault(cat, levers) {
 }
 
 /** What choosing `value` for lever `key` does from `current` (a levers object):
- *  {selected, enabled, reason, scenario, levers, changes[{key, from, to, reason}]}. Pure; the tests pin it. */
+ *  {selected, enabled, reason, scenario, levers, changes[{key, from, to, reason}]}. Pure; the tests pin it.
+ *  - The one-lever rule (ruling 1): moving a fleet lever off its default resets any other off-default fleet lever;
+ *    each reset is a `change` with ONE_LEVER_REASON (the page shows it as a note).
+ *  - Otherwise the setting must be a catalogue run: when it is not, the option is DISABLED with the catalogue's
+ *    reason (its `unavailable` rows), never moved somewhere else behind the user's back. */
 export function optionState(cat, current, key, value) {
   const d = defaultLevers(cat);
   if (same(current[key], value)) {
     return { selected: true, enabled: true, reason: null, scenario: scenarioFor(cat, current), levers: { ...current }, changes: [] };
   }
-  const out = (enabled, reason, scenario = null, changes = []) =>
-    ({ selected: false, enabled, reason, scenario, levers: scenario ? { ...scenario.levers } : null, changes });
-  if (current.policy === 'none' && (FLEET_KEYS.includes(key) || key === 'failure')) {
-    return out(false, (key === 'failure' && unavailableReason(cat, { ...current, [key]: value })) || NO_BATTERIES_REASON);
-  }
-  // the requested setting, with the one-lever rule applied to the fleet levers
   const want = { ...current, [key]: value };
-  const ruled = new Map();
-  if (FLEET_KEYS.includes(key) && !same(value, d[key])) {
-    for (const k of FLEET_KEYS) if (k !== key && !same(want[k], d[k])) { want[k] = d[k]; ruled.set(k, ONE_LEVER_REASON); }
-  }
-  const withValue = (cat.scenarios || []).filter((s) => same(s.levers[key], value));
-  if (!withValue.length) {
-    return out(false, unavailableReason(cat, { [key]: value }) || unavailableReason(cat, want) || 'Not run: no engine run in the catalogue has this setting');
-  }
-  // the closest run with that value: fewest other levers changed, preferring changes back to the default
-  let best = null, bestCost = Infinity;
-  for (const s of withValue) {
-    let cost = 0;
-    for (const k of LEVER_KEYS) {
-      if (k === key || same(s.levers[k], want[k])) continue;
-      cost += 1 + (same(s.levers[k], d[k]) ? 0 : 0.5);
-    }
-    if (cost < bestCost) { best = s; bestCost = cost; }
-  }
-  const why = unavailableReason(cat, want);
   const changes = [];
-  for (const k of LEVER_KEYS) {
-    if (k === key || same(best.levers[k], current[k])) continue;
-    const reason = ruled.has(k) && same(best.levers[k], want[k]) ? ruled.get(k)
-      : why || (value === 'none' && key === 'policy' ? 'no batteries in this run' : 'no engine run combines these settings');
-    changes.push({ key: k, from: current[k], to: best.levers[k], reason });
+  if (FLEET_KEYS.includes(key) && !same(value, d[key])) {
+    for (const k of FLEET_KEYS) {
+      if (k !== key && !same(want[k], d[k])) { changes.push({ key: k, from: want[k], to: d[k], reason: ONE_LEVER_REASON }); want[k] = d[k]; }
+    }
   }
-  return out(true, null, best, changes);
+  const scenario = scenarioFor(cat, want);
+  if (scenario) return { selected: false, enabled: true, reason: null, scenario, levers: { ...scenario.levers }, changes };
+  const reason = unavailableReason(cat, want) || unavailableReason(cat, { [key]: value })
+    || (current.policy === 'none' && FLEET_KEYS.includes(key) ? NO_BATTERIES_REASON : NOT_RUN_REASON);
+  return { selected: false, enabled: false, reason, scenario: null, levers: null, changes: [] };
 }
 
 /** Apply a lever: {scenario, levers, notes[]} or null when the option is disabled. */
@@ -97,12 +82,19 @@ export function applyLever(cat, current, key, value) {
   return { scenario: st.scenario, levers: st.levers, notes };
 }
 
+/** The presets, in the catalogue's order: [{name, id, scenario}]. `catalogue.presets` ([{name, id}]) when present,
+ *  else the scenarios that carry a `preset` name. A preset whose id is not a scenario is dropped. */
+export function presets(cat) {
+  const list = Array.isArray(cat.presets) ? cat.presets.map((p) => ({ name: p.name, id: p.id }))
+    : (cat.scenarios || []).filter((s) => s.preset).map((s) => ({ name: s.preset, id: s.id }));
+  return list.map((p) => ({ ...p, scenario: scenarioById(cat, p.id) })).filter((p) => p.scenario && p.name);
+}
 /** The preset name of the run these levers select, or null (Custom). */
 export function presetOf(cat, levers) {
   const s = scenarioFor(cat, levers);
-  return s && s.preset ? s.preset : null;
+  const p = s ? presets(cat).find((x) => x.id === s.id) : null;
+  return p ? p.name : null;
 }
-export const presets = (cat) => (cat.scenarios || []).filter((s) => s.preset);
 
 // ---------------------------------------------------------------------------------------------------------- the page
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -201,7 +193,7 @@ export async function mount(root, ctx) {
   function renderScenarioBar() {
     const pre = presets(cat);
     const active = presetOf(cat, scenario.levers);
-    $('.cfg-seg').innerHTML = pre.map((s) => `<button type="button" role="radio" aria-checked="${s.preset === active}" class="${s.preset === active ? 'on' : ''}" data-s="${esc(s.id)}">${esc(s.preset)}</button>`).join('')
+    $('.cfg-seg').innerHTML = pre.map((p) => `<button type="button" role="radio" aria-checked="${p.name === active}" class="${p.name === active ? 'on' : ''}" data-s="${esc(p.id)}">${esc(p.name)}</button>`).join('')
       + `<button type="button" role="radio" aria-checked="${!active}" class="${!active ? 'on' : ''}" data-custom="1">Custom</button>`;
     $('.cfg-scn-note').textContent = active ? scenario.title || scenario.id : `Your own settings: ${scenario.title || scenario.id}`;
   }

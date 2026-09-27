@@ -30,6 +30,12 @@ const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
 const fmtN = (v, d = 0) => Number(v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
 
 // ------------------------------------------------------------------------------------------------ pure helpers
+/** The covert scenario's detector file (catalogue `attack`; `covert` in the dev catalogue), or null. */
+export function attackPath(scenario) {
+  if (!scenario || !scenario.levers || scenario.levers.failure !== 'covert') return null;
+  return scenario.attack || scenario.covert || 'p3/covert.json';
+}
+
 /** The files a scenario's Run page reads (paths under ui/data). */
 export function runFiles(scenario) {
   const out = [
@@ -39,7 +45,7 @@ export function runFiles(scenario) {
     { path: scenario.branch, what: 'the run: loading, tiers, batteries, every minute', optional: false },
   ];
   if (scenario.extras) out.push({ path: scenario.extras, what: 'the rule log, failures, feeder readouts', optional: true });
-  if (scenario.levers && scenario.levers.failure === 'covert') out.push({ path: scenario.covert || 'p3/covert.json', what: 'the detector run (fictional attacker)', optional: false });
+  if (attackPath(scenario)) out.push({ path: attackPath(scenario), what: 'the detector run (fictional attacker)', optional: false });
   return out;
 }
 
@@ -96,7 +102,11 @@ export function ranges(n, fn, gap = MERGE_GAP) {
   return r;
 }
 
-const KIND = { comms_lost: 'Battery silent', hot: 'Load spike', stall: 'Controller stalled' };
+/** Display words for the failure kinds of extras.failures (engine codes) and of the fallback list. */
+export const KIND = { comms_lost: 'Battery silent', hot: 'Load spike', stall: 'Controller stalled', stale: 'Batteries stale',
+  normal: 'Normal rating exceeded', emergency: 'Emergency rating', protection: 'Protection open', worker_kill: 'Worker killed',
+  takeover: 'Lease taken over', late: 'Late commands refused', covert: 'Hidden carrier' };
+export const kindWord = (kind) => KIND[kind] || String(kind || '').replace(/_/g, ' ');
 /** Failures without extras: meta.events of this branch, the runtime block (worker_kill), the covert attack, the
  *  network-limit intervals of the counts series (codes 3/4/5) and stale/expired batteries (state S/X). */
 export function fallbackFailures({ meta, doc, series, topology, branch, covert = null }) {
@@ -105,27 +115,34 @@ export function fallbackFailures({ meta, doc, series, topology, branch, covert =
   for (const e of (meta.events && meta.events[branch]) || []) {
     const k1 = e.kind === 'comms_lost' ? (e.coveredStep ?? e.expiredStep ?? e.step) : e.kind === 'stall' ? (e.resumeStep ?? e.step) : e.kind === 'hot' && e.minutes ? e.step + e.minutes : e.step;
     const where = e.kind === 'comms_lost' ? home(e.home) : e.tf !== undefined ? tfName(topology, e.tf) : e.kind === 'stall' ? 'our controller' : '';
-    out.push({ kind: KIND[e.kind] || e.kind, where, k0: e.step, k1: Math.min(n - 1, k1), text: e.text || '', label: 'ASSUMPTION' });
+    out.push({ kind: e.kind, where, k0: e.step, k1: Math.min(n - 1, k1), text: e.text || '', label: 'ASSUMPTION' });
   }
   const rt = doc.runtime;
   if (rt) {
     const tk = (rt.takeover || [])[0];
-    if (rt.kill) out.push({ kind: 'Worker killed', where: `${rt.kill.worker} · ${(rt.kill.groups || []).join(', ')}`, k0: rt.kill.step, k1: tk ? tk.step : rt.kill.step, text: rt.kill.text || '', label: 'SIM' });
-    for (const t of rt.takeover || []) out.push({ kind: 'Lease taken over', where: `${t.partition} → ${t.worker}`, k0: t.step, k1: t.step, text: t.text || '', label: 'SIM' });
-    if (rt.late) out.push({ kind: 'Late commands refused', where: rt.late.worker, k0: rt.late.step, k1: rt.late.step, text: rt.late.text || '', label: 'SIM' });
+    if (rt.kill) out.push({ kind: 'worker_kill', where: `${rt.kill.worker} · ${(rt.kill.groups || []).join(', ')}`, k0: rt.kill.step, k1: tk ? tk.step : rt.kill.step, text: rt.kill.text || '', label: 'SIM' });
   }
-  if (covert && covert.attack) {
-    const q = (covert.quarantine && covert.quarantine.log) || [];
-    const end = q.length ? Math.max(...q.map((x) => x[0])) : n - 1;
-    out.push({ kind: 'Hidden carrier', where: `${covert.attack.shard.length} batteries`, k0: covert.attack.step, k1: end, text: covert.attack.text || '', label: 'ASSUMPTION' });
-  }
+  out.push(...covertFailures(covert, n));
   const c = series.counts;
-  for (const [a, b] of ranges(n, (k) => c[k][4] > 0)) out.push({ kind: 'Protection open', where: tfName(topology, series.wtf[a]), k0: a, k1: b, text: 'The fuse rule opens a transformer; homes without a battery behind it go dark.', label: 'SIM' });
-  for (const [a, b] of ranges(n, (k) => c[k][3] > 0)) out.push({ kind: 'Emergency', where: tfName(topology, series.wtf[a]), k0: a, k1: b, text: `A transformer is above ${meta.tiers ? meta.tiers.emergency : 150}% of nameplate.`, label: 'SIM' });
-  for (const [a, b] of ranges(n, (k) => c[k][2] > 0)) out.push({ kind: 'Normal rating exceeded', where: tfName(topology, series.wtf[a]), k0: a, k1: b, text: `Above ${meta.tiers ? meta.tiers.normal : 110}% for ${meta.tiers ? meta.tiers.normalMinutes : 30} minutes or more.`, label: 'SIM' });
-  if (series.fleetN) for (const [a, b] of ranges(n, (k) => /[SX]/.test(doc.state[k] || ''), 2)) out.push({ kind: 'Stale battery', where: 'fleet', k0: a, k1: b, text: 'A battery stopped reporting, or its last command expired.', label: 'SIM' });
+  for (const [a, b] of ranges(n, (k) => c[k][4] > 0)) out.push({ kind: 'protection', where: tfName(topology, series.wtf[a]), k0: a, k1: b, text: 'The fuse rule opens a transformer; homes without a battery behind it go dark.', label: 'SIM' });
+  for (const [a, b] of ranges(n, (k) => c[k][3] > 0)) out.push({ kind: 'emergency', where: tfName(topology, series.wtf[a]), k0: a, k1: b, text: `A transformer is above ${meta.tiers ? meta.tiers.emergency : 150}% of nameplate.`, label: 'SIM' });
+  for (const [a, b] of ranges(n, (k) => c[k][2] > 0)) out.push({ kind: 'normal', where: tfName(topology, series.wtf[a]), k0: a, k1: b, text: `Above ${meta.tiers ? meta.tiers.normal : 110}% for ${meta.tiers ? meta.tiers.normalMinutes : 30} minutes or more.`, label: 'SIM' });
+  if (series.fleetN) for (const [a, b] of ranges(n, (k) => /[SX]/.test(doc.state[k] || ''), 2)) out.push({ kind: 'stale', where: 'fleet', k0: a, k1: b, text: 'A battery stopped reporting, or its last command expired.', label: 'SIM' });
   out.sort((x, y) => x.k0 - y.k0 || x.k1 - y.k1);
   return out;
+}
+
+/** The covert attack as a failure interval: the channel opens at attack.step and runs until the last quarantine. */
+export function covertFailures(covert, n) {
+  if (!covert || !covert.attack) return [];
+  const q = (covert.quarantine && covert.quarantine.log) || [];
+  const end = q.length ? Math.max(...q.map((x) => x[0])) : n - 1;
+  return [{ kind: 'covert', where: `${(covert.attack.shard || []).length} batteries (fictional attacker)`, k0: covert.attack.step, k1: Math.min(n - 1, end), text: covert.attack.text || '', label: 'ASSUMPTION' }];
+}
+/** The covert attack in the story line: its own text at attack.step. */
+export function covertMoments(covert) {
+  if (!covert || !covert.attack) return [];
+  return [{ k: covert.attack.step, t: covert.attack.t, text: covert.attack.text, label: 'ASSUMPTION', rule: 'covert channel opens' }];
 }
 
 /** Story moments without extras: meta.markers (their own text; another branch's fault markers dropped), this branch's
@@ -147,7 +164,7 @@ export function fallbackMoments({ meta, doc, branch, covert = null }) {
     for (const t of rt.takeover || []) out.push({ k: t.step, t: t.t, text: t.text, label: 'SIM', rule: 'takeover' });
     if (rt.late) out.push({ k: rt.late.step, t: rt.late.t, text: rt.late.text, label: 'SIM', rule: 'late batch' });
   }
-  if (covert && covert.attack) out.push({ k: covert.attack.step, t: covert.attack.t, text: covert.attack.text, label: 'ASSUMPTION', rule: 'covert channel opens' });
+  out.push(...covertMoments(covert));
   out.sort((a, b) => a.k - b.k);
   return out;
 }
@@ -172,6 +189,17 @@ export function laneArea(vals, lo, hi, base = lo) {
 }
 const yOf = (v, lo, hi) => clamp(100 - (v - lo) / (hi - lo) * 100, -2, 102).toFixed(2);
 
+/** The engine's measured cost of a run, from the catalogue (scenario.engine, and attackEngine for covert). */
+export function runCostHTML(sc, num) {
+  const e = sc.engine || {}, a = sc.attackEngine || null;
+  const by = sc.producer ? ` (${esc(sc.producer)})` : '';
+  const parts = [e.solves ? `${num(e.solves)} OpenDSS power flows` : '', e.buildSeconds ? `built in ${num(e.buildSeconds, { unit: ' s' })}` : ''].filter(Boolean);
+  let html = parts.length ? `The engine already ran this evening${by}: ${parts.join(', ')}.`
+    : 'The catalogue has no measured engine cost for this run.';
+  if (a && a.buildSeconds) html += ` The detector replay took ${num(a.buildSeconds, { unit: ' s' })} to build.`;
+  return `${html} This page replays that output; nothing is solved in the browser.`;
+}
+
 // ------------------------------------------------------------------------------------------------ 1b Running
 export async function mountRunning(root, ctx) {
   const sc = ctx.scenario;
@@ -183,9 +211,7 @@ export async function mountRunning(root, ctx) {
     <div class="rn-files">${files.map((f, i) => `<div class="rn-file" data-i="${i}"><i class="st"></i><span class="p" title="${esc(f.what)}">${esc(f.path)}</span><span class="w">waiting</span></div>`).join('')}</div>
     <div class="rn-cost"></div></div>`;
   const $ = (s) => root.querySelector(s);
-  $('.rn-cost').innerHTML = e.solves || e.buildSeconds
-    ? `The engine already ran this evening: ${[e.solves ? `${ctx.num(e.solves)} OpenDSS power flows` : '', e.buildSeconds ? `built in ${ctx.num(e.buildSeconds, { unit: ' s' })}` : ''].filter(Boolean).join(', ')}. This page replays its output; nothing is solved in the browser.`
-    : 'The catalogue has no measured engine cost for this run. This page replays its output; nothing is solved in the browser.';
+  $('.rn-cost').innerHTML = runCostHTML(sc, ctx.num);
   const setRow = (i, cls, text) => { const r = root.querySelector(`.rn-file[data-i="${i}"]`); if (!r) return; r.className = `rn-file ${cls}`; r.querySelector('.w').textContent = text; };
   const started = performance.now();
   const results = await Promise.all(files.map(async (f, i) => {
@@ -239,6 +265,7 @@ async function makeScene(el, topology, nowebgl, onError) {
   document.body.dataset.webgl = 'fallback';
   return s;
 }
+const n0 = (doc) => (doc.loading || []).length;
 const withTimeout = (p, ms, what) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(`${what} timed out after ${ms} ms`)), ms))]);
 
 const STATE_CSS = { C: '#1e4d2b', D: '#c7962b', I: '#e3dfd3', S: '#8f8b7f', X: '#8f8b7f', B: '#8fcf9f' };
@@ -247,13 +274,17 @@ export async function mount(root, ctx) {
   const sc = ctx.scenario;
   const lev = sc.levers || {};
   const covertOn = lev.failure === 'covert';
+  let runtimeOn = false;
   root.innerHTML = '<div class="rv"><div class="rv-loading">Loading the run…</div></div>';
   const [topology, footprints, meta, doc, extras, covert] = await Promise.all([
     ctx.getJSON('topology.json'), ctx.getJSON('footprints.json').catch(() => null), ctx.getAny(sc.meta), ctx.getAny(sc.branch),
     sc.extras ? ctx.getAny(sc.extras).catch(() => null) : Promise.resolve(null),
-    covertOn ? ctx.getAny(sc.covert || 'p3/covert.json') : Promise.resolve(null),
+    covertOn ? ctx.getAny(attackPath(sc)) : Promise.resolve(null),
   ]);
   const branch = doc.branch || (lev.failure === 'faults' ? 'aware_faults' : lev.policy);
+  const rt = doc.runtime && Array.isArray(doc.runtime.holder) && Array.isArray(doc.runtime.partitions) ? doc.runtime : null;
+  runtimeOn = !!rt;
+  const rtLab = (key) => (doc.series && doc.series[key] && doc.series[key].label) || 'SIM';
   const noFleet = lev.policy === 'none';
   const S = buildSeries(doc, meta, topology, extras);
   const n = S.n;
@@ -268,14 +299,13 @@ export async function mount(root, ctx) {
   let hideBatteries = noFleet;
   if (fleetHomes && fleetHomes.length === S.fleetN) topoRun = { ...topology, fleet: fleetHomes };
   else if (S.fleetN !== (topology.fleet || []).length) hideBatteries = true;
-  const moments = extras && Array.isArray(extras.moments) ? [...extras.moments].sort((a, b) => a.k - b.k) : fallbackMoments({ meta, doc, branch, covert });
-  const failures = extras && Array.isArray(extras.failures) ? [...extras.failures].sort((a, b) => a.k0 - b.k0) : fallbackFailures({ meta, doc, series: S, topology, branch, covert });
-  if (extras && Array.isArray(extras.failures)) {
-    // the runtime and covert items live in their own files; add them when the engine's list does not carry them
-    for (const f of fallbackFailures({ meta, doc: { ...doc, loading: [], state: [] }, series: { ...S, counts: S.counts.map(() => [0, 0, 0, 0, 0]), fleetN: 0 }, topology, branch: '__none__', covert }))
-      if (!failures.some((x) => x.k0 === f.k0 && x.kind === f.kind)) failures.push(f);
-    failures.sort((a, b) => a.k0 - b.k0);
-  }
+  // the engine's rule log and failure list (extras); the covert attack lives in its own file (p3/covert.json), so its
+  // line and interval are added here from that file's own text and steps
+  const moments = extras && Array.isArray(extras.moments)
+    ? [...extras.moments, ...covertMoments(covert)].sort((a, b) => a.k - b.k) : fallbackMoments({ meta, doc, branch, covert });
+  const failures = extras && Array.isArray(extras.failures)
+    ? [...extras.failures, ...covertFailures(covert, n0(doc))].sort((a, b) => a.k0 - b.k0 || a.k1 - b.k1)
+    : fallbackFailures({ meta, doc, series: S, topology, branch, covert });
   const worstMax = Math.max(...S.worst);
   const priceMax = S.price ? Math.max(...S.price) : 0;
   const priceHi = Math.max(600, Math.ceil(priceMax / 100) * 100);
@@ -338,6 +368,7 @@ export async function mount(root, ctx) {
       <div class="rv-card rv-hero"><div class="h"><span class="st-eyebrow">WORST TRANSFORMER NOW</span>${tagHTML(loadLab, 'OpenDSS loading as % of nameplate kVA as shipped')}</div>
         <div class="big" data-v="hero"></div><div class="who"><i></i><b></b><span class="tn"></span></div><div class="cnt"></div></div>
       ${covertOn ? '<div class="rv-card rv-det"></div>' : ''}
+      ${runtimeOn ? '<div class="rv-card rv-ctl"></div>' : ''}
       <div class="rv-card rv-bat"><div class="h"><span class="t">Fleet charge</span><span class="m">${noFleet ? 'no batteries in this run' : `${fmtN(S.fleetN)} batteries`}</span><span class="flow"></span></div>
         <div class="rv-cell"><div class="rv-body"><div class="rv-track"><div class="rv-fill"></div><div class="rv-stripes"></div>${reservePct !== null ? `<div class="rv-reserve" style="left:${reservePct}%"></div>` : ''}<span class="rv-pct"></span></div></div><div class="rv-term"></div></div>
         <div class="rv-resnote">${reservePct !== null ? `<span style="left:calc(${reservePct}% - 4px)">↑ ${fmtN(reservePct)}% member reserve${summary.reserveBreaches ? (summary.reserveBreaches.v === 0 ? ', never used' : `, crossed ${fmtN(summary.reserveBreaches.v)} battery-minutes`) : ''} ${tagHTML(reserveC.label, reserveC.cite)}</span>` : ''}</div></div>
@@ -379,29 +410,21 @@ export async function mount(root, ctx) {
       ['emergency', c[3], TIER_RGB[4], c[3] > 0], ['open', c[4], TIER_RGB[5], c[4] > 0]];
     const bar = [[within, TIER_RGB[0]], ...tierRows.map((r) => [r[1], r[2]])].filter((r) => r[0] > 0)
       .map(([v, col]) => `<div style="width:${(v / tot * 100).toFixed(2)}%;background:${rgb(col)}"></div>`).join('');
-    let lease = '';
-    if (doc.runtime && Array.isArray(doc.runtime.holder)) {
-      const h = doc.runtime.holder[k] || '';
-      const parts = doc.runtime.partitions || [];
-      lease = `<div class="rv-sec"><div class="r"><b>Controller leases</b><span>${esc((doc.runtime.workers || []).join(' · '))}</span></div>
-        <div class="rv-lease">${Array.from(h).map((ch, i) => `<span class="${ch === '-' ? 'gap' : ''}" title="${esc(ch === '-' ? 'no commands this minute: its worker missed a heartbeat; the batteries run on their last commands' : `group ${parts[i] ? parts[i].id : i + 1} served by W${ch}`)}">${esc(parts[i] ? parts[i].id : `G${i + 1}`)} ${ch === '-' ? '—' : `W${esc(ch)}`}</span>`).join('')}</div></div>`;
-    }
     const el = $('.rv-now');
     el.classList.toggle('failing', nowF.length > 0);
     el.innerHTML = `<div class="h"><span class="st-eyebrow">RIGHT NOW · ${stepToTime(meta, k)}</span>${tagHTML('SIM', 'the engine\'s run at this minute')}</div>
-      ${nowF.length ? `<div class="rv-failing"><div class="e">FAILING NOW · ${nowF.length}</div>${nowF.map((f) => `<button type="button" class="rv-fnow" data-seek="${f.k0}"><span class="a"><b>${esc(f.kind)}${f.where ? ` · ${esc(f.where)}` : ''}</b><span>${span(f)}</span></span><span class="b">${esc(f.text)}</span></button>`).join('')}</div>`
+      ${nowF.length ? `<div class="rv-failing"><div class="e">FAILING NOW · ${nowF.length}</div>${nowF.map((f) => `<button type="button" class="rv-fnow" data-seek="${f.k0}"><span class="a"><b>${esc(kindWord(f.kind))}${f.where ? ` · ${esc(f.where)}` : ''}</b><span>${span(f)}</span></span><span class="b">${esc(f.text)}</span></button>`).join('')}</div>`
         : '<div class="rv-ok"><i></i>No failures right now</div>'}
       <div class="rv-sec"><div class="r"><b>${fmtN(tot)} transformers</b><span>${fmtN(within)} within nameplate</span></div><div class="rv-tbar">${bar}</div>
         <div class="rv-tiers">${tierRows.map(([nm, v, col, bad]) => `<span class="${bad ? 'bad' : v ? '' : 'zero'}"><i style="background:${rgb(col)}"></i>${esc(nm)} ${fmtN(v)}</span>`).join('')}</div></div>
-      ${lease}
       ${noFleet ? '' : `<div class="rv-sec"><div class="r"><b>${fmtN(S.fleetN)} batteries</b><span>charging ${cnt.C} · discharging ${cnt.D} · idle ${cnt.I}${cnt.F ? ` · failing ${cnt.F}` : ''}</span></div><div class="rv-cells">${cells}</div></div>`}
       <div class="rv-all"><div class="e">FAILURES THIS EVENING<span>${failures.length}</span></div>${failures.length ? failures.map((f) => {
         const act = f.k0 <= k && k <= f.k1, past = f.k1 < k;
-        return `<button type="button" class="rv-frow${act ? ' act' : past ? ' past' : ''}" data-seek="${f.k0}" title="${esc(f.text)}"><i></i><span class="s">${span(f)}</span><span class="w">${esc(f.kind)}${f.where ? ` · ${esc(f.where)}` : ''}</span></button>`;
+        return `<button type="button" class="rv-frow${act ? ' act' : past ? ' past' : ''}" data-seek="${f.k0}" title="${esc(f.text)}"><i></i><span class="s">${span(f)}</span><span class="w">${esc(kindWord(f.kind))}${f.where ? ` · ${esc(f.where)}` : ''}</span></button>`;
       }).join('') : '<div class="rv-ok">None in this run.</div>'}</div>`;
     const banner = $('.rv-banner');
     banner.hidden = nowF.length === 0;
-    banner.querySelector('.t').textContent = nowF.map((f) => `${f.kind}${f.where ? ` · ${f.where}` : ''}`).join('  ·  ');
+    banner.querySelector('.t').textContent = nowF.map((f) => `${kindWord(f.kind)}${f.where ? ` · ${f.where}` : ''}`).join('  ·  ');
     for (const b of bandEls) { const f = failures[Number(b.dataset.f)]; b.style.opacity = f.k1 < k || (f.k0 <= k && k <= f.k1) ? '1' : '.45'; }
   }
 
@@ -423,6 +446,29 @@ export async function mount(root, ctx) {
       <div class="l">${k < a.step ? `Channel opens at ${esc(a.t)}` : `compromised batteries flagged · ${fmtN(quarantined)} held at zero`}</div>
       <div class="rv-cells">${cells}</div>
       <div class="l">${sm.detectionSeconds ? `First flag ${ctx.num(sm.detectionSeconds, { unit: ' s' })} after the channel opens` : ''}${sm.falsePositivesClean ? ` · clean-fleet false flags ${ctx.num(sm.falsePositivesClean)}` : ''}</div>`;
+  }
+
+  // worker_kill: the controller's workers and leases from the run's own runtime block (mpalacios.runtime replay)
+  function drawController() {
+    if (!rt) return;
+    const h = rt.holder[k] || '';
+    const kill = rt.kill || null, tk = (rt.takeover || [])[0] || null, late = rt.late || null;
+    const killed = kill && k >= kill.step ? kill.worker : null;
+    const tgt = (rt.partitionTargetKW || [])[k] || [], got = (rt.partitionDeliveredKW || [])[k] || [];
+    const rows = rt.partitions.map((p, i) => {
+      const ch = h[i] || '-';
+      const w = ch === '-' ? null : `W${ch}`;
+      const took = tk && k >= tk.step && tk.partition === p.id;
+      const state = !w ? `no worker: its ${fmtN((p.batts || []).length)} batteries run on their last commands` : took ? `${w}, took over (epoch ${tk.epoch})` : w;
+      return `<div class="rv-ctl-row${w ? '' : ' gap'}"><b>${esc(p.id)}</b><span class="w">${esc(state)}</span>
+        <span class="kw">${tgt[i] !== undefined ? `${fmtN(got[i] / 10, 0)} of ${fmtN(tgt[i] / 10, 0)} kW` : ''}</span></div>`;
+    }).join('');
+    const ev = (e, text) => (e ? `<div class="rv-ctl-ev${k >= e.step ? ' on' : ''}"><span class="s">${esc(e.t)}</span><span>${esc(text)}</span></div>` : '');
+    $('.rv-ctl').innerHTML = `<div class="h"><span class="e">CONTROLLER · ${fmtN((rt.workers || []).length)} WORKERS</span>${tagHTML(rtLab('holder'), (doc.series && doc.series.holder && doc.series.holder.unit) || 'runtime.holder')}</div>
+      <div class="rv-ctl-ws">${(rt.workers || []).map((w) => `<span class="${w === killed ? 'dead' : ''}">${esc(w)}${w === killed ? ' · killed' : ''}</span>`).join('')}</div>
+      <div class="rv-ctl-rows">${rows}</div>
+      <div class="rv-ctl-sub">delivered of target kW per group ${tagHTML(rtLab('partitionDeliveredKW'), (doc.series && doc.series.partitionDeliveredKW && doc.series.partitionDeliveredKW.by) || '')}</div>
+      ${ev(kill, kill ? kill.text : '')}${ev(tk, tk ? tk.text : '')}${ev(late, late ? late.text : '')}`;
   }
 
   function draw() {
@@ -463,6 +509,7 @@ export async function mount(root, ctx) {
     if (m) { story.querySelector('b').textContent = m.t || stepToTime(meta, m.k); story.querySelector('span').innerHTML = `${esc(m.text)} ${m.label ? tagHTML(m.label, m.rule ? `rule: ${m.rule}` : '') : ''}`; }
     drawNow();
     drawDetector();
+    drawController();
     if (scene && sceneK !== k) {
       sceneK = k;
       scene.update(buildSceneModel({ topology: topoRun, footprints, frame: frameFromP1(doc, k), view: 'p1', theme: 'light', hideBatteries }));

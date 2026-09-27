@@ -15,7 +15,8 @@
 //   params             the parsed link {page, s, k, speed, q, tf, n, cat, nowebgl}; a key not in the link is null
 //   getJSON(path)      fetch + parse a JSON file; path relative to ui/data/ (cached per path)
 //   getAny(path)       the same, and *.json.gz through data.getGz (cached)
-//   k                  the shared cursor (a step index) at mount: &k= or 0. Kept current by setK
+//   k                  the shared cursor (a step index) at mount: &k=, or null when the link has none (a page picks its
+//                      own start, e.g. Results opens at the evening's worst minute). Kept current by setK
 //   setK(k)            move the shared cursor: sets ctx.k, writes &k= (replaceState, throttled) and calls every onK fn
 //   onK(fn)            subscribe fn(k) to cursor moves; returns an unsubscribe function (dropped on page change)
 //   nav(page, params)  go to another page: params merge over the current {s, k, speed, q, tf, n} (null drops a key);
@@ -130,7 +131,7 @@ function makeCtx() {
   const ctx = {
     catalogue: app.catalogue, scenario: app.scenario, params: { ...app.params },
     getJSON: (p) => data.getJSON(p), getAny: (p) => data.getAny(p),
-    k: app.k,
+    k: app.params.k,
     setK: (k) => { setK(k); ctx.k = app.k; },
     onK: (fn) => { app.kFns.add(fn); return () => app.kFns.delete(fn); },
     nav: (page, params, opts) => nav(page, params, opts),
