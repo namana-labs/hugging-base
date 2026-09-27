@@ -432,7 +432,7 @@ export async function mount(root, ctx) {
     let hypo = [];
     try { if (lib && typeof lib.rackStates === 'function') hypo = [false, ...lib.rackStates(planner, st.sel, kMax, 'aware-screen', 0).map((x) => x.hypothetical)]; } catch (e) { console.error('[learnings] rackStates', e); }
     const firstHypo = hypo.indexOf(true);
-    const pill = (c) => (!c ? '' : c.pill === 'agree' ? `<span class="pb-pill" title="${esc(c.cite)}">✓ OpenDSS</span>` : c.pill === 'lower' ? `<span class="pb-pill pb-pill-warn" title="${esc(c.cite)}">OpenDSS: overload at ${fmtNum(c.raw)}</span>` : tagHTML('SCREENING', 'not OpenDSS-checked'));
+    const pill = (c) => (!c || !c.pill ? '' : c.pill === 'agree' ? `<span class="pb-pill" title="${esc(c.cite)}">✓ OpenDSS</span>` : c.pill === 'lower' ? `<span class="pb-pill pb-pill-warn" title="${esc(c.cite)}">OpenDSS: overload at ${fmtNum(c.raw)}</span>` : tagHTML('SCREENING', 'not OpenDSS-checked'));
     const strip = (c) => `<div class="pb-strip" style="--cells:${kMax + 1}">${stripCells(c ? c.v : null, kMax, hypo).map((x) => `<i class="${x.fit ? 'f' : x.zero ? 'z' : 'n'}${x.hypo ? ' h' : ''}"></i>`).join('')}<b style="left:${((n + 0.5) / (kMax + 1) * 100).toFixed(2)}%"></b></div>`;
     const limitRow = (name, verb, c, extra) => `
       <div class="pb-limit">
