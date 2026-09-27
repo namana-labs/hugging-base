@@ -1,5 +1,7 @@
 # scripts/deeplinks.txt (L0): one link per line, "<tags> <query>"; tags from p1, p2, more, beat and the always-run tag.
-# Exactly three links carry the always-run tag (one P1, one P2, view=more). smoke_ui.sh reads this file.
+# Exactly four links carry the always-run tag (one P1, one P2, view=more, the story Run page). smoke_ui.sh reads this file.
+# view= / beat= links open the engine explorer (ui/explore.html, the old tab app); page= links open the story app
+# (ui/index.html, docs/story-contract.md "URL scheme"). smoke_cdp.mjs picks the page from the query.
 # Lanes that need a link changed write "REQUEST (lead): ..." in their PR body.
 # P1 (L2 data, L4 view). aware_faults t = Tc+16; Tc = 22:00 measured (p1/meta.json tc). ui/test/core.test.js checks it.
 p1 view=p1&branch=none&t=16:45&cam=street
@@ -44,18 +46,40 @@ p2 view=p2&combo=naive-core-d26-g0&home=p1ulv24700
 p2 view=p2&combo=aware-core-d26-g0&n=5
 # More (L5)
 more,canary view=more
-# Beats: one "beat <link>&beat=<id>" line per ui/data/beats.json beat, in its order (L5 owns beats.json; the lead regenerates these).
+# Beats: one "beat <link>&beat=<id>" line per ui/data/beats.json beat, in its order (TRUTH owns beats.json; story page= links).
 # Generate: python3 -c 'import json;[print("beat "+b["link"]+"&beat="+b["id"]) for b in json.load(open("ui/data/beats.json"))["beats"]]'
 # core.test.js fails when these lines and beats.json disagree.
-beat view=p1&branch=naive&t=16:00&cam=street&beat=problem
-beat view=p1&branch=aware&t=16:45&cam=street&beat=peak-relief
-beat view=p2&combo=aware-core-d26-g0&beat=insight
-beat view=p1&branch=naive&t=20:00&cam=street&beat=backfeed
-beat view=p1&branch=naive&t=22:30&cam=street&beat=rebound-naive
-beat view=p1&branch=aware&t=22:30&cam=street&beat=rebound-aware
-beat view=p1&branch=aware_faults&t=22:16&cam=street&beat=faults
-beat view=p2&combo=aware-core-d26-g0&n=5&beat=p2-controls
-beat view=p2&combo=naive-core-d26-g0&beat=p2-flip
-beat view=p2&combo=aware-core-d26-g0&n=10&beat=p2-capacity
-beat view=more&beat=money
-beat view=more&beat=plug-in
+beat page=configure&s=2026-08-23/naive&beat=configure
+beat page=running&s=2026-08-23/naive&beat=running
+beat page=run&s=2026-08-23/naive&k=390&beat=run-naive
+beat page=results&s=2026-08-23/naive&k=390&beat=results-naive
+beat page=run&s=2026-08-23/aware&k=390&beat=run-aware
+beat page=results&s=2026-08-23/aware&k=390&beat=results-aware
+beat page=run&s=2026-08-23/aware/faults&k=376&beat=faults
+beat page=run&s=2026-08-23/aware/worker_kill&k=384&beat=worker-kill
+beat page=run&s=2026-08-23/aware/covert&k=392&beat=covert
+beat page=results&s=2026-08-23/aware/covert&beat=covert-results
+beat page=learnings&q=1&beat=learnings-q1
+beat page=learnings&q=2&tf=150&beat=learnings-q2
+beat page=learnings&q=3&beat=learnings-q3
+beat page=learnings&q=4&beat=learnings-q4
+beat page=results&s=2026-07-22/aware&beat=close
+# The story app (UI-A): the pages, Running, the presets, the failure views and the fleet levers. s= ids are
+# ui/data/story/index.json scenarios (core.test.js checks them once the catalogue is built); 2099-01-01 is the
+# unknown-s probe (a notice, then the catalogue default). Results and Learnings are UI-B's pages.
+story,canary page=run
+story page=configure
+story page=configure&s=2026-08-23/naive/fleet=192
+story page=running&s=2026-08-23/aware/faults
+story page=run&s=2026-08-23/none&k=360
+story page=run&s=2026-08-23/naive&k=390&speed=1
+story page=run&s=2026-08-23/aware/faults&k=376
+story page=run&s=2026-08-23/aware/worker_kill&k=381
+story page=run&s=2026-08-23/aware/covert&k=396
+story page=run&s=2026-07-22/aware&k=375
+story page=run&s=2026-08-23/aware/cls=legacy&k=360&nowebgl=1
+story page=run&s=2026-08-23/naive/growth=50&k=360
+story page=run&s=2099-01-01/aware
+story page=results&s=2026-08-23/aware
+story page=results&s=2026-08-23/aware/covert
+story page=learnings

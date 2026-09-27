@@ -306,13 +306,30 @@ test('static demo: no absolute http(s) URL in any src, href, import, fetch or ur
   }
 });
 
-test('shell: index.html carries the health flags and loads the vendored deck.gl 9.4.0', () => {
-  const html = fs.readFileSync(path.join(UI, 'index.html'), 'utf8');
-  for (const k of ['data-status="loading"', 'data-webgl=', 'data-errors="0"', 'data-fixture="0"', 'data-offsite="0"']) assert.ok(html.includes(k), k);
-  assert.ok(html.includes('src="vendor/deck-9.4.0.min.js"'));
+test('shell: index.html (the story app) and explore.html (the engine explorer) carry the health flags and load the vendored deck.gl 9.4.0', () => {
+  for (const f of ['index.html', 'explore.html']) {
+    const html = fs.readFileSync(path.join(UI, f), 'utf8');
+    for (const k of ['data-status="loading"', 'data-webgl=', 'data-errors="0"', 'data-fixture="0"', 'data-offsite="0"']) assert.ok(html.includes(k), `${f}: ${k}`);
+    assert.ok(html.includes('src="vendor/deck-9.4.0.min.js"'), f);
+    assert.ok(html.includes('window.__hbHealth'), `${f}: the health counters load first`);
+  }
   const sha = crypto.createHash('sha256').update(fs.readFileSync(path.join(UI, 'vendor', 'deck-9.4.0.min.js'))).digest('hex');
   assert.equal(sha, '2eb6a1ae0d58604b1378682cd1136f8793478ba801e43dae48b3807e48758a6b');
   assert.ok(fs.existsSync(path.join(UI, 'vendor', 'LICENSE-deck.gl')));
+});
+
+test('shell: ui/index.html is the story app; the old tab app moved to ui/explore.html (story contract ruling 7)', () => {
+  const story = fs.readFileSync(path.join(UI, 'index.html'), 'utf8');
+  const explore = fs.readFileSync(path.join(UI, 'explore.html'), 'utf8');
+  assert.match(story, /<script type="module" src="story\/app\.js"><\/script>/);
+  assert.match(story, /href="story\/story\.css"/);
+  assert.match(explore, /<script type="module" src="app\.js"><\/script>/);
+  assert.match(explore, /<title>Hugging Base · Engine explorer<\/title>/);
+  // a round-1/2 link (?view= or &beat=) on ui/ still opens the old app, with its query
+  assert.match(story, /q\.has\('view'\) \|\| q\.has\('beat'\)/);
+  assert.match(story, /location\.replace\('explore\.html' \+ location\.search/);
+  // the story footer links the explorer
+  assert.match(fs.readFileSync(path.join(UI, 'story', 'shell.js'), 'utf8'), /href="explore\.html">Engine explorer</);
 });
 
 test('shell: the stubs export the agreed names', async () => {
@@ -358,9 +375,9 @@ test('deeplinks: history dates are derived from p1/days/index.json; 2026-01-01 i
   }
 });
 
-test('deeplinks: exactly three canaries, one P1, one P2 (the default combo) and view=more', () => {
+test('deeplinks: exactly four canaries, one P1, one P2 (the default combo), view=more and the story Run page', () => {
   const c = deeplinks().filter((d) => d.tags.includes('canary'));
-  assert.deepEqual(c.map((d) => param(d.query, 'view')), ['p1', 'p2', 'more']);
+  assert.deepEqual(c.map((d) => param(d.query, 'view') || `page=${param(d.query, 'page')}`), ['p1', 'p2', 'more', 'page=run']);
   const idx = readJSON(path.join(UI, 'data', 'p2', 'index.json'));
   if (idx) assert.equal(param(c[1].query, 'combo'), idx.default);
 });
@@ -391,5 +408,25 @@ test('deeplinks: every P2 combo in p2/index.json, the home= link at its measured
     const f = links.filter((q) => param(q, 'branch') === 'aware_faults' && !param(q, 'date'));
     assert.ok(f.length >= 1, 'an aware_faults link');
     for (const q of f) assert.equal(param(q, 't'), minToHHMM(hhmmToMin(meta.tc.t) + 16), 'aware_faults t = Tc + 16 (meta.tc)');
+  }
+});
+
+test('deeplinks: the story links use the story URL scheme; every s= is a catalogue scenario (but the unknown-s probe)', async () => {
+  const { parseStoryLink, STORY_PAGES } = await import('../lib/data.js');
+  const story = deeplinks().filter((d) => d.tags.includes('story'));
+  assert.ok(story.length >= 10, 'the story pages, Running, the presets and the failure views');
+  for (const p of STORY_PAGES) assert.ok(story.some((d) => (param(d.query, 'page') || 'configure') === p), `a ${p} link`);
+  for (const d of story) {
+    assert.equal(param(d.query, 'view'), null, `${d.query}: a story link never carries view=`);
+    const l = parseStoryLink(`?${d.query}`);
+    for (const k of ['page', 's', 'k', 'speed', 'q', 'tf', 'n']) if (param(d.query, k) !== null) assert.notEqual(l[k], null, `${d.query}: ${k} parses`);
+  }
+  const probes = story.filter((d) => /^2099-/.test(param(d.query, 's') || ''));
+  assert.equal(probes.length, 1, 'one unknown-s probe (falls back to the catalogue default with a notice)');
+  const cat = readJSON(path.join(UI, 'data', 'story', 'index.json'));
+  if (cat) {
+    const ids = new Set(cat.scenarios.map((x) => x.id));
+    for (const d of story) { const s = param(d.query, 's'); if (s && !/^2099-/.test(s)) assert.ok(ids.has(s), `${s} is in story/index.json`); }
+    for (const f of ['faults', 'worker_kill', 'covert']) assert.ok(story.some((d) => (param(d.query, 's') || '').endsWith(`/${f}`)), `a ${f} link`);
   }
 });
