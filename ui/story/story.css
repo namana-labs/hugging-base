@@ -211,7 +211,7 @@ code { font-size: 12.5px; }
 .rv-speed { margin-left: auto; display: flex; gap: 2px; padding: 3px; border: 1px solid var(--border); border-radius: 8px; }
 .rv-speed button { border: 0; padding: 4px 8px; border-radius: 6px; font-size: 12.5px; cursor: pointer; background: transparent; }
 .rv-speed button.on { background: var(--brand-tint); color: var(--brand); font-weight: 700; }
-.rv-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 180px minmax(0, 1fr); grid-template-rows: repeat(5, minmax(0, 1fr)) 16px; column-gap: 10px; position: relative; }
+.rv-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 230px minmax(0, 1fr); grid-template-rows: repeat(5, minmax(0, 1fr)) 16px; column-gap: 10px; position: relative; }
 .rv-lab { display: flex; flex-direction: column; justify-content: center; gap: 1px; border-bottom: 1px solid var(--board); min-width: 0; }
 .rv-lab .n { font-size: 12.5px; font-weight: 700; }
 .rv-lab .v { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
