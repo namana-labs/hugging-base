@@ -15,7 +15,8 @@ Paths are relative to the repo root. `mpalacios/out/p1/worker_kill.json` and `mp
 | Service transformers | **379** | REAL | `ui/data/topology.json` | `transformers (length)` |
 | Batteries in the fleet (a deliberate stress placement) | **96** | ASSUMPTION | `ui/data/topology.json` | `fleet (length); constant FLEET_SIZE` |
 | Fleet penetration | **9.5%** | DERIVED | `ui/data/topology.json` | `fleet / homes` |
-| Eligible homes (the capacity ceiling) | **1,007** | DERIVED | `ui/data/topology.json` | `homes[].eligible (count)` |
+| Eligible customers (the capacity ceiling) | **1,007** | DERIVED | `ui/data/topology.json` | `homes[].eligible (count); meta.counts.eligible` |
+| …of which homes / small businesses | **969 / 38** | DERIVED | `ui/data/topology.json` | `homes[] with eligible = true, by use = residential / commercial (count)` |
 | Core battery power | **20 kW** | REAL | `ui/data/p1/meta.json` | `constants.CORE_POWER_KW` |
 | Member backup reserve (hard floor) | **20%** | REAL | `ui/data/p1/meta.json` | `constants.RESERVE_FLOOR` |
 | State of charge at 16:00 | **90%** | ASSUMPTION | `ui/data/p1/meta.json` | `constants.SOC0` |
@@ -142,7 +143,7 @@ Paths are relative to the repo root. `mpalacios/out/p1/worker_kill.json` and `mp
 | --- | --- | --- | --- | --- |
 | Q1 naive: largest build that holds (OpenDSS) | **100** | SIM | `ui/data/p2/index.json` | `usefulCapacity.naiveOpenDSS` |
 | Q1 naive: first build that fails (OpenDSS; head cable 100.7%) | **101** | SIM | `ui/data/p2/index.json` | `usefulCapacity.naiveOpenDSS.failAt` |
-| Q1 feeder-aware: batteries that fit (every eligible home) | **1,007** | SIM | `ui/data/p2/index.json` | `usefulCapacity.aware` |
+| Q1 feeder-aware: batteries that fit (every eligible customer: 969 homes, 38 small businesses) | **1,007** | SIM | `ui/data/p2/index.json` | `usefulCapacity.aware` |
 | Q1 feeder-aware: battery-caused events in OpenDSS | **0** | SIM | `ui/data/p2/index.json` | `usefulCapacity.opendss.aware.causedNormal` |
 | Q1 feeder-aware: head cable, worst step (OpenDSS) | **95.9%** | SIM | `ui/data/p2/index.json` | `usefulCapacity.opendss.aware.headMaxPct` |
 | Q1 feeder-aware: lowest home voltage (just under the 0.95 floor; voltage is not in the harm test) | **0.9498 pu** | SIM | `ui/data/p2/index.json` | `usefulCapacity.opendss.aware.vMinPu` |
@@ -227,6 +228,7 @@ Read the growth rows with care: at +50% home load, feeder-aware still causes 0 b
 - "−15.9 → −45.8 MW" or "ERCOT's base point". It is Base's set point, 0 → −45.8 MW in 15 minutes; the fleet realized −44.7 MW.
 - "3–5 mHz" or any single frequency value. It is the 3–17 mHz band.
 - "1,010 homes". It is 1,010 customers (971 homes, 39 small businesses).
+- "1,007 homes" or "every eligible home". It is 1,007 eligible customers (969 homes, 38 small businesses).
 - "No overload" without "because of batteries": T-240 goes over nameplate on home load alone.
 - A dollar figure without "fleet" and "gross, not Base's profit"; the per-Core year without "perfect foresight".
 - "1.5% of this feeder". 2,663.8 kVA is one conductor of the head cable; the head's three-phase rating is 7,991.5 kVA.
