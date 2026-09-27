@@ -11,11 +11,11 @@ Read in this order. Each file has one job; do not duplicate content between them
 | [design-handoff/](design-handoff/README.md) | High-fidelity design spec for Chapter 1 (option 3a, the heartbeat control room): layout, components, motion, tokens, plus an HTML reference prototype and the design system. | Authoritative for visual design; supersedes ui-brief.md §6–7 where they differ. Handed off 26 Sep 2026. Placeholder series in the prototype are scripted; the rebuild reads the real replay JSON. Agents: `.claude/skills/hugging-base-design/`. | Colours, type, spacing, radii, motion, components and UI copy |
 | [research-report.md](research-report.md) | The sourced research on Base, ERCOT, physics and data. 176 inline citations. | Frozen as of 25 Sep 2026 except for corrections. | Every number and label (UNVERIFIED / DERIVED / ASSUMPTION / INFERENCE) |
 | [headroom/](headroom/README.md) | The Headroom PRD, five design proposals, two critiques, and the research notes behind the report. | Supporting material. | Depth for adopted pieces: device acceptance rules (PRD §7.5), detector definitions (§6.4), metrics (§9), Track 1 methods (§9.5), risks (§12) |
-| [../headroom-gridspine-dossier.html](../headroom-gridspine-dossier.html) | GridSpine Atlas v0.2. | Supporting material. | The stretch transmission layer and the CIM vocabulary |
+| [headroom/headroom-gridspine-dossier.html](headroom/headroom-gridspine-dossier.html) | GridSpine Atlas v0.2: a pre-build design, never built (its LLM scenario studio and gateway included; the submitted app calls no language model). | Supporting material. | The stretch transmission layer and the CIM vocabulary |
 
-The root app built overnight on 26 Sep 2026 documents its simulator-to-UI data contracts in [contracts.md](contracts.md).
+**The submission is the root app:** the engine in `sim/` and the four story pages in `ui/` (Configure → Run → Results → Learnings), fed by committed JSON. Run it and read the screen: [run-the-demo.md](run-the-demo.md). Its data contracts: [contracts.md](contracts.md) (simulator to UI), [story-contract.md](story-contract.md) (the story pages, rulings and path ownership) and [contracts-planner.md](contracts-planner.md) (the capacity planner behind Learnings).
 
-The working prototype in [demos/grid-stories/](../demos/grid-stories/README.md) has its own runbook and an honest list of limitations. It is the spine the main app is promoted from.
+The first prototype, [demos/grid-stories/](../demos/grid-stories/README.md), has its own runbook and an honest list of limitations. It is kept for history; root `sim/` promoted its device and feeder code.
 
 ## How they relate
 
@@ -38,7 +38,7 @@ Found by the Headroom judge critique, already fixed in the report and the design
 
 ## Rules that apply to everything in this repo
 
-- Keep the labels. A number without UNVERIFIED, DERIVED or ASSUMPTION is claimed as sourced. Do not strip a label to make a slide cleaner.
+- Keep the labels. Every number the app shows carries REAL, SIM, DERIVED or ASSUMPTION, and "screening" where OpenDSS did not check it ([run-the-demo.md](run-the-demo.md)); the research report keeps its own UNVERIFIED / DERIVED / ASSUMPTION / INFERENCE labels. Do not strip a label to make a slide cleaner.
 - The adversary in the covert-channel scenario is **fictional**. Never name a real company as the attacker.
 - The feeder is presented as an **Oncor-suburb stand-in on Base's ERCOT path, settled at LZ_NORTH**. Say so wherever the feeder appears.
 - **OpenDSS is the referee.** The kW bucket model may drive the controller but never decides whether a limit was violated.

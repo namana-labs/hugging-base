@@ -1,6 +1,6 @@
 # Hugging Base
 
-> **Root app (sim/, ui/, data/, scripts/) is the submission (merged into main 27 Sep 2026, PR #42); the sprint contract is docs/story-contract.md; demos/ is unchanged.**
+> **The root app is the submission** (merged into `main` 27 Sep 2026, PR #42): engine in `sim/`, four story pages in `ui/`, run it per `docs/run-the-demo.md`, sprint contract `docs/story-contract.md`; `demos/`, `four-home-simulation/` and `simulators/` are earlier prototypes kept for history.
 
 Hackathon project (Base Power & AITX, Sep 2026). A feeder-aware simulator for a fleet of home batteries: where to add the next battery and what it is worth, which units to recharge given a congestion point, and how to detect a stealthy hijack from physics rather than command logs.
 
@@ -35,4 +35,4 @@ SMART-DS and EAGLE-I are CC BY 4.0. OSM and Overture are ODbL. ERCOT data may be
 
 The working prototype lives in `demos/grid-stories/`, with its own `sim/`, `ui/`, `data/`, dependencies, tests and README. It is the spine the main app is promoted from, not a throwaway.
 
-See `docs/design.md` §12 for the full layout. `sim/` is the Python simulator, `ui/` the SVG feeder board (a MapLibre inset is an enhancement), `data/` pre-extracted inputs with attribution, `docs/` the documents above. `docs/headroom/` and `headroom-gridspine-dossier.html` are supporting material from the two other designs; `docs/reconciliation.md` says which parts of each we adopted.
+See `docs/design.md` §12 for the full layout. `sim/` is the Python simulator, `ui/` the SVG feeder board (a MapLibre inset is an enhancement), `data/` pre-extracted inputs with attribution, `docs/` the documents above. `docs/headroom/` (including `docs/headroom/headroom-gridspine-dossier.html`) is supporting material from the two other designs; `docs/reconciliation.md` says which parts of each we adopted.

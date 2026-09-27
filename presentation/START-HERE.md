@@ -1,5 +1,7 @@
 # Hugging Base: presentation startup doc (for Amy)
 
+> **Snapshot of 26 Sep, before PR #42; the root app is the submission:** see [README.md](../README.md) and [docs/run-the-demo.md](../docs/run-the-demo.md).
+
 26 Sep 2026 · RZ
 
 > This is a snapshot of the live doc, which RZ shares with you. Comment and edit there; this copy is here so everything lives in the repo. Put your scripts, Q&A sheet and slide notes in this `presentation/` folder, on your own branch.

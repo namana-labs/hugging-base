@@ -504,4 +504,4 @@ curl -O https://www.ercot.com/api/1/services/read/dashboards/{dc-tie-flows,syste
 2. Map each row to its interval start. For this QC only, rows flagged `Repeated Hour Flag = Y` were dropped; the ingest code resolves them properly.
 3. Join each load zone to its weather zone by hour-beginning.
 
-**Scripts.** `extract_rtm.py`, `a1_zones.py`, `a3_rebound.py` and `a4_flip.py` are in `/private/tmp/claude-501/-Users-rzalagbada-Desktop-projects-forge/db7213a8-6bab-44d3-b22b-9fe4a11f46ca/scratchpad/bp-data-ingest/`. That folder is ephemeral and a reboot empties it; the method above is enough to rebuild them. The FME and ADER numbers came from inline scripts run over the same files.
+**Scripts.** `extract_rtm.py`, `a1_zones.py`, `a3_rebound.py` and `a4_flip.py` were in a temporary folder on the author's machine, which a reboot empties; the method above is enough to rebuild them. The FME and ADER numbers came from inline scripts run over the same files.

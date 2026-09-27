@@ -336,7 +336,7 @@ docs/reconciliation.md    where the three designs disagreed and what we chose
 docs/research-report.md   the sourced research report (176 citations); canonical for every figure
 docs/headroom/            the Headroom PRD, proposals, critiques and research notes (supporting material)
 docs/contracts.md         (to write in Stage 0) per-step feeder state, replay file, UI input; CIM names as vocabulary
-headroom-gridspine-dossier.html   GridSpine Atlas: design for the stretch transmission layer
+docs/headroom/headroom-gridspine-dossier.html   GridSpine Atlas: design for the stretch transmission layer
 demos/grid-stories/       the working prototype: sim/, ui/, data/, tests, its own README
 data/                     pre-extracted SMART-DS feeder, ERCOT price extracts, Track 1 summaries, with attribution
 sim/devices.py            battery classes and state machine

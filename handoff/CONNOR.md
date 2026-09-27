@@ -1,5 +1,7 @@
 # Hugging Base: Connor's handoff (the four pages)
 
+> **Snapshot of 26 Sep, before PR #42; the root app is the submission:** see [README.md](../README.md) and [docs/run-the-demo.md](../docs/run-the-demo.md).
+
 26 Sep 2026 · RZ. Snapshot of the live doc; RZ shares the live version.
 
 ## Your job, and what you hand back

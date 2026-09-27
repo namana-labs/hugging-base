@@ -9,6 +9,7 @@ The research, design proposals, critiques and PRD produced on 25–26 Sep 2026, 
 | `PRD.md` | Headroom PRD v1, merged from five design proposals and two critiques. §7 defines every interface. Published page: https://claude.ai/artifact/1PKt63sT1Jn8NGStMxfv4p |
 | `design/round1/` | The five proposals (world-sim, orchestrator, adversary-and-observability, data-ingest, ui-scenario-studio) and two critiques (critique-judge, critique-integration). |
 | `research_notes/` | The five source-note files behind the research report, with every citation. |
+| `headroom-gridspine-dossier.html` | GridSpine Atlas v0.2: the stretch transmission layer and the CIM vocabulary. A design only, never built (moved here from the repo root on 27 Sep 2026). |
 | `../research-report.md` | The research report. The PRD cites it as `reports/Base Power system and ERCOT data.md`. Research brief page: https://claude.ai/artifact/BRaMSHHnktx9U48JvFGnaX |
 
 ## Corrections applied on 26 Sep 2026

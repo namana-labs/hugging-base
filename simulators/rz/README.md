@@ -1,5 +1,7 @@
 # simulators/rz: RZ's app (P1, P2, P3)
 
+> **SUPERSEDED (27 Sep 2026): the root app is the submission since PR #42** (engine in root `sim/`, story pages in root `ui/`; see the [README](../../README.md) and [`docs/run-the-demo.md`](../../docs/run-the-demo.md)). This folder is RZ's earlier copy, kept for its `research/`, `judges/`, `story/` and `RULINGS.md`; its app, "Known gaps" and "Delete it" below describe 26 Sep, not `main`.
+
 **Owner:** RZ. A self-contained, runnable, deletable copy of the root app (main `432b888`) **with round 2 merged**. The root app (`sim/ ui/ scripts/ data/` at the repo root) is unchanged; this folder is where RZ's work lives until the team combines the best of every folder into one submission folder.
 
 ## The one problem

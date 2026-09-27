@@ -4,7 +4,7 @@
 # (Python >= 3.12; numpy 2.5.3 has no 3.11 wheel). Lanes never pip install; only this script does.
 # Ends with "SETUP: OK (...)" or "SETUP: FAIL (...)".
 set -u
-ROOT="$(git rev-parse --show-toplevel)" || exit 2
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" || exit 2
 VENV="${HB_VENV:-$HOME/hb-overnight/.venv}"
 # the venv's python: bin/python (macOS/Linux) or Scripts/python.exe (Windows)
 venv_py() { if [ -x "$1/bin/python" ]; then echo "$1/bin/python"; elif [ -x "$1/Scripts/python.exe" ]; then echo "$1/Scripts/python.exe"; else echo "$1/bin/python"; fi; }
@@ -22,7 +22,8 @@ else
 fi
 NODE="$(node --version 2>/dev/null || echo missing)"
 if [ -z "${CHROME:-}" ]; then
-  for c in "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" "/c/Program Files/Google/Chrome/Application/chrome.exe" \n           "/c/Program Files (x86)/Google/Chrome/Application/chrome.exe" /usr/bin/google-chrome /usr/bin/chromium; do
+  for c in "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" "/c/Program Files/Google/Chrome/Application/chrome.exe" \
+           "/c/Program Files (x86)/Google/Chrome/Application/chrome.exe" /usr/bin/google-chrome /usr/bin/chromium; do
     [ -x "$c" ] && { CHROME="$c"; break; }
   done
 fi
