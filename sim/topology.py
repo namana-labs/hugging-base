@@ -51,6 +51,24 @@ def load_table():
             "tf_ids": [t["id"] for t in topo["transformers"]], "fleet": fl, "tf_of_batt": home_tf[fl]}
 
 
+CUSTOMER_USE_RULE = ("each customer bus in data/smartds/Loads.dss is 'commercial' when any of its loads uses a com_kw_* "
+                     "yearly shape, else 'residential' (res_kw_*); 'homes' in counts is every customer bus (1,010 customers)")
+
+
+def customer_use(smartds=None):
+    """{home id (load bus): 'residential' | 'commercial'} from the Loads.dss yearly shape names, WITHOUT OpenDSS."""
+    smartds = smartds or (ROOT / "data" / "smartds")
+    out = {}
+    for line in (smartds / "Loads.dss").read_text().splitlines():
+        if not line.strip().lower().startswith("new load."):
+            continue
+        bus = re.search(r"(?i)bus1=([^\s.]+)", line).group(1)
+        m = re.search(r"(?i)yearly=(\S+)", line)
+        com = bool(m and m.group(1).lower().startswith("com_"))
+        out[bus] = "commercial" if (com or out.get(bus) == "commercial") else "residential"
+    return out
+
+
 MOUNT_RULE = ("SMART-DS Lines.dss secondary linecodes; any *_OH_* on the LV bus -> pole "
               "(ASSUMPTION: a pad-mount cannot feed an overhead secondary)")
 
@@ -104,12 +122,14 @@ def build(feeder=None):
     districts = doc["districts"]
     fleet_set = {int(j) for j in f.fleet}
     focus_by_tf = {f.tf_index[tid]: key for key, tid in FOCUS_TFS.items()}
+    use = customer_use()
     homes = []
     for i, h in enumerate(f.homes):
         homes.append({
             "id": h["id"], "label": f"Home {i + 1:04d}", "lonlat": [round(h["coordinates"][0], 7), round(h["coordinates"][1], 7)],
             "tf": h["tf"], "kwNameplate": round(h["kw"], 3), "eligible": bool(h["eligible"]),
             "battery": {"cls": "core"} if i in fleet_set else None, "district": districts[h["id"]],
+            "use": use.get(h["id"], "residential"),
         })
     mounts = transformer_mounts()
     transformers = []
@@ -124,7 +144,11 @@ def build(feeder=None):
                  "shaping": dict(doc["shaping"], label="ASSUMPTION"),
                  "source": [round(f.source[0], 7), round(f.source[1], 7)],
                  "counts": {"homes": len(homes), "transformers": len(transformers), "edges": len(edges),
-                            "fleet": len(f.fleet), "eligible": sum(h["eligible"] for h in homes)}},
+                            "fleet": len(f.fleet), "eligible": sum(h["eligible"] for h in homes),
+                            "residential": sum(h["use"] == "residential" for h in homes),
+                            "commercial": sum(h["use"] == "commercial" for h in homes),
+                            "fleetOnCommercial": sum(h["use"] == "commercial" and h["battery"] is not None for h in homes)},
+                 "customerUse": {"label": "DERIVED", "cite": CUSTOMER_USE_RULE}},
         "homes": homes,
         "transformers": transformers,
         "edges": edges,
