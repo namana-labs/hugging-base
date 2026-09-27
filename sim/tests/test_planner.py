@@ -312,6 +312,20 @@ class CommittedFile(unittest.TestCase):
 
 
 class Constants(unittest.TestCase):
+    def test_ui_rules_are_engine_constants(self):
+        """The three rules planner.js used to type in: exported in planner.json's constants with label and cite."""
+        doc = _doc()
+        want = {"PLAN_HYPOTHETICAL_PER_HOME": (2, "ASSUMPTION"), "PLAN_NO_UPGRADE_P_OVER": (0.05, "ASSUMPTION"),
+                "PLAN_SCREEN_SHARE_AE90": (0.9, "REAL"), "PLAN_SCREEN_SHARE_NAMEPLATE": (1.0, "REAL")}
+        for k, (v, lab) in want.items():
+            self.assertEqual((TAG[k]["value"], TAG[k]["label"]), (v, lab))
+            self.assertEqual(doc["constants"][k], TAG[k])
+        self.assertIn("Austin Energy", TAG["PLAN_SCREEN_SHARE_AE90"]["cite"])
+        self.assertEqual([s["share"]["v"] for s in doc["screens"]["profiles"]], [1.0, 0.9])
+        for r in doc["tfs"]:
+            self.assertEqual(r["cap"]["paper"]["ae90"], pl.paper_screen(r["kva"]["v"], pl.PLAN_SCREEN_SHARE_AE90))
+            self.assertEqual(r["up"]["paper"]["ae90"], pl.paper_screen(r["up"]["kva"]["v"], pl.PLAN_SCREEN_SHARE_AE90))
+
     def test_plan_constants_registered_here_not_in_constants_py(self):
         names = [k for k in TAG if k.startswith("PLAN_")]
         self.assertGreaterEqual(len(names), 30)

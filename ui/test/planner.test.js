@@ -7,7 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { mulberry32, monthly, surv, pReplace, annuity, breakEven, breakEvenValue, bindingCap, scenarioCosts, decide,
-  paramsFor, verdict, rackStates, tfRow, capsFor, labelOf, growthOf, SETTINGS } from '../lib/planner.js';
+  paramsFor, verdict, rackStates, tfRow, capsFor, labelOf, growthOf, planRules, SETTINGS } from '../lib/planner.js';
 
 const UI = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const FILE = path.join(UI, 'data', 'p2', 'planner.json');
@@ -26,7 +26,7 @@ const T61_Q0 = [[0, 0.0185, 0.0367, 0.0546, 0.0721, 0.0893], [0, 0.023, 0.0455, 
   [0, 0.0517, 0.1007, 0.1472, 0.1913, 0.2331]];
 const ZERO = Array.from({ length: 9 }, () => [0, 0, 0, 0, 0, 0]);
 const base = (o = {}) => ({ k0: 2, homes: 3, c: 1, cUp: 2, age: 39, survTable: S, C: 10000, Cinc: 1071, L: 6, r: 0.08,
-  V: annuity(631, 0.08, 12), pLoss: 0.3, s: 0.5, H: 5, paths: 1000, perMember: 1, life: 12, ...o });
+  V: annuity(631, 0.08, 12), pLoss: 0.3, s: 0.5, H: 5, paths: 1000, perMember: 1, life: 12, rules: planRules(planner), ...o });
 
 // ---- survival (DESIGN §3.2; P8's JS half) ---------------------------------------------------------------------------
 test('survival: P_rep(5 | 20) = 0.124 and P_rep(5 | 40) = 0.575 (±0.002); monotone in age and years', () => {
@@ -221,6 +221,33 @@ test('capsFor / rackStates: growth caps come from perK, the rack marks overload,
   assert.equal(g20[11].approx, false);                                  // j = 12 is on the 19-value grid
   assert.equal(g20[12].approx, true);                                   // j = 13 sits between 12 and 15
   assert.equal(rackStates(planner, 61, 14, 'aware-screen', 0)[12].approx, false);   // g0 is simulated at every k
+});
+
+test('rules come from planner.constants (PLAN_*), never from literals in planner.js', () => {
+  const R = planRules(planner);
+  assert.deepEqual(R, { hypotheticalPerHome: planner.constants.PLAN_HYPOTHETICAL_PER_HOME.value,
+    noUpgradePOver: planner.constants.PLAN_NO_UPGRADE_P_OVER.value, ae90Share: planner.constants.PLAN_SCREEN_SHARE_AE90.value,
+    nameplateShare: planner.constants.PLAN_SCREEN_SHARE_NAMEPLATE.value, corePowerKw: planner.constants.CORE_POWER_KW.value });
+  assert.deepEqual([R.hypotheticalPerHome, R.noUpgradePOver, R.ae90Share], [2, 0.05, 0.9]);
+  assert.deepEqual(paramsFor(planner, 61, 2).rules, R);
+  // the ae90 screen at the next size is the engine's per-row number
+  const row = tfRow(planner, 61);
+  assert.equal(paramsFor(planner, 61, 2, { screen: 'ae90' }).caps.upPaper, row.up.paper.ae90);
+  assert.equal(row.up.paper.ae90, Math.floor(R.ae90Share * row.up.kva.v / R.corePowerKw + 1e-9));
+  // the hypothetical threshold follows the constant, and a missing constant switches the rule off
+  const k = R.hypotheticalPerHome * row.homes;
+  assert.equal(rackStates(planner, 61, k + 1)[k - 1].hypothetical, false);
+  assert.equal(rackStates(planner, 61, k + 1)[k].hypothetical, true);
+  const bare = { ...planner, constants: {} };
+  assert.ok(rackStates(bare, 61, 20).every((x) => !x.hypothetical));
+  const p = base({ k0: 1, homes: 3, c: 3, cUp: 4 });
+  const d = decide(p, T61_Q0);
+  assert.equal(verdict(p, d).code, 'no-upgrade');
+  assert.notEqual(verdict({ ...p, rules: planRules(bare) }, d).code, 'no-upgrade');
+  assert.equal(verdict({ ...p, rules: { ...R, noUpgradePOver: 0 } }, d).code, verdict({ ...p, rules: planRules(bare) }, d).code);
+  // no rule literals left in the module source
+  const src = fs.readFileSync(path.join(UI, 'lib', 'planner.js'), 'utf8');
+  assert.doesNotMatch(src, /0\.05|0\.9 \*|2 \* row\.homes|\?\? 12|H = 5|paths = 1000|perMember = 1/);
 });
 
 test('decide() is fast enough for the page (< 1.5 s per call even on a loaded box; 3-16 ms on the design machine)', () => {

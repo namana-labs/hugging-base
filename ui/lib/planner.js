@@ -26,8 +26,9 @@
 //     screen   'nameplate100' | 'ae90' ; paths: Monte Carlo paths per decile curve (default decision.paths)
 //   returns p = { k0, homes, c, cUp, age, survTable, C, Cinc, L, r, V, pLoss, s, H, paths, perMember, life,   // decide() input
 //                 deciles: [9][6] (pass as decide's 2nd argument), caps: {naive, aware, paper, ae90, utility, upNaive,
-//                 upAware, upPaper, c, cUp, checked, growth, upAtToday}, row (the planner.tfs row), setting, v ($/yr),
-//                 cost {v,label,cite}, value {v,label,cite}, knobs {setting, growth, referral} }
+//                 upAware, upPaper, upAe90, c, cUp, checked, growth, upAtToday}, row (the planner.tfs row), setting,
+//                 v ($/yr), cost {v,label,cite}, value {v,label,cite}, knobs {setting, growth, referral},
+//                 rules: planRules(planner) }
 //   (p itself is returned, not {p}: callers written as `pr.p || pr` work.)
 //
 // decide(p, deciles, seed = 20260926) -> {
@@ -39,10 +40,15 @@
 //   named:       {p10, p50, p90: {upgrade, wait, never, pOver, meanJoins}}  per-scenario costs
 //   regretBy:    {p10, p50, p90: {upgrade, wait, never}}                   per-scenario regret (min is 0 in each)
 // }
+// planRules(planner) -> { hypotheticalPerHome, noUpgradePOver, ae90Share, nameplateShare, corePowerKw }
+//   read from planner.constants (PLAN_HYPOTHETICAL_PER_HOME, PLAN_NO_UPGRADE_P_OVER, PLAN_SCREEN_SHARE_AE90,
+//   PLAN_SCREEN_SHARE_NAMEPLATE, CORE_POWER_KW .value); a constant missing from the file is null and its rule is off
+//   (no literal fallback): no 'no-upgrade' verdict, no hypothetical Cores.
 // verdict(p, d) -> { code: 'no-upgrade'|'wait-and-watch'|'upgrade-now'|'dont-upgrade'|'dont-upgrade-tell',
 //                    overToday, blockedToday, roomToday, unlocksNow, breakEven, breakEvenValue, twoRows }
-// rackStates(planner, tfIndex, k, setting, growth) -> [{j, state: 'fits'|'paper'|'overload'|'earnsLess', hypothetical,
-//                    approx (k off the aware grid at g20/g50), tier}]
+//   'no-upgrade' needs p.rules.noUpgradePOver (fits today and pOverP90 < it)
+// rackStates(planner, tfIndex, k, setting, growth) -> [{j, state: 'fits'|'paper'|'overload'|'earnsLess', hypothetical
+//                    (j > PLAN_HYPOTHETICAL_PER_HOME x homes), approx (k off the aware grid at g20/g50), tier}]
 // tfRow(planner, tfIndex) -> row | null ; capsFor(planner, row, growth) -> caps ; labelOf(planner, v) -> {v,label,cite}
 
 export function mulberry32(seed) {
@@ -79,7 +85,7 @@ export function bindingCap({ naive, aware, paper, utility = null }, setting) {
 }
 /** Mean cost of the three actions over `paths` demand paths for ONE demand scenario curve F (monthly). */
 export function scenarioCosts(p, F, seed) {
-  const { k0, homes, c, cUp, age, survTable, C, Cinc, L, r, V, pLoss, s, H = 5, paths = 1000, perMember = 1 } = p;
+  const { k0, homes, c, cUp, age, survTable, C, Cinc, L, r, V, pLoss, s, H, paths, perMember } = p;   // all from paramsFor
   const T = 12 * H, rng = mulberry32(seed), m = Math.max(0, homes - Math.min(k0, homes));
   const disc = Array.from({ length: T + 1 }, (_, t) => (1 + r) ** (-t / 12));
   // P(replaced by month t | age): the same for every path, so computed once (Appendix A recomputed it per path;
@@ -145,6 +151,16 @@ export function labelOf(planner, v) {
   return { v, label: planner.decision.label, cite: planner.decision.cite };
 }
 
+/** The planner's rule constants, read from planner.constants (sim.planner registers them with const()). A constant
+ *  the file does not carry is null, and the rule that needs it is off: nothing here falls back to a literal. */
+export function planRules(planner) {
+  const c = (planner && planner.constants) || {};
+  const val = (name) => (c[name] && c[name].value != null ? c[name].value : null);
+  return { hypotheticalPerHome: val('PLAN_HYPOTHETICAL_PER_HOME'), noUpgradePOver: val('PLAN_NO_UPGRADE_P_OVER'),
+    ae90Share: val('PLAN_SCREEN_SHARE_AE90'), nameplateShare: val('PLAN_SCREEN_SHARE_NAMEPLATE'),
+    corePowerKw: val('CORE_POWER_KW') };
+}
+
 /** 0 | 20 | 50 from 0, '20', 'g20', ... (unknown -> 0). */
 export function growthOf(g) {
   const n = typeof g === 'string' ? Number(g.replace(/^g/, '')) : Number(g ?? 0);
@@ -171,7 +187,7 @@ export function capsFor(planner, row, growth = 0) {
     paper: row.cap.paper.v,
     ae90: row.cap.paper.ae90,
     utility: row.cap.utility ? row.cap.utility.v : null,
-    upNaive: row.up.naive.v, upAware: row.up.aware.v, upPaper: row.up.paper.v,
+    upNaive: row.up.naive.v, upAware: row.up.aware.v, upPaper: row.up.paper.v, upAe90: row.up.paper.ae90 ?? null,
     checked: g0 && planner.referee.status === 'checked',
     growth: g0 ? 0 : gn,
     upAtToday: !g0,                                  // one size up was simulated at today's load only (screening)
@@ -198,7 +214,8 @@ export function paramsFor(planner, tfIndex, k, knobs = {}) {
   const m = planner.money;
   const caps = capsFor(planner, row, growth);
   const paper = knobs.screen === 'ae90' ? caps.ae90 : caps.paper;
-  const upPaper = knobs.screen === 'ae90' ? Math.floor((0.9 * row.up.kva.v) / 20 + 1e-9) : caps.upPaper;
+  const upPaper = knobs.screen === 'ae90' ? caps.upAe90 : caps.upPaper;
+  if (upPaper == null || paper == null) throw new Error(`planner: no ${knobs.screen ?? 'nameplate100'} paper screen in planner.json`);
   const c = bindingCap({ naive: caps.naive, aware: caps.aware, paper, utility: caps.utility }, setting);
   const cUp = Math.max(c, bindingCap({ naive: caps.upNaive, aware: caps.upAware, paper: upPaper }, setting));
   const Cl = preset(m.upgradePresets, knobs.cost, d.cost ?? 1);
@@ -215,7 +232,7 @@ export function paramsFor(planner, tfIndex, k, knobs = {}) {
     perMember: m.coresPerMember.v, life: m.contractYears.v,
   };
   Object.assign(p, { deciles: referral ? curves.q30 : curves.q0, caps: { ...caps, paper, upPaper, c, cUp },
-    row, setting, v: vl.v, cost: Cl, value: vl, knobs: { setting, growth, referral } });
+    row, setting, v: vl.v, cost: Cl, value: vl, knobs: { setting, growth, referral }, rules: planRules(planner) });
   return p;
 }
 
@@ -231,11 +248,12 @@ export function verdict(p, d) {
   const overToday = p.k0 > p.c;
   const unlocksNow = Math.max(0, p.cUp - p.c);
   let code;
-  if (!overToday && d.pOverP90 < 0.05) code = 'no-upgrade';
+  const pMax = p.rules ? p.rules.noUpgradePOver : null;          // PLAN_NO_UPGRADE_P_OVER; null = the rule is off
+  if (!overToday && pMax != null && d.pOverP90 < pMax) code = 'no-upgrade';
   else if (overToday) code = d.leastRegret === 'never' ? 'dont-upgrade-tell' : 'upgrade-now';
   else code = { wait: 'wait-and-watch', upgrade: 'upgrade-now', never: 'dont-upgrade' }[d.leastRegret];
   return { code, overToday, blockedToday: Math.max(0, p.k0 - p.c), roomToday: Math.max(0, p.c - p.k0), unlocksNow,
-    breakEven: breakEven(p.C, p.V), breakEvenValue: breakEvenValue(p.C, unlocksNow, p.r, p.life ?? 12),
+    breakEven: breakEven(p.C, p.V), breakEvenValue: breakEvenValue(p.C, unlocksNow, p.r, p.life),
     twoRows: overToday };
 }
 
@@ -252,13 +270,14 @@ export function rackStates(planner, tfIndex, k, setting = 'aware-screen', growth
   const grid = blk.awareGrid ? new Set(blk.awareGrid) : null;
   const r = planner.meta.tfOrder.indexOf(row.tf);
   const rule = caps.utility ?? caps.paper;
+  const perHome = planRules(planner).hypotheticalPerHome;        // PLAN_HYPOTHETICAL_PER_HOME; null = none hatched
   const out = [];
   for (let j = 1; j <= Math.min(k, planner.meta.kMax); j++) {
     let state = 'fits';
     if (setting === 'naive' && j > caps.naive) state = 'overload';
     else if (setting !== 'naive' && j > caps.aware) state = 'earnsLess';
     else if (setting !== 'aware-credit' && j > rule) state = 'paper';
-    out.push({ j, state, hypothetical: j > 2 * row.homes, approx: setting !== 'naive' && !!grid && !grid.has(j),
+    out.push({ j, state, hypothetical: perHome != null && j > perHome * row.homes, approx: setting !== 'naive' && !!grid && !grid.has(j),
       tier: blk.naiveTier ? blk.naiveTier[r][j] : null });
   }
   return out;
