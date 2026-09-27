@@ -177,6 +177,11 @@ Paths are relative to the repo root. `mpalacios/out/p1/worker_kill.json` and `mp
 | OpenDSS referee status, month solves | **checked, 13** | SIM | `ui/data/p2/planner.json` | `referee.status, referee.runs` |
 | OpenDSS agrees with the naive cap | **374 of 376** | SIM | `ui/data/p2/planner.json` | `referee.naiveAtCap.agree, .of` |
 | OpenDSS agrees with the feeder-aware cap | **376 of 376** | SIM | `ui/data/p2/planner.json` | `referee.awareAtCap.agree, .of` |
+| Q2 beat transformer T-34: nameplate, homes | **75 kVA, 6** | REAL | `ui/data/p2/planner.json` | `tfs[tf=34].kva, .homes` |
+| …our batteries there today | **0** | ASSUMPTION | `ui/data/p2/planner.json` | `tfs[tf=34].installed` |
+| …batteries that fit with feeder-aware charging (OpenDSS agrees) | **6** | SIM | `ui/data/p2/planner.json` | `tfs[tf=34].cap.aware.shown (opendss = agree)` |
+| …where a naive split tops out (OpenDSS agrees) | **2** | SIM | `ui/data/p2/planner.json` | `tfs[tf=34].cap.naive.shown (opendss = agree)` |
+| …what the utility nameplate rule allows (no power flow) | **3** | DERIVED | `ui/data/p2/planner.json` | `tfs[tf=34].cap.paper` |
 | Q3: upgrade cost per transformer (Base's figure in its PUCT filing, 54224 item 49; not a quote) | **$10,000** | REAL | `ui/data/p2/planner.json` | `money.upgradeUSD (= ranking[0].costUSD)` |
 | Q3: value per battery a year (one Core, 2025 LZ_NORTH, planned on public day-ahead prices; gross energy value, not Base's profit; not the $284.68 perfect-foresight 2026 per-Core year) | **$631/yr** | DERIVED | `ui/data/p2/planner.json` | `money.memberValueUSDYr (= ranking[0].valueUSDYr)` |
 | Q3: payback of the #1 upgrade (the same on #1–#4, Streets A–D) | **15.8 yr** | DERIVED | `ui/data/p2/planner.json` | `ranking[0].paybackYears` |

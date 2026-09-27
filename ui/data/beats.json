@@ -127,9 +127,9 @@
       "t1": "4:10",
       "title": "One transformer, zero to fifty",
       "label": "SIM",
-      "link": "page=learnings&q=2&tf=150",
+      "link": "page=learnings&q=2&tf=34",
       "headline": "How many more batteries one transformer can take under feeder-aware charging: read the answer sentence as the page prints it.",
-      "caption": "Transformer A, zero to fifty batteries, feeder-aware {{chip:SIM:ui/data/p2/planner.json, the planner's layer two; each number keeps the tag the page shows}}. The fit strip shows where it stops fitting."
+      "caption": "One transformer with room and none of our batteries yet, zero to fifty batteries {{chip:SIM:ui/data/p2/planner.json tfs cap, the planner's layer two; each number keeps the tag the page shows}}: what feeder-aware charging fits, where a naive split tops out, and what the utility's nameplate rule allows {{chip:DERIVED:utility rule, nameplate against kVA (cap.paper); not a power flow}}, each with its fit strip. OpenDSS checked the feeder-aware and naive caps {{chip:SIM:planner.json referee, month solves}}."
     },
     {
       "id": "learnings-q3",
