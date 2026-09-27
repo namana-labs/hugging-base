@@ -35,15 +35,16 @@ export function numHTML(x, opts = {}) {
 /** Lever words for the run pill, from the catalogue's own option labels. */
 export function leverSummary(catalogue, levers) {
   const L = (catalogue && catalogue.levers) || {};
+  // the option's label up to its first ":" or " (" ("Controller crash: a worker is ..." -> "Controller crash")
   const lab = (key) => {
     const o = ((L[key] && L[key].options) || []).find((x) => String(x.id) === String(levers[key]));
-    return o ? o.label : String(levers[key]);
+    return o ? String(o.label).split(/: | \(/)[0].trim() : String(levers[key]);
   };
   if (!levers) return '';
   const parts = [lab('policy')];
   if (levers.failure && levers.failure !== 'none') parts.push(lab('failure'));
-  if (levers.policy !== 'none') parts.push(`${lab('fleet')} ${lab('cls')}`, `${lab('reserve')} reserve`, `${lab('soc0')} at start`);
-  if (levers.growth !== undefined && String(levers.growth) !== String(L.growth && L.growth.default)) parts.push(`${lab('growth')} load`);
+  if (levers.policy !== 'none') parts.push(`${lab('fleet')}, ${lab('cls')}`, lab('reserve'), lab('soc0'));
+  if (levers.growth !== undefined && String(levers.growth) !== String(L.growth && L.growth.default)) parts.push(lab('growth'));
   return parts.join(' · ');
 }
 

@@ -139,6 +139,34 @@ export function covertFailures(covert, n) {
   const end = q.length ? Math.max(...q.map((x) => x[0])) : n - 1;
   return [{ kind: 'covert', where: `${(covert.attack.shard || []).length} batteries (fictional attacker)`, k0: covert.attack.step, k1: Math.min(n - 1, end), text: covert.attack.text || '', label: 'ASSUMPTION' }];
 }
+export const DET_WORDS = { off: 'channel not open yet', on: 'carrying the hidden signal, not flagged yet', flag: 'flagged by the detector', held: 'quarantined: held at zero' };
+/** The Detector card's model from p3/covert.json: the shard's units, flagged and quarantined counts per step, and two
+ *  step paths over the attack window (a 300 x 44 box). Counts come from units[].flaggedStep and quarantine.log. */
+export function detectorModel(covert, n) {
+  const a = covert.attack || {};
+  const byBatt = new Map((covert.units || []).map((u) => [u.batt, u]));
+  const units = (a.shard || []).map((b) => {
+    const u = byBatt.get(b) || {};
+    return { batt: b, home: u.home ?? null, flaggedStep: u.flaggedStep ?? null, quarantinedStep: u.quarantinedStep ?? null };
+  });
+  const qlog = ((covert.quarantine && covert.quarantine.log) || []).map((q) => q[0]);
+  const flagSteps = units.map((u) => u.flaggedStep).filter((x) => x !== null);
+  const last = Math.max(a.step ?? 0, ...flagSteps, ...qlog);
+  const w0 = Math.max(0, (a.step ?? 0) - 10), w1 = Math.min(n - 1, last + 20);
+  const flaggedAt = (k) => flagSteps.filter((s) => s <= k).length;
+  const quarantinedAt = (k) => qlog.filter((s) => s <= k).length;
+  const tot = Math.max(1, units.length);
+  const X = (k) => ((k - w0) / Math.max(1, w1 - w0) * 300);
+  const Y = (c) => (42 - c / tot * 40);
+  const path = (fn) => {
+    let d = `M0,${Y(fn(w0)).toFixed(1)}`, prev = fn(w0);
+    for (let k = w0 + 1; k <= w1; k++) { const c = fn(k); if (c !== prev) { d += `H${X(k).toFixed(1)}V${Y(c).toFixed(1)}`; prev = c; } }
+    return `${d}H300`;
+  };
+  const series = covert.series && covert.series.units;
+  return { units, w0, w1, flaggedAt, quarantinedAt, flagPath: path(flaggedAt), heldPath: path(quarantinedAt),
+    x: (k) => (k < w0 || k > w1 ? null : X(k).toFixed(1)), label: (series && series.label) || 'SIM' };
+}
 /** The covert attack in the story line: its own text at attack.step. */
 export function covertMoments(covert) {
   if (!covert || !covert.attack) return [];
@@ -428,24 +456,27 @@ export async function mount(root, ctx) {
     for (const b of bandEls) { const f = failures[Number(b.dataset.f)]; b.style.opacity = f.k1 < k || (f.k0 <= k && k <= f.k1) ? '1' : '.45'; }
   }
 
+  const det = covertOn ? detectorModel(covert, n) : null;
   function drawDetector() {
-    if (!covertOn) return;
+    if (!det) return;
     const a = covert.attack || {}, sm = covert.summary || {};
-    const units = new Map((covert.units || []).map((u) => [u.batt, u]));
-    const qlog = (covert.quarantine && covert.quarantine.log) || [];
-    const flagged = (covert.units || []).filter((u) => u.compromised && u.flaggedStep !== null && u.flaggedStep <= k).length;
-    const quarantined = qlog.filter((q) => q[0] <= k).length;
-    const cells = (a.shard || []).map((b) => {
-      const u = units.get(b);
-      const on = k >= a.step, fl = u && u.flaggedStep !== null && u.flaggedStep <= k, qu = u && u.quarantinedStep !== null && u.quarantinedStep <= k;
-      const col = !on ? '#e3dfd3' : qu ? '#4a4f4c' : fl ? '#b23a2f' : '#c7962b';
-      return `<i style="background:${col}" title="battery ${b}${u ? ` · ${u.peerRule} peers ${u.peers}` : ''}"></i>`;
+    const flagged = det.flaggedAt(k), quarantined = det.quarantinedAt(k);
+    const cells = det.units.map((u) => {
+      const st = k < a.step ? 'off' : u.quarantinedStep !== null && u.quarantinedStep <= k ? 'held' : u.flaggedStep !== null && u.flaggedStep <= k ? 'flag' : 'on';
+      return `<i class="${st}" title="${esc(`battery ${u.batt} (home ${u.home}) · ${DET_WORDS[st]}${u.flaggedStep !== null ? ` · flagged ${stepToTime(meta, u.flaggedStep)}` : ''}`)}"></i>`;
     }).join('');
-    $('.rv-det').innerHTML = `<div class="h"><span class="e">DETECTOR · FICTIONAL ATTACKER</span>${tagHTML('SIM', (covert.sources && covert.sources.detector && covert.sources.detector.text) || 'detector run')}</div>
-      <div class="big">${k < a.step ? '—' : `${fmtN(flagged)} of ${fmtN((a.shard || []).length)}`}</div>
-      <div class="l">${k < a.step ? `Channel opens at ${esc(a.t)}` : `compromised batteries flagged · ${fmtN(quarantined)} held at zero`}</div>
+    const cx = det.x(k);
+    $('.rv-det').innerHTML = `<div class="h"><span class="e">DETECTOR · FICTIONAL ATTACKER</span>${tagHTML(det.label, (covert.sources && covert.sources.detector && covert.sources.detector.text) || 'detector run')}</div>
+      <div class="rv-det-top"><div class="big">${k < a.step ? '—' : `${fmtN(flagged)} of ${fmtN(det.units.length)}`}</div>
+        <div class="l">${k < a.step ? `The channel opens at ${esc(a.t)}` : `compromised batteries flagged<br>${fmtN(quarantined)} quarantined (held at zero)`}</div></div>
+      <svg class="rv-det-plot" viewBox="0 0 300 44" preserveAspectRatio="none" aria-label="Batteries flagged and quarantined, ${esc(stepToTime(meta, det.w0))} to ${esc(stepToTime(meta, det.w1))}">
+        <rect width="300" height="44" fill="#f6f3ea"></rect>
+        <path d="${det.flagPath}" fill="none" stroke="#b23a2f" stroke-width="1.6" vector-effect="non-scaling-stroke"></path>
+        <path d="${det.heldPath}" fill="none" stroke="#10231a" stroke-width="1.2" stroke-dasharray="3 2" vector-effect="non-scaling-stroke"></path>
+        ${cx !== null ? `<line x1="${cx}" x2="${cx}" y1="0" y2="44" stroke="#1e4d2b" stroke-width="2" vector-effect="non-scaling-stroke"></line>` : ''}</svg>
+      <div class="rv-det-ax"><span>${esc(stepToTime(meta, det.w0))}</span><span><i class="flag"></i>flagged <i class="held"></i>quarantined</span><span>${esc(stepToTime(meta, det.w1))}</span></div>
       <div class="rv-cells">${cells}</div>
-      <div class="l">${sm.detectionSeconds ? `First flag ${ctx.num(sm.detectionSeconds, { unit: ' s' })} after the channel opens` : ''}${sm.falsePositivesClean ? ` · clean-fleet false flags ${ctx.num(sm.falsePositivesClean)}` : ''}</div>`;
+      <div class="l">${sm.detectionSeconds ? `First flag ${ctx.num(sm.detectionSeconds, { unit: ' s' })} after the channel opens` : ''}${sm.falsePositivesClean ? ` · false flags on the clean fleet ${ctx.num(sm.falsePositivesClean)}` : ''}</div>`;
   }
 
   // worker_kill: the controller's workers and leases from the run's own runtime block (mpalacios.runtime replay)
