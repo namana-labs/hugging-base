@@ -6,7 +6,7 @@
 # deeplinks.txt format, one link per line:  <tags> <query>   e.g.  p1,canary view=p1&branch=aware&t=22:30
 # scripts/lanes.json gives each lane a "smoke": [groups] list; --lane runs those groups plus "canary".
 set -u
-ROOT="$(git rev-parse --show-toplevel)" || exit 2
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" || exit 2
 SMOKE_TMP="${SMOKE_TMP:-$HOME/hb-overnight/tmp}"; mkdir -p "$SMOKE_TMP"; export SMOKE_TMP
 SHOTS="${SMOKE_SHOTS:-$SMOKE_TMP/shots-$(basename "$ROOT")}"
 LINKS="${SMOKE_LINKS:-$ROOT/scripts/deeplinks.txt}"

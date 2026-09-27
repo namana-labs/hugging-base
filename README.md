@@ -3,7 +3,7 @@
 **Feeder-aware charging for a fleet of home batteries** (Base Power × AITX hackathon, Sep 2026). When a price crash tells every battery to charge at once, street transformers overload. Checking each transformer's room first charges the fleet with no overload caused by batteries.
 
 ```sh
-scripts/serve.sh      # a static server from the repo root, port 8765 (scripts/setup.sh once, to check Python)
+scripts/serve.sh      # a static server from the repo root, port 8765 (viewing needs only python3; scripts/setup.sh is for the engine and tests: it creates a venv at ~/hb-overnight/.venv)
 ```
 
 Open **http://127.0.0.1:8765/ui/index.html** and walk four pages: **Configure** a scenario → **Run** the evening in 3D → **Results** → **Learnings** (how many batteries fit, where the next one helps).

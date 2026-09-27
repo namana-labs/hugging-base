@@ -7,7 +7,7 @@
 # Heavy targets take the shared heavy-run lock unless HB_LOCK_HELD=1 (check_all.sh --full holds it once).
 # A target whose module is not on this branch prints "BUILD <t>: SKIP (...)". Gate on the final "BUILD: PASS" line.
 set -u
-ROOT="$(git rev-parse --show-toplevel)" || exit 2
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" || exit 2
 cd "$ROOT"
 # the venv's python: bin/python (macOS/Linux) or Scripts/python.exe (Windows)
 venv_py() { if [ -x "$1/bin/python" ]; then echo "$1/bin/python"; elif [ -x "$1/Scripts/python.exe" ]; then echo "$1/Scripts/python.exe"; else echo "$1/bin/python"; fi; }
