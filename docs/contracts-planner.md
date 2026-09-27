@@ -21,9 +21,9 @@ python -m sim.planner ages         # regenerate data/planner/tf_simulated_ages.c
   load, is ~10 min of it; the referee ~14 min). Every stage is cached in `data/cache/planner/*.npz` (gitignored),
   keyed on `SWEEP_VERSION` + the sha of `sim/{siting,surrogate,loads,prices,caps}.py` + the input shas, so a
   re-emit after a change to `sim/planner.py`'s document code takes **~45 s** and is **byte-identical**
-  (sha256 of the 26 Sep file: `631ad8d6ba1e751787e0b281bb7d822f27eefe44228a31a8b319e4750c75a63a`).
+  (a second re-emit of the same code gives the same sha256).
   Bump `SWEEP_VERSION` when the sweep code itself changes. `PLAN_WORKERS=n` runs the aware chunks in n processes.
-- **Size.** 1,962,535 bytes. Cap **2.0 MB** (`SIZE_CAP_BYTES`, lead ruling 26 Sep; was 1.2 MB in the design). Over
+- **Size.** 2,030,047 bytes (with `rankingByGrowth`; 1,962,535 before it). Cap **2.0 MB** = 2,097,152 bytes (`SIZE_CAP_BYTES`, lead ruling 26 Sep; was 1.2 MB in the design). Over
   the cap the CLI still writes the file but exits 1. Growth levels are never dropped any more. (The 18:49 build exited
   1 for exactly this: 1,291,630 B was still over 1.2 MB after dropping g20 / g50 per-k detail.)
 - **Constants.** Every `PLAN_*` is registered with `const()` inside `sim/planner.py` (never `sim/constants.py`) and
@@ -85,6 +85,9 @@ referee{ status:"checked"|"not run", runs, secondsPerRun{v,SIM}, naiveAtCap{agre
 sizeSummary{"10"|"25"|"50"|"75": {count, homesP50, paper, naive{v,p90}, aware, naiveG20, awareG20, naiveG50, awareG50}}
 ranking[]{ rank, tf, why:"blocked"|"unlocks"|"little"|"onboard", blockedToday, wanted5y{v,p10,p90},
            unlocked{v,p10,p90}, valueUSDYr, costUSD, paybackYears, controlsFit, age{v,pRep5} }       // layer 3, DERIVED
+rankingByGrowth{ g0[], g20[], g50[] }      // the same function per home-load level; g0 == ranking byte-for-byte;
+           // g20 / g50: feeder-aware cap from perK.<g>.capAware (screening), one size up at today's load, and each row
+           // adds approx: bool (true = that aware cap was not exact on the 19-value grid). Labels as in ranking.
 baseline{ peak[379], h100[379] }           // home load only, August (also satisfies sim.contracts' p2/* shape check)
 ```
 
@@ -145,6 +148,9 @@ computed once per curve instead of per path (identical numbers). About 60-90 ms 
   `dont-upgrade`, at $2,040 → `wait-and-watch`; feeder-aware credited → `no-upgrade` (DERIVED, every economic input
   an ASSUMPTION).
 - **Ranking** (layer 3): 26 rows (4 blocked today, 4 "little", 18 "neighbourhood already on board").
+  `rankingByGrowth.g20` / `g50` hold the same 26 transformers in the same order with the same unlocked counts: under
+  "feeder-aware, utility rule unchanged" the utility's nameplate rule binds wherever the list is decided, and the
+  feeder-aware caps only rise with load. Only `controlsFit` changes (2 rows at +20%, 7 at +50%); no row is `approx`.
 
 ## 5. Readings to state, not hide
 - **Feeder-aware caps rise with home load** (75 kVA: 6 → 7). The feeder-aware limit is the 90%-earnings rule, and in
@@ -167,7 +173,8 @@ computed once per curve instead of per path (identical numbers). About 60-90 ms 
 4. `cap.*.shown`, `note`, `screening` implement "OpenDSS wins"; `opendss` may also be `"higher"` (OpenDSS finds no
    event at cap + 1; none on this feeder). `cap.paper.ae90` carries the Austin Energy profile.
 5. `cap.heat` (§3.1.4 heat reading) is **cut**; `nb.tfs[]` is not written.
-6. Extra top-level keys: `sizeSummary` (Q2 headline), `ranking` (RZ's layer 3, deterministic, DERIVED) and `baseline`
+6. Extra top-level keys: `sizeSummary` (Q2 headline), `ranking` (RZ's layer 3, deterministic, DERIVED),
+   `rankingByGrowth` (the same list per growth level, lead request 26 Sep, so the page never re-derives it) and `baseline`
    (`sim.contracts.check_shapes` requires `ranking` and `baseline[379]` of every `p2/*.json`).
 7. `money.valuePresets` has three presets ($631, $859 with the $19 membership, $2,040; CRITIQUE must-fix 5);
    `decision.defaults.setting` is `aware-screen` (CRITIQUE must-fix 1: "blocked" means the utility rule).
@@ -185,11 +192,11 @@ no spread, installed, pending, `utility_headroom_kw` → `cap.utility = installe
 The ranking is not recomputed from local values (stated limitation).
 
 ## 8. Tests
-- `sim/tests/test_planner.py` (27 tests, ~5 s): survival (mean life 32.0, P_rep(5|20) 0.124, P_rep(5|40) 0.575),
+- `sim/tests/test_planner.py` (28 tests, ~10 s): survival (mean life 32.0, P_rep(5|20) 0.124, P_rep(5|40) 0.575),
   paper screen (P6), demand model (P9, the design's T-61 example 6 (3-11) / 20 (13-27) pinned), cap rules, referee
   merge rule (P12), local override and private-only output (P10, P11), committed-file shape / contracts / exclusions
   (P7), caps vs per-k arrays (P2, P3), size medians (P5), referee headline, ranking, constants placement, the naive
-  identity (P1).
+  identity (P1), `rankingByGrowth` (g0 equals `ranking` byte-for-byte; g20 / g50 shape, `approx`, caps).
 - `ui/test/planner.test.js` (16 tests): P_rep checks, J1-J8, the T-61 verdicts through `paramsFor` on the built
   file, knob aliases, `rackStates`, a speed guard.
 

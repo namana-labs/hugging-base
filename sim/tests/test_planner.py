@@ -202,7 +202,8 @@ class CommittedFile(unittest.TestCase):
         self.assertLessEqual(DOC_PATH.stat().st_size, pl.SIZE_CAP_BYTES)
         self.assertEqual(self.doc["producer"], "sim.planner")
         for k in ("schema", "producer", "inputs", "constants", "sources", "series", "meta", "tfs", "perK", "survival",
-                  "demand", "money", "screens", "decision", "referee", "sizeSummary", "ranking", "baseline"):
+                  "demand", "money", "screens", "decision", "referee", "sizeSummary", "ranking", "rankingByGrowth",
+                  "baseline"):
             self.assertIn(k, self.doc)
 
     def test_contracts_accept_it(self):
@@ -280,6 +281,34 @@ class CommittedFile(unittest.TestCase):
         self.assertEqual(un, sorted(un, reverse=True))
         tfs = {r["tf"] for r in self.doc["tfs"]}
         self.assertTrue(all(x["tf"] in tfs for x in rk))
+
+    def test_ranking_by_growth(self):
+        """rankingByGrowth.g0 is `ranking` byte-for-byte; g20 / g50 are the same function on perK.<g>.capAware, same
+        row shape plus `approx` (the aware cap was not exact on the 19-value grid)."""
+        from sim.contracts import audit_labels, dumps
+        rbg = self.doc["rankingByGrowth"]
+        self.assertEqual(sorted(rbg), ["g0", "g20", "g50"])
+        self.assertEqual(dumps(rbg["g0"]), dumps(self.doc["ranking"]))
+        keys0 = [list(x) for x in self.doc["ranking"]]
+        self.assertTrue(all("approx" not in k for k in keys0))
+        self.assertEqual(audit_labels({"ranking": rbg})[0], [])
+        rows = {r["tf"]: r for r in self.doc["tfs"]}
+        order = self.doc["meta"]["tfOrder"]
+        for g in ("g20", "g50"):
+            rk = rbg[g]
+            self.assertEqual([x["rank"] for x in rk], list(range(1, len(rk) + 1)))
+            un = [x["unlocked"]["v"] for x in rk]
+            self.assertEqual(un, sorted(un, reverse=True))
+            pk = self.doc["perK"][g]
+            for x in rk:
+                self.assertEqual([k for k in x if k != "approx"], keys0[0])
+                self.assertIsInstance(x["approx"], bool)
+                i = order.index(x["tf"])
+                self.assertEqual(x["approx"], pk["capAwareExact"][i] == 0)
+                self.assertEqual(x["controlsFit"]["v"], pk["capAware"][i])
+                c = min(pk["capAware"][i], rows[x["tf"]]["cap"]["paper"]["v"])
+                k0 = rows[x["tf"]]["installed"]["v"] + rows[x["tf"]]["pending"]["v"]
+                self.assertEqual(x["blockedToday"]["v"], max(0, k0 - c))
 
 
 class Constants(unittest.TestCase):

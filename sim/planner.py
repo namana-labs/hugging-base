@@ -895,6 +895,12 @@ def build(quick=False, out=print, ref_override=None, run_ref=False):
 
     # ---- the upgrade priority list (layer 3) ------------------------------------------------------------------------
     ranking = upgrade_ranking(rows, curves)
+    ranking_by_growth = {"g0": json.loads(dumps(ranking))}
+    for g in PLAN_GROWTH_PCTS:
+        if g:
+            ranking_by_growth[f"g{g}"] = upgrade_ranking(
+                rows, curves, aware=dict(zip(tfs, perk[g]["capAware"])),
+                exact={t: bool(x) for t, x in zip(tfs, perk[g]["capAwareExact"])})
 
     # ---- referee block ------------------------------------------------------------------------------------------------
     if ref is not None:
@@ -937,6 +943,11 @@ def build(quick=False, out=print, ref_override=None, run_ref=False):
         "survival": {"label": "DERIVED", "text": "DOE retirement function r(age), age 0..60 (DESIGN §3.2)"},
         "demandCurves": {"label": "DERIVED", "text": "per-home cumulative join probability, pointwise deciles p10..p90 "
                                                      "at months 0, 12, ..., 60 per neighbourhood key"},
+        "rankingByGrowth": {"label": "DERIVED", "text": "rankingByGrowth.g0 / g20 / g50: the upgrade priority list "
+                                                        "(same function and row shape as `ranking`; g0 == ranking) with "
+                                                        "the feeder-aware cap at +0 / +20 / +50% home load (perK.<g>."
+                                                        "capAware, screening); g20 / g50 rows add approx = that cap is "
+                                                        "not exact on the 19-value grid; one size up at today's load"},
         "baseline": {"label": "SIM", "text": "home load only, August: peak % and hours above 100% per transformer [379]"},
         "tfsOrder": {"label": "REAL", "text": "perK row r is transformer meta.tfOrder[r] (topology index)"},
     }
@@ -998,6 +1009,7 @@ def build(quick=False, out=print, ref_override=None, run_ref=False):
         "referee": referee,
         "sizeSummary": size_summary,
         "ranking": ranking,
+        "rankingByGrowth": ranking_by_growth,
         "baseline": {"peak": [round(float(x), 1) for x in M0["peak"]], "h100": [round(float(x), 2) for x in M0["h100"]]},
     })
     info = {"seconds": round(time.perf_counter() - t_all, 1), "referee": referee["status"], "sha": sha,
@@ -1005,14 +1017,17 @@ def build(quick=False, out=print, ref_override=None, run_ref=False):
     return doc, info
 
 
-def upgrade_ranking(rows, curves):
+def upgrade_ranking(rows, curves, aware=None, exact=None):
     """Layer 3 (RZ's scope): the transformers worth paying to upgrade, ranked by the members an upgrade unlocks in 5
     years at the typical (p50) neighbourhood growth, referral off, under 'feeder-aware, utility rule unchanged'
     (the binding cap is min(aware, rule); 'blocked' means the utility rule, CRITIQUE-CAP-base must-fix 1).
     Deterministic arithmetic (DERIVED): wanted(5 y) = installed + pending + non-member homes x F_q(60 months);
     unlocked = min(wanted, c_up) - min(wanted, c); value/yr = unlocked x PLAN_MEMBER_VALUE_USD_YR;
     payback = PLAN_UPGRADE_USD / value. Rows: every transformer at or over its binding cap today, or whose p90 wanted
-    exceeds it; 'onboard' rows (every home already a member) say an upgrade unlocks nothing."""
+    exceeds it; 'onboard' rows (every home already a member) say an upgrade unlocks nothing.
+    aware: {tf: feeder-aware cap} at a home-load growth level (default: today's cap.aware.shown, OpenDSS wins);
+    exact: {tf: bool} for that level; when given, every row gets `approx` = the aware cap was not exact on the
+    simulated k grid (the true cap may sit between grid points). One size up stays at today's load (screening)."""
     v = PLAN_MEMBER_VALUE_USD_YR
     C = PLAN_UPGRADE_USD
     out = []
@@ -1020,7 +1035,8 @@ def upgrade_ranking(rows, curves):
         homes = r["homes"]
         k0 = r["installed"]["v"] + r["pending"]["v"]
         paper = r["cap"]["paper"]["v"]
-        c = min(r["cap"]["aware"]["shown"], paper)
+        ca = r["cap"]["aware"]["shown"] if aware is None else aware[r["tf"]]
+        c = min(ca, paper)
         c_up = min(r["up"]["aware"]["v"], r["up"]["paper"]["v"])
         m = max(0, homes - min(k0, homes))
         F = curves[r["nb"]["key"]]["q0"]
@@ -1040,9 +1056,11 @@ def upgrade_ranking(rows, curves):
                     "valueUSDYr": L(round(val), "DERIVED", f"unlocked x ${v}/yr (gross energy value, not Base's profit)"),
                     "costUSD": L(C, "REAL", "PLAN_UPGRADE_USD: Base's figure, PUCT 54224 item 49"),
                     "paybackYears": L(round(C / val, 1) if val > 0 else None, "DERIVED", "cost / value per year"),
-                    "controlsFit": L(r["cap"]["aware"]["shown"], "SIM", "feeder-aware cap if the utility counted our "
+                    "controlsFit": L(ca, "SIM", "feeder-aware cap if the utility counted our "
                                                                          "control (UNVERIFIED in Texas)"),
                     "age": L(r["age"]["v"], "DERIVED", "simulated", pRep5=r["age"]["pRep5"])})
+        if exact is not None:
+            out[-1]["approx"] = not exact[r["tf"]]
     out.sort(key=lambda x: (-x["unlocked"]["v"], -(x["age"]["pRep5"]), x["tf"]))
     for i, x in enumerate(out):
         x["rank"] = i + 1
@@ -1105,6 +1123,10 @@ def check_shape(doc):
         need(not {123, 144, 366} & set(tfs), "planner: tfs must exclude 123, 144, 366")
         need(all(r["homes"] >= 1 for r in doc["tfs"]), "planner: every row serves >= 1 home")
         need(isinstance(doc["ranking"], list), "planner: ranking missing")
+        rbg = doc["rankingByGrowth"]
+        need(sorted(rbg) == sorted(f"g{g}" for g in PLAN_GROWTH_PCTS) and all(isinstance(x, list) for x in rbg.values()),
+             "planner: rankingByGrowth must hold g0, g20, g50 lists")
+        need(dumps(rbg["g0"]) == dumps(doc["ranking"]), "planner: rankingByGrowth.g0 != ranking")
         need(doc["meta"]["tfOrder"] == tfs, "planner: meta.tfOrder != tfs order")
         n = len(tfs)
         need(sorted(doc["perK"]) == sorted(f"g{g}" for g in PLAN_GROWTH_PCTS), "planner: perK must hold g0, g20, g50")
