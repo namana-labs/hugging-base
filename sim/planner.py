@@ -148,14 +148,30 @@ PLAN_REF_BATCH_NAIVE = const("PLAN_REF_BATCH_NAIVE", 140, "ASSUMPTION", "OpenDSS
 PLAN_REF_BATCH_AWARE = const("PLAN_REF_BATCH_AWARE", 400, "ASSUMPTION", "OpenDSS referee: at most 400 aware Cores per month solve")
 PLAN_DEMO_TF = const("PLAN_DEMO_TF", 61, "ASSUMPTION", "the demo transformer: 50 kVA pole, 3 homes, old (DESIGN §3.7)")
 PLAN_DEFAULT_TF = const("PLAN_DEFAULT_TF", 240, "ASSUMPTION", "P1's unrelieved transformer (BRIDGE_TF), the default pick")
+PLAN_SCREEN_SHARE_NAMEPLATE = const("PLAN_SCREEN_SHARE_NAMEPLATE", 1.0, "REAL",
+                                    "nameplate100 paper screen: battery nameplate <= transformer kVA, TDSP practice as "
+                                    "Base describes it (PUCT 54233 items 85, 92); Cores = floor(1.0 x kVA / CORE_POWER_KW)")
+PLAN_SCREEN_SHARE_AE90 = const("PLAN_SCREEN_SHARE_AE90", 0.9, "REAL",
+                               "ae90 paper screen: Austin Energy denies an application when all DG kW AC exceeds 90% of "
+                               "the transformer rating (AE DG interconnection guide rev 14, p. 13, https://austinenergy."
+                               "com/-/media/project/websites/austinenergy/contractors/ae_dg_interconnection_guide.pdf); "
+                               "Cores = floor(0.9 x kVA / CORE_POWER_KW), 20 kW per Core")
+PLAN_HYPOTHETICAL_PER_HOME = const("PLAN_HYPOTHETICAL_PER_HOME", 2, "ASSUMPTION",
+                                   "DESIGN-CAPACITY-PLANNER §4.3: Core j on a transformer is hypothetical (hatched) when "
+                                   "j > 2 x its homes ('more Cores than 2 per home'); Base averages about 1.35 batteries "
+                                   "per home and two-cabinet homes are common (research notes, REAL)")
+PLAN_NO_UPGRADE_P_OVER = const("PLAN_NO_UPGRADE_P_OVER", 0.05, "ASSUMPTION",
+                               "DESIGN-CAPACITY-PLANNER §3.4.4: the verdict is 'No upgrade' when the unit fits today and "
+                               "the chance of outgrowing it within the horizon in the fast-growth (p90) scenario is "
+                               "under 5%")
 
 K_MAX = 50
 KS = list(range(K_MAX + 1))
 K_GRID = list(range(13)) + [15, 20, 25, 30, 40, 50]          # the scout's 19-value aware grid
 SIZES = [25, 50, 75, 100]
-SCREENS = [{"id": "nameplate100", "share": 1.0, "label": "REAL",
+SCREENS = [{"id": "nameplate100", "share": PLAN_SCREEN_SHARE_NAMEPLATE, "label": "REAL",
             "cite": "nameplate <= transformer kVA: TDSP practice as Base describes it (PUCT 54233 items 85, 92)"},
-           {"id": "ae90", "share": 0.9, "label": "REAL",
+           {"id": "ae90", "share": PLAN_SCREEN_SHARE_AE90, "label": "REAL",
             "cite": "Austin Energy DG guide rev 14 p. 13: all DG kW AC <= 90% of the transformer rating"}]
 SCOPE = ("Core battery · D-26 onset · August 2026 prices × SMART-DS 2018 August load · empty feeder · "
          "Oncor-suburb stand-in on NREL's synthetic feeder")
@@ -259,7 +275,7 @@ def load_ages(path=AGES_CSV):
 # =================================================================================================================
 # paper screen, circles and demand (DERIVED; DESIGN §3.1.3, §3.3)
 # =================================================================================================================
-def paper_screen(kva, share=1.0, dg_kw=0.0, p_kw=CORE_POWER_KW):
+def paper_screen(kva, share=PLAN_SCREEN_SHARE_NAMEPLATE, dg_kw=0.0, p_kw=CORE_POWER_KW):
     """N_paper = floor((share x kVA - existing DG kW) / battery kW), never below 0."""
     return max(0, int(math.floor((share * float(kva) - float(dg_kw)) / float(p_kw) + 1e-9)))
 
@@ -859,13 +875,14 @@ def build(quick=False, out=print, ref_override=None, run_ref=False):
                            note=(f"OpenDSS found an overload at {ca}" if va == "lower" else None),
                            screening=va == "not run"),
                 "paper": L(paper_screen(kva, share), "DERIVED", f"utility rule {screen} (screens.profiles)",
-                           profile=screen, ae90=paper_screen(kva, 0.9)),
+                           profile=screen, ae90=paper_screen(kva, PLAN_SCREEN_SHARE_AE90)),
             },
             "up": {
                 "kva": L(kup, "ASSUMPTION", "PLAN_UP_SIZES"),
                 "naive": L(int(upN["cap"][t]), "SIM", "screening: next size (meta.cites.up)", screening=True),
                 "aware": L(upA[t][0], "SIM", "screening: next size (meta.cites.up)", screening=True),
-                "paper": L(paper_screen(kup, share), "DERIVED", "utility rule at the next size"),
+                "paper": L(paper_screen(kup, share), "DERIVED", "utility rule at the next size",
+                           ae90=paper_screen(kup, PLAN_SCREEN_SHARE_AE90)),
                 "incrementUSD": L(inc, "DERIVED" if inc is not None else "ASSUMPTION",
                                   "PLAN_UNIT_USD step (NREL 2017 $)" if inc is not None
                                   else "no NREL unit cost for 10 kVA: the increment is not sourced"),

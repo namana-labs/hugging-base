@@ -23,12 +23,17 @@ python -m sim.planner ages         # regenerate data/planner/tf_simulated_ages.c
   re-emit after a change to `sim/planner.py`'s document code takes **~45 s** and is **byte-identical**
   (a second re-emit of the same code gives the same sha256).
   Bump `SWEEP_VERSION` when the sweep code itself changes. `PLAN_WORKERS=n` runs the aware chunks in n processes.
-- **Size.** 2,030,047 bytes (with `rankingByGrowth`; 1,962,535 before it). Cap **2.0 MB** = 2,097,152 bytes (`SIZE_CAP_BYTES`, lead ruling 26 Sep; was 1.2 MB in the design). Over
+- **Size.** 2,034,990 bytes (with `rankingByGrowth` and `up.paper.ae90`; 1,962,535 before them). Cap **2.0 MB** = 2,097,152 bytes (`SIZE_CAP_BYTES`, lead ruling 26 Sep; was 1.2 MB in the design). Over
   the cap the CLI still writes the file but exits 1. Growth levels are never dropped any more. (The 18:49 build exited
   1 for exactly this: 1,291,630 B was still over 1.2 MB after dropping g20 / g50 per-k detail.)
 - **Constants.** Every `PLAN_*` is registered with `const()` inside `sim/planner.py` (never `sim/constants.py`) and
   exported in the envelope's `constants` with its label and cite. `PLAN_UPGRADE_USD` = $10,000, REAL: Base's own
   figure to the PUCT (54224 item 49). `PLAN_UNIT_USD` NREL cost DB v2, REAL (2017 $).
+- **Rules the UI applies** are constants too, read by `ui/lib/planner.js` from `planner.constants` (never typed in):
+  `PLAN_HYPOTHETICAL_PER_HOME` = 2 (ASSUMPTION, DESIGN §4.3: Core j is hypothetical when j > 2 x homes),
+  `PLAN_NO_UPGRADE_P_OVER` = 0.05 (ASSUMPTION, §3.4.4: "No upgrade" when it fits today and the p90 chance of
+  outgrowing it is under 5%), `PLAN_SCREEN_SHARE_AE90` = 0.9 (REAL, Austin Energy's 90% rule, / `CORE_POWER_KW` =
+  20 kW per Core) and `PLAN_SCREEN_SHARE_NAMEPLATE` = 1.0 (REAL). Each is `constants.<NAME> = {value, label, cite}`.
 - **Inputs.** Only `data/planner/` (see its `SOURCE.md`), the repo's `data/` (prices, loads, SMART-DS, fleet) and
   `ui/data/topology.json`. Nothing is read from `simulators/rz/research/`.
 
@@ -55,7 +60,7 @@ tfs[376]: { tf, id, kva{v,REAL}, mount:"pad"|"pole", phases{v:1,REAL}, homes, in
         paper{v, DERIVED, cite, profile:"nameplate100", ae90},
         utility?{v, REAL, cite}             // only in the private file, from a portal headroom read
    },
-   up{ kva{v,ASSUMPTION}, naive{v,SIM,screening:true}, aware{v,SIM,screening:true}, paper{v,DERIVED},
+   up{ kva{v,ASSUMPTION}, naive{v,SIM,screening:true}, aware{v,SIM,screening:true}, paper{v,DERIVED, ae90},
        incrementUSD{v,DERIVED,cite} },      // one standard size up (10->25, 25->50, 50->75, 75->100), today's load only
    nb{ key:"<M>-<n>", homes:M, installed{v:n,ASSUMPTION} } }   // the 200 m neighbourhood (demand.curves key)
 
@@ -124,6 +129,10 @@ decide(p, deciles, seed = 20260926) ->
 verdict(p, d) -> { code: 'no-upgrade'|'wait-and-watch'|'upgrade-now'|'dont-upgrade'|'dont-upgrade-tell',
                    overToday, blockedToday, roomToday, unlocksNow, breakEven, breakEvenValue, twoRows }
 rackStates(planner, tfIndex, k, setting, growth) -> [{ j, state:'fits'|'paper'|'overload'|'earnsLess', hypothetical, approx, tier }]
+planRules(planner) -> { hypotheticalPerHome, noUpgradePOver, ae90Share, nameplateShare, corePowerKw }   // = constants.*.value
+  // p.rules = planRules(planner). A constant missing from the file is null and its rule is OFF (no literal fallback):
+  // hypothetical = PLAN_HYPOTHETICAL_PER_HOME != null && j > it x homes; 'no-upgrade' needs PLAN_NO_UPGRADE_P_OVER;
+  // screen 'ae90' reads tfs[].cap.paper.ae90 and tfs[].up.paper.ae90 (the engine's numbers)
 also: mulberry32, monthly, surv, pReplace, annuity, breakEven, breakEvenValue, bindingCap, scenarioCosts, tfRow,
       capsFor, labelOf, growthOf, SETTINGS
 ```
@@ -192,12 +201,12 @@ no spread, installed, pending, `utility_headroom_kw` → `cap.utility = installe
 The ranking is not recomputed from local values (stated limitation).
 
 ## 8. Tests
-- `sim/tests/test_planner.py` (28 tests, ~10 s): survival (mean life 32.0, P_rep(5|20) 0.124, P_rep(5|40) 0.575),
+- `sim/tests/test_planner.py` (29 tests, ~10 s): survival (mean life 32.0, P_rep(5|20) 0.124, P_rep(5|40) 0.575),
   paper screen (P6), demand model (P9, the design's T-61 example 6 (3-11) / 20 (13-27) pinned), cap rules, referee
   merge rule (P12), local override and private-only output (P10, P11), committed-file shape / contracts / exclusions
   (P7), caps vs per-k arrays (P2, P3), size medians (P5), referee headline, ranking, constants placement, the naive
   identity (P1), `rankingByGrowth` (g0 equals `ranking` byte-for-byte; g20 / g50 shape, `approx`, caps).
-- `ui/test/planner.test.js` (16 tests): P_rep checks, J1-J8, the T-61 verdicts through `paramsFor` on the built
+- `ui/test/planner.test.js` (17 tests; one checks the rules come from `constants` and no rule literal is left): P_rep checks, J1-J8, the T-61 verdicts through `paramsFor` on the built
   file, knob aliases, `rackStates`, a speed guard.
 
 ## 9. Cut (DESIGN §6.6 order)
