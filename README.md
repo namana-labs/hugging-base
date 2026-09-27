@@ -12,6 +12,26 @@
 
 When the ERCOT price crashes in the evening, a fleet of home batteries that all start charging at once can overload the street transformers that feed those homes, even while the wider grid is fine. ERCOT dispatch sees the price zone, not the neighbourhood: the feeder and the service transformer on the pole. Batter Up checks each transformer's room before it sends a charge command, and shows on a feeder model refereed by OpenDSS that the fleet still charges, with no overload caused by batteries.
 
+## How this meets the Orchestration goal
+
+The track asks to coordinate many independent things and show how the system holds up when pieces fail.
+
+**Coordinate.** ERCOT sends one number per price zone and does not check feeders. Batter Up splits that number across 96 home batteries on 379 street transformers: before each charge command it checks each transformer's room, grants in turn by lowest state of charge, relieves an overloaded transformer with its own batteries first, and never dips into the 20% member reserve (`sim.orchestrator.allocate()`). On the demo evening (23 Aug 2026), judged by OpenDSS:
+
+| | Naive (one number, no feeder check) | Feeder-aware (Batter Up) |
+|---|---|---|
+| Worst transformer | 201.2% of nameplate (SIM) | 119.5% (SIM) |
+| Battery-caused normal-rating events | 11, with 3 transformers past emergency (150%) (SIM) | **0** (SIM) |
+| Fleet charged by 04:00 (fleet average) | 100.0% (SIM) | 100.0% (SIM) |
+| Gross energy value | $893.83 (DERIVED) | $916.56 (DERIVED) |
+
+Feeder-aware charging causes 0 battery-caused events in all 18 of its runs (4 evenings, 12 fleet settings, failures), the reserve is never breached by dispatch in any of the 51 scenarios, and the feeder holds 1,007 feeder-aware batteries against 100 naive ones before OpenDSS finds harm.
+
+**Hold up when pieces fail** (23 Aug, feeder-aware):
+- **Pieces fail:** 50 seeded runs with 1–10 batteries going silent, an EV surge on a hot transformer and a 1–8 minute controller stall: 0 battery-caused normal-rating or emergency events in all 50; batteries that never went silent still charged at least 99.6% (SIM).
+- **Controller crash:** a worker is killed (ASSUMPTION) and another takes over its lease at 22:24; the 31 late commands from the dead worker are refused (SIM).
+- **Hidden attacker (fictional):** a 24-battery shard (ASSUMPTION) modulates its power to hide a signal; the detector flags and quarantines it from voltage physics, not from command logs (SIM).
+
 ## The four pages
 
 Pick a scenario on page 1; the same scenario carries through every page. Every scenario is a run the engine already made and committed.
@@ -29,6 +49,8 @@ Pick a scenario on page 1; the same scenario carries through every page. Every s
 - **Every number is labelled** REAL, SIM, DERIVED or ASSUMPTION, and comes from a committed file the engine wrote. Hover or tap a tag for its source. The audited numbers, each with its file and field: [docs/NUMBERS.md](docs/NUMBERS.md).
 - **OpenDSS is the referee.** An AC power flow judges every violation in the evening runs. Month and growth counts from the faster per-transformer estimate are marked SCREENING.
 - **The feeder** is NREL's SMART-DS Austin P1U, a synthetic feeder ("realistic but not real"), used as an **Oncor-suburb stand-in** settled at ERCOT's LZ_NORTH zone. ERCOT prices are REAL.
+- **What we took from ERCOT (REAL):** real-time settlement point prices for load zone LZ_NORTH, every 15 minutes from 1 Jan to 19 Sep 2026 (ERCOT product NP6-785-ER, committed as `data/ercot/lz_north_2026.csv` with its checksum and download chain); one recorded day of system frequency (25 Sep 2026), shown only beside the hidden-attacker result as "a different day"; the 22 Jul 2026 record demand (91,134 MW, preliminary), used only to pick that evening; and ERCOT's ADER rule that it does not enforce distribution limits.
+- **What we assumed about the ERCOT side:** LZ_NORTH is our placeholder zone for the stand-in feeder (ASSUMPTION). We do not replay any ERCOT dispatch instruction or Base set point: the fleet's charge window and discharge plan are DERIVED from those prices by our own rule (`sim/prices.py`), and the money assumes perfect price foresight (ASSUMPTION). Home load is NREL's 2018 profile for the same calendar date (ASSUMPTION), so weekdays can differ from the price day. The 3–17 mHz effect of a 1,000-battery hijack is DERIVED from ERCOT frequency events, not measured.
 - **The attacker is fictional.** No real company or person is named as an attacker.
 - **Money is gross energy value**, not Base's profit.
 - **No language model sets any number.** Deterministic code decides every charge command, base point and rank.
