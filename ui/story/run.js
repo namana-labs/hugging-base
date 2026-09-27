@@ -161,13 +161,15 @@ export const KIND = { comms_lost: 'Battery silent', hot: 'Load spike', stall: 'C
   normal: 'Normal rating exceeded', emergency: 'Emergency rating', protection: 'Protection open', worker_kill: 'Worker killed',
   takeover: 'Lease taken over', late: 'Late commands refused', covert: 'Hidden carrier' };
 export const kindWord = (kind) => KIND[kind] || String(kind || '').replace(/_/g, ' ');
+/** "+-350 W" as "±350 W" (review-0927 S7): the detector file's ASCII plus-minus, shown as the sign it means. */
+export const plusMinus = (s) => String(s ?? '').replace(/\+-(?=\s*\d)/g, '±');
 /** The covert attack as a failure interval: the channel opens at attack.step and runs until the last quarantine. */
 export function covertFailures(covert, n) {
   if (!covert || !covert.attack) return [];
   const q = (covert.quarantine && covert.quarantine.log) || [];
   const end = q.length ? Math.max(...q.map((x) => x[0])) : n - 1;
   const adv = covert.sources && covert.sources.adversary;
-  return [{ kind: 'covert', where: `${(covert.attack.shard || []).length} batteries (fictional attacker)`, k0: covert.attack.step, k1: Math.min(n - 1, end), text: covert.attack.text || '', label: adv && LABEL_OK(adv.label) ? adv.label : null }];
+  return [{ kind: 'covert', where: `${(covert.attack.shard || []).length} batteries (fictional attacker)`, k0: covert.attack.step, k1: Math.min(n - 1, end), text: plusMinus(covert.attack.text || ''), label: adv && LABEL_OK(adv.label) ? adv.label : null }];
 }
 export const DET_WORDS = { off: 'channel not open yet', on: 'carrying the hidden signal, not flagged yet', flag: 'flagged by the detector', held: 'quarantined: held at zero' };
 /** The Detector card's model from p3/covert.json: the shard's units, flagged and quarantined counts per step, and two
@@ -201,7 +203,7 @@ export function detectorModel(covert, n) {
 export function covertMoments(covert) {
   if (!covert || !covert.attack) return [];
   const adv = covert.sources && covert.sources.adversary;
-  return [{ k: covert.attack.step, t: covert.attack.t, text: covert.attack.text, label: adv && LABEL_OK(adv.label) ? adv.label : null, rule: 'covert channel opens' }];
+  return [{ k: covert.attack.step, t: covert.attack.t, text: plusMinus(covert.attack.text), label: adv && LABEL_OK(adv.label) ? adv.label : null, rule: 'covert channel opens' }];
 }
 
 /** "+0.59" / "−3.84" / "0.00": the fleet's signed power in MW from kW. */
