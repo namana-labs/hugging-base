@@ -10,7 +10,10 @@ Jobs (each one live OpenDSS circuit; run several processes in parallel, then --c
   base:<evening>     re-runs the committed branches of that evening (23 Aug: none, naive, aware, aware_faults; other
                      evenings: none, naive, aware, loads as sim.history builds them) and writes one extras file per
                      branch, ui/data/p1/extras/<scenario id with / as _>.json.gz (A.12). The re-run must reproduce the
-                     committed loading exactly, or the job fails: the extras describe the run the page plays.
+                     committed loading exactly, or the job fails: the extras describe the run the page plays. OpenDSS
+                     starts each solve from the last solution, so the runs follow the committed builds' order on a fresh
+                     circuit: 23 Aug as sim.p1_build; any history evening re-runs all of them in sim.history.DAYS order
+                     (22 Jul, 26 Aug, 14 Aug) on one circuit.
   variant:<l>=<v>    one fleet lever away from the default on 23 Aug (FLEET_LEVERS): naive and aware (growth also its own
                      none) into ui/data/p1/variants/<l>=<v>/ (meta.json + <branch>.json.gz in the A.5/A.6 shapes, with
                      `variant`, `fleet`, `fleetCls` and measured engine seconds) and their extras.

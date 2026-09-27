@@ -302,3 +302,70 @@ sim.siting.per_tf_rule(bg_kw[379], bg_kvar[379], kva[379], soc[m], pmax[m], emax
 ## Part C. The gate
 
 `scripts/check_all.sh [--lane <id>] [--full]` runs, in order: sim unit tests; `node --test ui/test/*.test.js`; the prototype's and four-home's own tests (with the EXTERNAL RED classifier); `sim.contracts`; `sim.verify labels|p1|p2`; `scripts/check_paths.py --lane <id>`; `scripts/smoke_ui.sh --lane <id>` (or `canary`; with `--full`, `all` under the lock); with `--full`, `build_all.sh all` and the `--rebuild` byte-compares. It ends with exactly one line, `ALL CHECKS: PASS` or `ALL CHECKS: FAIL (<steps>)`: gate on `grep -c '^ALL CHECKS: PASS$'`.
+
+---
+
+### A.12 Story catalogue, fleet-lever variants and extras (ENGINE, submission sprint)
+
+Producer `sim.scenarios` (`python -m sim.scenarios [--only JOB|SCENARIO_ID] [--catalogue-only] [--no-catalogue] [--list]`).
+Rulings and owners: `docs/story-contract.md`. All files carry the A.2 envelope and A.1 labels; each is ≤ 4 MB.
+Paths below are relative to `ui/data/`. Scenario ids: `<evening>/<policy>[/<failure>][/<lever>=<value>]`
+(`2026-08-23/aware`, `2026-08-23/aware/faults`, `2026-08-23/naive/fleet=192`); an extras file name is the id with `/` → `_`.
+
+**`story/index.json`** (`hb.story.v1`). The UI resolves every page-1 choice here and nowhere else.
+```
+default: "2026-08-23/aware"
+levers: {evening|policy|failure|fleet|cls|reserve|soc0|growth: {label, default, options: [{id, label, tag?, why?{text,label,cite}}]}}
+leverOrder: [the eight lever names]          presets: [{name, id}]   (only presets whose scenario exists)
+headline: [summary keys in display order: batteryCausedNormal, batteryCausedEmergency, batteryCausedAmberMin,
+           energyValueUSD, maxLoading, normalEvents, emergencyTfs, chargedPctBy0400, reserveBreaches, protectionOperated, homesDark]
+match: how a choice resolves (by id; else the first `unavailable` row whose every lever matches, a list = any of)
+scenarios: [{id, title, preset?, levers{all eight}, meta, branch, extras, compare{none?,naive?,aware?}, gz,
+             summary{labelled, the same keys as meta.summary.<branch>}, engine{buildSeconds{v,label,cite}, solves{v,label,cite}},
+             vsDefault?{<headline key>: {v, ref, refId}},       # only the headline keys this scenario moved vs the same
+                                                                # policy on the default evening and fleet (refId)
+             variant?, alias?, plays?, attack?, attackSummary?, attackEngine?, producer?}]
+unavailable: [{levers{partial; a value or a list}, reason}]
+```
+- Fleet levers are **one away from the default at a time** on 23 Aug; two moved levers resolve to an `unavailable` row.
+  Failures exist on 23 Aug, policy aware, default fleet only. `reserve` options never go below 20 (hard constraint).
+- `none` under a battery lever (fleet size, class, reserve, start charge) is the shared 23 Aug `none` run: `alias` names it.
+  Growth changes home load, so each growth value has its own `none`.
+- `worker_kill` plays `p1/worker_kill.json` (producer `mpalacios.runtime`, A.6b), `covert` plays the 23 Aug aware branch
+  (`plays`) and shares its extras; `attack` = `p3/covert.json` (A.11), `attackSummary` its summary.
+- `engine.buildSeconds` is measured wall time on a shared machine (DERIVED; not byte-reproducible, like `engine.json`).
+  For `worker_kill` it is the rebuild time recorded in `mpalacios/docs/measurements.md` B1.3 (`WORKER_KILL_SECONDS`).
+
+**`p1/variants/<lever>=<value>/`**: `meta.json` in the A.5 shape plus `variant{lever, value, id, label, text, labelKind,
+noneShared, files}`, `fleet` (home indices, the fleet's order), `fleetCls`, and `engine.{buildSeconds, branchSeconds, solves}`;
+`naive.json.gz`, `aware.json.gz` (and `none.json.gz` for growth) in the A.6 shape (gzip 9, mtime 0). A fleet-size variant's
+`state`/`batKW`/`soc` rows hold `len(meta.fleet)` batteries. Levers: `fleet` 48/144/192, `cls` legacy, `reserve` 30/40/50,
+`soc0` 60/75/100, `growth` 20/50 (percent ints in ids, fractions in the engine).
+Fleet placement (ASSUMPTION, `FLEET_PLACEMENT`): N ≤ 96 keeps the 24 dense Cedar Grove homes and the first N−24 other
+fleet homes in `data/fleet.json` order; N > 96 keeps all 96 and adds eligible non-fleet homes in
+`numpy.random.default_rng(17263).permutation` order over topology home order (so 144 ⊂ 192). Legacy class: every battery
+is Legacy and the market plan uses its power and energy.
+
+**`p1/extras/<id with / → _>.json.gz`** (`hb.p1extras.v1`), one per playable scenario: `scenario, branch, steps, start,
+stepSeconds`, then the series of the story contract (`vTfMilli[steps][379]`, `busOrder[379]`, `busDistKm[379]`,
+`headKW`, `headKVAr`, `capKVAr`, `feederLoadKW`, `worstPct`, `worstTf`, `moments[{k,t,rule,text,label}]`,
+`failures[{kind,where,k0,k1,text,label}]`; k1 inclusive), `absent[]` and `engine`. Moment rules: `firstOver100`,
+`mostAtOnce`, `firstNormalEvent`, `firstAbove150`, `protection`, `fleetDischarging`, `fleetLowest`, `fleetRecharging`,
+`fault`, `takeover`, `lateCommands`, `end`. Failure kinds: scripted (`comms_lost`, `hot`, `stall`, `worker_kill`), then
+`normal`/`emergency`/`protection` (tier codes 3/4/5, merged when the gap ≤ `FAILURE_MERGE_MIN`), then `stale`.
+- Every extras file comes from a re-run of the branch the page plays, and the job **fails** unless the re-run reproduces
+  that branch's `loading` cell for cell. OpenDSS starts every solve from the last solution, so a run reproduces only
+  from the same circuit state: 23 Aug re-runs `sim.p1_build`'s order on a fresh circuit, the history evenings re-run
+  `sim.history`'s order (22 Jul, 26 Aug, 14 Aug, one fresh circuit). Variants are new runs (no committed twin).
+- A key the source cannot give is **ABSENT** (and named in `absent`), never zero. `worker_kill` is derived from its
+  committed branch file alone (never rebuilt): `vTfMilli`, `headKW`, `headKVAr`, `capKVAr`, `feederLoadKW` are absent.
+
+**Copies**: `p1/worker_kill.json` ← `mpalacios/out/p1/worker_kill.json`, `p3/covert.json` ← `mpalacios/out/p3/covert.json`,
+byte for byte (`sim.scenarios --catalogue-only` refreshes them). `sim.contracts` accepts producer `mpalacios.<module>`.
+
+**Engine API additions** (defaults unchanged; the committed P1 build stays byte-identical):
+`Scenario(win, loads, feeder, soc0=SOC0, reserve=RESERVE_FLOOR, growth=0.0)` (reserve < 0.20 raises `ValueError`; growth
+multiplies every home's kW and kvar by 1 + g, the warm-up minute included); `market(win, soc0, reserve, emax, pmax, rte)`;
+`Feeder(fleet=doc)` (`sim.scenarios.fleet_doc(n, cls)`); `Feeder.solve()` adds `head_kw`, `head_kvar` (HEAD_LINE
+terminal 1) and `cap_kvar` (positive = injected); `Feeder.vmin_tf(vmin_home)` gives the lowest home voltage per
+transformer (0 = isolated); each `Feeder.transformers[i]` has `distance` (km from the substation along the lines).
