@@ -9,7 +9,7 @@
    - every number on the page carries a tag, and **no page shows a placeholder or "not built"** in anything you plan to read;
    - the Run page plays in 3D (if the 3D area is blank, reload; the 2D fallback is acceptable for a take);
    - the **Running** screen shows the files loading and the engine's measured cost for that run, never a fake progress bar.
-3. **Playback.** The Run page opens paused. The default speed is **0.25×** (2.5 simulated minutes a second); `&speed=0.1` lingers, `&speed=1` skims. `&k=<step>` sets the minute (the trailing `&beat=<id>` only names the beat; the story pages ignore it): k counts minutes after 16:00 (k=360 is 22:00, k=390 is 22:30).
+3. **Playback.** A Run deep link opens paused at its minute; arriving through **Start the sim →** and Running, it plays from 16:00. The default speed is **0.25×** (2.5 simulated minutes a second); `&speed=0.1` lingers, `&speed=1` skims. `&k=<step>` sets the minute (the trailing `&beat=<id>` only names the beat; the story pages ignore it): k counts minutes after 16:00 (k=360 is 22:00, k=390 is 22:30).
 4. The old tab app is kept as the **Engine explorer** (`ui/explore.html`, footer link). It is not in the video.
 
 ## How to read the screen while you talk
