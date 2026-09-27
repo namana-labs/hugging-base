@@ -173,7 +173,7 @@ export function createShell(body) {
       const fr = header.querySelector('[data-framing="learnings"]');
       if (fr && getJSON) {
         getJSON('p2/index.json').then((p2) => {
-          const t = p2 && ((p2.scope && p2.scope.text) || (p2.usefulCapacity && p2.usefulCapacity.scopeText));
+          const t = p2 && ((p2.usefulCapacity && p2.usefulCapacity.scopeText) || (p2.scope && p2.scope.text));
           if (t) fr.textContent = t; else fr.remove();
         }).catch(() => fr.remove());
       } else if (fr) fr.remove();
