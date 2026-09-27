@@ -221,13 +221,13 @@ export function createShell(body) {
         return `<a class="st-step${on ? ' on' : ''}" href="${esc(link(id, {}))}" data-page="${id}"${on ? ' aria-current="page"' : ''}>${text}</a>`;
       }).join('');
       let right = '';
-      if (page === 'configure') right = `<span class="st-framing">${FRAMING}</span>`;
+      if (page === 'configure') right = `<span class="st-framing" title="${esc(FRAMING)}">${FRAMING}</span>`;
       else if (page === 'learnings') right = '<span class="st-framing" data-framing="learnings"></span>';
       else if (NEXT[page] && scenario) {
         const info = vsDefaultInfo(catalogue, scenario);
         const vs = info ? `${info.refTitle}: ${info.rows.length ? vsDefaultText(info.rows) : 'no headline value moved'}` : '';
         const ev = scenario.levers ? leverTag(catalogue, 'evening', scenario.levers.evening) : null;
-        right = `<span class="st-pill" title="${esc(`${scenario.title || scenario.id} (${scenario.id}): a static replay of the engine's run (ui/data). No simulator runs in the page.${vs ? ` Against the reference run: ${vs}.` : ''}`)}">
+        right = `<span class="st-pill" title="${esc(`${scenario.title || scenario.id} (${scenario.id}). ${leverSummary(catalogue, scenario.levers)}. A static replay of the engine's run (ui/data); no simulator runs in the page.${vs ? ` Against the reference run: ${vs}.` : ''}`)}">
             <span class="dot"></span><b>${esc(scenario.levers ? optionWords(catalogue, 'evening', scenario.levers.evening) : scenario.id)}</b>${ev ? tagHTML(ev.label, ev.cite) : ''}<span class="sum">${leverSummaryHTML(catalogue, scenario.levers)}</span></span>
           <a class="st-btn" href="${esc(link(NEXT[page][0], {}))}" data-next="${NEXT[page][0]}">${NEXT[page][1]}</a>`;
       }
@@ -238,7 +238,7 @@ export function createShell(body) {
       if (fr && getJSON) {
         getJSON('p2/index.json').then((p2) => {
           const t = p2 && ((p2.usefulCapacity && p2.usefulCapacity.scopeText) || (p2.scope && p2.scope.text));
-          if (t) fr.textContent = t; else fr.remove();
+          if (t) { fr.textContent = t; fr.title = t; } else fr.remove();
         }).catch(() => fr.remove());
       } else if (fr) fr.remove();
       // in-app navigation (the hrefs still work with a middle click)
