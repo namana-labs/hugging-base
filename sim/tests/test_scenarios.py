@@ -225,9 +225,38 @@ class CatalogueTests(unittest.TestCase):
         from sim.constants import P1_DAY
         self.assertEqual(S.HISTORY_ORDER, tuple(r["date"] for r in DAYS if r["date"] != P1_DAY))
 
+    def test_named_constants_for_the_ui(self):
+        c = self.doc["constants"]
+        self.assertEqual((c["V_ANSI_LO"]["value"], c["V_ANSI_HI"]["value"]), (0.95, 1.05))
+        self.assertEqual(c["V_ANSI_LO"]["label"], "REAL")
+        self.assertEqual((c["HIJACK_MHZ_LO"]["value"], c["HIJACK_MHZ_HI"]["value"], c["HIJACK_MW"]["value"]), (3, 17, 40))
+        self.assertTrue(all(c[k]["label"] == "DERIVED" for k in ("HIJACK_MHZ_LO", "HIJACK_MHZ_HI", "HIJACK_MW")))
+        for p in sorted({s["extras"] for s in self.doc["scenarios"]}):
+            d = read_json_any(UI_DATA / p)
+            self.assertEqual(d["constants"]["V_ANSI_LO"], c["V_ANSI_LO"], p)
+            self.assertEqual(d["constants"]["V_ANSI_HI"], c["V_ANSI_HI"], p)
+            self.assertIsInstance(d["steps"], int)
+            self.assertEqual(d["stepSeconds"], 60)
+            self.assertEqual(d["start"], "16:00")
+
     def test_copies_are_byte_identical(self):
         for src, dst in ((S.MP_WORKER_KILL, "p1/worker_kill.json"), (S.MP_COVERT, "p3/covert.json")):
             self.assertEqual((UI_DATA / dst).read_bytes(), Path(src).read_bytes(), dst)
+
+
+class RuleTests(unittest.TestCase):
+    def test_stale_rows_group_each_batterys_own_runs(self):
+        """One battery silent all night and a stall that expires every command are two rows, not one fleet-wide row."""
+        n, m = 60, 4
+        st = [["I"] * m for _ in range(n)]
+        for k in range(10, n):
+            st[k][0] = "S" if k < 12 else "X"
+        for k in range(30, 33):
+            for b in range(1, m):
+                st[k][b] = "X"
+        rows = S.stale_intervals("16:00", ["".join(r) for r in st], ["a", "b", "c", "d"])
+        self.assertEqual([(r["k0"], r["k1"], r["where"]) for r in rows], [(10, 59, "a"), (30, 32, "b, c, d")])
+        self.assertTrue(rows[1]["text"].startswith("3 batteries"))
 
 
 class ContractTests(unittest.TestCase):

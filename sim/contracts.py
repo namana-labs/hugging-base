@@ -246,7 +246,16 @@ FAILURE_KEYS = ("kind", "where", "k0", "k1", "text", "label")
 
 def _check_extras(doc, errs, tag):
     """A.12: one playable scenario's extra series; a key the source run cannot give is ABSENT (named in `absent`)."""
-    n = doc["steps"]
+    n = doc.get("steps")
+    _need(isinstance(n, int) and n > 0 and isinstance(doc.get("stepSeconds"), int) and doc["stepSeconds"] > 0
+          and bool(re.fullmatch(r"\d\d:\d\d", str(doc.get("start")))),
+          f"{tag}: steps, start (HH:MM) and stepSeconds are required (a page must never assume 720)", errs)
+    if not isinstance(n, int):
+        return
+    for k in ("V_ANSI_LO", "V_ANSI_HI"):                  # the UI's voltage band comes from here, never a literal
+        c = doc.get("constants", {}).get(k)
+        _need(isinstance(c, dict) and isinstance(c.get("value"), (int, float)) and c.get("label") == "REAL",
+              f"{tag}: constants.{k} (REAL, ANSI C84.1 Range A) is required", errs)
     absent = set(doc.get("absent") or ())
     for k in ("vTfMilli", "headKW", "headKVAr", "capKVAr", "feederLoadKW", "worstPct", "worstTf"):
         if k in absent:
@@ -272,6 +281,11 @@ def _check_extras(doc, errs, tag):
 
 def _check_story(doc, errs, root):
     tag = "story/index"
+    for k in ("V_ANSI_LO", "V_ANSI_HI", "HIJACK_MHZ_LO", "HIJACK_MHZ_HI", "HIJACK_MW"):
+        _need(isinstance(doc.get("constants", {}).get(k), dict), f"{tag}: constants.{k} is required", errs)
+    c = doc.get("constants", {})
+    _need(c.get("HIJACK_MHZ_LO", {}).get("value", 0) < c.get("HIJACK_MHZ_HI", {}).get("value", 0),
+          f"{tag}: the hijack frequency is a band (HIJACK_MHZ_LO < HIJACK_MHZ_HI), never one value", errs)
     ids = [s["id"] for s in doc["scenarios"]]
     _need(len(set(ids)) == len(ids), f"{tag}: duplicate scenario ids", errs)
     _need(doc["default"] in ids, f"{tag}: default {doc['default']!r} is not a scenario", errs)

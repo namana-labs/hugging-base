@@ -40,7 +40,8 @@ import numpy as np
 from .constants import (const, export, TAG, FLEET_SIZE, MIN_DWELL_MIN, P1_DAY, P1_STEP_SECONDS, RESERVE_FLOOR, SOC0,
                         FAULT_COMMS_AFTER_MIN, FAULT_HOT_AFTER_MIN, FAULT_STALL_AFTER_MIN, MIN_GRANT_KW,
                         TIER_AMBER_PCT)
-from .contracts import (ROOT, UI_DATA, envelope, inputs_sha, labelled, read_json_any, write_json, write_json_gz)
+from .contracts import (ROOT, UI_DATA, dumps, envelope, inputs_sha, labelled, read_json_any, write_json,
+                        write_json_gz)
 from .feeder import load_fleet
 from .tiers import tier_codes
 
@@ -82,6 +83,15 @@ FLEET_PLACEMENT = const(
 FAILURE_MERGE_MIN = const("FAILURE_MERGE_MIN", 5, "ASSUMPTION",
                           "docs/design-handoff/story-flow/README.md 'Failure detection': network-limit intervals merged "
                           "when the gap is 5 minutes or less")
+V_ANSI_LO = const("V_ANSI_LO", 0.95, "REAL", "ANSI C84.1-2020 Range A service voltage, ±5% of nominal")
+V_ANSI_HI = const("V_ANSI_HI", 1.05, "REAL", "ANSI C84.1-2020 Range A service voltage, ±5% of nominal")
+HIJACK_CITE = ("docs/research-report.md §frequency: ~40 MW swing from 1,000 batteries, range depends on load damping and "
+               "deadband (corrected 26 Sep from 3–5 mHz); quote the band, never one value")
+HIJACK_MHZ_LO = const("HIJACK_MHZ_LO", 3, "DERIVED", HIJACK_CITE)
+HIJACK_MHZ_HI = const("HIJACK_MHZ_HI", 17, "DERIVED", HIJACK_CITE)
+HIJACK_MW = const("HIJACK_MW", 40, "DERIVED", HIJACK_CITE)
+EXTRAS_CONSTANTS = ("FAILURE_MERGE_MIN", "FLEET_MOVE_KW", "TIER_AMBER_PCT", "TIER_NORMAL_PCT", "TIER_NORMAL_MIN",
+                    "TIER_EMERGENCY_PCT", "FUSE_PCT", "FUSE_MINUTES", "HEAD_LINE", "V_ANSI_LO", "V_ANSI_HI")
 FLEET_MOVE_KW = const("FLEET_MOVE_KW", 1.0, "ASSUMPTION",
                       "moments log: the fleet counts as discharging / recharging once its net kW passes 1 kW")
 
@@ -300,15 +310,28 @@ def failure_intervals(start, codes, states, fleet_labels, scripted):
             out.append({"kind": kind, "where": _where_tfs(tfs), "k0": k0, "k1": k1,
                         "text": f"{what} on {_where_tfs(tfs)}, {hhmm_of(start, k0)} to {hhmm_of(start, k1)}",
                         "label": "SIM"})
-    if states is not None and len(states):
-        sx = np.array([[c in "SX" for c in s] for s in states])
-        for k0, k1 in _intervals(sx.any(axis=1), FAILURE_MERGE_MIN):
-            bs = np.flatnonzero(sx[k0:k1 + 1].any(axis=0))
-            names = [fleet_labels[int(b)] for b in bs[:3]] + ([f"{len(bs) - 3} more"] if len(bs) > 3 else [])
-            out.append({"kind": "stale", "where": ", ".join(names), "k0": k0, "k1": k1,
-                        "text": f"{len(bs)} batter{'ies' if len(bs) != 1 else 'y'} stale or expired (no telemetry, or "
-                                f"the last command ran out), {hhmm_of(start, k0)} to {hhmm_of(start, k1)}",
-                        "label": "SIM"})
+    out += stale_intervals(start, states, fleet_labels)
+    return out
+
+
+def stale_intervals(start, states, fleet_labels):
+    """failures of kind "stale": each battery's own runs in state S or X (merged when the gap is <= FAILURE_MERGE_MIN),
+    batteries with the same run grouped into one row, rows by start step. One silent battery and a controller stall
+    that lets every command expire are two rows, never one "whole fleet all night" row."""
+    if states is None or not len(states):
+        return []
+    sx = np.array([[c in "SX" for c in s] for s in states])
+    groups = {}
+    for b in np.flatnonzero(sx.any(axis=0)):
+        for k0, k1 in _intervals(sx[:, b], FAILURE_MERGE_MIN):
+            groups.setdefault((k0, k1), []).append(int(b))
+    out = []
+    for (k0, k1), bs in sorted(groups.items()):
+        names = [fleet_labels[b] for b in bs[:3]] + ([f"{len(bs) - 3} more"] if len(bs) > 3 else [])
+        out.append({"kind": "stale", "where": ", ".join(names), "k0": k0, "k1": k1,
+                    "text": f"{len(bs)} batter{'ies' if len(bs) != 1 else 'y'} stale or expired (no telemetry, or "
+                            f"the last command ran out), {hhmm_of(start, k0)} to {hhmm_of(start, k1)}",
+                    "label": "SIM"})
     return out
 
 
@@ -356,9 +379,7 @@ def extras_envelope(inputs, constants=None, absent=None):
     series = dict(EXTRAS_SERIES)
     for k in absent or ():
         series.pop(k, None)
-    return envelope("p1extras", "sim.scenarios", inputs=inputs, constants=constants or export(
-        "FAILURE_MERGE_MIN", "FLEET_MOVE_KW", "TIER_AMBER_PCT", "TIER_NORMAL_PCT", "TIER_NORMAL_MIN",
-        "TIER_EMERGENCY_PCT", "FUSE_PCT", "FUSE_MINUTES", "HEAD_LINE"),
+    return envelope("p1extras", "sim.scenarios", inputs=inputs, constants=constants or export(*EXTRAS_CONSTANTS),
         sources={"referee": {"label": "SIM", "text": "OpenDSSDirect.py 0.9.4 AC power flow, every step"},
                  "rules": {"label": "SIM", "text": "moments and failures are computed from this run's arrays by "
                                                    "sim.scenarios (A.12)"}},
@@ -865,7 +886,7 @@ def build_catalogue():
     doc = envelope("story", "sim.scenarios", inputs=inputs_sha(),
                    constants=export("STORY_FLEET_SIZES", "STORY_RESERVES_PCT", "STORY_SOC0_PCT", "STORY_GROWTH_PCT",
                                     "FLEET_PLACEMENT", "FLEET_PLACEMENT_SEED", "RESERVE_FLOOR", "SOC0", "FLEET_SIZE",
-                                    "GROWTH"),
+                                    "GROWTH", "V_ANSI_LO", "V_ANSI_HI", "HIJACK_MHZ_LO", "HIJACK_MHZ_HI", "HIJACK_MW"),
                    sources={"engine": {"label": "SIM", "text": "every scenario is a committed run of sim.p1_build / "
                                                               "sim.history / sim.scenarios / mpalacios (OpenDSS every step)"},
                             "timing": {"label": "DERIVED", "text": "engine.buildSeconds measured on a shared machine; "
@@ -884,6 +905,38 @@ def build_catalogue():
 
 def lv_key(lv, v):
     return lever_key(lv, v)
+
+
+def refresh_extras(doc=None):
+    """Without OpenDSS, bring every extras file up to the current rules: its `constants` block becomes
+    export(*EXTRAS_CONSTANTS) (the physics does not change), and its `stale` failure rows are recomputed from the branch
+    file its scenario plays (state strings are the run's own: branch_doc writes run["state"])."""
+    doc = doc or build_catalogue()
+    done = set()
+    for s in doc["scenarios"]:
+        rel = s["extras"]
+        if rel in done or s.get("alias") or s.get("plays"):
+            continue
+        done.add(rel)
+        ex = read_json_any(UI_DATA / rel)
+        before = dumps(ex)
+        ex["constants"] = export(*EXTRAS_CONSTANTS)
+        bd = read_json_any(UI_DATA / s["branch"])
+        if "state" not in bd or ex.get("branch") == "none":
+            if dumps(ex) != before:
+                write_json_gz(UI_DATA / rel, ex)
+                print(f"    refreshed: {rel}", flush=True)
+            continue
+        topo = json.loads(TOPOLOGY.read_text(encoding="utf-8"))
+        labels = [h["label"] for h in topo["homes"]]
+        meta = read_json_any(UI_DATA / s["meta"])
+        fleet = meta.get("fleet") if s["branch"] != "p1/worker_kill.json" else topo["fleet"]
+        fleet_labels = [labels[h] for h in (fleet or topo["fleet"])]
+        ex["failures"] = [f for f in ex["failures"] if f["kind"] != "stale"] + stale_intervals(
+            ex["start"], bd["state"], fleet_labels)
+        if dumps(ex) != before:
+            write_json_gz(UI_DATA / rel, ex)
+            print(f"    refreshed: {rel}", flush=True)
 
 
 def copy_runtime_files():
@@ -913,11 +966,17 @@ def main(argv=None):
     ap.add_argument("--catalogue-only", action="store_true", help="copies + index.json from files on disk")
     ap.add_argument("--no-catalogue", action="store_true", help="run the jobs only")
     ap.add_argument("--list", action="store_true", help="print the jobs")
+    ap.add_argument("--refresh", action="store_true",
+                    help="no OpenDSS: re-stamp every extras file's constants and recompute its stale rows, then the "
+                         "catalogue")
     a = ap.parse_args(argv)
     if a.list:
         print("\n".join(all_jobs()))
         return 0
     t0 = time.time()
+    if a.refresh:
+        refresh_extras()
+        a.catalogue_only = True
     if not a.catalogue_only:
         jobs = sorted({job_of(t) for t in a.only}) if a.only else all_jobs()
         run_jobs(jobs)
