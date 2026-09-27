@@ -308,7 +308,10 @@ export async function mountRunning(root, ctx) {
   $('.rn-title').textContent = 'Done';
   $('.rn-stage').textContent = `Opening the run: ${meta.start} → ${stepToTime(meta, meta.steps)}, ${fmtN(meta.steps)} steps, files in ${fmtN(performance.now() - started)} ms`;
   try { sessionStorage.setItem(AUTOPLAY_KEY, sc.id); } catch (err) { /* private mode: Run opens paused */ }
-  timer = setTimeout(() => { if (!disposed) ctx.nav('run', { s: sc.id, k: null }, { replace: true }); }, 500);
+  // review-0927 M8: the "Running, honestly" beat link (&beat=running) holds this page for 6 s so it can be filmed; the
+  // judge's path (no beat) hands over to Run after 0.5 s as before
+  const wait = /[?&]beat=running\b/.test(location.search) ? 6000 : 500;
+  timer = setTimeout(() => { if (!disposed) ctx.nav('run', { s: sc.id, k: null }, { replace: true }); }, wait);
   return { dispose() { disposed = true; clearTimeout(timer); } };
 }
 
