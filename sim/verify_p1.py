@@ -5,7 +5,7 @@
                                          # HB_LOCK_HELD=1) and byte-compares every file
 
 Lines are tagged [INVARIANT] (gates: a failure is a bug), [EXPECT] (prints ok/REFUTED, never gates; build prompt 3.5)
-or [report]. Ends "VERIFY p1: PASS (k expectations refuted, see NOTES.md)" or "VERIFY p1: FAIL (<invariants>)".
+or [report]. Ends "VERIFY p1: PASS (k expectations refuted, see the [EXPECT] lines above)" or "VERIFY p1: FAIL (<invariants>)".
 """
 import gzip
 import json
@@ -34,7 +34,7 @@ from datetime import datetime, timedelta
 
 P1 = UI_DATA / "p1"
 BRANCHES = ("none", "naive", "aware", "aware_faults")
-LOCK = os.environ.get("HB_LOCK", "/private/tmp/claude-501/forge-heavy-local.lock")
+LOCK = os.environ.get("HB_LOCK", os.path.join(tempfile.gettempdir(), "hb-heavy.lock"))
 
 
 class V:
@@ -343,7 +343,7 @@ def main(argv=None):
     if v.fails:
         print(f"VERIFY p1: FAIL ({', '.join(v.fails)})")
         return 1
-    print(f"VERIFY p1: PASS ({len(v.refuted)} expectations refuted, see NOTES.md{': ' + ', '.join(v.refuted) if v.refuted else ''})")
+    print(f"VERIFY p1: PASS ({len(v.refuted)} expectations refuted, see the [EXPECT] lines above{': ' + ', '.join(v.refuted) if v.refuted else ''})")
     return 0
 
 
@@ -511,7 +511,7 @@ def rebuild_compare():
         if (P1 / "chaos.json").exists():
             steps.append([sys.executable, "-m", "sim.chaos", "--out", tmp])
         cmd = ["bash", "-c", " && ".join(shlex.join(s) for s in steps)]
-        if os.environ.get("HB_LOCK_HELD") != "1":
+        if os.environ.get("HB_LOCK_HELD") != "1" and shutil.which("lockf"):
             cmd = ["lockf", "-k", "-t", "2400", LOCK, "nice", "-n", "10"] + cmd
         r = subprocess.run(cmd, cwd=Path(__file__).resolve().parents[1], capture_output=True, text=True)
         if r.returncode != 0:
@@ -725,7 +725,7 @@ def main_days(argv):
     if v.fails:
         print(f"VERIFY p1: FAIL (days: {', '.join(sorted(set(v.fails)))})")
         return 1
-    print(f"VERIFY p1: PASS (days: {len(built)} evenings; {len(v.refuted)} expectations refuted, see NOTES.md"
+    print(f"VERIFY p1: PASS (days: {len(built)} evenings; {len(v.refuted)} expectations refuted, see the [EXPECT] lines above"
           f"{': ' + ', '.join(v.refuted) if v.refuted else ''})")
     return 0
 
@@ -752,7 +752,7 @@ def rebuild_days_compare():
             steps.append([sys.executable, "-c", "import sys; from sim.history import slice_loads; "
                           "[slice_loads(d, out_dir=sys.argv[1], force=True) for d in sys.argv[2:]]", tmp + "/slices"] + cut)
         cmd = ["bash", "-c", " && ".join(shlex.join(s) for s in steps)]
-        if os.environ.get("HB_LOCK_HELD") != "1":
+        if os.environ.get("HB_LOCK_HELD") != "1" and shutil.which("lockf"):
             cmd = ["lockf", "-k", "-t", "2400", LOCK, "nice", "-n", "10"] + cmd
         r = subprocess.run(cmd, cwd=Path(__file__).resolve().parents[1], capture_output=True, text=True)
         if r.returncode != 0:

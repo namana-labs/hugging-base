@@ -9,8 +9,11 @@
 set -u
 ROOT="$(git rev-parse --show-toplevel)" || exit 2
 cd "$ROOT"
-PY="${PY:-$HOME/hb-overnight/.venv/bin/python}"
-LOCK="${HB_LOCK:-/private/tmp/claude-501/forge-heavy-local.lock}"
+# the venv's python: bin/python (macOS/Linux) or Scripts/python.exe (Windows)
+venv_py() { if [ -x "$1/bin/python" ]; then echo "$1/bin/python"; elif [ -x "$1/Scripts/python.exe" ]; then echo "$1/Scripts/python.exe"; else echo "$1/bin/python"; fi; }
+PY="${PY:-$(venv_py "${HB_VENV:-$HOME/hb-overnight/.venv}")}"
+LOCK="${HB_LOCK:-${TMPDIR:-/tmp}/hb-heavy.lock}"
+command -v lockf >/dev/null 2>&1 || export HB_LOCK_HELD=1   # no lockf (Linux/Windows): run heavy steps unlocked
 QUICK=()
 TARGETS=()
 for a in "$@"; do
