@@ -132,7 +132,7 @@ export function verdictOf(sm, levers = {}, tm = null) {
   if (bn) parts.push(`${fmtNum(bn)} normal-rating event${bn === 1 ? '' : 's'}`);
   if (be) parts.push(`${fmtNum(be)} transformer${be === 1 ? '' : 's'} in emergency`);
   if (prot) parts.push(`${fmtNum(prot)} fuse${prot === 1 ? '' : 's'} open`);
-  return { title: `Batteries caused ${parts.join(' and ')} this evening`, sub, ok: false };
+  return { title: `Batteries caused ${parts.join(' and ')} this evening`, sub: prot ? `${sub} · fuse openings use an ASSUMPTION rule (screening)` : sub, ok: false, screening: !!prot };
 }
 
 export function tileDefs(tm) {
@@ -143,26 +143,37 @@ export function tileDefs(tm) {
     { key: 'chargedPctBy0400', title: tm ? `Fleet charged by ${clockOf(tm.n, tm)}` : 'Fleet charged at the end of the run', opts: { digits: 1, unit: '%' } },
   ];
 }
-/** Tile models: this run's labelled value (or null) and one compare row per other run. */
-export function tilesModel(sm, others, tm = null) {
+/** Digits for a pu voltage: one more when 3 would round it onto the band's lower edge (0.9498 must not read 0.950). */
+export const vDigits = (v, band) => (band && fin(v) && v < band.lo.v && +v.toFixed(3) >= band.lo.v ? 4 : 3);
+/** Tile models: this run's labelled value (or null) and one compare row per other run. The lowest-voltage tile says
+ *  when one home dips under the band's floor, and that voltage is not part of the capacity harm test (TRUTH #4). */
+export function tilesModel(sm, others, tm = null, band = null) {
   return tileDefs(tm).map((d) => {
     const x = sm ? sm[d.key] : null;
     const big = has(x) ? x : null;
     const na = !!(x && isLab(x) && x.v == null);
-    const where = d.where && big && big.tf != null ? `T-${big.tf}${big.t ? ` at ${big.t}` : ''}` : '';
+    const volt = d.key === 'vMinHome';
+    const opts = volt && big ? { ...d.opts, digits: vDigits(big.v, band) } : d.opts;
+    let where = d.where && big && big.tf != null ? `T-${big.tf}${big.t ? ` at ${big.t}` : ''}` : '';
+    if (volt && big) {
+      where = band && big.v < band.lo.v
+        ? `one home dips just under ${fmtNum(band.lo.v, decimalsOf(band.lo.v))} pu${big.t ? ` at ${big.t}` : ''}; voltage is not part of the capacity harm test`
+        : big.t ? `at ${big.t}` : '';
+    }
     const cmp = others.map((o) => {
       const y = o.summary ? o.summary[d.key] : null;
-      return { name: o.name, text: has(y) ? `${fmtNum(y.v, d.opts.digits)}${d.opts.unit || ''}` : '—', missing: !has(y) };
+      const dg = volt && has(y) ? vDigits(y.v, band) : d.opts.digits;
+      return { name: o.name, text: has(y) ? `${fmtNum(y.v, dg)}${d.opts.unit || ''}` : '—', missing: !has(y) };
     });
-    return { ...d, big, na, where, cmp };
+    return { ...d, opts, big, na, where, cmp };
   });
 }
 /** The evening's other labelled facts (money, reserve, homes dark). The reserve is this scenario's lever value. */
 export function eveningDefs(levers = {}) {
   return [
-    { key: 'energyValueUSD', title: 'Gross energy value, not Base\'s profit', opts: { money: true, digits: 2 }, skip: levers.policy === 'none' },
+    { key: 'energyValueUSD', title: 'Fleet gross energy value, not Base\'s profit', opts: { money: true, digits: 2 }, skip: levers.policy === 'none' },
     { key: 'reserveBreaches', title: levers.reserve != null ? `Breaches of the ${levers.reserve}% member reserve` : 'Member reserve breaches', opts: { digits: 0 } },
-    { key: 'homesDark', title: 'Homes dark', opts: { digits: 0 } },
+    { key: 'homesDark', title: 'Homes dark', opts: { digits: 0, screening: true } },
     { key: 'emergencyTfs', title: 'Transformers in emergency', opts: { digits: 0 } },
   ];
 }
@@ -411,7 +422,7 @@ export async function mount(root, ctx) {
   const hij = hijackOf(cat);
   const fq = failure === 'covert' ? freqModel(freq, hij) : null;
   const verdict = verdictOf(sm, L, tm);
-  const tiles = tilesModel(sm, others, tm);
+  const tiles = tilesModel(sm, others, tm, band);
   let k = 0;
   const fromLink = ctx.params && ctx.params.k != null;
   if (fromLink || !(ex && Array.isArray(ex.worstPct) && ex.worstPct.length)) k = Number.isFinite(ctx.k) ? ctx.k : 0;
@@ -419,6 +430,7 @@ export async function mount(root, ctx) {
   k = n ? Math.max(0, Math.min(n - 1, Math.round(k))) : 0;
 
   const evening = leverLabel(cat, 'evening', L.evening);
+  const absent = (k) => !!(ex && Array.isArray(ex.absent) && ex.absent.includes(k));
   const exMissing = !ex ? (exR.err ? notBuilt(exR.err, scn.extras) : 'not exported for this run') : !tm ? 'this run\'s clock (steps, start, stepSeconds) is not exported' : null;
   const vLab = sLabel('vTfMilli', 'SIM'), oLab = sLabel('busOrder', 'DERIVED'), qLab = sLabel('headKVAr', 'SIM'), cLab = sLabel('capKVAr', 'SIM');
   const bandTag = band ? tagHTML(band.lo.label, `${band.lo.cite}; ${band.hi.cite}`) : '';
@@ -463,9 +475,10 @@ export async function mount(root, ctx) {
         <span class="pb-axis pb-axis-tl">${esc(fmtNum(fq.dmax, 3))} Hz</span><span class="pb-axis pb-axis-bl">${esc(fmtNum(fq.dmin, 3))} Hz</span>
       </div>
       <div class="pb-kv"><span>Normal wander that day (σ)</span><span>${numH(ctx, fq.sigma, { digits: 1, unit: ' mHz' })}</span></div>
-      <div class="pb-kv"><span>A ${hij && hij.mw ? numH(ctx, hij.mw, { digits: 0, unit: ' MW' }) : ''} battery hijack moves it by</span><span>${hijH}</span></div>
+      <div class="pb-kv"><span>A fleet hijack swings</span><span>${hij && hij.mw ? numH(ctx, hij.mw, { digits: 0, unit: ' MW' }) : missingHTML('not exported')}</span></div>
+      <div class="pb-kv"><span>which moves frequency by</span><span>${hijH}</span></div>
       <div class="pb-note">Same scale: the bracket at the right edge is the hijack band beside a whole day of normal wander. The feeder sees the attack; grid-wide frequency cannot single it out.</div>`
-      : `<div class="pb-kv">${missingHTML(freqErr || 'frequency series not loaded')}</div><div class="pb-kv"><span>A battery hijack moves it by</span><span>${hijH}</span></div>`}
+      : `<div class="pb-kv">${missingHTML(freqErr || 'frequency series not loaded')}</div><div class="pb-kv"><span>A fleet hijack moves frequency by</span><span>${hijH}</span></div>`}
     </div>` : '';
 
   root.innerHTML = `
@@ -473,7 +486,7 @@ export async function mount(root, ctx) {
       <div class="pb-card pb-verdict${verdict.ok === false ? ' pb-verdict-bad' : ''}">
         <div class="pb-eyebrow">THIS EVENING · ${esc(String(evening).toUpperCase())} · ${esc(runName(scn, cat).toUpperCase())}</div>
         <div class="pb-verdict-t">${esc(verdict.title)}</div>
-        <div class="pb-verdict-s">${sm ? tagHTML('SIM', 'OpenDSS AC power flow, every step (the run summary)') : ''}<span>${esc(verdict.sub)}</span></div>
+        <div class="pb-verdict-s">${sm ? tagHTML('SIM', 'OpenDSS AC power flow, every step (the run summary)', !!verdict.screening) : ''}<span>${esc(verdict.sub)}</span></div>
       </div>
       ${tileH}
     </div>
@@ -489,7 +502,7 @@ export async function mount(root, ctx) {
           </svg>
           ${band ? `<span class="pb-axis pb-red" style="top:calc(${vY(band.hi.v, vsc)}% - 14px)">${fmtNum(band.hi.v, bd)}</span><span class="pb-axis pb-red" style="top:calc(${vY(band.lo.v, vsc)}% + 1px)">${fmtNum(band.lo.v, bd)}</span>`
     : `<span class="pb-axis pb-axis-tl">${fmtNum(vsc.hi, 3)}</span><span class="pb-axis" style="top:calc(96% - 14px)">${fmtNum(vsc.lo, 3)}</span>`}
-          <span class="pb-axis pb-axis-bl">← near the substation</span><span class="pb-axis pb-axis-br">far end →</span>` : `<div class="pb-empty">${missingHTML(exMissing || 'voltage by bus not exported for this run')}</div>`}
+          <span class="pb-axis pb-axis-bl">← near the substation</span><span class="pb-axis pb-axis-br">far end →</span>` : `<div class="pb-empty">${missingHTML(exMissing || (absent('vTfMilli') ? 'not exported for this run: this replay records no voltage per transformer' : 'voltage by bus not exported for this run'))}</div>`}
         </div>
         <div class="pb-foot">${hasV ? `${tagHTML(vLab, 'OpenDSS lowest home voltage per transformer (extras vTfMilli)')}OpenDSS, every transformer · order ${tagHTML(oLab, 'path distance from the substation along the SMART-DS lines (extras busOrder)')} path distance from the substation · ${band ? `${bandTxt} ${bandTag}` : missingHTML('band not exported for this run')}` : 'Voltage by bus comes from the engine\'s extras export'}</div>
       </div>
@@ -503,7 +516,7 @@ export async function mount(root, ctx) {
             <path d="${rq.headD}" fill="none" stroke="#10231a" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
           </svg>
           <span class="pb-axis pb-axis-tl">${esc(fmtNum(rq.hi, 0))}</span><span class="pb-axis pb-axis-bl">${esc(fmtNum(rq.lo, 0))}</span>
-          <div class="pb-cursor" data-pb="cur"></div>` : `<div class="pb-empty">${missingHTML(exMissing || 'reactive power not exported for this run')}</div>`}
+          <div class="pb-cursor" data-pb="cur"></div>` : `<div class="pb-empty">${missingHTML(exMissing || (absent('headKVAr') ? 'not exported for this run: this replay records no feeder-head reactive power' : 'reactive power not exported for this run'))}</div>`}
         </div>
         <div class="pb-legend"><span><i class="pb-sw-line"></i>feeder head ${tagHTML(qLab, 'OpenDSS feeder-head Q (extras headKVAr)')}</span><span><i class="pb-sw-area"></i>capacitor bank ${tagHTML(cLab, 'OpenDSS capacitor output (extras capKVAr)')}</span><span><i class="pb-sw-brand"></i>our inverters: 0, unity power factor ${tagHTML('ASSUMPTION', 'the batteries run at unity power factor: they exchange no reactive power in this run')}</span></div>
       </div>
@@ -511,13 +524,13 @@ export async function mount(root, ctx) {
     <div class="pb-row3${fm ? ' pb-has-fail' : ''}${failure === 'covert' ? ' pb-has-freq' : ''}">
       <div class="pb-card pb-heat">
         <div class="pb-card-h"><span class="pb-card-t">Voltage over the evening</span><span class="pb-sub">every transformer (rows, substation at top) × every step</span>${hasV ? tagHTML(vLab, 'OpenDSS lowest home voltage per transformer (extras vTfMilli)') : ''}</div>
-        <div class="pb-plot pb-scrub" data-pb="hplot">${hasV ? `<canvas data-pb="heat" width="${n}" height="${ex.busOrder.length}"></canvas><div class="pb-cursor" data-pb="cur"></div>` : `<div class="pb-empty">${missingHTML(exMissing || 'not exported for this run')}</div>`}</div>
+        <div class="pb-plot pb-scrub" data-pb="hplot">${hasV ? `<canvas data-pb="heat" width="${n}" height="${ex.busOrder.length}"></canvas><div class="pb-cursor" data-pb="cur"></div>` : `<div class="pb-empty">${missingHTML(exMissing || (absent('vTfMilli') ? 'not exported for this run: this replay records no voltage per transformer' : 'not exported for this run'))}</div>`}</div>
         <div class="pb-legend pb-heat-legend">${hasV ? heatLegend(band).map((l) => `<span><i style="background:${l.css}"></i>${esc(l.text)}</span>`).join('') + (band ? bandTag : missingHTML('band not exported for this run')) : ''}</div>
       </div>
       <div class="pb-card pb-evening">
         <div class="pb-card-h"><span class="pb-card-t">The evening in numbers</span></div>
         ${sm ? eveningH : `<div class="pb-kv">${missingHTML()}</div>`}
-        <div class="pb-note">Gross energy value is REAL LZ_NORTH prices × simulated battery kW: not Base's profit.</div>
+        <div class="pb-note">Fleet gross energy value is REAL LZ_NORTH prices × simulated battery kW: not Base's profit.</div>
         ${naiveNote}
       </div>
       ${failH}${freqH}
@@ -565,7 +578,7 @@ export async function mount(root, ctx) {
         : `<line x1="${b.x}" x2="${b.x}" y1="${base}" y2="${b.y}" stroke="${b.c}" stroke-width="1.6" vector-effect="non-scaling-stroke"/>`)).join('');
       const lo = lowestBus(row), iso = st.filter((b) => b.iso).length;
       const dist = lo ? distKmOf(ex, lo.i) : null;
-      $('vnow').innerHTML = lo ? `lowest <b>${fmtNum(lo.v, 3)} pu</b> at T-${lo.i}${dist != null ? ` (${fmtNum(dist, 1)} km out ${tagHTML(sLabel('busDistKm', 'DERIVED'), 'extras busDistKm: along the SMART-DS lines')})` : ''}${iso ? ` · ${iso} isolated` : ''} ${tagHTML(vLab, 'extras vTfMilli')}` : 'every bus isolated';
+      $('vnow').innerHTML = lo ? `lowest <b>${fmtNum(lo.v, 3)} pu</b> at T-${lo.i}${dist != null ? `, ${fmtNum(dist, 1)} km out ${tagHTML(sLabel('busDistKm', 'DERIVED'), 'extras busDistKm: along the SMART-DS lines')}` : ''}${iso ? ` · ${iso} isolated` : ''} ${tagHTML(vLab, 'extras vTfMilli')}` : 'every bus isolated';
     } else if ($('vnow')) $('vnow').textContent = '';
     if (rq && $('qnow')) $('qnow').innerHTML = `head <b>${fmtNum(rq.head[k], 0)}</b> · capacitor <b>${fmtNum(rq.cap[k], 0)}</b> kvar ${tagHTML(qLab, 'extras headKVAr / capKVAr')}`;
   }

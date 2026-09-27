@@ -236,8 +236,10 @@ export function rankingModel(p2a, topo, n = TOP_N) {
   const rank = (p2a && Array.isArray(p2a.ranking) ? p2a.ranking : []).slice(0, n);
   const r0 = rank[0];
   const why = r0 ? String(r0.reason || '').split(';')[0].replace(/\s*\((SIM|DERIVED|REAL|ASSUMPTION)[^)]*\)/g, '').trim() : '';
+  const of = p2a && p2a.flip && has(p2a.flip.entries) ? p2a.flip.entries : null;     // collapsed: one entry per transformer
   return {
-    headline: r0 ? `The next battery goes to ${r0.label} on ${tfName(topo, r0.tf)}: it ${why}.` : null,
+    of,
+    headline: r0 ? `The next battery goes to ${r0.label} on ${tfName(topo, r0.tf)} (rank ${r0.rank}${of ? ` of ${fmtNum(of.v)}` : ''}): it ${why}.` : null,
     rows: rank.map((r) => ({ rank: r.rank, home: r.label, tf: r.tf, tfName: tfName(topo, r.tf), stress: r.stressAvoidedH, peak: r.peakWithPct, value: r.revenueUSD, screening: r.screening })),
     tfs: [...new Set(rank.map((r) => r.tf))],
   };
@@ -466,6 +468,8 @@ export async function mount(root, ctx) {
     const blocked = all.filter((r) => r.why === 'blocked').length;
     const seg = levels.map((l) => `<button type="button" class="pb-seg-b${l.g === st.g ? ' on' : ''}" data-g="${l.g}"${l.ok ? '' : ' disabled title="not exported by the planner"'}>${l.g ? `+${l.g}%` : 'Today\'s load'}${l.ok ? '' : ' · not exported'}</button>`).join('');
     const H = horizon != null ? `${fmtNum(horizon)} years` : 'the horizon';
+    const N = all.length;
+    const upCite = planner.meta && planner.meta.cites && planner.meta.cites.up;
     const lines = list.map((r) => {
       const t = planner.tfs[rows.get(r.tf)] || {};
       const u = r.unlocked;
@@ -475,8 +479,8 @@ export async function mount(root, ctx) {
       const ageTxt = r.age && has(r.age) ? ` · age ${num(r.age, { digits: 0, unit: ' y' })}${t.age && t.age.source !== 'utility' ? ' (simulated)' : ''}` : '';
       return `
         <div class="pb-up${r.tf === st.sel ? ' on' : ''}${r.why === 'onboard' ? ' pb-dim' : ''}" data-tf="${r.tf}">
-          <div class="pb-up-h"><b>${esc(tfName(topo, r.tf))}</b><span class="pb-sub">${has(t.kva) ? fmtNum(t.kva.v) : '—'}${t.up && has(t.up.kva) ? ` → ${fmtNum(t.up.kva.v)}` : ''} kVA · ${fmtNum(t.homes)} home${t.homes === 1 ? '' : 's'} · ${fmtNum(r.k0)} wanted now, fits ${fmtNum(r.c)}</span><span class="pb-right pb-verdict-w${vw && /^Upgrade/.test(vw.word) ? ' pb-go' : ''}">${esc(vw ? vw.word : '')}</span></div>
-          <div class="pb-up-b">${r.why === 'onboard' ? 'every home here is already a member: an upgrade unlocks no one' : `unlocks <b>${unl}</b> member${has(u) && u.v === 1 ? '' : 's'} within ${esc(H)}${r.valueUSDYr && has(r.valueUSDYr) && r.valueUSDYr.v ? `, worth ${num(r.valueUSDYr, { money: true, digits: 0 })}/yr` : ''}${has(r.paybackYears) ? ` · pays back in ${num(r.paybackYears, { digits: 1, unit: ' yr' })}` : ''}`}${ageTxt}${r.screening ? ` ${tagHTML('SCREENING', 'caps at this home-load growth are the surrogate screen (not OpenDSS-checked); one size up stays at today\'s load')}` : ''}</div>
+          <div class="pb-up-h"><span class="pb-rank-n">${r.rank != null ? `${r.rank}<small> of ${fmtNum(N)}</small>` : ''}</span><b>${esc(tfName(topo, r.tf))}</b><span class="pb-sub">${has(t.kva) ? fmtNum(t.kva.v) : '—'}${t.up && has(t.up.kva) ? ` → ${fmtNum(t.up.kva.v)}` : ''} kVA · ${fmtNum(t.homes)} home${t.homes === 1 ? '' : 's'} · ${fmtNum(r.k0)} wanted now, fits ${fmtNum(r.c)}</span><span class="pb-right pb-verdict-w${vw && /^Upgrade/.test(vw.word) ? ' pb-go' : ''}">${esc(vw ? vw.word : '')}</span></div>
+          <div class="pb-up-b">${r.why === 'onboard' ? 'every home here is already a member: an upgrade unlocks no one' : `unlocks <b>${unl}</b> member${has(u) && u.v === 1 ? '' : 's'} ${has(u) ? tagHTML(u.label, `${u.cite}; one size up: ${upCite || 'screening'}`, true) : ''} within ${esc(H)}${r.valueUSDYr && has(r.valueUSDYr) && r.valueUSDYr.v ? `, worth ${num(r.valueUSDYr, { money: true, digits: 0 })}/yr` : ''}${has(r.paybackYears) ? ` · pays back in ${num(r.paybackYears, { digits: 1, unit: ' yr' })}` : ''}`}${ageTxt}${r.screening ? ` ${tagHTML('SCREENING', 'caps at this home-load growth are the surrogate screen (not OpenDSS-checked); one size up stays at today\'s load')}` : ''}</div>
           ${vw && vw.why ? `<div class="pb-sub">${esc(vw.why)}</div>` : ''}
         </div>`;
     }).join('');
@@ -485,7 +489,7 @@ export async function mount(root, ctx) {
       <div class="pb-headline pb-h20">${st.g ? `At +${st.g}% home load` : 'At today\'s load'}, ${fmtNum(blocked)} transformer${blocked === 1 ? ' blocks' : 's block'} a battery wanted now, feeder-aware with the utility rule unchanged.</div>
       <div class="pb-growth"><span class="pb-sub">Home load growth (EVs, heat pumps)</span>${tagHTML('ASSUMPTION', constOf('PLAN_GROWTH_PCTS', planner) ? constOf('PLAN_GROWTH_PCTS', planner).cite : 'planner perK growth levels')}<div class="pb-seg">${seg}</div></div>
       <div class="pb-uplist">${lines || '<div class="pb-body">No transformer is at capacity at this load.</div>'}</div>
-      <div class="pb-foot">Upgrade cost ${has(money.upgradeUSD) ? num(money.upgradeUSD, { money: true, digits: 0 }) : missingHTML()} per transformer · member value ${has(money.memberValueUSDYr) ? num(money.memberValueUSDYr, { money: true, digits: 0 }) : missingHTML()}/yr is energy value, not Base's profit · unlocked = members over today's cap that one size up serves (typical growth; slow–fast) · verdict = least worst regret over slow, typical and fast growth (planner.js decide)</div>`;
+      <div class="pb-foot">Upgrade cost ${has(money.upgradeUSD) ? num(money.upgradeUSD, { money: true, digits: 0 }) : missingHTML()} per transformer · member value ${has(money.memberValueUSDYr) ? num(money.memberValueUSDYr, { money: true, digits: 0 }) : missingHTML()}/yr per battery is gross energy value, not Base's profit, and assumes perfect price foresight · unlocked = members over today's cap that one size up serves (typical growth; slow–fast) · verdict = least worst regret over slow, typical and fast growth (planner.js decide)</div>`;
   }
 
   function q4HTML() {
@@ -496,17 +500,17 @@ export async function mount(root, ctx) {
     return `
       ${eyebrow}
       <div class="pb-headline pb-h20">${esc(rm.headline)}</div>
-      <div class="pb-sub">Ranked by the transformer stress it removes, then energy value${month ? `, for ${esc(month)}` : ''} with feeder-aware charging. Each pick adds no new violation because of batteries.</div>
+      <div class="pb-sub">Ranked by the transformer stress it removes, then energy value${month ? `, for ${esc(month)}` : ''} with feeder-aware charging${rm.of ? `, among ${num(rm.of, { digits: 0 })} transformers with a candidate home (one entry each)` : ''}. Each pick adds no new violation because of batteries.</div>
       <div class="pb-ranklist">${rm.rows.map((r) => `
         <div class="pb-rank${r.tf === st.sel ? ' on' : ''}" data-tf="${r.tf}">
-          <span class="pb-rank-n">${r.rank}</span>
+          <span class="pb-rank-n">${r.rank}${rm.of ? `<small> of ${fmtNum(rm.of.v)}</small>` : ''}</span>
           <span class="pb-rank-h"><b>${esc(r.home)}</b> <span class="pb-sub">on ${esc(r.tfName)}</span></span>
           <span class="pb-rank-v">${has(r.value) ? num(r.value, { money: true, digits: 2 }) : missingHTML()}</span>
           <span></span>
-          <span class="pb-sub">removes ${has(r.stress) ? num(r.stress, { digits: 2, unit: ' h', screening: !!r.screening }) : '—'} over nameplate · month peak ${has(r.peak) ? num(r.peak, { digits: 1, unit: '%', screening: !!r.screening }) : '—'} with it</span>
-          <span class="pb-sub">energy value</span>
+          <span class="pb-sub">removes ${has(r.stress) ? num(r.stress, { digits: 2, unit: ' h', screening: true }) : '—'} over nameplate · month peak ${has(r.peak) ? num(r.peak, { digits: 1, unit: '%', screening: true }) : '—'} with it</span>
+          <span class="pb-sub">energy value*</span>
         </div>`).join('')}</div>
-      <div class="pb-foot">sim.p2_build ranking, ${esc(p2a.combo || 'aware-core-d26-g0')} · stress hours SIM (surrogate, calibrated to OpenDSS) · energy value DERIVED from REAL prices, not Base's profit</div>`;
+      <div class="pb-foot">sim.p2_build ranking, ${esc(p2a.combo || 'aware-core-d26-g0')} · stress hours and peaks: surrogate screen, calibrated to OpenDSS, not OpenDSS-checked · *energy value per battery: REAL prices, assumes perfect price foresight; gross energy value, not Base's profit</div>`;
   }
 
   // ---------------- render + events ----------------
