@@ -264,6 +264,10 @@ class CommittedFile(unittest.TestCase):
         self.assertEqual([s[k]["aware"]["v"] for k in ("25", "50", "75")], [2, 4, 6])
         self.assertEqual([s[k]["paper"]["v"] for k in ("25", "50", "75")], [1, 2, 3])
         self.assertEqual([s[k]["count"]["v"] for k in ("10", "25", "50", "75")], [1, 138, 158, 79])
+        for size in s.values():                  # growth-level medians are surrogate screens: say so in the value
+            for k in ("naiveG20", "awareG20", "naiveG50", "awareG50"):
+                self.assertIs(size[k]["screening"], True)
+                self.assertIn("screening", size[k]["cite"])
 
     def test_referee_headline(self):
         ref = self.doc["referee"]
@@ -290,7 +294,7 @@ class CommittedFile(unittest.TestCase):
         self.assertEqual(sorted(rbg), ["g0", "g20", "g50"])
         self.assertEqual(dumps(rbg["g0"]), dumps(self.doc["ranking"]))
         keys0 = [list(x) for x in self.doc["ranking"]]
-        self.assertTrue(all("approx" not in k for k in keys0))
+        self.assertTrue(all("approx" not in k and "screening" not in k for k in keys0))
         self.assertEqual(audit_labels({"ranking": rbg})[0], [])
         rows = {r["tf"]: r for r in self.doc["tfs"]}
         order = self.doc["meta"]["tfOrder"]
@@ -301,8 +305,9 @@ class CommittedFile(unittest.TestCase):
             self.assertEqual(un, sorted(un, reverse=True))
             pk = self.doc["perK"][g]
             for x in rk:
-                self.assertEqual([k for k in x if k != "approx"], keys0[0])
+                self.assertEqual([k for k in x if k not in ("approx", "screening")], keys0[0])
                 self.assertIsInstance(x["approx"], bool)
+                self.assertIs(x["screening"], True)
                 i = order.index(x["tf"])
                 self.assertEqual(x["approx"], pk["capAwareExact"][i] == 0)
                 self.assertEqual(x["controlsFit"]["v"], pk["capAware"][i])
