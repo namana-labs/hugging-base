@@ -180,19 +180,58 @@ def ercot_demand(path=ERCOT_DEMAND_CSV):
             "sha256": hashlib.sha256(raw).hexdigest(), "path": ERCOT_DEMAND_REL}
 
 
-def scale_ladder(n_batt, pmax_kw, can_key, can_id, can_kva, head_kva, ercot):
+FLEET_SOURCE_DEFAULT = "data/fleet.json"
+# the battery classes whose power a ladder rung may use, by the registered constant that carries it (sim/constants.py)
+LADDER_POWER_CONSTS = ("CORE_POWER_KW", "LEGACY_POWER_KW")
+
+
+def ladder_power_const(pmax_kw):
+    """The registered battery-class constant whose value is `pmax_kw` (CORE_POWER_KW or LEGACY_POWER_KW). The ladder
+    names the constant it multiplies by; a power no class constant carries is refused (never an unnamed literal)."""
+    for name in LADDER_POWER_CONSTS:
+        t = TAG.get(name)
+        if t is not None and float(t["value"]) == float(pmax_kw):
+            return name
+    raise ValueError(f"scale ladder: {pmax_kw:g} kW is not a registered battery-class power {LADDER_POWER_CONSTS}")
+
+
+def fleet_source(const_extra=None):
+    """Where the fleet a build uses comes from, for the ladder's cite: data/fleet.json for the committed fleet; a fleet
+    lever names itself (sim.scenarios Scenario.const_extra: FLEET_SIZE, placed by FLEET_PLACEMENT; FLEET_CLASS, every
+    battery that class). Pass the build's const_extra (None or {} = the committed fleet)."""
+    ce = const_extra or {}
+    parts = []
+    if "FLEET_SIZE" in ce:
+        parts.append(f"a {ce['FLEET_SIZE']['value']}-battery fleet placed by FLEET_PLACEMENT (sim.scenarios) from "
+                     f"{FLEET_SOURCE_DEFAULT}")
+    if "FLEET_CLASS" in ce:
+        parts.append(f"every battery {ce['FLEET_CLASS']['value']} (FLEET_CLASS lever)")
+    if not parts:
+        return FLEET_SOURCE_DEFAULT
+    if "FLEET_SIZE" not in ce:
+        parts.insert(0, f"{FLEET_SOURCE_DEFAULT} placement")
+    return ", ".join(parts)
+
+
+def scale_ladder(n_batt, pmax_kw, can_key, can_id, can_kva, head_kva, ercot, power_const=None,
+                 fleet_src=FLEET_SOURCE_DEFAULT):
     """The same battery kW (every battery on one focus can at full charge power) as a share of that can's nameplate,
     of one conductor of this feeder's head cable (head_kva = head_kva_per_phase(); audit L2), and of ERCOT's peak
-    demand (build prompt 3.4). Battery kW = kVA at unity power factor (BATTERY_PF, ASSUMPTION)."""
+    demand (build prompt 3.4). Battery kW = kVA at unity power factor (BATTERY_PF, ASSUMPTION).
+    power_const names the battery-class constant pmax_kw comes from (default: the one whose value it is,
+    ladder_power_const); fleet_src says where the fleet comes from (default data/fleet.json; a fleet lever passes
+    fleet_source(sc.const_extra)). With the defaults the committed 23 Aug ladder is byte-identical."""
     kw = float(n_batt * pmax_kw)
     can_pct = kw / can_kva * 100.0
     feeder_pct = kw / head_kva * 100.0
     ercot_pct = kw / (ercot["mw"] * 1000.0) * 100.0
     kws = f"{kw:g} kW"
+    pc = power_const or ladder_power_const(pmax_kw)
+    pc_label = TAG[pc]["label"] if pc in TAG else "ASSUMPTION"
     return {
         "text": f"The same {kws} ({n_batt} x {pmax_kw:g} kW batteries charging at once on {can_key}) at three scales (DERIVED)",
-        "kw": labelled(kw, "DERIVED", f"{n_batt} batteries on {can_key} (data/fleet.json, {can_id}) x CORE_POWER_KW "
-                                      f"{pmax_kw:g} kW (REAL)"),
+        "kw": labelled(kw, "DERIVED", f"{n_batt} batteries on {can_key} ({fleet_src}, {can_id}) x {pc} "
+                                      f"{pmax_kw:g} kW ({pc_label})"),
         "rungs": [
             {"scale": "can", "name": f"{can_key}: one {can_kva:g} kVA service transformer",
              "base": labelled(float(can_kva), "REAL", f"{can_id} nameplate kVA (SMART-DS Transformers.dss)", unit="kVA"),

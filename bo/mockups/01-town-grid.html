@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Town grid · mockup 01</title>
+<link rel="stylesheet" href="../design-system/styles.css">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--surface-page);color:var(--text-body);font-family:var(--font-sans);font-size:var(--fs-body);
+       display:flex;flex-direction:column;font-variant-numeric:var(--numeric)}
+
+  /* Header */
+  header{height:60px;flex:none;display:flex;align-items:center;gap:18px;padding:0 24px;border-bottom:var(--hairline)}
+  .wordmark{font-size:21px;font-weight:700;letter-spacing:var(--tracking-display);color:var(--brand)}
+  .divider{width:1px;height:24px;background:var(--border)}
+  .scenario{font-size:16px}
+  .spacer{flex:1}
+  .frame-label{font-size:13px;color:var(--muted);border:var(--hairline);border-radius:var(--radius-control);padding:4px 10px}
+
+  /* Body */
+  main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 320px;grid-template-rows:minmax(0,1fr);gap:14px;padding:18px 22px}
+
+  .board{position:relative;border:var(--hairline);border-radius:var(--radius-card);overflow:hidden;background:var(--board)}
+  .board svg{display:block;width:100%;height:100%}
+
+  .overlay{position:absolute;background:rgba(255,253,248,.94);border:var(--hairline);border-radius:8px;padding:10px 12px}
+  .title-box{top:12px;left:12px}
+  .title-box b{font-size:15px;display:block}
+  .title-box span{font-size:12px;color:var(--muted)}
+
+  .legend{top:74px;left:12px;font-size:12px;display:grid;grid-template-columns:auto;gap:3px;width:230px}
+  .legend h4{margin:0 0 2px;font-size:11px;letter-spacing:var(--tracking-tag);text-transform:uppercase;color:var(--muted);grid-column:1}
+  .legend .row{display:flex;align-items:center;gap:7px;white-space:nowrap}
+  .legend .row em{font-style:normal;color:var(--muted);margin-left:auto;padding-left:8px}
+  .sw{width:12px;height:12px;border-radius:3px;flex:none}
+  .ln{width:20px;height:0;border-top-style:solid;flex:none}
+
+  .attrib{position:absolute;left:0;right:0;bottom:0;height:28px;display:flex;align-items:center;gap:8px;padding:0 12px;
+          font-size:11.5px;color:var(--muted);background:rgba(255,253,248,.94);border-top:var(--hairline)}
+
+  /* Right column */
+  aside{display:flex;flex-direction:column;gap:10px;min-height:0}
+  .card{background:var(--surface-card);border:var(--hairline);border-radius:var(--radius-card);padding:10px 12px 8px}
+  .card h3{margin:0 0 8px;font-size:13.5px;font-weight:700}
+  .card p{margin:0 0 8px;font-size:var(--fs-small);color:var(--ink-2);line-height:var(--lh-body)}
+  .card footer{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:11.5px;color:var(--muted)}
+  .tag{flex:none;font-size:var(--fs-tag);font-weight:700;letter-spacing:var(--tracking-tag);border:1px solid var(--border-strong);
+       border-radius:var(--radius-tag);padding:1px 5px;color:var(--muted)}
+
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .stat b{display:block;font-size:var(--fs-stat);line-height:var(--lh-tight)}
+  .stat span{font-size:12px;color:var(--muted)}
+
+  ol.flow{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:var(--fs-small)}
+  ol.flow li{display:flex;align-items:center;gap:8px}
+  ol.flow .n{width:20px;height:20px;border-radius:50%;border:1px solid var(--border-strong);display:grid;place-items:center;font-size:11px;font-weight:700;flex:none}
+  ol.flow .arrow{color:var(--muted);padding-left:6px;font-size:11px}
+
+  .sel dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:var(--fs-small)}
+  .sel dt{color:var(--muted)}
+  .sel dd{margin:0;font-weight:700}
+  .sel .empty{color:var(--muted);font-size:var(--fs-small)}
+
+  /* Board interactivity */
+  .home{cursor:pointer}
+  .home rect{fill:transparent}
+  .trace{transition:opacity var(--dur-state) var(--ease-state)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wordmark">Hugging Base</div>
+  <div class="divider"></div>
+  <div class="scenario">Town grid · mockup 01</div>
+  <div class="spacer"></div>
+  <div class="frame-label">Oncor-suburb stand-in · LZ_NORTH</div>
+</header>
+
+<main>
+  <section class="board">
+    <svg id="board" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet" aria-label="Map of a fictional town's power grid">
+      <defs>
+        <symbol id="ic-house" viewBox="0 0 24 24"><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" fill="none"/></symbol>
+        <symbol id="ic-zap" viewBox="0 0 24 24"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></symbol>
+      </defs>
+      <g id="roads"></g>
+      <g id="labels"></g>
+      <g id="drops"></g>
+      <g id="lines"></g>
+      <g id="trace" class="trace"></g>
+      <g id="xfmrs"></g>
+      <g id="homes"></g>
+      <g id="plant"></g>
+    </svg>
+
+    <div class="overlay title-box">
+      <b>Pecan Flats</b>
+      <span>fictional town · one feeder · click a home to trace its supply</span>
+    </div>
+
+    <div class="overlay legend">
+      <h4>Transformer loading</h4>
+      <div class="row"><span class="sw" style="background:var(--healthy)"></span>Inside limits<em id="c-t0">0</em></div>
+      <div class="row"><span class="sw" style="background:var(--tier-1)"></span>Over nameplate &gt;100%<em>0</em></div>
+      <div class="row"><span class="sw" style="background:var(--tier-2)"></span>Above normal &gt;110%<em>0</em></div>
+      <div class="row"><span class="sw" style="background:var(--tier-3)"></span>Above emergency &gt;150%<em>0</em></div>
+      <h4 style="margin-top:6px">Homes and lines</h4>
+      <div class="row"><svg viewBox="0 0 24 24" style="width:13px;height:13px;flex:none"><use href="#ic-house" fill="var(--brand)" stroke="var(--brand)" stroke-width="2.2"/></svg>With our battery<em id="c-bat">0</em></div>
+      <div class="row"><svg viewBox="0 0 24 24" style="width:13px;height:13px;flex:none"><use href="#ic-house" fill="#fffdf8" stroke="#8f8b7f" stroke-width="2.2"/></svg>No battery<em id="c-nobat">0</em></div>
+      <div class="row"><span class="ln" style="border-top:3px solid var(--ink-2)"></span>Transmission line</div>
+      <div class="row"><span class="ln" style="border-top:4px solid var(--healthy)"></span>Feeder trunk</div>
+      <div class="row"><span class="ln" style="border-top:2px solid var(--healthy)"></span>Lateral</div>
+      <div class="row"><span class="ln" style="border-top:1px solid #cdc8ba"></span>Service drop</div>
+    </div>
+
+    <div class="attrib">
+      <span class="tag">ASSUMPTION</span>
+      Oncor-suburb stand-in · LZ_NORTH · Town, streets and layout fictional · No load modelled yet, so every transformer reads inside limits
+    </div>
+  </section>
+
+  <aside>
+    <div class="card">
+      <h3>Pecan Flats at a glance</h3>
+      <div class="stats">
+        <div class="stat"><b id="s-homes">0</b><span>homes</span></div>
+        <div class="stat"><b id="s-bat">0</b><span>with our battery</span></div>
+        <div class="stat"><b id="s-xf">0</b><span>transformers</span></div>
+        <div class="stat"><b>1</b><span>generator</span></div>
+      </div>
+      <footer><span class="tag">ASSUMPTION</span>Hand-drawn layout; battery homes placed at random</footer>
+    </div>
+
+    <div class="card">
+      <h3>How power reaches a home</h3>
+      <ol class="flow">
+        <li><span class="n">1</span>Generator makes the power</li>
+        <li><span class="n">2</span>Transmission line carries it to town</li>
+        <li><span class="n">3</span>Substation steps it down for the feeder</li>
+        <li><span class="n">4</span>Feeder trunk runs along Main St</li>
+        <li><span class="n">5</span>Laterals branch up and down each avenue</li>
+        <li><span class="n">6</span>Transformer (the street box shared by a few homes)</li>
+        <li><span class="n">7</span>Service drop into the house</li>
+      </ol>
+    </div>
+
+    <div class="card sel" id="sel">
+      <h3>Selected home</h3>
+      <div class="empty">Click any home on the map to trace its path back to the generator.</div>
+    </div>
+  </aside>
+</main>
+
+<script>
+(() => {
+  const NS = 'http://www.w3.org/2000/svg';
+  const $ = id => document.getElementById(id);
+  const el = (tag, attrs, parent) => {
+    const n = document.createElementNS(NS, tag);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  };
+
+  // Seeded random so the mock looks the same on every load
+  let seed = 7;
+  const rand = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+
+  // --- Layout (all fictional) ---
+  const BATTERY_SHARE = 0.35;           // ASSUMPTION: share of homes with one of our batteries
+  const GEN = { x: 70, y: 330 };
+  const SUB = { x: 170, y: 330 };
+  const TRUNK_Y = 318;
+  const AVENUES = [
+    { x: 330, name: 'Cedar Ave' },
+    { x: 530, name: 'Pecan Ave' },
+    { x: 730, name: 'Mesquite Ave' },
+    { x: 900, name: 'Elm Ave' },
+  ];
+  const STREETS = [
+    { y: 150, name: 'Oak St',   x1: 280, x2: 960 },
+    { y: 330, name: 'Main St',  x1: 200, x2: 960 },
+    { y: 500, name: 'Creek Rd', x1: 280, x2: 960 },
+  ];
+  const AVE_Y1 = 76, AVE_Y2 = 574;
+
+  // House slots along each avenue, skipping cross-street intersections
+  const slots = [];
+  for (let y = 96; y <= 560; y += 32) if (STREETS.every(s => Math.abs(y - s.y) >= 26)) slots.push(y);
+  // Group slots into blocks (runs between streets), then into transformer chunks of two
+  const chunks = [];
+  let block = [];
+  slots.forEach((y, i) => {
+    block.push(y);
+    if (i === slots.length - 1 || slots[i + 1] - y > 32) {
+      for (let j = 0; j < block.length; j += 2) chunks.push(block.slice(j, j + 2));
+      block = [];
+    }
+  });
+
+  // --- Roads ---
+  const roads = $('roads');
+  const road = (d, w) => {
+    el('path', { d, stroke: 'var(--border-strong)', 'stroke-width': w + 2, fill: 'none', 'stroke-linecap': 'round' }, roads);
+    return () => el('path', { d, stroke: 'var(--panel)', 'stroke-width': w, fill: 'none', 'stroke-linecap': 'round' }, roads);
+  };
+  const tops = [];
+  STREETS.forEach(s => tops.push(road(`M${s.x1} ${s.y}H${s.x2}`, s.name === 'Main St' ? 20 : 14)));
+  AVENUES.forEach(a => tops.push(road(`M${a.x} ${AVE_Y1}V${AVE_Y2}`, 14)));
+  tops.forEach(f => f());   // draw fills after all casings so intersections read clean
+
+  const labels = $('labels');
+  const text = (x, y, s, anchor = 'middle') => {
+    const t = el('text', { x, y, 'text-anchor': anchor, 'font-size': 12, 'font-weight': 700, fill: 'var(--muted)' }, labels);
+    t.textContent = s;
+  };
+  AVENUES.forEach(a => text(a.x, AVE_Y1 - 12, a.name));
+  STREETS.forEach(s => s.name === 'Main St' ? text(s.x1 + 6, s.y + 26, s.name, 'start') : text(s.x1, s.y - 13, s.name, 'start'));
+
+  // --- Power lines ---
+  const lines = $('lines');
+  const LINE = { stroke: 'var(--healthy)', fill: 'none', 'stroke-linecap': 'round' };
+  el('path', { d: `M${GEN.x + 18} ${GEN.y}H${SUB.x - 12}`, stroke: 'var(--ink-2)', 'stroke-width': 3, fill: 'none' }, lines);
+  const lastLat = AVENUES[AVENUES.length - 1].x + 12;
+  el('path', { ...LINE, d: `M${SUB.x + 12} ${TRUNK_Y}H${lastLat}`, 'stroke-width': 4.2 }, lines);
+  // short riser from substation to trunk
+  el('path', { ...LINE, d: `M${SUB.x} ${SUB.y - 12}V${TRUNK_Y}H${SUB.x + 12}`, 'stroke-width': 4.2 }, lines);
+  AVENUES.forEach(a => {
+    const lx = a.x + 12;
+    el('path', { ...LINE, d: `M${lx} ${TRUNK_Y}V${slots[0]}M${lx} ${TRUNK_Y}V${slots[slots.length - 1]}`, 'stroke-width': 2.6 }, lines);
+  });
+
+  // --- Transformers, drops, homes ---
+  const xfmrs = [], homes = [];
+  AVENUES.forEach(a => {
+    const lx = a.x + 12;
+    chunks.forEach(chunk => {
+      const xf = { id: 'T-' + String(xfmrs.length + 1).padStart(2, '0'), x: lx, y: chunk.reduce((s, y) => s + y, 0) / chunk.length, ave: a, homes: [] };
+      xfmrs.push(xf);
+      chunk.forEach(y => {
+        [a.x - 34, a.x + 42].forEach(x => {
+          const h = { x, y, xf, battery: rand() < BATTERY_SHARE, n: homes.length + 1 };
+          homes.push(h);
+          xf.homes.push(h);
+        });
+      });
+    });
+  });
+
+  const drops = $('drops');
+  homes.forEach(h => el('path', { d: `M${h.xf.x} ${h.xf.y}L${h.x} ${h.y}`, stroke: '#cdc8ba', 'stroke-width': 0.8 }, drops));
+
+  const gx = $('xfmrs');
+  xfmrs.forEach(xf => {
+    const g = el('g', { transform: `translate(${xf.x - 7} ${xf.y - 7})` }, gx);
+    el('rect', { width: 14, height: 14, rx: 3.5, fill: 'var(--healthy)', stroke: 'var(--panel)', 'stroke-width': 1.5 }, g);
+    el('use', { href: '#ic-zap', x: 2.5, y: 2.5, width: 9, height: 9, fill: 'none', stroke: 'var(--panel)', 'stroke-width': 2.6, 'stroke-linejoin': 'round' }, g);
+  });
+
+  const HOUSE = 15;
+  const gh = $('homes');
+  homes.forEach(h => {
+    const g = el('g', { class: 'home', transform: `translate(${h.x - HOUSE / 2} ${h.y - HOUSE / 2})`, tabindex: 0, role: 'button',
+                        'aria-label': `Home ${h.n} on ${h.xf.ave.name}` }, gh);
+    el('rect', { x: -4, y: -4, width: HOUSE + 8, height: HOUSE + 8 }, g);   // larger hit area
+    el('use', { href: '#ic-house', width: HOUSE, height: HOUSE, 'stroke-width': 2.2, 'stroke-linejoin': 'round',
+                fill: h.battery ? 'var(--brand)' : '#fffdf8', stroke: h.battery ? 'var(--brand)' : '#8f8b7f' }, g);
+    h.node = g;
+    g.addEventListener('click', () => select(h));
+    g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(h); } });
+  });
+
+  // --- Generator and substation ---
+  const plant = $('plant');
+  el('circle', { cx: GEN.x, cy: GEN.y, r: 18, fill: 'var(--ink)' }, plant);
+  el('path', { d: `M${GEN.x - 10} ${GEN.y}c3.3-8 6.7-8 10 0s6.7 8 10 0`, stroke: 'var(--panel)', 'stroke-width': 2.4, fill: 'none', 'stroke-linecap': 'round' }, plant);
+  el('rect', { x: SUB.x - 12, y: SUB.y - 12, width: 24, height: 24, rx: 5, fill: 'var(--ink)' }, plant);
+  el('use', { href: '#ic-zap', x: SUB.x - 8, y: SUB.y - 8, width: 16, height: 16, fill: 'none', stroke: 'var(--panel)', 'stroke-width': 2.4, 'stroke-linejoin': 'round' }, plant);
+  const plabel = (x, y, s, sub) => {
+    const t = el('text', { x, y, 'text-anchor': 'middle', 'font-size': 13, 'font-weight': 700, fill: 'var(--ink)' }, plant);
+    t.textContent = s;
+    const u = el('text', { x, y: y + 15, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--muted)' }, plant);
+    u.textContent = sub;
+  };
+  plabel(GEN.x, GEN.y + 38, 'Generator', 'makes the power');
+  plabel(SUB.x, SUB.y + 38, 'Substation', 'steps it down');
+
+  // --- Counts ---
+  const nBat = homes.filter(h => h.battery).length;
+  $('s-homes').textContent = homes.length;
+  $('s-bat').textContent = nBat;
+  $('s-xf').textContent = xfmrs.length;
+  $('c-t0').textContent = xfmrs.length;
+  $('c-bat').textContent = nBat;
+  $('c-nobat').textContent = homes.length - nBat;
+
+  // --- Selection: trace generator → home ---
+  const trace = $('trace');
+  function select(h) {
+    trace.replaceChildren();
+    const xf = h.xf;
+    const d = `M${GEN.x} ${GEN.y}H${SUB.x}V${TRUNK_Y}H${xf.x}V${xf.y}L${h.x} ${h.y}`;
+    el('path', { d, stroke: 'var(--brand)', 'stroke-width': 5, fill: 'none', 'stroke-linejoin': 'round', 'stroke-linecap': 'round', opacity: 0.85 }, trace);
+    el('circle', { cx: h.x, cy: h.y, r: 13, fill: 'none', stroke: 'var(--brand)', 'stroke-width': 2 }, trace);
+
+    const neighbours = xf.homes.length - 1;
+    const ourOnXf = xf.homes.filter(o => o.battery).length;
+    $('sel').innerHTML = `
+      <h3>Selected home</h3>
+      <dl>
+        <dt>Home</dt><dd>#${h.n} · ${xf.ave.name}</dd>
+        <dt>Our battery</dt><dd>${h.battery ? 'Yes' : 'No'}</dd>
+        <dt>Transformer</dt><dd>${xf.id}</dd>
+        <dt>Shares it with</dt><dd>${neighbours} other homes (${ourOnXf} of ${xf.homes.length} have our battery)</dd>
+        <dt>Lateral</dt><dd>${xf.ave.name}</dd>
+        <dt>Path</dt><dd>Generator → substation → Main St trunk → ${xf.ave.name} → ${xf.id} → home</dd>
+      </dl>
+      <footer><span class="tag">ASSUMPTION</span>Fictional topology</footer>`;
+  }
+})();
+</script>
+</body>
+</html>

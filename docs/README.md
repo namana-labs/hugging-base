@@ -33,7 +33,8 @@ These override the report where they conflict.
 Found by the Headroom judge critique, already fixed in the report and the design doc:
 
 1. **Do not de-rate SMART-DS transformers.** The `kva=` values are standard 25/50/75 kVA nameplates; 27.5 and 37.5 are the 110% normal and 150% emergency ratings. The limit is nameplate, reported in three tiers.
-2. **Frequency effect of a 1,000-battery hijack is a 3–17 mHz band**, not 3–5 mHz. Normal ERCOT wander on 25 Sep 2026 had σ ≈ 13.7 mHz.
+2. **Frequency effect of a 1,000-battery hijack is a 3–17 mHz band**, not 3–5 mHz. Normal ERCOT wander on 25 Sep 2026 had σ 13.51 mHz (DERIVED from REAL samples, `ui/data/ems/freq-series.json` `stats.frequency.sigma_mhz`).
+3. **What a battery does when it loses its connection is confirmed** (Base engineer, on site, 26 Sep 2026, verbal): it idles in backup-only mode, does not charge, never discharges to the grid, and only backs up its own home in an outage. The behaviour is REAL; our timings (`COMMS_STALE_S` 180 s, `COMMAND_TTL_S` 300 s) stay ASSUMPTION, and so does the fuse rule.
 
 ## Rules that apply to everything in this repo
 

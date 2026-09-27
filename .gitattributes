@@ -1,0 +1,13 @@
+data/** -text
+ui/data/** -text
+ui/vendor/** -text
+four-home-simulation/data/** -text
+simulators/*/data/** -text
+simulators/*/ui/data/** -text
+simulators/*/ui/vendor/** -text
+mpalacios/out/** -text
+mpalacios/fixtures/** -text
+*.sh text eol=lf
+*.npz binary
+*.gz binary
+*.png binary

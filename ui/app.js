@@ -59,7 +59,9 @@ function theme() {
   return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
-const STANDIN_CITE = 'CLAUDE.md; the real P1U buses sit in Pedernales Electric Cooperative territory (PUCT service-area map, 2023, information purposes only)';
+const STANDIN_CITE = "CLAUDE.md; 'Oncor suburb' is a framing label: the synthetic feeder is drawn on NW-Austin coordinates that fall in Pedernales Electric Cooperative territory (PUCT service-area layers, 2023, marked 'UNOFFICIAL', information purposes only)";
+// data-truth fix list #1: NREL's SMART-DS is a real published dataset of a synthetic feeder ("realistic but not real")
+const FEEDER_CITE = "NREL SMART-DS 2018 AUS P1U, CC BY 4.0: NREL's published files, byte-identical to OEDI. NREL calls SMART-DS 'realistic but not real' (https://www.nlr.gov/grid/smart-ds.html): a synthetic, statistically realistic Austin feeder, not a utility circuit";
 
 /** A visible notice under the header (not an error: data-errors is untouched). body data-notice counts them. */
 function showNotice(msg) {
@@ -101,7 +103,7 @@ function header(link) {
   h.className = 'hb-header';
   h.innerHTML = `<div class="hb-brand">Hugging Base<small>feeder-aware battery fleet</small></div>
     <nav class="hb-tabs">${tabs.map(([v, t]) => `<a href="${data.linkQuery({ view: v })}"${v === link.view ? ' aria-current="page"' : ''}>${t}</a>`).join('')}</nav>
-    <div class="hb-standin">NREL SMART-DS 2018 AUS P1U feeder ${fmt.chip('REAL', 'CC BY 4.0')}<br>Oncor-suburb stand-in settled at LZ_NORTH (placeholder) ${fmt.chip('ASSUMPTION', STANDIN_CITE)}</div>`;
+    <div class="hb-standin">NREL SMART-DS 2018 AUS P1U: REAL dataset · synthetic feeder ${fmt.chip('REAL', FEEDER_CITE)}<br>Oncor-suburb stand-in settled at LZ_NORTH (placeholder) ${fmt.chip('ASSUMPTION', STANDIN_CITE)}</div>`;
   const banner = document.createElement('div');
   banner.className = 'hb-fixture';
   banner.hidden = true;
