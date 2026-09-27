@@ -536,8 +536,9 @@ export async function mount(root, ctx) {
           </svg>
           ${band ? `<span class="pb-axis pb-red" style="top:calc(${vY(band.hi.v, vsc)}% - 14px)">${fmtNum(band.hi.v, bd)}</span><span class="pb-axis pb-red" style="top:calc(${vY(band.lo.v, vsc)}% + 1px)">${fmtNum(band.lo.v, bd)}</span>`
     : `<span class="pb-axis pb-axis-tl">${fmtNum(vsc.hi, 3)}</span><span class="pb-axis" style="top:calc(96% - 14px)">${fmtNum(vsc.lo, 3)}</span>`}
-          <span class="pb-axis pb-axis-bl">← near the substation</span><span class="pb-axis pb-axis-br">far end →</span>` : `<div class="pb-empty">${missingHTML(exMissing || (absent('vTfMilli') ? 'not exported for this run: this replay records no voltage per transformer' : 'voltage by bus not exported for this run'))}</div>`}
+` : `<div class="pb-empty">${missingHTML(exMissing || (absent('vTfMilli') ? 'not exported for this run: this replay records no voltage per transformer' : 'voltage by bus not exported for this run'))}</div>`}
         </div>
+        ${hasV ? '<div class="pb-xaxis"><span>← near the substation</span><span>far end →</span></div>' : ''}
         <div class="pb-foot">${hasV ? `${vTag}OpenDSS, every transformer · order ${sTag('busOrder', 'path distance from the substation along the SMART-DS lines (extras busOrder)')} path distance from the substation · ${band ? `${bandTxt} ${bandTag}` : missingHTML('band not exported for this run')}` : 'Voltage by bus comes from the engine\'s extras export'}</div>
       </div>
       <div class="pb-card pb-q">
