@@ -1,25 +1,20 @@
-# Docs
+# Docs: everything a judge needs
 
-Read in this order. Each file has one job; do not duplicate content between them.
+One line per document: what it answers. Start with the first two.
 
-| File | Job | Status | Owner of truth for |
-|---|---|---|---|
-| [design.md](design.md) | What we are building, why, and what is out of scope. The group signs off on this before code. §9 is the dated decision log. | Living. Edit when scope or a decision changes. | Scope, decisions, scenarios, model, metrics, repo layout |
-| [plan.md](plan.md) | Stack, work split by stream, stages, milestones with pass tests and status, risks. | Living. Update when a milestone passes or slips. | Sequencing and tooling |
-| [reconciliation.md](reconciliation.md) | Where Hugging Base, the Headroom PRD and GridSpine Atlas disagreed, and what we chose for each, with reasons. | Frozen as of 26 Sep 2026. Its picks are folded into design.md and plan.md. | The *why* behind decisions 12–23 in design.md §9 |
-| [ui-brief.md](ui-brief.md) | Hand-off for UI design: audience, hard constraints, what the prototype already has, the seven beats as screens, components, brand tokens, glossary. | Living. | Audience, constraints and the beats as screens (visual language now in design-handoff/) |
-| [design-handoff/](design-handoff/README.md) | High-fidelity design spec for Chapter 1 (option 3a, the heartbeat control room): layout, components, motion, tokens, plus an HTML reference prototype and the design system. | Authoritative for visual design; supersedes ui-brief.md §6–7 where they differ. Handed off 26 Sep 2026. Placeholder series in the prototype are scripted; the rebuild reads the real replay JSON. Agents: `.claude/skills/hugging-base-design/`. | Colours, type, spacing, radii, motion, components and UI copy |
-| [research-report.md](research-report.md) | The sourced research on Base, ERCOT, physics and data. 176 inline citations. | Frozen as of 25 Sep 2026 except for corrections. | Every number and label (UNVERIFIED / DERIVED / ASSUMPTION / INFERENCE) |
-| [headroom/](headroom/README.md) | The Headroom PRD, five design proposals, two critiques, and the research notes behind the report. | Supporting material. | Depth for adopted pieces: device acceptance rules (PRD §7.5), detector definitions (§6.4), metrics (§9), Track 1 methods (§9.5), risks (§12) |
-| [headroom/headroom-gridspine-dossier.html](headroom/headroom-gridspine-dossier.html) | GridSpine Atlas v0.2: a pre-build design, never built (its LLM scenario studio and gateway included; the submitted app calls no language model). | Supporting material. | The stretch transmission layer and the CIM vocabulary |
+| Document | What it answers |
+|---|---|
+| [run-the-demo.md](run-the-demo.md) | How do I run the app, what does each page show, and how do I read the labels on the screen? |
+| [demo-script.md](demo-script.md) | What does the five-minute video show, beat by beat, with one deep link per beat? |
+| [NUMBERS.md](NUMBERS.md) | Where does every number in the video come from: its label, the committed file and the field? |
+| [data-sources.md](data-sources.md) | Where does each input come from, under what licence, and how is it labelled (REAL, SIM, DERIVED, ASSUMPTION)? |
+| [how-base-plugs-in.md](how-base-plugs-in.md) | Where would the two outputs (feeder-aware charging and the next-battery ranking) fit into what Base runs today? |
+| [research-report.md](research-report.md) | What is true about Base, ERCOT, the physics and the data, with inline citations? |
+| [contracts.md](contracts.md) | What is in each JSON file the engine writes and the app reads? |
+| [story-contract.md](story-contract.md) | How the four story pages, their scenario catalogue and their links are specified. |
+| [contracts-planner.md](contracts-planner.md) | How the transformer capacity planner behind the Learnings page works, and what its file holds. |
 
-**The submission is the root app:** the engine in `sim/` and the four story pages in `ui/` (Configure → Run → Results → Learnings), fed by committed JSON. Run it and read the screen: [run-the-demo.md](run-the-demo.md). Its data contracts: [contracts.md](contracts.md) (simulator to UI), [story-contract.md](story-contract.md) (the story pages, rulings and path ownership) and [contracts-planner.md](contracts-planner.md) (the capacity planner behind Learnings).
-
-The first prototype, [demos/grid-stories/](../demos/grid-stories/README.md), has its own runbook and an honest list of limitations. It is kept for history; root `sim/` promoted its device and feeder code.
-
-## How they relate
-
-The research report answers "what is true." The design doc answers "what do we do about it." The plan answers "in what order, with what." The reconciliation answers "why this and not the other two designs." If a figure appears in the design doc, it came from the report or from a Base employee on site; the design doc says which. If you find a figure in the report that changes a design decision, change the design doc and leave a one-line note in the report's conflicts table only if the report itself was wrong. A new decision goes in design.md §9 with a date; if it reverses a reconciliation pick, say so there.
+**The submission** is the engine in `sim/`, the four story pages in `ui/` (Configure → Running → Run → Results → Learnings), fed by committed JSON, and `resilience/` (the controller-crash and hidden-attacker runs). Everything that is not part of the submission, including the original design, plan and design hand-off, is archived in [previous-work/](../previous-work/README.md).
 
 ## Corrections from Base employees on site (25 Sep 2026)
 
@@ -43,7 +38,7 @@ Found by the Headroom judge critique, already fixed in the report and the design
 - The feeder is presented as an **Oncor-suburb stand-in on Base's ERCOT path, settled at LZ_NORTH**. Say so wherever the feeder appears.
 - **OpenDSS is the referee.** The kW bucket model may drive the controller but never decides whether a limit was violated.
 - **Replay is the spine.** Live ERCOT data may decorate the demo but nothing the demo depends on may need it.
-- Every unverified constant lives in one place (design.md §10) so an on-site answer changes one line.
+- Every unverified constant lives in one place (`sim/constants.py`, each with its label and cite; the original list is [design.md §10](../previous-work/docs-history/design.md)) so an on-site answer changes one line.
 - **No language model produces a setpoint, a base point or a rank.** Deterministic code does. Models draft validated scenarios and explain numbers.
-- **Transformer limit is nameplate kVA in three tiers** (100 / 110 / 150%). The headline violation is >110% sustained for the window in design.md §10.
+- **Transformer limit is nameplate kVA in three tiers** (100 / 110 / 150%). The headline violation is >110% for 30 minutes or more.
 - **The 20% member reserve is a hard constraint**, including in every failure scenario.

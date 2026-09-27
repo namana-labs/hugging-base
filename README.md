@@ -1,39 +1,86 @@
 # Hugging Base
 
-**Feeder-aware charging for a fleet of home batteries** (Base Power × AITX hackathon, Sep 2026). When a price crash tells every battery to charge at once, street transformers overload. Checking each transformer's room first charges the fleet with no overload caused by batteries.
+**Feeder-aware charging for a fleet of home batteries.** Base Power × AITX hackathon, Sep 2026.
+
+**Live demo:** LIVE_URL_PLACEHOLDER
+
+## The problem
+
+When the ERCOT price crashes in the evening, a fleet of home batteries that all start charging at once can overload the street transformers that feed those homes, even while the wider grid is fine. ERCOT dispatch sees the price zone, not the neighbourhood: the feeder and the service transformer on the pole. Hugging Base checks each transformer's room before it sends a charge command, and shows on a feeder model refereed by OpenDSS that the fleet still charges, with no overload caused by batteries.
+
+## The four pages
+
+Pick a scenario on page 1; the same scenario carries through every page. Every scenario is a run the engine already made and committed.
+
+| Page | What it answers |
+|---|---|
+| **Configure** | Which evening, which charging policy (no batteries, naive, feeder-aware), which failure (none, pieces fail, controller crash, hidden attacker), and which fleet settings? |
+| **Running** (between Configure and Run) | Which files does this run play, and what did the engine measure it cost to make? No fake progress bar: the run already happened. |
+| **Run** | What happens on the street, minute by minute from 16:00 to 04:00, in 3D? |
+| **Results** | Did any transformer break its rating, how low did home voltage go, and was the fleet charged by 04:00, compared with every other run? |
+| **Learnings** | How many batteries fit, what happens to one transformer as batteries are added, which transformers to upgrade as home load grows, and where the next battery helps most? |
+
+## What is real and what is simulated
+
+- **Every number is labelled** REAL, SIM, DERIVED or ASSUMPTION, and comes from a committed file the engine wrote. Hover or tap a tag for its source. The audited numbers, each with its file and field: [docs/NUMBERS.md](docs/NUMBERS.md).
+- **OpenDSS is the referee.** An AC power flow judges every violation in the evening runs. Month and growth counts from the faster per-transformer estimate are marked SCREENING.
+- **The feeder** is NREL's SMART-DS Austin P1U, a synthetic feeder ("realistic but not real"), used as an **Oncor-suburb stand-in** settled at ERCOT's LZ_NORTH zone. ERCOT prices are REAL.
+- **The attacker is fictional.** No real company or person is named as an attacker.
+- **Money is gross energy value**, not Base's profit.
+- **No language model sets any number.** Deterministic code decides every charge command, base point and rank.
+- "Naive" charging is our assumption of a simple rule (everyone at once, no feeder check). It is not how Base charges; Base's method is not public.
+
+## Run it locally
 
 ```sh
-scripts/serve.sh      # a static server from the repo root, port 8765 (viewing needs only python3; scripts/setup.sh is for the engine and tests: it creates a venv at ~/hb-overnight/.venv)
+scripts/serve.sh      # a static file server from the repo root on port 8765 (needs only python3)
 ```
 
-Open **http://127.0.0.1:8765/ui/index.html** and walk four pages: **Configure** a scenario → **Run** the evening in 3D → **Results** → **Learnings** (how many batteries fit, where the next one helps).
+Open **http://127.0.0.1:8765/ui/index.html**. The app is static: the browser only reads committed JSON, with no server logic and no network calls at view time.
 
-- **Every number is labelled** REAL, SIM, DERIVED or ASSUMPTION and comes from a committed file the engine wrote. The audited numbers, each with its file and field: [`presentation/NUMBERS.md`](presentation/NUMBERS.md).
-- **OpenDSS referees.** An AC power flow on NREL's synthetic SMART-DS feeder (an Oncor-suburb stand-in) judges every violation in the evening runs; month and growth counts are marked SCREENING. Deterministic code, never a language model, sets every command.
-- The attacker is fictional; money is gross energy value, not Base's profit. More: [run the demo](docs/run-the-demo.md) · [the video script](docs/demo-script.md) · [data sources and labels](docs/data-sources.md).
+For the engine and the tests:
 
----
+```sh
+scripts/setup.sh      # once: checks or creates the Python venv; ends "SETUP: OK"
+scripts/check_all.sh  # the full gate: unit, node, archived-prototype, contract, verify and browser smoke tests; ends "ALL CHECKS: PASS"
+```
 
-> **Team:** the root app (`sim/`, `ui/`, `data/`, `scripts/`) is the submission, merged into `main` (PR #42, 27 Sep 2026). Who does what: [`handoff/README.md`](handoff/README.md). Amy's presentation work: [`presentation/`](presentation/START-HERE.md). RZ's round-2 app stays in [`simulators/rz/`](simulators/rz/README.md) for reference.
+More detail, including every page link and how to read the screen: [docs/run-the-demo.md](docs/run-the-demo.md).
 
-## Project documents
+## Where everything lives
 
-- [Reading order and project guidance](docs/README.md)
-- [Design, scope and decision log](docs/design.md)
-- [Plan: stack, streams, milestones](docs/plan.md)
-- [Reconciliation of the three designs](docs/reconciliation.md)
-- [Research and source references](docs/research-report.md)
-- [Data sources, licences and labels](docs/data-sources.md) · [How Base plugs it in](docs/how-base-plugs-in.md)
+| Folder or file | What it is |
+|---|---|
+| `README.md` | This page. |
+| [`docs/`](docs/README.md) | Everything a judge needs: how to run the demo, the video script, the audited numbers, data sources and licences, research, and the data contracts. Start at [docs/README.md](docs/README.md). |
+| `ui/` | The web app (the four pages). This is what the live demo serves. |
+| `sim/` | The engine: the Python simulator that wrote every number the app shows, with OpenDSS as the referee. |
+| `resilience/` | Controller-crash survival (a worker is killed and another takes over), the hidden-attacker detector, and physics checks. |
+| `data/` | Pre-extracted inputs (the SMART-DS feeder, load profiles, ERCOT prices, building footprints, the fleet placement, the capacity planner's inputs), with a `SOURCE.md` for each source. |
+| `scripts/` | Setup, the local server, the engine builds and the test gate. |
+| `requirements.txt` | Python dependencies for the engine and tests. |
+| `CLAUDE.md`, `.claude/` | Instructions for AI coding assistants working in this repo. |
+| `.gitignore`, `.gitattributes` | Git settings. |
+| [`previous-work/`](previous-work/README.md) | **The archive. Not part of the submission.** Earlier prototypes, personal simulators, design history and hand-off notes, moved here on 27 Sep 2026 so nothing was deleted. |
 
-## Run the demo
+## Key documents
 
-The root app is a static web app fed by committed JSON: no server logic, no network at view time. The data contracts are in [`docs/contracts.md`](docs/contracts.md) and [`docs/story-contract.md`](docs/story-contract.md). Page links and how to read the screen: [`docs/run-the-demo.md`](docs/run-the-demo.md). The earlier tab app is kept as the **Engine explorer** at `ui/explore.html` (footer link). The gate is `scripts/check_all.sh` (it ends `ALL CHECKS: PASS`).
+- [docs/README.md](docs/README.md): the index of every judge document.
+- [docs/demo-script.md](docs/demo-script.md): the five-minute video, beat by beat, one link per beat.
+- [docs/NUMBERS.md](docs/NUMBERS.md): every number the video says, with its label, file and field.
+- [docs/data-sources.md](docs/data-sources.md): where each input comes from, its licence and its label.
 
-## Earlier prototypes (history, not the submission)
+## Team
 
-Kept so the path to the root app can be traced; the root app above is what is judged.
+RZ, Michael, Connor, Amy, Bo, Jeff.
 
-- [`demos/grid-stories/`](demos/grid-stories/README.md): the first toy demo; root `sim/` promoted its device and feeder code.
-- [`four-home-simulation/`](four-home-simulation/README.md): Michael's four-home street on real ERCOT data for 25 Sep 2026.
-- [`simulators/connor/`](simulators/connor/README.md): Connor's four-node mechanics test and control-room dashboard.
-- [`simulators/rz/`](simulators/rz/README.md): RZ's earlier copy of the app, superseded by the root app (PR #42); kept for its research, judges, story notes and `RULINGS.md`.
+Engine: RZ and Michael. Visuals: Connor. Presentation: Amy. Design: Bo.
+
+## Data and licences
+
+- **SMART-DS** (NREL's synthetic feeder and load profiles): CC BY 4.0.
+- **OpenStreetMap** building footprints: ODbL.
+- **ERCOT** market data: public ERCOT data, used in analysis (not ERCOT's logo).
+- **deck.gl** (vendored in `ui/vendor/`): MIT.
+
+Details and attribution: [docs/data-sources.md](docs/data-sources.md).
