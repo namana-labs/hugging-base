@@ -2,6 +2,8 @@
 
 26 Sep 2026 · RZ. Snapshot of the live team hub doc; RZ shares the live docs.
 
+> **Update, 26 Sep 2026 (evening sprint): the root app is now the submission** (branch `submission`). Root `sim/` is the one engine and root `ui/` is the four story pages (Configure → Run → Results → Learnings); the old tab app is `ui/explore.html`. `simulators/rz/` stays as reference; where this hub says `simulators/rz/ui/data/` or `simulators/rz/docs/`, read the root `ui/data/` and `docs/`. Rulings and path ownership: [`docs/story-contract.md`](../docs/story-contract.md). Amy's audited numbers, each with its file and field: [`presentation/NUMBERS.md`](../presentation/NUMBERS.md).
+
 ## Who does what, and the one doc each person reads
 
 We submit a 5-minute video and the code by Sun 27 Sep, 11:00 AM Central. The demo is a four-page story: set up a scenario, watch what happens, see the result, see the answers. Each person reads one doc.

@@ -84,7 +84,7 @@ Rulings every design already agrees on and that stay: the 20% member reserve is 
 
 ### 6. Frequency
 
-**Pick:** do not simulate frequency (Hugging Base's call), and quote a 1,000-battery hijack as **"about 3–17 mHz, no larger than ERCOT's normal wander (σ ≈ 13.7 mHz)"**, never 3–5 mHz or any single value. Atlas's live frequency strip is fine as a header decoration.
+**Pick:** do not simulate frequency (Hugging Base's call), and quote a 1,000-battery hijack as **"about 3–17 mHz, no larger than ERCOT's normal wander (σ 13.51 mHz on 25 Sep 2026)"**, never 3–5 mHz or any single value. Atlas's live frequency strip is fine as a header decoration.
 
 ### 7. Architecture
 

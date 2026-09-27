@@ -1,0 +1,10 @@
+:root{
+  --day-duration:20s;            /* one simulated day */
+  --sim-ticks-per-day:12000;     /* solver substeps */
+  --market-steps-per-day:288;    /* 5-minute steps; numbers update here */
+  --pulse-min-bpm:52; --pulse-max-bpm:116; /* rhythm follows feeder demand */
+  --pulse-lub-width:0.07; --pulse-dub-offset:0.24; --pulse-dub-gain:0.55;
+  --pulse-travel:0.55;           /* share of a beat to cross the feeder */
+  --ghost-fade:4s;               /* yesterday's trace */
+  --ease-state:cubic-bezier(.3,.7,.2,1); --dur-state:300ms;
+}

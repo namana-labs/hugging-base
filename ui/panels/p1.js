@@ -14,6 +14,8 @@
 // Every number on screen is a labelled value (format.js throws on a bare one) or a bulk value shown with its series
 // label. Tiers, runs and protection come from the JSON; nothing here re-derives them. No label is invented in the UI.
 import { svg, TIER_WORDS, TIER_TIPS, STATE_WORDS, STATE_RGB, TIER_RGB } from '../lib/icons.js';
+import { loadPairingNote } from '../lib/days.js';
+import { FEEDER_TAG, FEEDER_CITE, COMMS_LOSS_CITE, COMMS_TIMING_CITE } from './more.js';
 
 export const ALL_BRANCHES = ['none', 'naive', 'aware', 'aware_faults'];
 /** The panel reads `&date=` itself (app.js routes a simulated history day here only when this is true). */
@@ -467,7 +469,7 @@ export function cueText(c, fmt, names, branch) {
     case 'comms_lost': {
       const e = f.e;
       const by = (e.coveredBy || []).map((h) => names.home(h)).join(' and ');
-      return `The battery at ${esc(names.home(e.home))} stops answering while holding a ${H(L(e.cmdKW, 'SIM', 'its last command'), { unit: ' kW', digits: 1, signed: true })} command (timing ${fmt.chip('ASSUMPTION', 'FAULT_COMMS_AFTER_MIN')}).${by && Number.isInteger(e.coveredStep) ? ` From ${H(L(names.time(e.coveredStep), 'SIM', 'coveredStep'))} ${esc(by)} take up its share.` : ''}`;
+      return `The battery at ${esc(names.home(e.home))} stops answering while holding a ${H(L(e.cmdKW, 'SIM', 'its last command'), { unit: ' kW', digits: 1, signed: true })} command (timing ${fmt.chip('ASSUMPTION', 'FAULT_COMMS_AFTER_MIN')}). When that command expires it idles in backup-only mode and never discharges to the grid ${fmt.chip('REAL', COMMS_LOSS_CITE)}; the expiry time is ours ${fmt.chip('ASSUMPTION', COMMS_TIMING_CITE)}.${by && Number.isInteger(e.coveredStep) ? ` From ${H(L(names.time(e.coveredStep), 'SIM', 'coveredStep'))} ${esc(by)} take up its share.` : ''}`;
     }
     case 'hot': {
       const e = f.e;
@@ -628,6 +630,19 @@ export function recordHTML(fmt, x) {
   return `<span class="p1-text">${esc(parts.join(': '))}</span> ${fmt.chip(x.label, x.cite)}`;
 }
 
+/** Why feeder-aware's fleet earned more (audit DATA-TRUTH-outputs 12): the sold and bought differences from
+ *  money.split, DERIVED. '' unless aware sold no more than naive and bought back less (the 23 Aug case: prices kept
+ *  falling after the onset, so the charge it waited to buy came cheaper). */
+export function awareWhy(fmt, split) {
+  const n = split && split.naive, a = split && split.aware;
+  const ok = (x) => x && fmt.isLabelled(x) && typeof x.v === 'number';
+  if (!n || !a || !ok(n.sold) || !ok(a.sold) || !ok(n.bought) || !ok(a.bought)) return '';
+  const dSold = Math.round((n.sold.v - a.sold.v) * 100) / 100, dBought = Math.round((n.bought.v - a.bought.v) * 100) / 100;
+  if (!(dSold >= 0 && dBought > dSold)) return '';
+  const D = (v, cite) => fmt.fmtHTML(L(v, 'DERIVED', cite), { money: true, digits: 2 });
+  return `, because prices kept falling after the onset: it sold ${D(dSold, 'naive sold minus aware sold (money.split)')} less at the peak but bought back ${D(dBought, 'naive bought minus aware bought (money.split)')} less after the fall`;
+}
+
 /** "Money tonight" (UX_SPEC_R2 6.2): each line labelled. The system-capacity band has LEFT P1 (audit M5; it stays on
  *  More, relabelled as a storage revenue benchmark that includes arbitrage). Local relief is never priced here.
  *  From checkpoint (b): sold / bought / net + per battery from `money.split`, when l2 ships it. */
@@ -641,22 +656,22 @@ export function moneyHTML(fmt, money, branch, branchNames = BRANCH_NAMES, consts
   const sp = money.split && money.split[branch];
   if (money.split) done.add('split');
   if (sp && sp.net) {
-    out.push(`<div class="p1-money-h">${svg('money', { size: 16 })} Tonight, ${esc(branchNames[branch] || branch)} <span class="hb-sub">(before costs; not Base's profit)</span></div>`);
+    out.push(`<div class="p1-money-h">${svg('money', { size: 16 })} The fleet tonight, ${esc(branchNames[branch] || branch)} <span class="hb-sub">(gross energy value: before costs, not Base's profit; the plan knows the evening's prices, perfect foresight ${fmt.chip('ASSUMPTION', 'sim.prices.discharge_plan sells the highest-priced intervals the usable energy covers')})</span></div>`);
     if (sp.sold) out.push(row(`${svg('priceUp', { size: 14 })} Sold into the evening peak`, usd(sp.sold)));
     if (sp.bought) out.push(row(`${svg('priceDown', { size: 14 })} Bought back when cheap`, usd(sp.bought)));
-    out.push(row('Money earned from the price difference', usd(sp.net)));
+    out.push(row('The fleet\'s gross energy value (price difference)', usd(sp.net)));
     if (sp.perBattery) out.push(row('Per battery', usd(sp.perBattery)));
   }
   if (money.energyValueUSD && typeof money.energyValueUSD === 'object' && !fmt.isLabelled(money.energyValueUSD)) {
     done.add('energyValueUSD');
-    out.push(`<div class="p1-money-h">Money earned from the price difference <span class="hb-sub">(before costs; not Base's profit)</span></div>`);
+    out.push(`<div class="p1-money-h">The fleet's gross energy value, by scenario <span class="hb-sub">(price difference, before costs; not Base's profit)</span></div>`);
     out.push(Object.entries(money.energyValueUSD).map(([b, v]) => row(esc(branchNames[b] || b) + (b === branch ? ' ◂' : ''), usd(v))).join(''));
   }
   if (money.costOfAwareness) {
     done.add('costOfAwareness');
     const c = money.costOfAwareness;
-    if (c.v !== null && c.v < 0) out.push(`<div class="p1-claim ok">${svg('check', { size: 15 })} Feeder-aware earned ${usd({ ...c, v: -c.v })} more than naive tonight: checking the street cost nothing.</div>`);
-    out.push(row('Cost of awareness (naive minus aware)', usd(c)));
+    if (c.v !== null && c.v < 0) out.push(`<div class="p1-claim ok">${svg('check', { size: 15 })} Feeder-aware's fleet earned ${usd({ ...c, v: -c.v })} more than naive tonight (gross, not Base's profit)${awareWhy(fmt, money.split)}: checking the street cost nothing.</div>`);
+    out.push(row('Cost of awareness for the fleet (naive minus aware, gross)', usd(c)));
   }
   // L7: a branch note from l2 (for example the silent battery's lower end charge on aware + failures)
   const note = summary && summary[branch] && (summary[branch].note || summary[branch].energyNote);
@@ -734,6 +749,29 @@ export function ladderHTML(fmt, ladder) {
     <div class="hb-sub">Bar length on a log scale (display only).</div>`;
 }
 
+/**
+ * The no-violation claim (fix list #10; DATA-TRUTH-outputs #4). It names the tier rule (thresholds from the meta
+ * constants), says "because of batteries", and says so when a transformer still went over nameplate that evening (not
+ * a violation by the rule, but the section prints its % just below). HTML.
+ *   o.branch, o.tfName(tf), o.homeOnly(tf) -> true when no battery sits on that transformer in this branch
+ */
+export function noViolationClaim(fmt, meta, s, o = {}) {
+  const c = (meta && meta.constants) || {};
+  const k = (name, unit) => (c[name] && typeof c[name].value === 'number' ? fmt.fmtHTML(L(c[name].value, c[name].label, c[name].cite), { unit }) : null);
+  const nPct = k('TIER_NORMAL_PCT', '%'), nMin = k('TIER_NORMAL_MIN', ' minutes'), ePct = k('TIER_EMERGENCY_PCT', '%');
+  const rule = nPct && nMin && ePct ? ` (none above ${nPct} for ${nMin} or more, none above ${ePct})` : ' (normal rating or emergency)';
+  const why = o.branch === 'none' ? ' This scenario has no batteries.' : ' So none because of batteries.';
+  let out = `No service transformer passed its limit this evening${rule} ${fmt.chip(s.normalEvents.label, s.normalEvents.cite)}.${why}`;
+  const ml = s.maxLoading;
+  const amber = c.TIER_AMBER_PCT && typeof c.TIER_AMBER_PCT.value === 'number' ? c.TIER_AMBER_PCT.value : null;
+  if (ml && fmt.isLabelled(ml) && amber !== null && ml.v > amber) {
+    const name = ml.tf !== undefined && o.tfName ? esc(o.tfName(ml.tf)) : 'The worst transformer';
+    const load = ml.tf !== undefined && o.homeOnly && o.homeOnly(ml.tf) ? ' on its homes\' load alone' : '';
+    out += ` ${name} still went over nameplate${load} (${fmt.fmtHTML(ml, { unit: '%', digits: 1 })}${ml.t ? ` at ${esc(ml.t)}` : ''}): over nameplate, not a violation by this rule.`;
+  }
+  return out;
+}
+
 /** "Voltage and feeder cable" (build prompt 7.3): measured, never asserted. */
 export function gridCheckHTML(fmt, s, homeLabel) {
   if (!s) return '';
@@ -806,6 +844,19 @@ export function tfTipHTML(fmt, meta, doc, topology, sceneModel, tf, k, names) {
   return lines.join('');
 }
 
+/** The comms-loss lines of the battery tooltip (ENGINE.md rulings): what a silent battery does is REAL (Base engineers,
+ *  on site), when our controller marks it stale and when its command expires are our timings (ASSUMPTION), read from
+ *  the meta constants. st 'S' = silent, marked stale; 'X' = its command expired. HTML. */
+export function commsLossTip(fmt, meta, st) {
+  const c = (meta && meta.constants) || {};
+  const t = (name) => (c[name] && typeof c[name].value === 'number' ? fmt.fmtHTML(L(c[name].value, c[name].label, c[name].cite), { unit: ' s' }) : null);
+  const stale = t('COMMS_STALE_S'), ttl = t('COMMAND_TTL_S');
+  const real = `it idles in backup-only mode, never discharges to the grid and only backs up its own home ${fmt.chip('REAL', COMMS_LOSS_CITE)}`;
+  const timing = ` ${fmt.chip('ASSUMPTION', COMMS_TIMING_CITE)}`;
+  if (st === 'S') return `<div>No signal${stale ? ` for ${stale} or more` : ''}: our controller marks it stale${timing}. When its command expires${ttl ? ` (after ${ttl})` : ''}, ${real}.</div>`;
+  return `<div>Its command expired${ttl ? ` after ${ttl}` : ''}${timing}: ${real}.</div>`;
+}
+
 /** The battery tooltip (3D cabinet or icon, street battery icons). */
 export function batteryTipHTML(fmt, meta, doc, topology, j, k, names, branch) {
   const hi = topology.fleet[j];
@@ -819,8 +870,7 @@ export function batteryTipHTML(fmt, meta, doc, topology, j, k, names, branch) {
     const word = STATE_WORDS[st] || st;
     const kwTxt = Math.abs(kw) >= 0.05 ? ` ${fmt.fmtHTML(L(+kw.toFixed(1), lab, 'battery kW (+ charging, - sending out)'), { unit: ' kW', digits: 1, signed: true })}` : '';
     lines.push(`<div class="tip-now">${svg('battery', { size: 20, level: soc / 100, state: st })} <b>${esc(word)}</b>${kwTxt} · ${fmt.fmtHTML(L(Math.round(soc), seriesLabel(doc, 'soc', 'SIM'), 'state of charge'), { unit: '% full' })}</div>`);
-    if (st === 'S') lines.push('<div>No signal for 3+ minutes; it stops on its own when its command expires (5 min).</div>');
-    if (st === 'X') lines.push('<div>Its command expired: it waits, backup armed.</div>');
+    if (st === 'S' || st === 'X') lines.push(commsLossTip(fmt, meta, st));
     if (st === 'I' && (branch === 'aware' || branch === 'aware_faults') && meta.plan && k >= fmt.timeToStep(meta, meta.plan.onset)) lines.push('<div class="tip-what">Waiting: the controller sends charge only where it fits.</div>');
   }
   lines.push(`<div class="tip-what">It keeps 20% for backup (Base's reserve ${fmt.chip('REAL', 'Base member reserve, 20% (build prompt 4.1)')}).</div>`);
@@ -996,7 +1046,7 @@ export async function mount(el, ctx) {
   const credits = document.createElement('div');
   credits.className = 'p1-overlay p1-credits';
   const fm = ctx.footprints && ctx.footprints.meta;
-  credits.innerHTML = `© OpenStreetMap contributors (ODbL) · NREL SMART-DS · ERCOT <span class="ic-help" tabindex="0" data-tip-html="${esc(`Buildings © OpenStreetMap contributors, ODbL 1.0${fm && fm.matched ? ` (${fmt.fmtHTML(fm.matched)} of the feeder's homes matched; the rest are 12 m boxes ${fmt.chip('ASSUMPTION')})` : ''}.<br>Feeder: NREL SMART-DS 2018 AUS P1U, CC BY 4.0.<br>Prices: ERCOT RTM settlement point prices, LZ_NORTH (recorded; not live).`)}">${svg('info', { size: 12 })}</span>`;
+  credits.innerHTML = `© OpenStreetMap contributors (ODbL) · NREL SMART-DS · ERCOT <span class="ic-help" tabindex="0" data-tip-html="${esc(`Buildings © OpenStreetMap contributors, ODbL 1.0${fm && fm.matched ? ` (${fmt.fmtHTML(fm.matched)} of the feeder's homes matched; the rest are 12 m boxes ${fmt.chip('ASSUMPTION')})` : ''}.<br>Feeder: NREL SMART-DS 2018 AUS P1U (${FEEDER_TAG} ${fmt.chip('REAL', FEEDER_CITE)}), CC BY 4.0.<br>Prices: ERCOT RTM settlement point prices, LZ_NORTH (recorded; not live).`)}">${svg('info', { size: 12 })}</span>`;
   const transport = document.createElement('div');
   transport.className = 'p1-overlay p1-transport';
   transport.innerHTML = `
@@ -1041,7 +1091,9 @@ export async function mount(el, ctx) {
     }
     $('p1-scn-sub').textContent = TAB_LINES[branch] || '';
     if (!dayPicker) {
-      $('p1-day').innerHTML = `<span class="p1-daychip" data-tip="A real Texas day: ERCOT prices (REAL); home loads are the same calendar date in the 2018 SMART-DS year (ASSUMPTION).">${svg('calendar', { size: 16 })} ${esc(dayLabel(meta.day))} ${fmt.chip(priceLabel, 'ERCOT RTM SPP LZ_NORTH, recorded; the loads are the same calendar date in 2018 (ASSUMPTION)')}</span>`;
+      // fix list #9: the weekday mismatch and the possible one-hour clock offset, computed for this evening
+      const pairing = loadPairingNote(meta.day, meta.constants) || '';
+      $('p1-day').innerHTML = `<span class="p1-daychip" data-tip="${esc(`A real Texas day: ERCOT prices (REAL). ${pairing}`)}">${svg('calendar', { size: 16 })} ${esc(dayLabel(meta.day))} ${fmt.chip(priceLabel, `ERCOT RTM SPP LZ_NORTH, recorded. ${pairing}`)}</span>`;
     }
     cues = storyCues(meta, doc, branch, topology, fmt);
     prevLit = null;
@@ -1089,7 +1141,8 @@ export async function mount(el, ctx) {
       const ok = s.homesBelow095 && s.homesBelow095.v === 0;
       set('grid', `${ok ? `<span class="t-ok">${svg('check', { size: 14 })}</span> voltage in range · ` : ''}cable max ${fmt.fmtHTML(L(s.feederHead.v, s.feederHead.label, s.feederHead.cite), { unit: '%', digits: 1 })}`);
     }
-    set('scale', 'one home\'s two batteries vs A, the feeder, ERCOT');
+    // fix list #13: the feeder rung is one conductor of the head cable (per phase), not the whole feeder
+    set('scale', 'A\'s batteries vs A, one head-cable conductor, ERCOT');
     set('log', doc.ticker ? `${nv(fmt, L(doc.ticker.length, seriesLabel(doc, 'ticker', 'SIM')))} commands ${fmt.chip(seriesLabel(doc, 'ticker', 'SIM'), 'sim.orchestrator.allocate(): deterministic, no model in the loop')}` : '');
     set('sources', 'ERCOT · SMART-DS · OSM · OpenDSS · named assumptions');
   }
@@ -1107,7 +1160,7 @@ export async function mount(el, ctx) {
       let claim = '';
       if (s.normalEvents && s.emergencyTfs) {
         claim = s.normalEvents.v === 0 && s.emergencyTfs.v === 0
-          ? `<div class="p1-claim ok">${svg('check', { size: 15 })} No service transformer passed its limit this evening (normal rating or emergency) ${fmt.chip(s.normalEvents.label, s.normalEvents.cite)}</div>`
+          ? `<div class="p1-claim ok">${svg('check', { size: 15 })} ${noViolationClaim(fmt, meta, s, { branch, tfName, homeOnly: (tf) => branch === 'none' || !(topology.fleet || []).some((hi) => topology.homes[hi] && topology.homes[hi].tf === tf) })}</div>`
           : `<div class="p1-claim bad">${svg('warn', { size: 15 })} ${fmt.fmtHTML(s.normalEvents)} normal-rating violations and ${fmt.fmtHTML(s.emergencyTfs)} transformers in emergency this evening</div>`;
       }
       bodyOf('evening').innerHTML = claim
@@ -1148,7 +1201,7 @@ export async function mount(el, ctx) {
       <div class="p1-row"><span class="p1-k">What the controller sees</span><span class="p1-v">${esc(cv ? cv.text : '')} ${cv ? fmt.chip(cv.label, cv.cite) : ''}</span></div>
       <div class="p1-note"><b>Naive:</b> ${esc(nl.text)} ${fmt.chip(nl.label || 'ASSUMPTION', nl.cite)}</div>
       <div class="hb-sub">${Object.values(meta.sources || {}).map((x) => `${esc(x.text)} ${fmt.chip(x.label)}`).join('<br>')}</div>
-      <div class="hb-sub">Buildings © OpenStreetMap contributors, ODbL 1.0${fm && fm.matched ? ` (${fmt.fmtHTML(fm.matched)} of the feeder's homes matched; the rest are 12 m boxes ${fmt.chip('ASSUMPTION')})` : ''} · Feeder: NREL SMART-DS 2018 AUS P1U, CC BY 4.0 · Prices: ERCOT RTM LZ_NORTH. Objects not to scale; roofs, heights and colours drawn for recognition ${fmt.chip('ASSUMPTION', 'display only')}.</div>`;
+      <div class="hb-sub">Buildings © OpenStreetMap contributors, ODbL 1.0${fm && fm.matched ? ` (${fmt.fmtHTML(fm.matched)} of the feeder's homes matched; the rest are 12 m boxes ${fmt.chip('ASSUMPTION')})` : ''} · Feeder: NREL SMART-DS 2018 AUS P1U, ${FEEDER_TAG} ${fmt.chip('REAL', FEEDER_CITE)}, CC BY 4.0 · Prices: ERCOT RTM LZ_NORTH. Objects not to scale; roofs, heights and colours drawn for recognition ${fmt.chip('ASSUMPTION', 'display only')}.</div>`;
   }
 
   function renderLegend() {
@@ -1268,7 +1321,7 @@ export async function mount(el, ctx) {
         const tipB = esc(batteryTipHTML(fmt, meta, doc, topology, j, k, names, branch));
         if (branch === 'none') { bats.push(`<span class="bt off" data-tip-html="${tipB}">${svg('battery', { size: 26, level: 0, state: 'I' })}</span>`); return; }
         const st = doc.state[k][j];
-        const badge = faultBadgeAt(j) ? `<i class="bt-badge" data-tip="No signal from this battery since ${esc(fmt.stepToTime(meta, faultBadgeAt(j).silentFrom ?? faultBadgeAt(j).step + 1))} (a failure we injected, ASSUMPTION)">${svg('silent', { size: 12 })}</i>` : '';
+        const badge = faultBadgeAt(j) ? `<i class="bt-badge" data-tip="No signal from this battery since ${esc(fmt.stepToTime(meta, faultBadgeAt(j).silentFrom ?? faultBadgeAt(j).step + 1))} (a failure we injected, ASSUMPTION). When its command expires it idles in backup-only mode and never discharges to the grid (Base engineer, on site, 26 Sep 2026, verbal: REAL); the timings are ours (ASSUMPTION).">${svg('silent', { size: 12 })}</i>` : '';
         bats.push(`<span class="bt s-${st}" data-tip-html="${tipB}">${svg('battery', { size: 26, level: doc.soc[k][j] / 1000, state: st })}${badge}</span>`);
       });
       const batHTML = bats.length ? bats.join('') : `<span class="bt-none" data-tip="No battery on T-240. Where would one help most? See P2 →">none</span>`;
@@ -1569,7 +1622,7 @@ export async function mount(el, ctx) {
       return homeTipHTML(fmt, topology, ctx.footprints, hi, names, hsFor()[hi], fleetSet.has(hi) && branch !== 'none');
     }
     if (['cabinets', 'caps', 'battery-icons'].includes(layer) && Number.isInteger(o.j) && o.j >= 0) return batteryTipHTML(fmt, meta, doc, topology, o.j, k, names, branch);
-    if (layer === 'badges' && o.icon === 'g-silent') return 'This battery has gone silent: no signal since it took its last command (a failure we injected, ASSUMPTION).';
+    if (layer === 'badges' && o.icon === 'g-silent') return 'This battery has gone silent: no signal since it took its last command (a failure we injected, ASSUMPTION). When that command expires it idles in backup-only mode and never discharges to the grid (Base engineer, on site, 26 Sep 2026, verbal: REAL); the timings are ours (ASSUMPTION).';
     if (layer === 'badges' && o.icon === 'g-hot') return 'An EV plugged in on this transformer (a failure we injected, ASSUMPTION).';
     return '';
   }

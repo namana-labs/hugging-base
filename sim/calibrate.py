@@ -261,8 +261,8 @@ def main(argv=None):
           f'max {np.abs(err0).max():.2f}, p99 {np.percentile(np.abs(err0), 99):.2f})      [report]')
     if not ok99:
         refuted.append(f'calibrate surrogate: {text} (expected p99 <= 5.0)')
-    la = os.getloadavg()[0]
-    print(f'step: set 2021 loads + {nf} batteries + solve + readout: {np.mean(times) * 1000:.1f} ms (load avg {la:.0f}; '
+    la = f'{os.getloadavg()[0]:.0f}' if hasattr(os, 'getloadavg') else 'n/a'   # Windows has no getloadavg
+    print(f'step: set 2021 loads + {nf} batteries + solve + readout: {np.mean(times) * 1000:.1f} ms (load avg {la}; '
           f'census {len(steps)} steps in {census_s:.1f} s)      [report]')
 
     if not a.quick and not a.no_write:

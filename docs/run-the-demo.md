@@ -1,6 +1,6 @@
 # Run the demo
 
-Hugging Base is a static web app. A Python simulator (`sim/`) wrote every number the page shows into committed JSON under `ui/data/`; the browser only reads those files. No server logic, no network at view time, no language model anywhere in the numbers.
+Hugging Base is a static web app. A Python simulator (`sim/`) wrote every number the page shows into committed JSON under `ui/data/`; the browser only reads those files. No server logic, no network at view time, no language model anywhere in the numbers, and **OpenDSS is the referee** of every violation.
 
 ## Two commands
 
@@ -9,55 +9,58 @@ scripts/setup.sh     # once: checks (or creates) the Python venv; ends "SETUP: O
 scripts/serve.sh     # a plain static server from the repo root on port 8765
 ```
 
-Open **http://127.0.0.1:8765/ui/**. Stop the server with Ctrl-C.
+Open **http://127.0.0.1:8765/ui/index.html**. Stop the server with Ctrl-C.
 
 `serve.sh` is only a file server (`python3 -m http.server`). Any static server rooted at the repo works; the page must be served from the **repo root** so that `/ui/`, `/demos/grid-stories/ui/dist/` and `/four-home-simulation/` resolve from one origin.
 
-## The three views
+## The four story pages
 
-| Tab | Deep link | What it answers |
+One scenario at a time, chosen on page 1 and carried through the rest. Every scenario is a run the engine already made and committed; the catalogue that lists them is `ui/data/story/index.json`.
+
+| Page | Link | What it shows |
 |---|---|---|
-| **P1 · where to charge** | `?view=p1&branch=none\|naive\|aware\|aware_faults&t=HH:MM&cam=feeder\|street\|t240&date=YYYY-MM-DD&speed=0.25` | One evening (23 Aug 2026 by default; three more real ERCOT evenings with `&date=`), 16:00 to 04:00, one-minute steps, OpenDSS every step, under four branches: no batteries, naive, feeder-aware, and feeder-aware with three failures (23 Aug only). A bare `?view=p1` opens with an intro card. |
-| **P2 · where the next battery goes** | `?view=p2&combo=<policy>-<class>-<rule>-g<growth>&home=<home id>&n=1..10` | A month-long what-if (August 2026) ranking candidate homes with vs without a battery, under naive vs feeder-aware dispatch. |
-| **More** | `?view=more` | The five-minute beat list, money tonight (sold, bought back, net), the real Texas evenings and the money calendar, who pays and a monthly storage benchmark, how Base plugs it in, performance as measured, everything that already worked (the prototype stories and four-home, with our review's caveats), and at the bottom the ERCOT console: frequency, reserves, net load and congestion for one recorded system day (25 Sep 2026, REAL, not live). |
+| **Configure** | `?page=configure` | Evening (23 Aug 2026 by default; 22 Jul, 14 Aug and 26 Aug are other real ERCOT evenings) × policy (no batteries, naive, feeder-aware) × failure (none, pieces fail, controller crash, hidden attacker: 23 Aug and feeder-aware only). The fleet levers (size 48 / 96 / 144 / 192, Core or Legacy, reserve 20–50%, start charge 60–100%, home-load growth 0 / 20 / 50%) are each a real engine run on 23 Aug, one lever away from the default. Anything not run is disabled with its reason. Presets: "The demo evening", "Record demand", "Priciest evening", "Pieces fail", "Controller crash", "Hidden attacker". |
+| **Running** | `?page=running` | The files the scenario plays, loading, and the engine's measured cost for that run (build seconds and OpenDSS solves, from the catalogue and `ui/data/engine.json`). No fake progress: the run already happened. |
+| **Run** | `?page=run` | The evening in 3D, 16:00 to 04:00, one-minute steps: the street, the rule-generated story line, the lanes (worst transformer, streets A–D and T-240, price, fleet charge, fleet power) and the "Right now" card, with any failure in red. |
+| **Results** | `?page=results` | The verdict and four tiles (worst transformer, normal-rating events, lowest home voltage, fleet charged by 04:00), each with every other committed run beneath it; voltage by bus from the substation outwards; reactive power. Only the hidden-attacker scenario shows ERCOT context: the REAL frequency of 25 Sep 2026, dated "a different day", beside the 3–17 mHz band. |
+| **Learnings** | `?page=learnings&q=1..4` | Q1 how many batteries fit (naive vs feeder-aware, OpenDSS); Q2 one transformer, 0 to 50 batteries; Q3 which transformers to upgrade as home load grows; Q4 where the next battery helps most. |
 
-Add `&beat=<id>` to any link to apply a beat from `ui/data/beats.json`: the page jumps to that beat's view and clock and shows its caption, with a "next beat" link. The video script is `docs/demo-script.md`.
+**Link parameters** (defaults are omitted): `s=<scenario id>` (for example `2026-08-23/naive`, `2026-08-23/aware/faults`, `2026-08-23/aware/worker_kill`, `2026-08-23/aware/covert`, `2026-08-23/naive/fleet=192`), `k=<step>` (minutes after 16:00: `k=390` is 22:30), `speed=0.1|0.25|0.5|1|2|4` (default 0.25×, 2.5 simulated minutes a second), `q=1..4`, `tf=<transformer index>`, `n=0..50`. An unknown `s` falls back to the default scenario with a notice. `&nowebgl=1` forces the 2D fallback.
 
-Combos: `policy` = `aware` or `naive`; `class` = `core` or `legacy`; `rule` = `d26` (charge from the D-26 onset) or `cheapest` (the cheapest post-peak intervals); `growth` = `0` or `20` (+20% load, ASSUMPTION). The default is `aware-core-d26-g0`.
+The five-minute video is `docs/demo-script.md`; its beats are `ui/data/beats.json`, one deep link each. The audited numbers, each with its label, file and field, are in `presentation/NUMBERS.md`.
 
 ## Reading the screen
 
-- **Tags, not word chips.** Every number carries a small tag: **R** REAL (ERCOT prices, SMART-DS topology and ratings, OSM footprints, sourced facts), **S** SIM (our simulation: OpenDSS + our controller), **D** DERIVED (arithmetic on REAL or SIM, such as dollars), **A** ASSUMPTION (a value we chose; dashed border). Hover or tap a tag for what it means and where the number comes from.
-- **≈ and ✓ on P2.** A dotted **≈** tag marks a screening number from the per-transformer surrogate that OpenDSS did not re-check; **✓ OpenDSS** marks a number the OpenDSS month run measured. Where both exist, the OpenDSS one is shown first.
-- **Hover explains.** Hover any house, battery cabinet, transformer, meter, icon or tag (or focus it with Tab) to see what it is and what is happening to it right now. Most numbers live in these tooltips and in the collapsible sections; the front of each panel shows words and pictures.
-- **The meter** is the one picture of load: the box is the transformer's rating; load that sticks out of the lid is too much; a jagged top is past the emergency rating; an empty box with a fuse is a fuse that opened (our ASSUMPTION rule). On P2 the two meters are the month's peak without and with the new battery.
-- **Battery icons:** fill = charge (the dashed tick is the 20% member reserve); **bolt** = charging (teal), **out-arrow** = sending power out (violet), no glyph = waiting, **crossed signal** = silent. Pad-mount transformers are green boxes; pole-mount ones are grey cans on a pole. Colour on a transformer's meter and halo means its load state; "green never means safe": within rating is a muted sage.
-- **Worst %.** The worst transformer's loading stays in front of P1 (large, tier colour) and over the scene ("worst now"); everything else is a state word you can hover.
-- **Speeds.** P1 plays at 0.1×, **0.25× (the default)**, 0.5×, 1×, 2× or 4×; **‹ 1 min ›** steps one simulated minute (Shift = ten); "moment" jumps to the previous or next story moment; "hold" pauses 1.5 s at each story moment. `&speed=0.1` in a link sets the speed; `&hold=0` turns the hold off; `&cap=0` hides the story line.
-- **The day chip** at the top of P1 switches between real ERCOT evenings (`&date=YYYY-MM-DD`): each is that day's real LZ_NORTH price on our feeder. A date that is not simulated shows a notice and the 23 Aug evening, never made-up data. "+ Failures" is scripted for 23 Aug only.
-- **Sections.** Below the front cards, P1 and P2 fold everything else into sections (click a row to open it; the page remembers what you opened). A beat link opens the section it talks about.
-- **Beat bar.** `&beat=<id>` shows the beat's one-sentence headline; on P1 "Read the full caption" opens the rest. P2 and More show both.
-- **A yellow FIXTURE banner** means a view is showing synthetic stand-in data because the real file has not been built. Never record a take with the banner showing.
-- **"(not built yet)"** in a caption means the data that caption reads does not exist yet. It never falls back to a guess; an optional clause whose data is missing is left out whole.
-- **More → Real Texas evenings** lists each simulated evening with its price shape, money per battery (gross, not Base's profit), naive's worst transformer and feeder-aware's battery-caused count; click one to open it on P1. The calendar under it is every real evening of 2026 for one Core, prices only.
+- **Every number carries a tag:** **R** REAL (ERCOT prices, SMART-DS topology and ratings, OSM footprints, sourced facts), **S** SIM (our simulation: OpenDSS and our controller), **D** DERIVED (arithmetic on REAL or SIM, such as dollars), **A** ASSUMPTION (a value we chose). A dashed **SCREENING** tag marks a number from the per-transformer surrogate that OpenDSS did not re-check. Hover or tap a tag for its source.
+- **The feeder** is NREL's SMART-DS Austin P1U: a REAL dataset of a **synthetic** feeder ("realistic but not real"), 1,010 customers (971 homes, 39 small businesses) and 379 service transformers, framed as an **Oncor-suburb stand-in** settled at LZ_NORTH. The 96-battery fleet is **a deliberate stress placement** (ASSUMPTION).
+- **Naive** is our assumption of one number, no feeder check, all at once at the price onset. It is not how Base charges; Base's method is not public.
+- **Tiers:** over nameplate (above 100%) is amber, not a failure; a normal-rating violation is above 110% for 30 minutes or more; emergency is above 150%. The fuse rule (200% for 10 minutes, 300% for 60 s) is an ASSUMPTION. Tier 0 is sage: **green never means safe**. Every no-violation claim reads "because of batteries".
+- **Money** is the fleet's **gross energy value, not Base's profit**.
+- **The attacker is fictional.**
+
+## The Engine explorer
+
+The earlier tab app (P1 · where to charge, P2 · where the next battery goes, More) is kept at **`ui/explore.html`**, linked as "Engine explorer" in the footer. Its links are `?view=p1|p2|more` (an old `?view=` or `?beat=` link to `ui/index.html` opens there). It is not in the video.
 
 ## If something looks wrong
 
 | Symptom | Try |
 |---|---|
-| Blank 3D area | `&nowebgl=1` forces the 2D fallback (same scene, drawn top-down). |
-| Camera lost | the camera presets (`&cam=feeder`, `street`, `t240`) reset the view. |
-| Page says "Could not start" | the server must be rooted at the repo, and `ui/data/topology.json` must exist. |
-| Health check | The `<body>` carries `data-status` (ready/error), `data-webgl` (ok/fallback), `data-errors`, `data-fixture` and `data-offsite` (other-origin loads; must be 0). |
+| Blank 3D area | reload; `&nowebgl=1` forces the 2D fallback (same scene, top-down). |
+| "Scenario … is not in the catalogue" | the link's `s=` is not a committed run; the page shows the default instead. |
+| Page says "Could not start" | the server must be rooted at the repo, and `ui/data/story/index.json` and `ui/data/topology.json` must exist. |
+| Health check | `<body>` carries `data-status` (loading/ready/error), `data-page`, `data-webgl`, `data-errors` (bare numbers refused) and `data-offsite` (other-origin loads; must be 0). |
 
 ## The gate (for builders)
 
 ```sh
-scripts/check_all.sh                  # unit tests, node tests, the untouched prototype's and four-home's tests,
-                                      # contracts, verifiers, and a 3-link browser smoke; ends "ALL CHECKS: PASS"
-scripts/check_all.sh --full           # also rebuilds every artifact under the heavy-run lock and byte-compares
-node --test ui/test/*.test.js         # the UI tests alone (pass files: "node --test ui/test" fails on node 26)
-scripts/smoke_ui.sh p2                # headless Chrome over every P2 deep link (its own server on a free port)
+scripts/check_all.sh                           # unit tests, node tests, the prototype's and four-home's tests,
+                                               # contracts, verifiers, and a browser smoke; ends "ALL CHECKS: PASS"
+scripts/check_all.sh --full                    # also rebuilds every artifact under the heavy-run lock and byte-compares
+python -m unittest discover -s sim/tests -t .  # the engine tests alone (~4 min on Windows, ~10 with a loaded machine)
+node --test ui/test/*.test.js                  # the UI tests alone
 ```
+
+On Windows (Git Bash) use the venv's Python (`PY=~/hb-overnight/.venv/Scripts/python.exe`), set `HB_LOCK_HELD=1` and `NODE_OPTIONS=--experimental-websocket`, and read text files with `encoding="utf-8"`.
 
 The prototype (`demos/grid-stories/`) and four-home (`four-home-simulation/`) are untouched and still run from the same server: http://127.0.0.1:8765/demos/grid-stories/ui/dist/ and http://127.0.0.1:8765/four-home-simulation/four-home.html.

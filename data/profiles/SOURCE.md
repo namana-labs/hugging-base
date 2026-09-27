@@ -20,6 +20,23 @@
 - Fitted per transformer on 240 separate OpenDSS frames (seed 20260801; each battery at an independent level); feeder: sim.feeder.Feeder (lane L0).
 <!-- calibrate:end -->
 
+<!-- provenance:begin -->
+## Provenance manifest (data-truth fix list #15; audit `simulators/rz/judges/DATA-TRUTH-inputs.md` problem 8)
+
+- **Dataset:** NREL SMART-DS v1.0, 2018, AUS, P1U, feeder `p1uhs19_1247--p1udt17263`. A real published dataset of a **synthetic** feeder: NREL calls SMART-DS "realistic but not real" (https://www.nlr.gov/grid/smart-ds.html); OEDI submission 2981 (https://data.openei.org/submissions/2981). **Licence: CC BY 4.0** (attribute NREL).
+- **Raw files:** `https://oedi-data-lake.s3.amazonaws.com/SMART-DS/v1.0/2018/AUS/P1U/profiles/{name}.csv`, one per shape in the table below (254 kW + 254 kvar, 35,040 values each = 365 x 96, so no daylight-saving shift). Fetched on demand by `python3 scripts/fetch_profiles.py --fetch-only` into `~/hb-overnight/cache/smartds/` (never committed); the fetch date was not recorded, and the table below is the byte check. The audit re-downloaded three of them on 26 Sep 2026 (HTTP 200), and `res_kw_38274_pu` again for the output audit: all equal their row below.
+- **Committed files** (sha256 and size of the committed blobs, `git show HEAD:<path> | sha256sum`):
+
+| file | built by | contents | sha256 | bytes |
+|---|---|---|---|---|
+| `data/profiles/smartds_2018_aug.npz` | `python3 scripts/fetch_profiles.py --build-only` | every kW and kvar shape, float32, 3,000 steps x 15 min from 2018 index 20352 (2018-08-01 00:00) | `1d30e06c69a9c59804c5a5546f5bedd4dd422acd47fef13134ada0b11c46f9e5` | 5,287,911 |
+| `data/profiles/days/2026-07-22.npz` | `python -m sim.history --only 2026-07-22` (`slice_loads`: cut from the same cached CSVs, zip entries normalised so a rebuild is byte-identical) | the 22 Jul load slice for the record-demand evening: every kW and kvar shape, float32, 120 steps x 15 min from 2018 index 19392 (2018-07-22 00:00, a Sunday, standing in for Wed 22 Jul 2026: LOAD_PAIRING, ASSUMPTION) | `32493549f79d5ba5ac76a22a0dbad79496066191a2b69dae30bdac3372c05331` | 236,069 |
+| `data/profiles/surrogate.json` | `python -m sim.calibrate` | the per-transformer screening surrogate fitted against OpenDSS (section above) | `8eb74c5e514ddca350ca6ad0671cea0231a3662903dcdfe0989b9e55921ebd50` | 30,983 |
+
+- **Audit checks:** the August npz equals the raw CSVs from index 20352 for 3,000 steps, and the 22 Jul npz equals them from index 19392, both with a maximum difference of 0. Every hash in the table below matched the cache.
+- **Clock and weekday (ASSUMPTION, disclosed):** the 2018 load is paired with 2026 prices by calendar date, so weekdays can differ (22 Jul 2026 Wed on a Sunday's load; 14 Aug Fri on a Tuesday's; 23 Aug Sun on a Thursday's; 26 Aug Wed on a Sunday's), and with no daylight-saving shift in the series the loads may sit one hour early against the CDT prices (`PROFILE_INDEX_RULE`, unverified).
+<!-- provenance:end -->
+
 ## sha256 manifest (raw CSVs as fetched)
 
 | shape | sha256 | max |
