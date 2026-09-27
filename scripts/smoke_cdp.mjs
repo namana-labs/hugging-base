@@ -95,7 +95,9 @@ async function main() {
 
   let ok = 0;
   for (const q of opt.links) {
-    const t0 = Date.now(), url = new URL('?' + q, opt.base).href, why = [];
+    // page= links open the story app (ui/index.html); view=/beat= links the engine explorer (ui/explore.html)
+    const story = /(^|&)page=/.test(q) || !/(^|&)(view|beat)=/.test(q);
+    const t0 = Date.now(), url = new URL((story ? '' : 'explore.html') + '?' + q, opt.base).href, why = [];
     let flags = null;
     // one retry at twice the timeout if the page never settles (machine load, not a verdict)
     for (let attempt = 0, lim = opt.timeout; attempt < 2; attempt++, lim *= 2) {
@@ -112,12 +114,15 @@ async function main() {
       if (flags && (flags.status === 'ready' || flags.status === 'error')) break;
     }
     const f = flags || {};
-    const wantWebgl = /(^|&)nowebgl=1(&|$)/.test(q) ? 'fallback' : 'ok';
+    // the story app draws a scene on Run only (Running hands over to Run by itself: either flag is fine there)
+    const page = story ? ((q.match(/(^|&)page=([a-z]+)/) || [])[2] || 'configure') : null;
+    const scene = !story || page === 'run';
+    const wantWebgl = !scene ? (page === 'running' ? /^(none|ok)$/ : /^none$/) : /(^|&)nowebgl=1(&|$)/.test(q) ? /^fallback$/ : /^ok$/;
     const view = (q.match(/(^|&)view=([a-z0-9]+)/) || [])[2];
     if (f.status !== 'ready') why.push(`status=${f.status ?? 'none'}`);
     if (f.errors !== '0') why.push(`errors=${f.errors ?? 'none'}`);
     if (f.offsite !== '0') why.push(`offsite=${f.offsite ?? 'none'}`);
-    if (f.webgl !== wantWebgl) why.push(`webgl=${f.webgl ?? 'none'}(want ${wantWebgl})`);
+    if (!wantWebgl.test(f.webgl ?? '')) why.push(`webgl=${f.webgl ?? 'none'}(want ${wantWebgl.source})`);
     if ((view === 'p1' && realP1) || (view === 'p2' && realP2)) { if (f.fixture !== '0') why.push(`fixture=${f.fixture ?? 'none'}(real data exists)`); }
     let kb = 0, colours = 0;
     if (f.status === 'ready') {
