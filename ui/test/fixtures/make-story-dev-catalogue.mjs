@@ -6,7 +6,8 @@
 // from ui/data/p1/meta.json, ui/data/p1/days/**, ui/data/engine.json or mpalacios/out/** (the two runtime files the
 // contract says ENGINE copies into ui/data), with its label and cite.
 //
-//   node ui/test/fixtures/make-story-dev-catalogue.mjs     writes ui/test/fixtures/story-dev-catalogue.json
+//   node ui/test/fixtures/make-story-dev-catalogue.mjs --write     writes ui/test/fixtures/story-dev-catalogue.json
+// (without --write it does nothing: `node --test ui/test/` also runs every .mjs under a test/ folder)
 //
 // What the dev catalogue can play: 23 Aug none/naive/aware/aware+faults (p1/*.json), the three history evenings'
 // none/naive/aware (p1/days/<date>/*.json.gz), worker_kill and covert (from mpalacios/out/, outside ui/data: fine on
@@ -16,6 +17,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dateLabel } from '../../lib/format.js';
 
+if (!process.argv.includes('--write')) {
+  console.log('make-story-dev-catalogue: pass --write to regenerate ui/test/fixtures/story-dev-catalogue.json');
+  process.exit(0);
+}
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const UI = path.resolve(HERE, '..', '..');
 const DATA = path.join(UI, 'data');
