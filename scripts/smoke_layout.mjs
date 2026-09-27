@@ -3,7 +3,8 @@
 // For each size x link: the page reaches data-status=ready, nothing overflows horizontally (page, header, footer)
 // (document.documentElement.scrollWidth <= innerWidth), and every primary control -- the step nav, "Start the sim ->",
 // "Continue to ..." -- and every header/footer link (the Engine explorer) lies inside the viewport and is the element
-// hit at its centre (elementFromPoint); no provenance tag is cut by a clipping ancestor; on Configure every lever group,
+// hit at its centre (elementFromPoint); no provenance tag is cut by a clipping ancestor, even once scrolled into view
+// (content below a scroll container's fold is not a cut); on Configure every lever group,
 // evening and fixed input is in the page flow (no inner scroll) and reachable by scrolling the page.
 // Usage: node scripts/smoke_layout.mjs --base http://127.0.0.1:8801/ui/ [--sizes 1280x800,1440x900,1920x1080]
 //        [--timeout 40] <query> [<query> ...]
@@ -75,23 +76,48 @@ const CHECK = `(() => {
     return !hit || !(hit === el || el.contains(hit)) ? name + ': covered by ' + (hit ? hit.tagName + '.' + hit.className : 'nothing') : null;
   };
   for (const el of els) { const w = hitOK(el); if (w) why.push(w); }
-  // a provenance tag is never cut: no ancestor that clips (overflow hidden/clip) hides part of it, and it is on screen
-  // horizontally (scroll containers such as a long failure list may hide a tag until scrolled: that is not a cut)
+  // a provenance tag is never cut. A tag outside a clipping ancestor (overflow not visible) is a cut only when no
+  // scrolling can show it: if an ancestor scrolls (overflow auto/scroll with more content than room) or the page
+  // scrolls, the tag is scrolled into view and tested again (content below a scroll container's fold is not a cut).
+  const scrolls = (a) => {
+    const cs = getComputedStyle(a);
+    return (/auto|scroll/.test(cs.overflowY) && a.scrollHeight > a.clientHeight + 1) || (/auto|scroll/.test(cs.overflowX) && a.scrollWidth > a.clientWidth + 1);
+  };
+  const cutBy = (c) => {
+    const r = c.getBoundingClientRect();
+    if (r.right > W + 0.5 || r.left < -0.5) return 'the viewport (x ' + Math.round(r.left) + ')';
+    for (let a = c.parentElement; a && a !== document.body; a = a.parentElement) {
+      const cs = getComputedStyle(a);
+      const cx = cs.overflowX !== 'visible', cy = cs.overflowY !== 'visible';
+      if (!cx && !cy) continue;
+      const ar = a.getBoundingClientRect();
+      if ((cx && (r.left < ar.left - 0.5 || r.right > ar.right + 0.5)) || (cy && (r.top < ar.top - 0.5 || r.bottom > ar.bottom + 0.5))) {
+        return a.tagName + '.' + String(a.className).split(' ')[0];
+      }
+    }
+    return null;
+  };
+  const saved = new Map();          // scroll positions to restore after the check
+  const page = document.scrollingElement;
   for (const c of document.querySelectorAll('.chip')) {
     const r = c.getBoundingClientRect();
     if (r.width === 0 || r.height === 0) continue;
-    if (r.right > W + 0.5 || r.left < -0.5) { why.push('tag ' + c.textContent + ' off screen at x ' + Math.round(r.left)); continue; }
-    for (let a = c.parentElement; a && a !== document.body; a = a.parentElement) {
-      const cs = getComputedStyle(a);
-      const clipX = /hidden|clip/.test(cs.overflowX), clipY = /hidden|clip/.test(cs.overflowY);
-      if (!clipX && !clipY) continue;
-      const ar = a.getBoundingClientRect();
-      if ((clipX && (r.left < ar.left - 0.5 || r.right > ar.right + 0.5)) || (clipY && (r.top < ar.top - 0.5 || r.bottom > ar.bottom + 0.5))) {
-        why.push('tag ' + c.textContent + ' cut by ' + a.tagName + '.' + String(a.className).split(' ')[0] + ' near "' + (c.parentElement.textContent || '').trim().slice(0, 40) + '"');
-        break;
-      }
+    let by = cutBy(c);
+    if (!by) continue;
+    const chain = [];
+    for (let a = c.parentElement; a; a = a.parentElement) {
+      const pageScrolls = a === page && (page.scrollHeight > page.clientHeight + 1 || page.scrollWidth > page.clientWidth + 1);
+      if (pageScrolls || (a !== page && scrolls(a))) chain.push(a);
     }
+    if (chain.length) {
+      for (const a of chain) if (!saved.has(a)) saved.set(a, [a.scrollTop, a.scrollLeft]);
+      c.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      by = cutBy(c);
+      if (!by) continue;
+    }
+    why.push('tag ' + c.textContent + ' cut by ' + by + (chain.length ? ' even when scrolled into view' : '') + ' near "' + (c.parentElement.textContent || '').trim().slice(0, 40) + '"');
   }
+  for (const [a, [t, l]] of saved) { a.scrollTop = t; a.scrollLeft = l; }
   // Configure: every lever group, evening and fixed input is in the page flow (no inner scroll) and reachable by
   // scrolling the page, where it is the element hit at its centre (not under the sticky start bar)
   if (document.body.dataset.page === 'configure') {

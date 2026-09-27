@@ -365,3 +365,9 @@ main.st-page-configure { overflow-y: auto; }
 .rv-frow .w > .tx { flex: 0 1 auto; }
 .rv-frow .w > .tx:first-child { flex: none; max-width: 60%; }
 .rv-frow .w > .num, .rv-frow .w > .chip { flex: none; }
+/* Run aside: the cards keep their content height and the aside scrolls when they do not fit (at 1280x800 with a
+   Detector or Controller card the Right-now card was squeezed to 26 px and its failure list to 8 px) */
+.rv-aside { overflow-y: auto; overflow-x: hidden; }
+.rv-aside > .rv-card { flex-shrink: 0; }
+.rv-now { flex: 1 0 auto; overflow: visible; }
+.rv-all { flex: 1 0 auto; overflow: visible; }
