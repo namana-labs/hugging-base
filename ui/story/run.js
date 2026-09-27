@@ -369,7 +369,7 @@ export async function mount(root, ctx) {
   // where a failure happens, as HTML: the covert shard's size is covert.json's labelled summary.shard
   const shardN = covert && covert.summary && covert.summary.shard && LABEL_OK(covert.summary.shard.label) ? covert.summary.shard : null;
   const whereHTML = (f) => (f.kind === 'covert' && shardN
-    ? `${ctx.num(shardN)} batteries (fictional attacker)` : esc(f.where || ''));
+    ? `${ctx.num(shardN)}<span class="tx">&nbsp;batteries (fictional attacker)</span>` : `<span class="tx">${esc(f.where || '')}</span>`);
   // lane ranges from the data: worst transformer and the named ones with their thresholds inside; price from 0; the
   // fleet power symmetric about 0 (kW)
   const LW = laneRange(S.worst, [T.normal && T.normal.v, T.emergency && T.emergency.v]);
@@ -507,7 +507,7 @@ export async function mount(root, ctx) {
       ${noFleet ? '' : `<div class="rv-sec"><div class="r"><b>${fmtN(S.fleetN)} batteries${fleetTag}</b><span>${esc(stateLine)}</span></div><div class="rv-cells">${cells}</div></div>`}
       <div class="rv-all"><div class="e">FAILURES THIS EVENING<span>${failures ? `${failures.length}${rulesTag}` : '—'}</span></div>${!failures ? '<div class="rv-ok">Not exported for this run.</div>' : failures.length ? failures.map((f) => {
         const act = f.k0 <= k && k <= f.k1, past = f.k1 < k;
-        return `<button type="button" class="rv-frow${act ? ' act' : past ? ' past' : ''}" data-seek="${f.k0}" title="${esc(f.text)}"><i></i><span class="s">${span(f)}</span><span class="w">${esc(kindWord(f.kind))}${f.where ? ` · ${whereHTML(f)}` : ''}</span></button>`;
+        return `<button type="button" class="rv-frow${act ? ' act' : past ? ' past' : ''}" data-seek="${f.k0}" title="${esc(f.text)}"><i></i><span class="s">${span(f)}</span><span class="w"><span class="tx">${esc(kindWord(f.kind))}${f.where ? '&nbsp;·&nbsp;' : ''}</span>${f.where ? whereHTML(f) : ''}</span></button>`;
       }).join('') : `<div class="rv-ok">None in this run${batQual}.</div>`}</div>`;
     const banner = $('.rv-banner');
     banner.hidden = nowF.length === 0;

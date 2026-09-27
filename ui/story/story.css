@@ -361,3 +361,7 @@ main.st-page-configure { overflow-y: auto; }
 .st-pill .fict { font-size: 11px; font-weight: 700; letter-spacing: .06em; padding: 1px 6px; border-radius: 4px; background: var(--ink); color: var(--panel); }
 .rv-banner .t .num { font-weight: 700; }
 .rv-banner .t .chip { color: var(--panel); border-color: rgba(255,253,248,.7); }
+.rv-frow .w { display: flex; align-items: baseline; min-width: 0; overflow: visible; }
+.rv-frow .w > .tx { flex: 0 1 auto; }
+.rv-frow .w > .tx:first-child { flex: none; max-width: 60%; }
+.rv-frow .w > .num, .rv-frow .w > .chip { flex: none; }
