@@ -85,8 +85,8 @@ FAILURE_MERGE_MIN = const("FAILURE_MERGE_MIN", 5, "ASSUMPTION",
                           "when the gap is 5 minutes or less")
 V_ANSI_LO = const("V_ANSI_LO", 0.95, "REAL", "ANSI C84.1-2020 Range A service voltage, ±5% of nominal")
 V_ANSI_HI = const("V_ANSI_HI", 1.05, "REAL", "ANSI C84.1-2020 Range A service voltage, ±5% of nominal")
-HIJACK_CITE = ("docs/research-report.md §frequency: ~40 MW swing from 1,000 batteries, range depends on load damping and "
-               "deadband (corrected 26 Sep from 3–5 mHz); quote the band, never one value")
+HIJACK_CITE = ("docs/research-report.md: ~40 MW swing from 1,000 batteries; range depends on load damping and deadband; "
+               "quote the band, never one value")
 HIJACK_MHZ_LO = const("HIJACK_MHZ_LO", 3, "DERIVED", HIJACK_CITE)
 HIJACK_MHZ_HI = const("HIJACK_MHZ_HI", 17, "DERIVED", HIJACK_CITE)
 HIJACK_MW = const("HIJACK_MW", 40, "DERIVED", HIJACK_CITE)
@@ -204,9 +204,10 @@ def tf_name(i):
     return f"T-{i} ({FOCUS[i]})" if i in FOCUS else f"T-{i}"
 
 
-def hhmm_of(start, k):
+def hhmm_of(start, k, step_s=P1_STEP_SECONDS):
+    """Clock time of step k (k may be `steps`: the end of the run) from the window start "HH:MM"."""
     h, m = map(int, start.split(":"))
-    t = (h * 60 + m + int(k)) % 1440
+    t = (h * 60 + m + int(k) * int(step_s) // 60) % 1440
     return f"{t // 60:02d}:{t % 60:02d}"
 
 
@@ -255,7 +256,7 @@ def rule_log(start, n, codes, load10, fleet_kw10, soc_mean, scripted, end_text):
     def add(k, rule, text, label="SIM"):
         out.append({"k": int(k), "t": hhmm_of(start, k), "rule": rule, "text": text, "label": label})
 
-    over = codes >= 1
+    over = (codes >= 1) & (codes <= 4)            # above nameplate and still in service (code 5 = protection open)
     if over.any():
         k = int(np.flatnonzero(over.any(axis=1))[0])
         t = int(np.argmax(np.where(over[k], load10[k], -1)))
@@ -375,6 +376,23 @@ EXTRAS_SERIES = {
 }
 
 
+BUS_DIST_NOTE = ("busDistKm is the geometric length along the SMART-DS lines (Units=km), measured before sim.feeder "
+                 "stretches the weak lateral x3 electrically (WEAK_LINE_FACTOR, ASSUMPTION): a place on the street, "
+                 "not an impedance")
+
+
+def rules_block(start, n, codes, load10, fleet_kw10, soc_mean, states, fleet_labels, mom, fail,
+                step_s=P1_STEP_SECONDS):
+    """(moments, failures) of one run from its A.6 arrays (the same values a live run gives: branch_doc writes
+    loading = rint(pct x 10), tier = tier_codes(pct), deliveredKW = rint(sum kW x 10), soc = rint(soc x 1000))."""
+    k, t = np.unravel_index(int(np.argmax(load10)), load10.shape)
+    end = (f"end of run at {hhmm_of(start, n, step_s)}: the worst transformer reached {load10.max() / 10:.1f}% "
+           f"({tf_name(int(t))})" + (f"; fleet at {soc_mean[-1] / 10:.1f}% charge" if soc_mean is not None
+                                     else "; no batteries"))
+    return (rule_log(start, n, codes, load10, fleet_kw10, soc_mean, list(mom), end),
+            failure_intervals(start, codes, states, fleet_labels, list(fail)))
+
+
 def extras_envelope(inputs, constants=None, absent=None):
     series = dict(EXTRAS_SERIES)
     for k in absent or ():
@@ -401,9 +419,8 @@ def extras_from_run(sc, run, sid, seconds, inputs=None, events=None):
     fleet_labels = [sc.labels[int(h)] for h in sc.fleet]
     order, dist = bus_order(sc.feeder)
     vt = sc.feeder.vmin_tf(run["vmin_home"])
-    end = (f"04:00, end of run: the worst transformer reached {load10.max() / 10:.1f}% "
-           f"({tf_name(int(np.unravel_index(load10.argmax(), load10.shape)[1]))})"
-           + (f"; fleet at {soc_mean[-1] / 10:.1f}% charge" if has_batt else "; no batteries"))
+    moments, failures = rules_block(start, n, codes, load10, fleet_kw10, soc_mean,
+                                    run["state"] if has_batt else None, fleet_labels, fm, ff)
     doc = extras_envelope(inputs or inputs_sha())
     doc.update({
         "scenario": sid, "branch": run["branch"], "steps": n, "start": start, "stepSeconds": P1_STEP_SECONDS,
@@ -412,8 +429,7 @@ def extras_from_run(sc, run, sid, seconds, inputs=None, events=None):
         "headKW": i10(run["head_kw"]), "headKVAr": i10(run["head_kvar"]), "capKVAr": i10(run["cap_kvar"]),
         "feederLoadKW": i10(run["load_kw"]),
         "worstPct": load10.max(axis=1).tolist(), "worstTf": worst_tf.tolist(),
-        "moments": rule_log(start, n, codes, load10, fleet_kw10, soc_mean, fm, end),
-        "failures": failure_intervals(start, codes, run["state"] if has_batt else None, fleet_labels, ff),
+        "moments": moments, "failures": failures, "busDistNote": BUS_DIST_NOTE,
         "absent": [],
         "engine": engine_block(seconds, n + 1, f"sim.scenarios: this branch, {n} steps x {P1_STEP_SECONDS} s, "
                                                 f"OpenDSS every step, run once"),
@@ -429,17 +445,15 @@ def extras_from_branch_doc(bd, start, sid, bus, fleet_labels, events_mom=(), eve
     codes = np.array([[int(c) for c in s] for s in bd["tier"]], dtype=int)
     fleet_kw10 = np.asarray(bd["deliveredKW"], dtype=int)
     soc_mean = np.asarray(bd["soc"], dtype=float).mean(axis=1)
-    k = int(load10.max(axis=1).argmax())
-    end = (f"04:00, end of run: the worst transformer reached {load10.max() / 10:.1f}% "
-           f"({tf_name(int(load10[k].argmax()))}); fleet at {soc_mean[-1] / 10:.1f}% charge")
+    moments, failures = rules_block(start, n, codes, load10, fleet_kw10, soc_mean, bd["state"], fleet_labels,
+                                    events_mom, events_fail)
     absent = ["vTfMilli", "headKW", "headKVAr", "capKVAr", "feederLoadKW"]
     doc = extras_envelope(bd["inputs"], absent=absent)
     doc.update({
         "scenario": sid, "branch": bd["branch"], "steps": n, "start": start, "stepSeconds": P1_STEP_SECONDS,
         "busOrder": bus[0], "busDistKm": bus[1],
         "worstPct": load10.max(axis=1).tolist(), "worstTf": load10.argmax(axis=1).tolist(),
-        "moments": rule_log(start, n, codes, load10, fleet_kw10, soc_mean, list(events_mom), end),
-        "failures": failure_intervals(start, codes, bd["state"], fleet_labels, list(events_fail)),
+        "moments": moments, "failures": failures, "busDistNote": BUS_DIST_NOTE,
         "absent": absent,
         "engine": engine,
     })
@@ -603,7 +617,8 @@ def job_worker_kill():
     if late:
         mom.append((late["step"], "lateCommands", late["text"], "SIM"))
     sid = scenario_id(P1_DAY, "aware", "worker_kill")
-    doc = extras_from_branch_doc(bd, "16:00", sid, bus, fleet_labels, mom, fail, engine)
+    start = read_json_any(UI_DATA / base_meta_rel(P1_DAY))["start"]      # the 23 Aug window the replay runs on
+    doc = extras_from_branch_doc(bd, start, sid, bus, fleet_labels, mom, fail, engine)
     _write_extras(sid, doc)
     return doc
 
@@ -907,33 +922,48 @@ def lv_key(lv, v):
     return lever_key(lv, v)
 
 
+EXTRAS_ORDER = ("schema", "producer", "inputs", "constants", "sources", "series", "scenario", "branch", "steps", "start",
+                "stepSeconds", "vTfMilli", "busOrder", "busDistKm", "headKW", "headKVAr", "capKVAr", "feederLoadKW",
+                "worstPct", "worstTf", "moments", "failures", "busDistNote", "absent", "engine")
+
+
 def refresh_extras(doc=None):
-    """Without OpenDSS, bring every extras file up to the current rules: its `constants` block becomes
-    export(*EXTRAS_CONSTANTS) (the physics does not change), and its `stale` failure rows are recomputed from the branch
-    file its scenario plays (state strings are the run's own: branch_doc writes run["state"])."""
+    """Without OpenDSS, bring every extras file up to the current rules: `constants` = export(*EXTRAS_CONSTANTS),
+    `busDistNote`, and `moments` / `failures` recomputed by rules_block() from the branch file the scenario plays (its
+    arrays are the run's own, see rules_block). The OpenDSS series (vTfMilli, head P/Q, capacitor, load) are kept.
+    worker_kill is re-derived from its branch file (job_worker_kill)."""
     doc = doc or build_catalogue()
+    topo = json.loads(TOPOLOGY.read_text(encoding="utf-8"))
+    labels = [h["label"] for h in topo["homes"]]
     done = set()
     for s in doc["scenarios"]:
         rel = s["extras"]
         if rel in done or s.get("alias") or s.get("plays"):
             continue
         done.add(rel)
+        if s["branch"] == "p1/worker_kill.json":
+            job_worker_kill()
+            continue
         ex = read_json_any(UI_DATA / rel)
         before = dumps(ex)
-        ex["constants"] = export(*EXTRAS_CONSTANTS)
         bd = read_json_any(UI_DATA / s["branch"])
-        if "state" not in bd or ex.get("branch") == "none":
-            if dumps(ex) != before:
-                write_json_gz(UI_DATA / rel, ex)
-                print(f"    refreshed: {rel}", flush=True)
-            continue
-        topo = json.loads(TOPOLOGY.read_text(encoding="utf-8"))
-        labels = [h["label"] for h in topo["homes"]]
         meta = read_json_any(UI_DATA / s["meta"])
-        fleet = meta.get("fleet") if s["branch"] != "p1/worker_kill.json" else topo["fleet"]
-        fleet_labels = [labels[h] for h in (fleet or topo["fleet"])]
-        ex["failures"] = [f for f in ex["failures"] if f["kind"] != "stale"] + stale_intervals(
-            ex["start"], bd["state"], fleet_labels)
+        n = len(bd["loading"])
+        if n != ex["steps"]:
+            raise SystemExit(f"{rel}: {ex['steps']} steps but {s['branch']} has {n}")
+        load10 = np.asarray(bd["loading"], dtype=int)
+        codes = np.array([[int(c) for c in row] for row in bd["tier"]], dtype=int)
+        has_batt = bd["branch"] != "none"
+        fleet_kw10 = np.asarray(bd["deliveredKW"], dtype=int) if has_batt else None
+        soc_mean = np.asarray(bd["soc"], dtype=float).mean(axis=1) if has_batt else None
+        fm, ff = scripted_faults(meta["events"]["aware_faults"], n, labels) if bd["branch"] == "aware_faults" else ([], [])
+        fleet_labels = [labels[h] for h in meta.get("fleet", topo["fleet"])]     # base metas: topology fleet
+        ex["moments"], ex["failures"] = rules_block(ex["start"], n, codes, load10, fleet_kw10, soc_mean,
+                                                    bd["state"] if has_batt else None, fleet_labels, fm, ff,
+                                                    step_s=ex["stepSeconds"])
+        ex["constants"] = export(*EXTRAS_CONSTANTS)
+        ex["busDistNote"] = BUS_DIST_NOTE
+        ex = {**{k: ex[k] for k in EXTRAS_ORDER if k in ex}, **{k: v for k, v in ex.items() if k not in EXTRAS_ORDER}}
         if dumps(ex) != before:
             write_json_gz(UI_DATA / rel, ex)
             print(f"    refreshed: {rel}", flush=True)

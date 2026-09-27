@@ -756,11 +756,28 @@ def build(win, out=OUT, loads=None, feeder=None, quiet=False, dwell=MIN_DWELL_MI
             "tc": tc}
 
 
-def relief_text(minutes_over, none_max, driver):
-    """relief.text, derived from the day (HIST-R2 3.1, audit L12): never a fixed 23 Aug sentence."""
+RELIEF_TIER_WORDS = {3: "normal rating exceeded: above 110% for 30 min", 4: "above the 150% emergency rating",
+                     5: "protection may operate (ASSUMPTION fuse rule)"}
+
+
+def relief_text(minutes_over, none_max, driver, code=None):
+    """relief.text, derived from the day (HIST-R2 3.1, audit L12): never a fixed 23 Aug sentence. `code` is the highest
+    tier code A reaches with no batteries (sim.tiers): 1-2 are amber (not a failure); 3-5 are worded from the tier."""
     if minutes_over == 0:
         return f"A stays under its nameplate all evening (max {none_max:.1f}%)"
-    return f"over nameplate for {minutes_over} minutes (amber; not a failure): {driver['label']}'s load"
+    tier = RELIEF_TIER_WORDS.get(int(code), "amber; not a failure") if code is not None else "amber; not a failure"
+    return f"over nameplate for {minutes_over} minutes ({tier}): {driver['label']}'s load"
+
+
+def grown_driver(sc, tf, k15):
+    """Loads.driver() with the growth lever applied: the peak home is the same (a uniform multiplier), its kwAtPeak is
+    the home's kW x (1 + growth), as the run served it. growth = 0 returns Loads.driver() unchanged."""
+    d = sc.loads.driver(tf, k15)
+    if sc.growth:
+        kw = float(sc.loads.home_kw(k15, 1)[0][d["home"]]) * (1 + sc.growth)
+        d = dict(d, kwAtPeak={"v": round(kw, 2), "label": "SIM",
+                              "cite": f"the peak home's SMART-DS kW x (1 + {sc.growth:g}) (home-load growth lever)"})
+    return d
 
 
 def onset_deferral(sc, runs):
@@ -825,7 +842,7 @@ def assemble(sc, runs, tc, faults, solves, dwell=MIN_DWELL_MIN, inputs=None):
                               "A's batteries' discharge at the peak minute (relief.t)")
     loads = sc.loads
     k15 = loads.step_of(win.day, win.start_min + kp)
-    driver = loads.driver(a, k15)
+    driver = grown_driver(sc, a, k15)
     relief = {
         "tf": a, "t": hhmm(win.time(kp)), "step": kp,
         "none": labelled(round(float(none_a[kp]), 1), "SIM", "OpenDSS, no batteries"),
@@ -836,7 +853,8 @@ def assemble(sc, runs, tc, faults, solves, dwell=MIN_DWELL_MIN, inputs=None):
                              **relief_when, atPeak=relief_at_peak),
         "reliefKWh": labelled(round(relief_kwh, 3), "SIM", "energy of that relief"),
         "driver": driver,
-        "text": relief_text(int((none_a > TIER_AMBER_PCT).sum()), float(none_a[kp]), driver),
+        "text": relief_text(int((none_a > TIER_AMBER_PCT).sum()), float(none_a[kp]), driver,
+                            int(tier_codes(none_a[:, None], P1_STEP_SECONDS / 60).max())),
     }
     minutes_over = int((none_a > TIER_AMBER_PCT).sum())
     # unrelieved: over 100% in aware on home load only, no battery on the transformer
@@ -850,7 +868,7 @@ def assemble(sc, runs, tc, faults, solves, dwell=MIN_DWELL_MIN, inputs=None):
         kk = int(np.argmax(ap[:, t]))
         unrelieved.append({"tf": t, "reason": f"home load only, no battery: peak {ap[kk, t]:.1f}% at {hhmm(win.time(kk))} (SIM)",
                            "peak": labelled(round(float(ap[kk, t]), 1), "SIM", "OpenDSS", t=hhmm(win.time(kk))),
-                           "driver": loads.driver(t, loads.step_of(win.day, win.start_min + kk))})
+                           "driver": grown_driver(sc, t, loads.step_of(win.day, win.start_min + kk))})
     # money
     kpk = int(np.argmax(sc.price))
     klo = kp

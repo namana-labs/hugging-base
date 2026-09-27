@@ -239,6 +239,23 @@ class CatalogueTests(unittest.TestCase):
             self.assertEqual(d["stepSeconds"], 60)
             self.assertEqual(d["start"], "16:00")
 
+    def test_never_the_old_frequency_band(self):
+        """CLAUDE.md: a 1,000-battery hijack is a 3-17 mHz band; the old 3-5 mHz never appears in what the UI reads."""
+        texts = [INDEX.read_text(encoding="utf-8")] + [dumps(read_json_any(UI_DATA / p))
+                                                        for p in sorted({s["extras"] for s in self.doc["scenarios"]})]
+        for t in texts:
+            for bad in ("3–5 mHz", "3-5 mHz", "3–5", "3 to 5 mHz"):
+                self.assertNotIn(bad, t)
+
+    def test_rules_use_the_run_clock(self):
+        for p in sorted({s["extras"] for s in self.doc["scenarios"]}):
+            d = read_json_any(UI_DATA / p)
+            end = d["moments"][-1]
+            self.assertEqual(end["rule"], "end", p)
+            self.assertEqual(end["k"], d["steps"] - 1, p)
+            self.assertIn(f"end of run at {S.hhmm_of(d['start'], d['steps'], d['stepSeconds'])}", end["text"], p)
+            self.assertIn("busDistNote", d, p)
+
     def test_copies_are_byte_identical(self):
         for src, dst in ((S.MP_WORKER_KILL, "p1/worker_kill.json"), (S.MP_COVERT, "p3/covert.json")):
             self.assertEqual((UI_DATA / dst).read_bytes(), Path(src).read_bytes(), dst)
@@ -257,6 +274,26 @@ class RuleTests(unittest.TestCase):
         rows = S.stale_intervals("16:00", ["".join(r) for r in st], ["a", "b", "c", "d"])
         self.assertEqual([(r["k0"], r["k1"], r["where"]) for r in rows], [(10, 59, "a"), (30, 32, "b, c, d")])
         self.assertTrue(rows[1]["text"].startswith("3 batteries"))
+
+
+    def test_most_at_once_ignores_open_transformers(self):
+        codes = np.zeros((3, 4), dtype=int)
+        codes[0, :2] = 1
+        codes[1, :] = 5                                  # four transformers open: not "above nameplate"
+        codes[2, :3] = 2
+        load = codes * 500
+        m = {x["rule"]: x for x in S.rule_log("16:00", 3, codes, load, None, None, [], "end")}
+        self.assertEqual(m["mostAtOnce"]["k"], 2)
+        self.assertTrue(m["mostAtOnce"]["text"].startswith("3 transformers"))
+
+    def test_relief_text_words_the_tier_reached(self):
+        from sim.p1_build import relief_text
+        drv = {"label": "Home 0212"}
+        self.assertEqual(relief_text(17, 122.1, drv, 2), "over nameplate for 17 minutes (amber; not a failure): "
+                                                         "Home 0212's load")          # the committed 23 Aug text
+        self.assertIn("150% emergency", relief_text(44, 184.8, drv, 4))
+        self.assertIn("110% for 30 min", relief_text(40, 130.0, drv, 3))
+        self.assertTrue(relief_text(0, 50.5, drv, 0).startswith("A stays under"))
 
 
 class ContractTests(unittest.TestCase):

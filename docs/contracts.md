@@ -357,7 +357,12 @@ stepSeconds`, then the series of the story contract (`vTfMilli[steps][379]`, `bu
 `normal`/`emergency`/`protection` (tier codes 3/4/5, merged when the gap ≤ `FAILURE_MERGE_MIN`), then `stale` (each
 battery's own S/X runs, same merge; batteries with the same run share a row). Every extras file carries `steps`, `start`,
 `stepSeconds` (never assume 720) and `constants.V_ANSI_LO/HI` (the UI's voltage band; no literal 0.95/1.05 in the UI).
-`python -m sim.scenarios --refresh` re-stamps the constants and stale rows of every extras file without OpenDSS.
+`firstOver100` and `mostAtOnce` count transformers above nameplate and still in service (codes 1–4; an open transformer,
+code 5, is not "above nameplate"). The `end` moment sits on the last step (k = steps − 1) and names the end of the run,
+start + steps × stepSeconds. `busDistNote`: `busDistKm` is the geometric length along the SMART-DS lines, measured
+before `sim.feeder` stretches the weak lateral ×3 electrically (WEAK_LINE_FACTOR): a place on the street, not an impedance.
+`python -m sim.scenarios --refresh` recomputes every extras file's `moments`, `failures`, `constants` and `busDistNote`
+from the branch file it describes, without OpenDSS (the OpenDSS series are kept).
 - Every extras file comes from a re-run of the branch the page plays, and the job **fails** unless the re-run reproduces
   that branch's `loading` cell for cell. OpenDSS starts every solve from the last solution, so a run reproduces only
   from the same circuit state: 23 Aug re-runs `sim.p1_build`'s order on a fresh circuit, the history evenings re-run
