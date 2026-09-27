@@ -192,6 +192,8 @@
 .pb-tile-big .num { white-space:nowrap; }
 .pb-cmp-row > span:first-child { white-space:normal; overflow:visible; text-overflow:clip; }
 .pb-row2 { flex:none; min-height:340px; height:clamp(340px, 46vh, 520px); }
+/* review-0927 M6: on the covert run the ERCOT card's 3-17 mHz band row is above the fold at 1920x1080 */
+@media (min-width:1100px) { .pb-results:has(.pb-has-freq) .pb-row2 { min-height:300px; height:clamp(300px,34vh,440px); } }
 .pb-row3 { flex:none; min-height:300px; align-items:stretch; }
 .pb-heat .pb-plot { min-height:220px; }
 .pb-freq-plot { flex:none; height:96px; }
