@@ -80,7 +80,15 @@ async function main() {
   const ws = new WebSocket(`ws://127.0.0.1:${portFile[0]}${portFile[1]}`);
   await new Promise((res, rej) => { ws.onopen = res; ws.onerror = () => rej(new Error('CDP websocket failed')); });
   let id = 0; const pending = new Map();
-  ws.onmessage = (ev) => { const m = JSON.parse(ev.data); if (m.id && pending.has(m.id)) { const p = pending.get(m.id); pending.delete(m.id); m.error ? p.rej(new Error(m.error.message)) : p.res(m.result); } };
+  // console errors of the page under test (console.error, uncaught exceptions, failed loads such as a 404)
+  const consoleErrors = [];
+  ws.onmessage = (ev) => {
+    const m = JSON.parse(ev.data);
+    if (m.id && pending.has(m.id)) { const p = pending.get(m.id); pending.delete(m.id); m.error ? p.rej(new Error(m.error.message)) : p.res(m.result); return; }
+    if (m.method === 'Runtime.consoleAPICalled' && m.params.type === 'error') consoleErrors.push((m.params.args || []).map((a) => a.value ?? a.description ?? '').join(' '));
+    else if (m.method === 'Runtime.exceptionThrown') consoleErrors.push((m.params.exceptionDetails && (m.params.exceptionDetails.exception || {}).description) || 'exception');
+    else if (m.method === 'Log.entryAdded' && m.params.entry.level === 'error') consoleErrors.push(`${m.params.entry.text}${m.params.entry.url ? ' ' + m.params.entry.url : ''}`);
+  };
   const send = (method, params = {}, sessionId) => new Promise((res, rej) => { const i = ++id; pending.set(i, { res, rej }); ws.send(JSON.stringify({ id: i, method, params, sessionId })); });
 
   // wait for the static server (the caller started it)
@@ -91,6 +99,8 @@ async function main() {
   const { targetId } = await send('Target.createTarget', { url: 'about:blank' });
   const { sessionId: s } = await send('Target.attachToTarget', { targetId, flatten: true });
   await send('Page.enable', {}, s);
+  await send('Runtime.enable', {}, s);
+  await send('Log.enable', {}, s);
   await send('Emulation.setDeviceMetricsOverride', { width: 1920, height: 1080, deviceScaleFactor: 1, mobile: false }, s);
 
   let ok = 0;
@@ -103,6 +113,7 @@ async function main() {
     for (let attempt = 0, lim = opt.timeout; attempt < 2; attempt++, lim *= 2) {
       try {
         const ta = Date.now();
+        consoleErrors.length = 0;
         await send('Page.navigate', { url }, s);
         while (Date.now() - ta < lim * 1000) {
           const r = await send('Runtime.evaluate', { expression: 'document.body ? JSON.stringify(Object.assign({}, document.body.dataset)) : "null"', returnByValue: true }, s);
@@ -137,6 +148,7 @@ async function main() {
         if (!f.placeholder && colours >= 0 && colours < 16) why.push(`shot has ${colours} colours (blank?)`);
       } catch (e) { why.push('shot:' + e.message); }
     }
+    if (consoleErrors.length) why.push(`console=${consoleErrors.length} (${consoleErrors[0].slice(0, 160)})`);
     const pass = why.length === 0; if (pass) ok++;
     const fl = ['status', 'webgl', 'errors', 'fixture', 'offsite'].map((k) => `${k}=${f[k] ?? '-'}`).join(' ') + (f.placeholder ? ` placeholder=${f.placeholder}` : '');
     console.log(`SMOKE ${q} ${pass ? 'ok' : 'FAIL ' + why.join(',')} | ${fl} | ${Date.now() - t0} ms | ${kb} KB | ${colours} colours`);

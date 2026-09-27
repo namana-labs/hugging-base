@@ -165,6 +165,7 @@ export async function mount(root, ctx) {
   let scenario = ctx.scenario;
   let notes = [];
   let disposed = false;
+  root.innerHTML = '<div class="rv-loading">Loading the scenario catalogue runs…</div>';
   const [days, topo] = await Promise.all([
     ctx.getJSON('p1/days/index.json').catch(() => null),
     ctx.getJSON('topology.json').catch(() => null),
