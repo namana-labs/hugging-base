@@ -1,11 +1,20 @@
 # Hugging Base
 
-> **Team hub (26 Sep): who does what, and which doc each person reads: [`handoff/README.md`](handoff/README.md).** RZ's latest app, with round 2 merged, runs from [`simulators/rz/`](simulators/rz/README.md). The root `sim/ ui/ scripts/ data/` is a frozen copy kept for `mpalacios/`. Amy's presentation work lives in [`presentation/`](presentation/START-HERE.md).
+**Feeder-aware charging for a fleet of home batteries** (Base Power × AITX hackathon, Sep 2026). When a price crash tells every battery to charge at once, street transformers overload. Checking each transformer's room first charges the fleet with no overload caused by batteries.
 
+```sh
+scripts/serve.sh      # a static server from the repo root, port 8765 (scripts/setup.sh once, to check Python)
+```
 
-A feeder-aware battery-fleet simulator for the Base Power × AITX hackathon. The project explores grid failures, local dispatch decisions, and where to build the next home battery.
+Open **http://127.0.0.1:8765/ui/index.html** and walk four pages: **Configure** a scenario → **Run** the evening in 3D → **Results** → **Learnings** (how many batteries fit, where the next one helps).
 
-The main app is promoted from the playable prototype in [`demos/grid-stories/`](demos/grid-stories/README.md), which has its own UI, simulator, data, dependencies, tests, and hosting configuration.
+- **Every number is labelled** REAL, SIM, DERIVED or ASSUMPTION and comes from a committed file the engine wrote. The audited numbers, each with its file and field: [`presentation/NUMBERS.md`](presentation/NUMBERS.md).
+- **OpenDSS referees.** An AC power flow on NREL's synthetic SMART-DS feeder (an Oncor-suburb stand-in) judges every violation; deterministic code, never a language model, sets every command.
+- The attacker is fictional; money is gross energy value, not Base's profit. More: [run the demo](docs/run-the-demo.md) · [the video script](docs/demo-script.md) · [data sources and labels](docs/data-sources.md).
+
+---
+
+> **Team:** the root app (`sim/`, `ui/`, `data/`, `scripts/`) is the submission, on branch `submission`. Who does what: [`handoff/README.md`](handoff/README.md). Amy's presentation work: [`presentation/`](presentation/START-HERE.md). RZ's round-2 app stays in [`simulators/rz/`](simulators/rz/README.md) for reference.
 
 ## Project documents
 
@@ -14,16 +23,11 @@ The main app is promoted from the playable prototype in [`demos/grid-stories/`](
 - [Plan: stack, streams, milestones](docs/plan.md)
 - [Reconciliation of the three designs](docs/reconciliation.md)
 - [Research and source references](docs/research-report.md)
+- [Data sources, licences and labels](docs/data-sources.md) · [How Base plugs it in](docs/how-base-plugs-in.md)
 
 ## Run the demo
 
-The root app (`sim/`, `ui/`, `data/`, `scripts/`) is being built overnight on 26 Sep 2026; path ownership is in [`scripts/lanes.json`](scripts/lanes.json) and the data contracts are in [`docs/contracts.md`](docs/contracts.md). It is a static web app fed by committed JSON: no server, no network at view time.
-
-```sh
-scripts/serve.sh            # static server from the repo root on port 8765
-```
-
-Open **http://127.0.0.1:8765/ui/**. Deep links (`?view=p1&branch=aware&t=22:30`, `?view=p2`, `?view=more`) are listed in [`scripts/deeplinks.txt`](scripts/deeplinks.txt). A yellow FIXTURE banner means that view still shows synthetic stand-in data. The gate is `scripts/check_all.sh` (it ends `ALL CHECKS: PASS`); `scripts/setup.sh` checks the Python venv, node and Chrome it needs.
+The root app is a static web app fed by committed JSON: no server logic, no network at view time. The data contracts are in [`docs/contracts.md`](docs/contracts.md) and [`docs/story-contract.md`](docs/story-contract.md). Page links and how to read the screen: [`docs/run-the-demo.md`](docs/run-the-demo.md). The earlier tab app is kept as the **Engine explorer** at `ui/explore.html` (footer link). The gate is `scripts/check_all.sh` (it ends `ALL CHECKS: PASS`).
 
 ## Simulators
 

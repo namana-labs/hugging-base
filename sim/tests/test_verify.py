@@ -33,7 +33,8 @@ class VerifyTests(unittest.TestCase):
             with mock.patch.object(verify, "DAYS_INDEX", missing), mock.patch.object(verify, "UI_DATA", Path(t)):
                 rc, out = self.run_main("p1", "--days")
                 self.assertEqual(rc, 0)
-                self.assertRegex(out, r"(?m)^VERIFY p1: SKIP \(no .*days/index.json yet\)")
+                # Windows prints p1\days\index.json; compare with forward slashes on every OS
+                self.assertRegex(out.replace("\\", "/"), r"(?m)^VERIFY p1: SKIP \(no .*days/index.json yet\)")
             missing.parent.mkdir(parents=True)
             missing.write_text("{}")
             (Path(t) / "p1" / "meta.json").write_text("{}")
