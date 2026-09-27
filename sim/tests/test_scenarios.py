@@ -7,6 +7,7 @@ Cheap: no full-evening run. The byte-identity of the committed P1 build under th
 passing the defaults explicitly changes nothing.
 """
 import json
+import os
 import unittest
 from pathlib import Path
 
@@ -75,6 +76,49 @@ class LeverTests(unittest.TestCase):
         self.assertTrue(np.allclose(kw1, kw0 * 1.2))
         run = run_branch(c, "aware")
         self.assertGreaterEqual(float(run["soc"].min()), 0.3 - 1e-9)   # never below the lever's reserve
+
+
+class VariantDeterminismTests(unittest.TestCase):
+    """Every variant job is reproducible by construction: its own fresh circuit, none -> naive -> aware in sim.p1_build's
+    order. Short windows keep these fast; the full-evening check against the committed files is `slow` (HB_SLOW=1)."""
+    WIN = dict(start="22:00", steps=12)       # the charge onset (Tc 22:00): naive and aware already differ
+
+    def _docs(self, lever, value, loads):
+        from sim.p1_build import Window
+        sc, runs, _, _ = S.variant_runs(lever, value, win=Window(**self.WIN), loads=loads)
+        meta, docs, _ = S.variant_docs(sc, runs, inputs={"x": None})
+        return meta, {b: dumps(d) for b, d in docs.items()}
+
+    def test_default_levers_through_the_variant_path_equal_p1_build(self):
+        import tempfile
+        from sim.loads import Loads
+        from sim.p1_build import Window, build
+        loads = Loads()
+        meta, docs = self._docs(None, None, loads)
+        with tempfile.TemporaryDirectory() as tmp:
+            r = build(Window(**self.WIN), out=tmp, loads=loads, quiet=True, branches=("none", "naive", "aware"),
+                      inputs={"x": None})
+        for b in ("none", "naive", "aware"):
+            self.assertEqual(docs[b], dumps(r["docs"][b]), b)
+        self.assertEqual(dumps(meta["summary"]), dumps(r["meta"]["summary"]))
+
+    def test_a_variant_does_not_depend_on_the_job_before_it(self):
+        from sim.loads import Loads
+        loads = Loads()
+        alone = self._docs("reserve", 30, loads)[1]
+        self._docs("soc0", 60, loads)                   # another job in the same process, on its own circuit
+        after = self._docs("reserve", 30, loads)[1]
+        self.assertEqual(alone, after)
+
+    @unittest.skipUnless(os.environ.get("HB_SLOW") == "1", "slow (a full evening, 3 branches): HB_SLOW=1")
+    def test_slow_default_variant_reproduces_the_committed_evening(self):
+        sc, runs, _, _ = S.variant_runs(None, None)
+        meta, docs, _ = S.variant_docs(sc, runs)
+        committed = read_json_any(UI_DATA / "p1" / "meta.json")
+        for b in ("none", "naive", "aware"):
+            bd = read_json_any(UI_DATA / "p1" / f"{b}.json")
+            self.assertEqual(docs[b]["loading"], bd["loading"], b)
+            self.assertEqual(dumps(meta["summary"][b]), dumps(committed["summary"][b]), b)
 
 
 class PlacementTests(unittest.TestCase):
