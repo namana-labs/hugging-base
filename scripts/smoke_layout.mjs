@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 // scripts/smoke_layout.mjs (UI-A) -- the story pages' layout at the demo sizes, in one headless Chrome over CDP.
-// For each size x link: the page reaches data-status=ready, nothing overflows horizontally
+// For each size x link: the page reaches data-status=ready, nothing overflows horizontally (page, header, footer)
 // (document.documentElement.scrollWidth <= innerWidth), and every primary control -- the step nav, "Start the sim ->",
-// "Continue to ..." -- lies inside the viewport and is the element hit at its centre (elementFromPoint).
+// "Continue to ..." -- and every header/footer link (the Engine explorer) lies inside the viewport and is the element
+// hit at its centre (elementFromPoint); no provenance tag is cut by a clipping ancestor; on Configure every lever group,
+// evening and fixed input is in the page flow (no inner scroll) and reachable by scrolling the page.
 // Usage: node scripts/smoke_layout.mjs --base http://127.0.0.1:8801/ui/ [--sizes 1280x800,1440x900,1920x1080]
 //        [--timeout 40] <query> [<query> ...]
 // Prints: LAYOUT <WxH> <query> ok|FAIL <reasons>, then LAYOUT: <ok>/<total> ok. Exit 0 when all pass.
@@ -12,7 +14,15 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-const CHROME = process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+// Chrome: env CHROME, else the first of the usual install paths that exists (macOS, Windows, Linux)
+const CHROME_PATHS = [process.env.CHROME, '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
+  '/usr/bin/google-chrome', '/usr/bin/chromium'].filter(Boolean);
+const CHROME = CHROME_PATHS.find((p) => fs.existsSync(p));
+if (!CHROME) {
+  console.error(`No Chrome found. Set CHROME to the Chrome binary; tried: ${CHROME_PATHS.join(', ')}`);
+  process.exit(2);
+}
 const argv = process.argv.slice(2);
 const opt = { base: null, sizes: '1280x800,1440x900,1920x1080', timeout: 40, links: [] };
 for (let i = 0; i < argv.length; i++) {
@@ -50,15 +60,58 @@ const CHECK = `(() => {
   if (document.documentElement.scrollWidth > W) why.push('page scrollWidth ' + document.documentElement.scrollWidth + ' > ' + W);
   const hdr = document.querySelector('.st-header');
   if (hdr && hdr.scrollWidth > hdr.clientWidth + 1) why.push('header content ' + hdr.scrollWidth + ' > ' + hdr.clientWidth);
-  const els = [...document.querySelectorAll('.st-steps > a, .st-steps > span, .st-header .st-btn, .cfg-start')];
+  const ftr = document.querySelector('.st-footer');
+  if (ftr && ftr.scrollWidth > ftr.clientWidth + 1) why.push('footer content ' + ftr.scrollWidth + ' > ' + ftr.clientWidth);
+  // every primary control and every header/footer link (the body clips, so scrollWidth alone cannot see these)
+  const els = [...new Set([...document.querySelectorAll('.st-steps > a, .st-steps > span, .st-header .st-btn, .cfg-start, .st-header a, .st-footer a, .st-explorer')])];
   if (!els.length) why.push('no primary controls found');
-  for (const el of els) {
+  if (!document.querySelector('.st-explorer')) why.push('no Engine explorer link');
+  const hitOK = (el) => {
     const r = el.getBoundingClientRect();
     const name = (el.textContent || el.className).trim().slice(0, 30);
-    if (r.width === 0 || r.height === 0) { why.push(name + ': not displayed'); continue; }
-    if (r.left < 0 || r.top < 0 || r.right > W + 0.5 || r.bottom > H + 0.5) { why.push(name + ': outside the viewport ' + [r.left, r.top, r.right, r.bottom].map(Math.round).join(',')); continue; }
+    if (r.width === 0 || r.height === 0) return name + ': not displayed';
+    if (r.left < 0 || r.top < 0 || r.right > W + 0.5 || r.bottom > H + 0.5) return name + ': outside the viewport ' + [r.left, r.top, r.right, r.bottom].map(Math.round).join(',');
     const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-    if (!hit || !(hit === el || el.contains(hit))) why.push(name + ': covered by ' + (hit ? hit.tagName + '.' + hit.className : 'nothing'));
+    return !hit || !(hit === el || el.contains(hit)) ? name + ': covered by ' + (hit ? hit.tagName + '.' + hit.className : 'nothing') : null;
+  };
+  for (const el of els) { const w = hitOK(el); if (w) why.push(w); }
+  // a provenance tag is never cut: no ancestor that clips (overflow hidden/clip) hides part of it, and it is on screen
+  // horizontally (scroll containers such as a long failure list may hide a tag until scrolled: that is not a cut)
+  for (const c of document.querySelectorAll('.chip')) {
+    const r = c.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) continue;
+    if (r.right > W + 0.5 || r.left < -0.5) { why.push('tag ' + c.textContent + ' off screen at x ' + Math.round(r.left)); continue; }
+    for (let a = c.parentElement; a && a !== document.body; a = a.parentElement) {
+      const cs = getComputedStyle(a);
+      const clipX = /hidden|clip/.test(cs.overflowX), clipY = /hidden|clip/.test(cs.overflowY);
+      if (!clipX && !clipY) continue;
+      const ar = a.getBoundingClientRect();
+      if ((clipX && (r.left < ar.left - 0.5 || r.right > ar.right + 0.5)) || (clipY && (r.top < ar.top - 0.5 || r.bottom > ar.bottom + 0.5))) {
+        why.push('tag ' + c.textContent + ' cut by ' + a.tagName + '.' + String(a.className).split(' ')[0] + ' near "' + (c.parentElement.textContent || '').trim().slice(0, 40) + '"');
+        break;
+      }
+    }
+  }
+  // Configure: every lever group, evening and fixed input is in the page flow (no inner scroll) and reachable by
+  // scrolling the page, where it is the element hit at its centre (not under the sticky start bar)
+  if (document.body.dataset.page === 'configure') {
+    const main = document.querySelector('main.st-main');
+    const groups = [...document.querySelectorAll('.cfg-card[data-lever], .cfg-evenings > .cfg-opt, .cfg-fixed .cfg-fx')];
+    if (!groups.length) why.push('configure: no lever groups found');
+    for (const g of groups) {
+      const name = (g.dataset.lever || g.textContent || '').trim().slice(0, 24);
+      let inner = null;
+      for (let a = g.parentElement; a && a !== main; a = a.parentElement) {
+        const cs = getComputedStyle(a);
+        if (/auto|scroll|hidden|clip/.test(cs.overflowY) && a.scrollHeight > a.clientHeight + 1) { inner = a; break; }
+      }
+      if (inner) { why.push('configure: ' + name + ' sits in an inner scroll (' + String(inner.className).split(' ')[0] + ')'); continue; }
+      g.scrollIntoView({ block: 'center' });
+      const r = g.getBoundingClientRect();
+      const hit = document.elementFromPoint(r.left + Math.min(24, r.width / 2), r.top + Math.min(24, r.height / 2));
+      if (!hit || !(hit === g || g.contains(hit))) why.push('configure: ' + name + ' not reachable by page scroll (hit ' + (hit ? hit.tagName + '.' + hit.className : 'nothing') + ')');
+    }
+    if (main) main.scrollTop = 0;
   }
   return JSON.stringify({ status: document.body.dataset.status, why });
 })()`;

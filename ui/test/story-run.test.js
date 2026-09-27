@@ -91,6 +91,11 @@ test('run: the reserve note: the floor, "never breached by dispatch" and the bac
   assert.doesNotMatch(reserveHTML({ reserveC, summary: { ...summary, reserveUsedInOutage: { v: 0, label: 'SIM' } }, num: numHTML }), /outages/);
   assert.match(reserveHTML({ reserveC, summary: { reserveBreaches: { v: 3, label: 'SIM' } }, num: numHTML }), /breached by dispatch <span class="num">3/);
   assert.equal(reserveHTML({ reserveC: null, summary, num: numHTML }), '');
+  // worker_kill's file has no reserveUsedInOutage: the clause is omitted, never shown as 0
+  const wk = readJSON(path.join(UI, 'data', 'p1', 'worker_kill.json'));
+  const hw = reserveHTML({ reserveC, summary: wk.summary, num: numHTML });
+  assert.match(hw, /never breached by dispatch/);
+  if (!('reserveUsedInOutage' in wk.summary)) assert.doesNotMatch(hw, /outage/);
 });
 
 test('run: the engine cost line is the catalogue\'s labelled numbers; no bare number passes', () => {

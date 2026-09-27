@@ -93,7 +93,7 @@ export function vsDefaultHTML(rows, { max = Infinity } = {}) {
   if (!rows.length) return '';
   const shown = rows.slice(0, max);
   const more = rows.length - shown.length;
-  return shown.map((r) => `<span class="vs-row" title="${esc(`vs ${r.refTitle}`)}">${esc(r.words)} ${numHTML(r.now, r.opts)} <span class="vs-was">vs ${numHTML(r.ref, r.opts)}</span></span>`).join('')
+  return shown.map((r) => `<span class="vs-row" title="${esc(`${r.words}: ${fmtValue(r.now, r.opts)} vs ${r.refTitle} ${fmtValue(r.ref, r.opts)}`)}"><span class="tx">${esc(r.words)}</span> ${numHTML(r.now, r.opts)} <span class="vs-was">vs ${numHTML(r.ref, r.opts)}</span></span>`).join('')
     + (more > 0 ? `<span class="vs-more" title="${esc(vsDefaultText(rows.slice(max)))}">+${more} more</span>` : '');
 }
 /** "vs 23 Aug 2026 · Naive · default settings": the reference run of the rows, by name. */
@@ -157,13 +157,28 @@ export function leverSummary(catalogue, levers) {
   if (!levers) return '';
   return summaryKeys(catalogue, levers).map((k) => optionWords(catalogue, k, levers[k])).join(' · ');
 }
-/** The same, each setting with its tag (leverTag). */
-export function leverSummaryHTML(catalogue, levers) {
+/** The same, each setting with its tag (leverTag); the words may shrink with an ellipsis, the tag never does.
+ *  `keys` limits the levers (the run pill shows the policy, the failure and the moved levers only). */
+export function leverSummaryHTML(catalogue, levers, keys = null) {
   if (!levers) return '';
-  return summaryKeys(catalogue, levers).map((k) => {
+  return (keys || summaryKeys(catalogue, levers)).map((k) => {
     const t = leverTag(catalogue, k, levers[k]);
-    return `<span class="lv">${esc(optionWords(catalogue, k, levers[k]))}${t ? tagHTML(t.label, t.cite) : ''}</span>`;
-  }).join('<span class="sep"> · </span>');
+    return `<span class="lv"><span class="tx">${esc(optionWords(catalogue, k, levers[k]))}</span>${t ? tagHTML(t.label, t.cite) : ''}</span>`;
+  }).join('<span class="sep">&nbsp;·&nbsp;</span>');
+}
+/** The levers of a run that are not at their default: the failure and the moved fleet levers (the policy always). */
+export function movedKeys(catalogue, levers) {
+  const L = (catalogue && catalogue.levers) || {};
+  return ['policy', 'failure', 'fleet', 'cls', 'reserve', 'soc0', 'growth']
+    .filter((k) => k === 'policy' || (L[k] && levers[k] !== undefined && String(levers[k]) !== String(L[k].default)));
+}
+/** Tags for the settings a run title names beyond the defaults (its evening and every moved lever). */
+export function settingTags(catalogue, levers) {
+  if (!levers) return '';
+  return ['evening', ...movedKeys(catalogue, levers).filter((k) => k !== 'policy')].map((k) => {
+    const t = leverTag(catalogue, k, levers[k]);
+    return t ? tagHTML(t.label, `${optionWords(catalogue, k, levers[k])}: ${t.cite}`) : '';
+  }).join('');
 }
 /** A run by name: "23 Aug 2026 · Naive · default settings", or "... · 192 batteries" for a moved fleet lever. */
 export function runName(catalogue, sc) {
@@ -228,7 +243,7 @@ export function createShell(body) {
         const vs = info ? `${info.refTitle}: ${info.rows.length ? vsDefaultText(info.rows) : 'no headline value moved'}` : '';
         const ev = scenario.levers ? leverTag(catalogue, 'evening', scenario.levers.evening) : null;
         right = `<span class="st-pill" title="${esc(`${scenario.title || scenario.id} (${scenario.id}). ${leverSummary(catalogue, scenario.levers)}. A static replay of the engine's run (ui/data); no simulator runs in the page.${vs ? ` Against the reference run: ${vs}.` : ''}`)}">
-            <span class="dot"></span><b>${esc(scenario.levers ? optionWords(catalogue, 'evening', scenario.levers.evening) : scenario.id)}</b>${ev ? tagHTML(ev.label, ev.cite) : ''}<span class="sum">${leverSummaryHTML(catalogue, scenario.levers)}</span></span>
+            <span class="dot"></span><b>${esc(scenario.levers ? optionWords(catalogue, 'evening', scenario.levers.evening) : scenario.id)}</b>${ev ? tagHTML(ev.label, ev.cite) : ''}<span class="sum">${scenario.levers ? leverSummaryHTML(catalogue, scenario.levers, movedKeys(catalogue, scenario.levers)) : ''}</span>${scenario.levers && scenario.levers.failure === 'covert' ? '<span class="fict">Fictional attacker</span>' : ''}</span>
           <a class="st-btn" href="${esc(link(NEXT[page][0], {}))}" data-next="${NEXT[page][0]}">${NEXT[page][1]}</a>`;
       }
       header.innerHTML = `<div class="st-wordmark">Hugging Base</div><nav class="st-steps" aria-label="Story steps">${steps}</nav>
