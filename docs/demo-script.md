@@ -49,7 +49,7 @@ Base URL: `http://127.0.0.1:8765/ui/index.html`
 - **The fleet:** "a deliberate stress placement": 24 clustered on purpose plus 72 random, 9.5% of customers.
 - **Every no-violation claim** ends "**because of batteries**": "no transformer passes its limit because of batteries". T-240 goes over nameplate on home load alone.
 - **Over nameplate** (above 100%) is amber, **not a failure**; a normal-rating violation is above 110% for 30 minutes or more; emergency is above 150%. Never "overheats".
-- **Money:** "the fleet's **gross energy value, not Base's profit**". The per-Core year ($284.68, DERIVED) assumes **perfect foresight**: say so.
+- **Money:** "the fleet's **gross energy value, not Base's profit**". The per-Core year ($284.68, DERIVED) assumes **perfect foresight**: say so. Q3's $631 a year per battery (DERIVED) is different: one Core on 2025 prices, planned on public day-ahead prices, not perfect foresight.
 - **Houston:** "Base's **set point** went from 0 to −45.8 MW in 15 minutes"; the fleet delivered −44.7 MW. Never "−15.9 → −45.8", never "ERCOT's base point".
 - **Scale:** 40 kW is 160% of A's 25 kVA can, but 1.5% of **one conductor of the head cable** (2,663.8 kVA), never "of this feeder".
 - **Screening:** any number from the per-transformer surrogate, not re-checked by OpenDSS, is "screening". Where OpenDSS checked it, read the OpenDSS number.
