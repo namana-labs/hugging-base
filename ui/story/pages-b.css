@@ -214,3 +214,9 @@
 }
 /* Learnings: the map's source line sits under the map, never on top of its legend */
 .pb-mapsrc { position:static; max-width:none; background:none; padding:0; flex:none; }
+/* eval2: the distance words under the voltage plot; the legend's count header */
+.pb-xaxis { display:flex; justify-content:space-between; font-size:10px; color:var(--muted); margin-top:-2px; }
+.pb-maplegend .pb-leg-h { font-size:11px; color:var(--muted); }
+.pb-maplegend .pb-leg-h .chip { margin-left:6px; }
+.pb-maphead .pb-sub .chip { margin-right:0; }
+.pb-verdict .pb-eyebrow { overflow-wrap:anywhere; }
