@@ -23,7 +23,7 @@ python -m sim.planner ages         # regenerate data/planner/tf_simulated_ages.c
   re-emit after a change to `sim/planner.py`'s document code takes **~45 s** and is **byte-identical**
   (a second re-emit of the same code gives the same sha256).
   Bump `SWEEP_VERSION` when the sweep code itself changes. `PLAN_WORKERS=n` runs the aware chunks in n processes.
-- **Size.** 2,034,990 bytes (with `rankingByGrowth` and `up.paper.ae90`; 1,962,535 before them). Cap **2.0 MB** = 2,097,152 bytes (`SIZE_CAP_BYTES`, lead ruling 26 Sep; was 1.2 MB in the design). Over
+- **Size.** 2,036,717 bytes (with `rankingByGrowth`, `up.paper.ae90` and the screening markers; 1,962,535 before them). Cap **2.0 MB** = 2,097,152 bytes (`SIZE_CAP_BYTES`, lead ruling 26 Sep; was 1.2 MB in the design). Over
   the cap the CLI still writes the file but exits 1. Growth levels are never dropped any more. (The 18:49 build exited
   1 for exactly this: 1,291,630 B was still over 1.2 MB after dropping g20 / g50 per-k detail.)
 - **Constants.** Every `PLAN_*` is registered with `const()` inside `sim/planner.py` (never `sim/constants.py`) and
@@ -87,12 +87,14 @@ decision{ label:"DERIVED", cite, paths{v:1000,ASSUMPTION}, seed:20260926,
           defaults{setting:"aware-screen", cost:1, value:0, referral:false, growth:0} }
 referee{ status:"checked"|"not run", runs, secondsPerRun{v,SIM}, naiveAtCap{agree{v,SIM}, of, lower[], higher[]},
          naiveAtCapPlus1{agree, of}, awareAtCap{agree, of}, vminPu{v,SIM}, rule, sha256 }   // "not run": + reason
-sizeSummary{"10"|"25"|"50"|"75": {count, homesP50, paper, naive{v,p90}, aware, naiveG20, awareG20, naiveG50, awareG50}}
+sizeSummary{"10"|"25"|"50"|"75": {count, homesP50, paper, naive{v,p90}, aware,
+            naiveG20, awareG20, naiveG50, awareG50}}   // the G20 / G50 medians carry screening: true (not OpenDSS-checked)
 ranking[]{ rank, tf, why:"blocked"|"unlocks"|"little"|"onboard", blockedToday, wanted5y{v,p10,p90},
            unlocked{v,p10,p90}, valueUSDYr, costUSD, paybackYears, controlsFit, age{v,pRep5} }       // layer 3, DERIVED
 rankingByGrowth{ g0[], g20[], g50[] }      // the same function per home-load level; g0 == ranking byte-for-byte;
            // g20 / g50: feeder-aware cap from perK.<g>.capAware (screening), one size up at today's load, and each row
-           // adds approx: bool (true = that aware cap was not exact on the 19-value grid). Labels as in ranking.
+           // adds approx: bool (true = that aware cap was not exact on the 19-value grid) and screening: true
+           // (growth-level caps are not OpenDSS-checked). Labels as in ranking.
 baseline{ peak[379], h100[379] }           // home load only, August (also satisfies sim.contracts' p2/* shape check)
 ```
 
