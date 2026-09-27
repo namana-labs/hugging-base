@@ -281,7 +281,7 @@ export async function mount(root, ctx) {
       const pair = pairingText(o.id, (meta && meta.constants) || {}, fn ? fn.name : '');
       const extra = `<span class="cfg-ev-tag">${esc(o.tag || '')}</span>${whyHTML(o.why)}
         ${pk ? `<span class="cfg-ev-peak">Peak price ${ctx.num(pk, { money: true, digits: 2, unit: '/MWh' })}${pk.t ? ` at ${esc(pk.t)}` : ''}</span>` : ''}
-        ${pair ? `<span class="cfg-ev-load">${esc(pair.short)}${pair.sameWeekday === false ? ' (another weekday)' : ''} ${pair.label ? tagHTML(pair.label, pair.text) : ''}</span>` : ''}`;
+        ${pair ? `<span class="cfg-ev-load">${esc(pair.short)}${pair.sameWeekday === false ? esc(` (a different day of the week from ${String(o.id).slice(0, 4)}'s)`) : ''} ${pair.label ? tagHTML(pair.label, pair.text) : ''}</span>` : ''}`;
       return optionButton('evening', { ...o, tag: null }, extra, pair ? pair.text : '');
     }).join('') + vsBlock('evening');
   }
