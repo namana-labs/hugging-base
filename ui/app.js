@@ -97,13 +97,31 @@ async function routeDate(link, panel) {
   return link;
 }
 
+
+/** Where "Back to the story" goes: the story URL the reader came from (from=..., kept in sessionStorage so it survives
+ *  the explorer's own tab links, which rebuild the query), else the story's first page. */
+function storyBack() {
+  const names = { configure: 'Configure', running: 'Run', run: 'Run', results: 'Results', learnings: 'Learnings' };
+  let from = new URLSearchParams(location.search).get('from');
+  try {
+    if (from != null) sessionStorage.setItem('hb.storyFrom', from);
+    else from = sessionStorage.getItem('hb.storyFrom');
+  } catch { /* storage blocked: the Back link still opens the story */ }
+  if (!from || !/^[\w=&%./,:+~-]*$/.test(from)) from = '';
+  const page = new URLSearchParams(from).get('page');
+  return { href: `index.html${from ? `?${from}` : ''}`, label: names[page] || 'the story' };
+}
+
 function header(link) {
   const tabs = [['p1', 'P1 · where to charge'], ['p2', 'P2 · where the next battery goes'], ['more', 'More']];
   const h = document.createElement('header');
   h.className = 'hb-header';
-  h.innerHTML = `<div class="hb-brand">Batter Up<small>feeder-aware battery fleet</small></div>
+  const back = storyBack();
+  h.innerHTML = `<div class="hb-row"><a class="hb-back" title="Back to the four-page story, where you left it">← Back to ${back.label}</a><div class="hb-brand"><img class="hb-mark" src="assets/batter-up-mark-256.png" alt="" width="24" height="30">Batter Up<small>Engine explorer</small></div>
     <nav class="hb-tabs">${tabs.map(([v, t]) => `<a href="${data.linkQuery({ view: v })}"${v === link.view ? ' aria-current="page"' : ''}>${t}</a>`).join('')}</nav>
-    <div class="hb-standin">NREL SMART-DS 2018 AUS P1U: REAL dataset · synthetic feeder ${fmt.chip('REAL', FEEDER_CITE)}<br>Oncor-suburb stand-in settled at LZ_NORTH (placeholder) ${fmt.chip('ASSUMPTION', STANDIN_CITE)}</div>`;
+    <div class="hb-standin">NREL SMART-DS 2018 AUS P1U: REAL dataset · synthetic feeder ${fmt.chip('REAL', FEEDER_CITE)}<br>Oncor-suburb stand-in settled at LZ_NORTH (placeholder) ${fmt.chip('ASSUMPTION', STANDIN_CITE)}</div></div>
+    <div class="hb-explain">The full-control view of the same engine the story plays: every branch, every transformer and every labelled number on one screen. The four-page story (Configure → Run → Results → Learnings) is the guided tour of these same results.</div>`;
+  h.querySelector('.hb-back').href = back.href;
   const banner = document.createElement('div');
   banner.className = 'hb-fixture';
   banner.hidden = true;

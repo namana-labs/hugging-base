@@ -329,7 +329,9 @@ test('shell: ui/index.html is the story app; the old tab app moved to ui/explore
   assert.match(story, /q\.has\('view'\) \|\| q\.has\('beat'\)/);
   assert.match(story, /location\.replace\('explore\.html' \+ location\.search/);
   // the story footer links the explorer
-  assert.match(fs.readFileSync(path.join(UI, 'story', 'shell.js'), 'utf8'), /href="explore\.html">Engine explorer</);
+  assert.match(fs.readFileSync(path.join(UI, 'story', 'shell.js'), 'utf8'), /class="st-explorer" href="explore\.html" data-explore>Engine explorer</);
+  assert.match(fs.readFileSync(path.join(UI, 'story', 'shell.js'), 'utf8'), /class="st-explore" href="\$\{esc\(explorerHref\(\)\)\}" data-explore/);
+  assert.match(fs.readFileSync(path.join(UI, 'app.js'), 'utf8'), /class="hb-back"/);
 });
 
 test('shell: the stubs export the agreed names', async () => {
