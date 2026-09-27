@@ -82,6 +82,7 @@ Paths are relative to the repo root. `mpalacios/out/p1/worker_kill.json` and `mp
 | Hidden attacker (fictional): batteries taken | **24** | ASSUMPTION | `mpalacios/out/p3/covert.json` | `summary.shard` |
 | …hidden carrier and start | **±350 W from 22:30** | ASSUMPTION | `mpalacios/out/p3/covert.json` | `attack.t, attack.text` |
 | …seconds to flag the first unit | **180 s** | SIM | `mpalacios/out/p3/covert.json` | `summary.detectionSeconds` |
+| …units flagged (and quarantined) in that first minute: the Detector card at 22:33 | **7 of 24** | SIM | `ui/data/p3/covert.json` | `units[].flaggedStep = 392 (count); quarantine.log step 392 (count)` |
 | …seconds to flag all 24 | **900 s** | SIM | `mpalacios/out/p3/covert.json` | `summary.allDetectedSeconds` |
 | …false alarms while the attack runs | **0** | SIM | `mpalacios/out/p3/covert.json` | `summary.falsePositivesAttack` |
 | …false alarms on the clean fleet (720 min × 96) | **0** | SIM | `mpalacios/out/p3/covert.json` | `summary.falsePositivesClean` |

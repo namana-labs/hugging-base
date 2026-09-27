@@ -97,7 +97,7 @@
       "t1": "3:15",
       "title": "Hidden attacker",
       "label": "SIM",
-      "link": "page=run&s=2026-08-23/aware/covert&k=392",
+      "link": "page=run&s=2026-08-23/aware/covert&k=393",
       "headline": "A fictional attacker hides a signal in two dozen Cores' charging; the detector reads physics, not command logs, and quarantines them.",
       "caption": "A fictional attacker {{chip:ASSUMPTION:a fictional adversary; no real company or person}} takes a shard of Cores and hides a small carrier in their charging. Our detector compares each battery's telemetry with its peers and with its home's own voltage {{chip:SIM:ui/data/p3/covert.json summary}}: read how fast it flags the first unit and the whole shard, the false alarms, and what a simple fixed threshold would have caught, from the quarantine list."
     },
