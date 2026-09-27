@@ -326,6 +326,8 @@ scenarios: [{id, title, preset?, levers{all eight}, meta, branch, extras, compar
                                                                 # policy on the default evening and fleet (refId)
              variant?, alias?, plays?, attack?, attackSummary?, attackEngine?, producer?}]
 unavailable: [{levers{partial; a value or a list}, reason}]
+constants: {... V_ANSI_LO 0.95, V_ANSI_HI 1.05 (REAL, ANSI C84.1-2020 Range A),
+            HIJACK_MHZ_LO 3, HIJACK_MHZ_HI 17, HIJACK_MW 40 (DERIVED; quote the band, never one value)}
 ```
 - Fleet levers are **one away from the default at a time** on 23 Aug; two moved levers resolve to an `unavailable` row.
   Failures exist on 23 Aug, policy aware, default fleet only. `reserve` options never go below 20 (hard constraint).
@@ -352,7 +354,10 @@ stepSeconds`, then the series of the story contract (`vTfMilli[steps][379]`, `bu
 `failures[{kind,where,k0,k1,text,label}]`; k1 inclusive), `absent[]` and `engine`. Moment rules: `firstOver100`,
 `mostAtOnce`, `firstNormalEvent`, `firstAbove150`, `protection`, `fleetDischarging`, `fleetLowest`, `fleetRecharging`,
 `fault`, `takeover`, `lateCommands`, `end`. Failure kinds: scripted (`comms_lost`, `hot`, `stall`, `worker_kill`), then
-`normal`/`emergency`/`protection` (tier codes 3/4/5, merged when the gap ≤ `FAILURE_MERGE_MIN`), then `stale`.
+`normal`/`emergency`/`protection` (tier codes 3/4/5, merged when the gap ≤ `FAILURE_MERGE_MIN`), then `stale` (each
+battery's own S/X runs, same merge; batteries with the same run share a row). Every extras file carries `steps`, `start`,
+`stepSeconds` (never assume 720) and `constants.V_ANSI_LO/HI` (the UI's voltage band; no literal 0.95/1.05 in the UI).
+`python -m sim.scenarios --refresh` re-stamps the constants and stale rows of every extras file without OpenDSS.
 - Every extras file comes from a re-run of the branch the page plays, and the job **fails** unless the re-run reproduces
   that branch's `loading` cell for cell. OpenDSS starts every solve from the last solution, so a run reproduces only
   from the same circuit state: 23 Aug re-runs `sim.p1_build`'s order on a fresh circuit, the history evenings re-run
