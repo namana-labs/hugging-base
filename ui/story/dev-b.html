@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hugging Base · UI-B dev harness</title>
+<!-- ui/story/dev-b.html (UI-B, dev only): mounts results.js / learnings.js with a minimal ctx that matches the UI-A
+     interface, so the pages can be built before the shell lands. Data: ui/data/<path> first; if that 404s, the
+     contract-shaped fixture in ./dev-b-fixtures/<path> (a FIXTURE banner shows on the page when one is used).
+     Open: http://127.0.0.1:8802/ui/story/dev-b.html?page=results&s=2026-08-23/aware   (serve the repo root) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./pages-b.css">
+<style>
+  html, body { margin:0; height:100%; background:#f7f4ec; font-family:'Hanken Grotesk',system-ui,sans-serif; color:#10231a; }
+  .devb-h { height:60px; display:flex; align-items:center; gap:18px; padding:0 24px; border-bottom:1px solid #e3dfd3; background:#f7f4ec; }
+  .devb-h > * { flex:none; white-space:nowrap; }
+  .devb-word { font-weight:700; font-size:21px; letter-spacing:-0.02em; color:#1e4d2b; }
+  .devb-nav { display:flex; gap:2px; padding:3px; border:1px solid #e3dfd3; border-radius:8px; font-size:13px; }
+  .devb-nav button { font:inherit; border:0; background:transparent; padding:5px 10px; border-radius:6px; cursor:pointer; color:#10231a; }
+  .devb-nav button.on { background:#e4efe6; color:#1e4d2b; font-weight:700; }
+  .devb-h select { font:inherit; font-size:13px; padding:4px 6px; border:1px solid #cfcabd; border-radius:6px; background:#fffdf8; }
+  .devb-note { font-size:12px; color:#5f6b63; }
+  #root { height:calc(100vh - 60px); }
+</style>
+</head>
+<body>
+<header class="devb-h">
+  <span class="devb-word">Hugging Base</span>
+  <nav class="devb-nav"><button data-page="results">3 Results</button><button data-page="learnings">4 Learnings</button></nav>
+  <span style="flex:1"></span>
+  <select id="scn" aria-label="Scenario"></select>
+  <span class="devb-note" id="note">UI-B dev harness</span>
+</header>
+<main id="root"></main>
+<script type="module">
+import * as fmt from '../lib/format.js';
+
+const DATA = '../data/', FIX = './dev-b-fixtures/';
+// ENGINE copies these into ui/data at integration; until then the harness reads Michael's committed originals
+const ALIAS = { 'p1/worker_kill.json': '../../mpalacios/out/p1/worker_kill.json', 'p3/covert.json': '../../mpalacios/out/p3/covert.json' };
+const cache = new Map();
+class HttpError extends Error { constructor(status, path) { super(`HTTP ${status} for ${path}`); this.status = status; this.path = path; } }
+async function fetchDoc(url, path) {
+  const r = await fetch(url);
+  if (!r.ok) throw new HttpError(r.status, path);
+  const buf = new Uint8Array(await r.arrayBuffer());
+  if (buf.length >= 2 && buf[0] === 0x1f && buf[1] === 0x8b) return new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).json();
+  return JSON.parse(new TextDecoder().decode(buf));
+}
+function getAny(path) {
+  if (cache.has(path)) return cache.get(path);
+  const p = (async () => {
+    try { return await fetchDoc(DATA + path, path); } catch (e) {
+      if (!(e instanceof HttpError) || e.status !== 404) throw e;
+      if (ALIAS[path]) return fetchDoc(ALIAS[path], path);
+      return fetchDoc(FIX + path, path);                 // throws HttpError(404) when no fixture exists either
+    }
+  })();
+  cache.set(path, p); p.catch(() => cache.delete(path));
+  return p;
+}
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function num(x, opts = {}) {
+  const v = fmt.fmtValue(x, opts);                        // throws on a bare number or an unknown label
+  return `<span class="num">${esc(v)}</span><span class="pb-tag"${x.cite ? ` title="${esc(x.cite)}"` : ''}>${x.label}</span>`;
+}
+
+const q = new URLSearchParams(location.search);
+const catalogue = await getAny('story/index.json');
+const scenario = catalogue.scenarios.find((s) => s.id === q.get('s')) || catalogue.scenarios.find((s) => s.id === catalogue.default);
+const page = q.get('page') === 'learnings' ? 'learnings' : 'results';
+document.getElementById('note').textContent = catalogue.fixture ? 'UI-B dev harness · catalogue FIXTURE' : 'UI-B dev harness';
+const sel = document.getElementById('scn');
+sel.innerHTML = catalogue.scenarios.map((s) => `<option value="${esc(s.id)}"${s.id === scenario.id ? ' selected' : ''}>${esc(s.id)}</option>`).join('');
+sel.addEventListener('change', () => nav(page, { s: sel.value }));
+for (const b of document.querySelectorAll('[data-page]')) { b.classList.toggle('on', b.dataset.page === page); b.addEventListener('click', () => nav(b.dataset.page, { s: scenario.id })); }
+
+let k = q.has('k') && Number.isFinite(+q.get('k')) ? +q.get('k') : null;
+const listeners = new Set();
+function link(params = {}) {
+  const u = new URLSearchParams(location.search);
+  for (const [key, v] of Object.entries(params)) { if (v == null || v === '') u.delete(key); else u.set(key, String(v)); }
+  return `?${u.toString()}`;
+}
+function nav(p, params = {}) { location.search = link({ page: p, q: null, tf: null, n: null, ...params }); }
+const ctx = {
+  catalogue, scenario, params: Object.fromEntries(q.entries()),
+  getJSON: getAny, getAny, k,
+  setK(v) { k = v; history.replaceState(null, '', link({ k: v })); for (const f of listeners) f(v); },
+  onK(fn) { listeners.add(fn); return () => listeners.delete(fn); },
+  nav, link, num, fmt, devPlannerLib: new URL('./dev-b-fixtures/planner.js', location.href).href,
+};
+const mod = await import(`./${page}.js`);
+window.__devb = { page, handle: await mod.mount(document.getElementById('root'), ctx), ctx };
+document.body.dataset.ready = '1';
+</script>
+</body>
+</html>
