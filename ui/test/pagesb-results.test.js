@@ -9,6 +9,7 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 
+import { TIER_RGB } from '../lib/icons.js';
 import {
   timeOf, clockOf, timeTicks, bandOf, hijackOf, constOf, vDigits, tilesModel, verdictOf, siblings, shortLabel, runName,
   distKmOf, voltageStems, vClass, vScale, vExtent, heatRGB, heatLegend, failureModel, freqModel, reactiveModel, branchKey,
@@ -68,7 +69,8 @@ test('the voltage band and the hijack band come from named constants, never a li
   assert.equal(constOf('X', { constants: { X: { value: 1, label: 'BOGUS' } } }), null);
   const cat = { constants: { HIJACK_MHZ_LO: C(3, 'DERIVED'), HIJACK_MHZ_HI: C(17, 'DERIVED'), HIJACK_MW: C(40, 'DERIVED') } };
   const h = hijackOf(cat);
-  assert.equal(h.lo.v, 3); assert.equal(h.hi.v, 17); assert.equal(h.mw.v, 40);
+  assert.equal(h.lo.v, 3); assert.equal(h.hi.v, 17); assert.equal(h.mw.v, 40); assert.equal(h.units, null);       // no units: the clause is dropped
+  assert.equal(hijackOf({ constants: { ...cat.constants, HIJACK_UNITS: C(1000, 'ASSUMPTION') } }).units.v, 1000);
   assert.equal(hijackOf({ constants: { HIJACK_MHZ_LO: C(3, 'DERIVED') } }), null);   // a single value is refused
   assert.equal(hijackOf({}), null);
   assert.equal(decimalsOf(0.95), 2); assert.equal(decimalsOf(17), 0);
@@ -90,6 +92,9 @@ test('a voltage just under the floor never rounds onto it, and the tile says so'
   const w = tiles.find((t) => t.key === 'maxLoading');
   assert.equal(w.where, 'T-240 at 16:45');
   assert.equal(w.cmp[0].text, '201.2%');
+  assert.deepEqual(w.cmpLabel.label, 'SIM');                                          // one tag when every value shares it
+  const mixed = tilesModel(sm, [{ name: 'a', summary: { maxLoading: { v: 1, label: 'SIM' } } }, { name: 'b', summary: { maxLoading: { v: 2, label: 'DERIVED' } } }], TM, band);
+  assert.equal(mixed[0].cmpLabel, null); assert.deepEqual(mixed[0].cmp.map((c) => c.label), ['SIM', 'DERIVED']);
   assert.equal(tiles.find((t) => t.key === 'chargedPctBy0400').title, 'Fleet charged by 04:00');
   assert.equal(tileTitle(tilesModel(sm, [], null, band)), 'Fleet charged at the end of the run');
   assert.equal(tilesModel(null, [], TM, band).every((t) => t.big === null), true);
@@ -117,6 +122,7 @@ test('evening facts: fleet money wording, reserve from the scenario lever, homes
   assert.equal(d[1].title, 'Breaches of the 30% member reserve');
   assert.equal(d.find((x) => x.key === 'homesDark').opts.screening, true);
   assert.equal(eveningDefs({ policy: 'none' })[0].skip, true);
+  assert.equal(eveningDefs({ policy: 'none', reserve: 20 })[1].skip, true);          // no batteries: no reserve row
   assert.equal(eveningDefs({})[1].title, 'Member reserve breaches');
 });
 
@@ -137,7 +143,7 @@ const CAT = {
 test('siblings: same evening and fleet levers, every policy and failure, replays not listed twice', () => {
   const ids = siblings(CAT.scenarios[0], CAT).map((s) => s.id);
   assert.deepEqual(ids, ['e/none', 'e/naive', 'e/aware/faults']);
-  assert.deepEqual(siblings(CAT.scenarios[4], CAT).map((s) => s.id), ['e/none', 'e/naive', 'e/aware', 'e/aware/faults']);
+  assert.deepEqual(siblings(CAT.scenarios[4], CAT).map((s) => s.id), ['e/none', 'e/naive', 'e/aware/faults']);      // not the run it replays
   assert.deepEqual(siblings(CAT.scenarios[5], CAT).map((s) => s.id), []);
   assert.equal(shortLabel('Naive: our assumption of one number, no feeder check'), 'Naive');
   assert.equal(runName(CAT.scenarios[3], CAT), 'Feeder-aware + Pieces fail');
@@ -170,9 +176,9 @@ test('voltage stems: ordered by busOrder, classed against the band, isolated fla
 });
 
 test('heat map colours and legend take their numbers from the band only', () => {
-  assert.deepEqual(heatRGB(0, band, null), [107, 111, 108]);
-  assert.deepEqual(heatRGB(940, band, null), [178, 58, 47]);
-  assert.deepEqual(heatRGB(1060, band, null), [110, 29, 23]);
+  assert.deepEqual(heatRGB(0, band, null), TIER_RGB[5].slice(0, 3));                   // the shared palette, not copies
+  assert.deepEqual(heatRGB(940, band, null), TIER_RGB[4].slice(0, 3));
+  assert.deepEqual(heatRGB(1060, band, null), TIER_RGB[3].slice(0, 3));
   const hi = heatRGB(1050, band, null), lo = heatRGB(950, band, null);
   assert.ok(hi[0] > lo[0]);                                                            // lighter near the top
   const L = heatLegend(band).map((x) => x.text);
@@ -193,32 +199,39 @@ test('reactive power: the file stores tenths; missing fields give null', () => {
 test('failure cards read their summaries; nothing is invented when a file is missing', () => {
   const lab = (v, label = 'SIM') => ({ v, label, cite: 'c' });
   const f = failureModel('faults', { chaos: { constants: { CHAOS_RUNS: C(50, 'ASSUMPTION') }, runsWithBatteryCaused: lab(0), batteryCausedNormal: lab(0), reserveBreaches: lab(0), minChargedPctResponsive: lab(99.6) },
-    failures: [{ t: '22:16', text: 'Home 0222 goes silent' }] });
+    failures: [{ t: '22:16', text: 'Home 0222 goes silent', label: 'ASSUMPTION' }, { t: '22:18', text: 'no label here' }] });
   assert.equal(f.rows[0].x.v, 50);
   assert.equal(f.rows[0].x.label, 'ASSUMPTION');
-  assert.deepEqual(f.lines, ['22:16 · Home 0222 goes silent']);
+  assert.deepEqual(f.lines.map((l) => [l.text, l.label]), [['22:16 · Home 0222 goes silent', 'ASSUMPTION'], ['22:18 · no label here', null]]);
   assert.equal(failureModel('faults', {}).missing, 'p1/chaos.json not loaded');
   const w = failureModel('worker_kill', { summary: { takeoverSeconds: lab(240), killCostMaxKW: lab(0.6), lateCommands: lab(31) }, runtime: { kill: { t: '22:20', text: 'worker W2 is killed' }, takeover: [{ t: '22:24', text: 'W1 takes over' }] } });
   assert.equal(w.rows.find((r) => r.k.startsWith('Takeover')).x.v, 240);
   assert.equal(w.rows.find((r) => r.k.startsWith('Refused')).x, null);
-  assert.equal(w.sub, '22:20 · worker W2 is killed');
+  assert.equal(w.sub.text, '22:20 · worker W2 is killed'); assert.equal(w.sub.label, undefined);
+  const wm = failureModel('worker_kill', { summary: {}, moments: [{ rule: 'fault', t: '22:20', text: 'W2 killed', label: 'ASSUMPTION' }, { rule: 'takeover', t: '22:24', text: 'W1 takes over', label: 'SIM' }, { rule: 'end', t: '03:59', text: 'end', label: 'SIM' }] });
+  assert.deepEqual([wm.sub.text, wm.sub.label], ['22:20 · W2 killed', 'ASSUMPTION']);
+  assert.deepEqual(wm.lines.map((l) => l.label), ['SIM']);
   assert.equal(failureModel('worker_kill', {}).missing, 'takeover summary not exported');
   const cv = failureModel('covert', { attackSummary: { detected: lab(24), shard: lab(24, 'ASSUMPTION'), detectionSeconds: lab(180) } });
   assert.equal(cv.rows[0].x.v, '24 of 24');
-  assert.match(cv.note, /Fictional attacker/);
+  assert.match(cv.note.text, /Fictional attacker/);
+  assert.equal(failureModel('covert', { covert: { summary: {}, attack: { t: '22:30', text: 'x' }, sources: { adversary: { label: 'ASSUMPTION', text: 'fictional' } } } }).sub.label, 'ASSUMPTION');
   assert.equal(failureModel('covert', {}).rows.length, 0);
   assert.ok(failureModel('covert', {}).missing);
   assert.equal(failureModel('none', {}), null);
 });
 
 test('frequency card: the day\'s own range; the hijack band hangs from f0 only when both exist', () => {
-  const f = { series_1min: { t0_cdt: '2026-09-25 00:00 CDT', f_mean_hz: [60.01, 59.99, 60.0] }, constants: { f0_hz: 60 }, stats: { frequency: { sigma_mhz: 13.51 } } };
+  const f = { series_1min: { t0_cdt: '2026-09-25 00:00 CDT', f_mean_hz: [60.01, 59.99, 60.0] }, constants: { f0_hz: 60 }, stats: { frequency: { sigma_mhz: 13.51 } },
+    provenance: { a: { status: 'REAL' }, b: { status: 'REAL' } }, status_legend: { DERIVED: 'our arithmetic on REAL' } };
   const h = hijackOf({ constants: { HIJACK_MHZ_LO: C(3, 'DERIVED'), HIJACK_MHZ_HI: C(17, 'DERIVED') } });
   const m = freqModel(f, h);
   assert.equal(m.day, '2026-09-25');
   assert.equal(m.dmin, 59.99); assert.equal(m.dmax, 60.01);
   assert.ok(m.bandTop < m.bandBot);                                                   // 3 mHz sits above 17 mHz down
-  assert.equal(m.sigma.v, 13.51); assert.equal(m.sigma.label, 'DERIVED');
+  assert.equal(m.sigma.v, 13.51); assert.equal(m.sigma.label, 'DERIVED'); assert.equal(m.sampleLabel, 'REAL');
+  assert.equal(freqModel({ ...f, provenance: { a: { status: 'REAL' }, b: { status: 'DERIVED' } } }, h).sampleLabel, null);   // mixed: no tag
+  assert.equal(freqModel({ ...f, status_legend: {} }, h).sigma, null);
   assert.equal(freqModel(f, null).bandTop, null);
   assert.equal(freqModel({ series_1min: {} }, h), null);
 });

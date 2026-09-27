@@ -60,16 +60,21 @@ test('room status and the peak fallback thresholds come from the data', () => {
 
 test('Q4: the rank carries its denominator from the file; ranks are the file\'s', () => {
   const p2a = { flip: { entries: lab(353, 'DERIVED') }, ranking: [
-    { rank: 1, label: 'Home 0409', tf: 240, reason: 'relieves 1.25 h above nameplate (SIM, screening); no new violation', stressAvoidedH: lab(1.25), peakWithPct: lab(96.8), revenueUSD: lab(63.91, 'DERIVED') },
-    { rank: 2, label: 'Home 0195', tf: 150, reason: 'x', stressAvoidedH: lab(0.5), peakWithPct: lab(97), revenueUSD: lab(63.98, 'DERIVED') }] };
+    { rank: 1, label: 'Home 0409', tf: 240, reason: 'relieves 1.25 h above nameplate (SIM, screening); no new violation', stressAvoidedH: lab(1.25), peakWithPct: lab(96.8), revenueUSD: lab(63.91, 'DERIVED'), noNewViolation: lab(true, 'SIM') },
+    { rank: 2, label: 'Home 0195', tf: 150, reason: 'x', stressAvoidedH: lab(0.5), peakWithPct: lab(97), revenueUSD: lab(63.98, 'DERIVED'), noNewViolation: lab(true, 'SIM') }] };
   const topo = { focus: [{ key: 'A', tf: 150 }] };
   const m = rankingModel(p2a, topo, 10);
   assert.equal(m.of.v, 353);
-  assert.equal(m.headline, 'The next battery goes to Home 0409 on T-240 (rank 1 of 353): it relieves 1.25 h above nameplate.');
+  assert.deepEqual(m.lead, { home: 'Home 0409', tf: 240, tfName: 'T-240', rank: 1, stress: p2a.ranking[0].stressAvoidedH });   // fields, no sentence parsing
+  assert.equal(m.noNew.all, true); assert.equal(m.noNew.label, 'SIM');
+  p2a.ranking[1].noNewViolation = lab(false, 'SIM');
+  assert.deepEqual([rankingModel(p2a, topo).noNew.all, rankingModel(p2a, topo).noNew.n], [false, 1]);
+  delete p2a.ranking[1].noNewViolation;
+  assert.equal(rankingModel(p2a, topo).noNew, null);                               // not every row says: no claim
   assert.equal(m.rows[1].tfName, 'Street A');
   assert.deepEqual(m.tfs, [240, 150]);
   assert.equal(rankingModel({ ranking: p2a.ranking }, topo).of, null);
-  assert.equal(rankingModel(null, topo).headline, null);
+  assert.equal(rankingModel(null, topo).lead, null);
   assert.equal(tfName(topo, 7), 'T-7');
 });
 
@@ -92,8 +97,8 @@ test('strip cells span 0..kMax; hypothetical cells come from planner.js rackStat
 test('labels and helpers', () => {
   assert.equal(monthName('2026-08'), 'August 2026');
   assert.equal(monthName('nope'), null);
-  assert.equal(questions(50, 10)[1].sub, 'One transformer, 0 to 50 batteries');
-  assert.equal(questions(null, null)[3].sub, 'The next homes, ranked');
+  assert.doesNotMatch(questions(50, 10).map((x) => x.sub).join(' '), /[0-9]/);                       // no unlabelled numbers in the rail
+
   assert.deepEqual([...plannerRows({ meta: { tfOrder: [5, 2] } }).entries()], [[5, 0], [2, 1]]);
   assert.deepEqual(constOf('A', { constants: { A: { value: 0.9, label: 'ASSUMPTION', cite: 'x' } } }), { v: 0.9, label: 'ASSUMPTION', cite: 'x' });
   assert.equal(constOf('A', {}), null);

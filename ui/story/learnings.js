@@ -11,6 +11,8 @@
 // Q2-Q4 are feeder-aware only. A missing file or field says "not built yet" / "not exported"; never a zero, never a
 // typed-in value. No language model produces a rank or verdict here: sim.planner, sim.p2_build and planner.js do.
 
+import { TIER_RGB, TIER_WORDS } from '../lib/icons.js';
+
 export const PAGE = 'learnings';
 const PLANNER_LIB = '../lib/planner.js';
 const TOP_N = 10;                                   // rows shown for Q4 (a display choice; ranks come from the file)
@@ -48,9 +50,9 @@ export function monthName(ym) {
 export function questions(kMax, nTop) {
   return [
     { q: 1, title: 'Compare charging algorithms', sub: 'A/B: same feeder, naive vs feeder-aware' },
-    { q: 2, title: 'How many more can we deploy?', sub: kMax != null ? `One transformer, 0 to ${kMax} batteries` : 'One transformer, one battery at a time' },
+    { q: 2, title: 'How many more can we deploy?', sub: 'One transformer, one battery at a time' },
     { q: 3, title: 'Which transformers should we upgrade?', sub: 'The tightest as home load grows' },
-    { q: 4, title: 'Where does a battery help most?', sub: nTop ? `The next ${nTop} homes, ranked` : 'The next homes, ranked' },
+    { q: 4, title: 'Where does a battery help most?', sub: 'The next homes, ranked' },
   ];
 }
 
@@ -113,7 +115,9 @@ export function roomStatus(cap, installed) {
   const spare = cap - installed;
   return spare < 0 ? 3 : spare === 0 ? 2 : spare === 1 ? 1 : 0;
 }
-export const STATUS_COL = ['#8aa58f', '#d9d4c3', '#c7962b', '#b23a2f'];
+const hex = (c) => `#${c.slice(0, 3).map((x) => x.toString(16).padStart(2, '0')).join('')}`;
+// room (tier-0 sage), one more (neutral, not a tier), at capacity (tier 1), over (tier 4): ui/lib/icons.js TIER_RGB
+export const STATUS_COL = [hex(TIER_RGB[0]), '#d9d4c3', hex(TIER_RGB[1]), hex(TIER_RGB[4])];
 export const EXCL_COL = '#b9b4a6';
 export const ROOM_NAMES = ['has room', 'room for one more', 'at capacity', 'over capacity today'];
 /** P2 baseline peak (pct x10) -> 0 under nameplate, 2 over nameplate, 3 over the normal rating (thresholds from the
@@ -213,11 +217,13 @@ export function verdictWords(code, horizon) {
 export function rankingModel(p2a, topo, n = TOP_N) {
   const rank = (p2a && Array.isArray(p2a.ranking) ? p2a.ranking : []).slice(0, n);
   const r0 = rank[0];
-  const why = r0 ? String(r0.reason || '').split(';')[0].replace(/\s*\((SIM|DERIVED|REAL|ASSUMPTION)[^)]*\)/g, '').trim() : '';
   const of = p2a && p2a.flip && has(p2a.flip.entries) ? p2a.flip.entries : null;     // collapsed: one entry per transformer
+  const nn = rank.map((r) => r.noNewViolation).filter(isLab);
   return {
     of,
-    headline: r0 ? `The next battery goes to ${r0.label} on ${tfName(topo, r0.tf)} (rank ${r0.rank}${of ? ` of ${fmtNum(of.v)}` : ''}): it ${why}.` : null,
+    lead: r0 ? { home: r0.label, tf: r0.tf, tfName: tfName(topo, r0.tf), rank: r0.rank, stress: has(r0.stressAvoidedH) ? r0.stressAvoidedH : null } : null,
+    // "no new violation because of batteries" only when every shown pick's own field says so (surrogate: screening)
+    noNew: rank.length && nn.length === rank.length ? { all: nn.every((x) => x.v === true), n: nn.filter((x) => x.v === true).length, of: rank.length, label: nn[0].label, cite: nn[0].cite } : null,
     rows: rank.map((r) => ({ rank: r.rank, home: r.label, tf: r.tf, tfName: tfName(topo, r.tf), stress: r.stressAvoidedH, peak: r.peakWithPct, value: r.revenueUSD, screening: r.screening })),
     tfs: [...new Set(rank.map((r) => r.tf))],
   };
@@ -235,8 +241,6 @@ async function tryGet(fn) { try { return { doc: await fn(), err: null }; } catch
 const notBuilt = (err, path) => (err && err.status === 404 ? `not built yet: ${path}` : `could not load ${path}`);
 
 async function loadPlannerLib(ctx) {
-  // dev harness first (a byte copy of PLANNER's module), so the dev page never requests a missing file
-  if (ctx && ctx.devPlannerLib) { try { return await import(ctx.devPlannerLib); } catch (e) { /* fall through */ } }
   try { return await import(PLANNER_LIB); } catch (e) { return null; }
 }
 
@@ -373,24 +377,28 @@ export async function mount(root, ctx) {
     const cols = N && N.checkCols ? N.checkCols : [];
     const failRow = N && Array.isArray(N.checks) ? N.checks.find((r) => r[0] === fail) : null;
     const colOf = (name) => (failRow && cols.includes(name) ? failRow[cols.indexOf(name)] : null);
-    const headAt = colOf('headMaxPct'), causedAt = colOf('causedNormal');
-    const whyFail = failRow ? (causedAt ? `${fmtNum(causedAt)} battery-caused transformer event${causedAt === 1 ? '' : 's'}` : headAt != null && headAt > 100 ? `the feeder-head cable to ${fmtNum(headAt, 1)}% of its rating` : 'a violation') : null;
+    const headAt = colOf('headMaxPct'), causedAt = colOf('causedNormal'), headOver = colOf('headStepsOver100'), holds = colOf('holds');
+    // the file says which check failed (holds, causedNormal, headStepsOver100); the browser applies no threshold
+    const whyFail = failRow && holds === false ? (causedAt ? `${fmtNum(causedAt)} battery-caused transformer event${causedAt === 1 ? '' : 's'}` : headOver ? `the feeder-head cable over its rating (peak ${fmtNum(headAt, 1)}%)` : 'a violation') : null;
+    const nTag = has(N) ? tagHTML(N.label, N.cite) : '', aTag = has(A) ? tagHTML(A.label, A.cite) : '';
+    const eligible = topo.meta && topo.meta.counts && Number.isInteger(topo.meta.counts.eligible) ? topo.meta.counts.eligible : null;
+    const capTag = (k) => { const t0 = planner && planner.tfs && planner.tfs.find((t) => t.cap && isLab(t.cap[k])); return t0 ? tagHTML(t0.cap[k].label, `count of transformers whose planner cap (cap.${k}.shown) is at or below the batteries there today`) : ''; };
     const every = idx.stepMinutes != null ? `every ${fmtNum(idx.stepMinutes)} minutes` : 'every step';
     const of = month ? ` of ${month}` : '';
     return `
       <div class="pb-eyebrow">WHICH TRANSFORMERS HAVE ROOM</div>
-      <div class="pb-headline">The same feeder holds ${has(A) ? fmtNum(A.v) : '—'} batteries with feeder-aware charging, and ${has(N) ? fmtNum(N.v) : '—'} with a naive split.</div>
+      <div class="pb-headline">The same feeder holds ${has(A) ? num(A, { digits: 0 }) : '—'} batteries with feeder-aware charging, and ${has(N) ? num(N, { digits: 0 }) : '—'} with a naive split.</div>
       <div class="pb-two">
-        <div class="pb-capt"><span class="pb-capt-t">A · Naive split</span><span class="pb-capt-big">${has(N) ? num(N, { digits: 0 }) : missingHTML('naiveOpenDSS not exported')}</span><span class="pb-sub">useful capacity, OpenDSS-judged${fullN != null ? ` · ${fmtNum(fullN)} transformers full or over today` : ''}</span></div>
-        <div class="pb-capt pb-capt-ours"><span class="pb-capt-t">B · Feeder-aware</span><span class="pb-capt-big">${has(A) ? num(A, { digits: 0 }) : missingHTML()}</span><span class="pb-sub">useful capacity, OpenDSS-checked${fullA != null ? ` · ${fmtNum(fullA)} transformers full or over today` : ''}</span></div>
+        <div class="pb-capt"><span class="pb-capt-t">A · Naive split</span><span class="pb-capt-big">${has(N) ? num(N, { digits: 0 }) : missingHTML('naiveOpenDSS not exported')}</span><span class="pb-sub">useful capacity, OpenDSS-judged${fullN != null ? ` · ${fmtNum(fullN)}${capTag('naive')} transformers full or over today` : ''}</span></div>
+        <div class="pb-capt pb-capt-ours"><span class="pb-capt-t">B · Feeder-aware</span><span class="pb-capt-big">${has(A) ? num(A, { digits: 0 }) : missingHTML()}</span><span class="pb-sub">useful capacity, OpenDSS-checked${fullA != null ? ` · ${fmtNum(fullA)}${capTag('aware')} transformers full or over today` : ''}</span></div>
       </div>
       <div class="pb-body">Useful capacity is how many batteries fit, placed one at a time from an empty feeder in the same order, before the next one causes a problem.</div>
-      <div class="pb-body"><b>Naive</b> is our assumption of one number, no feeder check: every battery charges at once when the price drops. OpenDSS stepped it one battery at a time: ${has(N) ? fmtNum(N.v) : '—'} hold for the whole month${of}${fail != null ? `; battery ${fmtNum(fail)} takes ${esc(whyFail || 'a violation')}` : ''}.</div>
-      <div class="pb-body"><b>Feeder-aware</b> charges each transformer only into the room it has, so it places a battery at every eligible home with no transformer event because of batteries (OpenDSS, ${esc(every)}${esc(of)})${uc.cap && has(uc.cap) ? `; it would stop if the feeder had to give up more than ${num({ ...uc.cap, v: uc.cap.v * 100 }, { digits: 0, unit: '%' })} of its charge` : ''}.</div>
+      <div class="pb-body"><b>Naive</b> is our assumption of one number, no feeder check: every battery charges at once when the price drops. OpenDSS stepped it one battery at a time: ${has(N) ? num(N, { digits: 0 }) : '—'} hold for the whole month${of}${fail != null ? `; battery ${fmtNum(fail)} brings ${esc(whyFail || 'a violation')}${nTag}` : ''}.</div>
+      <div class="pb-body"><b>Feeder-aware</b> charges each transformer only into the room it has, so it places ${has(A) && eligible != null && A.v === eligible ? `a battery at every one of the ${num(A, { digits: 0 })} eligible homes` : `${has(A) ? num(A, { digits: 0 }) : '—'} batteries`} with no transformer event because of batteries (OpenDSS, ${esc(every)}${esc(of)})${uc.cap && has(uc.cap) ? `; it would stop if the feeder had to give up more than ${num({ ...uc.cap, v: uc.cap.v * 100 }, { digits: 0, unit: '%' })} of its charge` : ''}.</div>
       <div class="pb-foot">${esc(uc.scopeText || '')} · sim.p2_build usefulCapacity · aware ${has(A) ? tagHTML(A.label, A.cite) : ''} naive ${has(N) ? tagHTML(N.label, N.cite) : ''}</div>`;
   }
 
-  const TIER = ['within its rating', 'over nameplate', 'above its normal rating, clock running', 'normal rating exceeded', 'emergency', 'fuse open'];
+  const TIER = TIER_WORDS.map((w) => w.toLowerCase());
   function q2HTML() {
     const eyebrow = '<div class="pb-row-b"><span class="pb-eyebrow">HOW MANY FIT ON ONE TRANSFORMER</span></div>';
     if (!planner || kMax == null) return `${eyebrow}${missingHTML(notBuilt(plR.err, 'p2/planner.json'))}<div class="pb-body">The per-transformer curves come from the capacity planner (sim.planner).</div>`;
@@ -399,7 +407,11 @@ export async function mount(root, ctx) {
     const sel = `<select class="pb-select" data-pb="loc">${st.sel == null ? '<option value="" selected>Pick a transformer</option>' : ''}${[...new Set(opts)].map((v) => `<option value="${v}"${v === st.sel ? ' selected' : ''}>${esc(tfName(topo, v))}</option>`).join('')}</select>`;
     if (st.sel == null) return `${eyebrow}${sel}<div class="pb-body">Pick a transformer on the map.</div>`;
     const cs = capsOf(st.sel);
-    if (!cs) return `${eyebrow}${sel}<div class="pb-body">${esc(tfName(topo, st.sel))} serves no homes (a commercial unit), so the planner leaves it out.</div>`;
+    if (!cs) {
+      const behind = (topo.homes || []).filter((h) => h.tf === st.sel);
+      const why = behind.length && behind.every((h) => h.use === 'commercial') ? ' serves only small businesses (topology: use commercial), so' : '';
+      return `${eyebrow}${sel}<div class="pb-body">${esc(tfName(topo, st.sel))}${why} the planner leaves it out.</div>`;
+    }
     const { t, row, cn, ca, cp } = cs;
     const n = Math.min(kMax, nFor());
     const pk = planner.perK && planner.perK.g0;
@@ -422,8 +434,9 @@ export async function mount(root, ctx) {
     let answer;
     if (n === 0) answer = 'Slide to add batteries to this transformer.';
     else if (fitsA) answer = `${n} batter${n === 1 ? 'y fits' : 'ies fit'} here with feeder-aware charging${!fitsN && cn ? `; a naive split tops out at ${fmtNum(cn.v)}` : ''}${!fitsP && cp ? `, and the utility's nameplate rule allows only ${fmtNum(cp.v)} today` : ''}.`;
-    else answer = `${n} is too many even for feeder-aware: past ${ca ? fmtNum(ca.v) : '—'}, each extra battery earns less${earnTxt ? ` than ${earnTxt} of an unconstrained one` : ''}. Feeder-aware never overloads the transformer; it charges less instead, so this limit is about money, not safety.`;
-    const hypoTxt = firstHypo > 0 && n >= firstHypo ? ` From ${fmtNum(firstHypo)} on, more batteries than ${fmtNum(t.homes)} home${t.homes === 1 ? '' : 's'} could plausibly hold: hypothetical (faded).` : '';
+    else answer = `${n} is too many even for feeder-aware: past ${ca ? fmtNum(ca.v) : '—'}, each extra battery earns less${earnTxt ? ` than ${earnTxt} of an unconstrained one` : ''}. Feeder-aware never overloads the transformer because of batteries; it charges less instead, so this limit is about money, not safety.`;
+    const perHome = constOf('PLAN_HYPOTHETICAL_PER_HOME', planner);
+    const hypoTxt = perHome && firstHypo > 0 && n >= firstHypo ? ` From ${fmtNum(firstHypo)} on, more than ${num(perHome, { digits: 0 })} per home: hypothetical (faded).` : '';
     return `
       ${eyebrow}
       ${sel}
@@ -433,7 +446,7 @@ export async function mount(root, ctx) {
       ${limitRow('Naive', 'fits', cn, nPeak != null ? `at ${n}: month peak ${fmtNum(nPeak / 10, 0)}% of nameplate, ${esc(TIER[nTier] || '')} ${tagHTML(sl('naivePeak'), planner.series && planner.series.naivePeak && planner.series.naivePeak.text, true)}` : missingHTML('per-k peaks not exported'))}
       ${limitRow('Utility rule', 'allows', cp, `nameplate vs kVA: it does not look at when batteries charge ${cp ? tagHTML(cp.label, cp.cite) : ''}`)}
       ${limitRow('Feeder-aware', 'fits', ca, aPeak != null ? `at ${n}: month peak ${fmtNum(aPeak / 10, 0)}% of nameplate, earning like ${fmtNum(aEff / 100, 1)} full batteries ${tagHTML(sl('awarePeak'), planner.series && planner.series.awareEff && planner.series.awareEff.text, true)}` : missingHTML('per-k peaks not exported'))}
-      <div class="pb-body">${esc(answer)}${esc(hypoTxt)}</div>
+      <div class="pb-body">${esc(answer)}${hypoTxt}</div>
       <div class="pb-foot">${esc(planner.meta.naiveWords || 'Naive: our assumption of one number, no feeder check')}. ${esc(planner.meta.awareWords || '')}${earn ? ` ${tagHTML(earn.label, earn.cite)}` : ''} ${esc(planner.meta.scope || '')}</div>`;
   }
 
@@ -449,7 +462,7 @@ export async function mount(root, ctx) {
     const ruleBinds = N > 0 && all.every((r) => r.paper && has(r.controlsFit) && r.paper.v <= r.controlsFit.v);
     const story = st.g ? growthStory(planner, st.g) : null;
     const seg = levels.map((l) => `<button type="button" class="pb-seg-b${l.g === st.g ? ' on' : ''}" data-g="${l.g}"${l.ok ? '' : ' disabled title="not exported by the planner"'}>${l.g ? `+${l.g}%` : 'Today\'s load'}${l.ok ? '' : ' · not exported'}</button>`).join('');
-    const H = horizon != null ? `${fmtNum(horizon)} years` : 'the horizon';
+    const H = horizon != null ? num(planner.money.horizonYears, { digits: 0, unit: " years" }) : "the horizon";   // HTML: the value with its tag
     const interp = st.g && planner.perK && planner.perK[`g${st.g}`] ? planner.perK[`g${st.g}`].awareInterp || null : null;
     const gSeries = planner.series && planner.series.rankingByGrowth ? planner.series.rankingByGrowth.text : null;
     const upCite = planner.meta && planner.meta.cites && planner.meta.cites.up;
@@ -464,10 +477,10 @@ export async function mount(root, ctx) {
       const movedTxt = r.fitFrom != null ? ` <b class="pb-moved">${fmtNum(r.fitFrom)} at today's load</b>` : '';
       return `
         <div class="pb-up${r.tf === st.sel ? ' on' : ''}${r.why === 'onboard' ? ' pb-dim' : ''}${r.fitFrom != null ? ' pb-up-moved' : ''}" data-tf="${r.tf}">
-          <div class="pb-up-h"><span class="pb-rank-n">${r.rank != null ? `${r.rank}<small> of ${fmtNum(N)}</small>` : ''}</span><b>${esc(tfName(topo, r.tf))}</b><span class="pb-sub">${has(t.kva) ? fmtNum(t.kva.v) : '—'}${t.up && has(t.up.kva) ? ` → ${fmtNum(t.up.kva.v)}` : ''} kVA · ${fmtNum(t.homes)} home${t.homes === 1 ? '' : 's'}</span></div>
-          <div class="pb-up-v"><span class="pb-verdict-w${vw && /^Upgrade/.test(vw.word) ? ' pb-go' : ''}">${esc(vw ? vw.word : '')}</span>${vw && vw.why ? ` <span class="pb-sub">${esc(vw.why)}</span>` : ''}</div>
-          <div class="pb-up-b">${fmtNum(r.k0)} wanted now · the utility rule allows ${r.paper ? num(r.paper, { digits: 0 }) : missingHTML()} · feeder-aware control would fit ${fit}${movedTxt}</div>
-          <div class="pb-up-b">${r.why === 'onboard' ? 'every home here is already a member: an upgrade unlocks no one' : `unlocks <b>${unl}</b> member${has(u) && u.v === 1 ? '' : 's'} ${has(u) ? tagHTML(u.label, `${u.cite}; one size up: ${upCite || 'screening'}`, true) : ''} within ${esc(H)}${r.valueUSDYr && has(r.valueUSDYr) && r.valueUSDYr.v ? `, worth ${num(r.valueUSDYr, { money: true, digits: 0 })}/yr` : ''}${has(r.paybackYears) ? ` · pays back in ${num(r.paybackYears, { digits: 1, unit: ' yr' })}` : ''}`}${ageTxt}</div>
+          <div class="pb-up-h"><span class="pb-rank-n">${r.rank != null ? `${r.rank}<small> of ${fmtNum(N)}</small>` : ''}</span><b>${esc(tfName(topo, r.tf))}</b><span class="pb-sub">${has(t.kva) ? num(t.kva, { digits: 0, unit: ' kVA' }) : '—'}${t.up && has(t.up.kva) ? ` → ${num(t.up.kva, { digits: 0, unit: ' kVA' })}` : ''} · ${fmtNum(t.homes)} home${t.homes === 1 ? '' : 's'}</span></div>
+          <div class="pb-up-v"><span class="pb-verdict-w${vw && /^Upgrade/.test(vw.word) ? ' pb-go' : ''}">${esc(vw ? vw.word : '')}</span>${vw && vw.why ? ` <span class="pb-sub">${esc(vw.why)}</span>${dv && dv.code === 'no-upgrade' && has(planner.money.horizonYears) ? tagHTML(planner.money.horizonYears.label, planner.money.horizonYears.cite) : ''}` : ''}</div>
+          <div class="pb-up-b">${has(r.blockedToday) ? `${num(r.blockedToday, { digits: 0 })} blocked today · ` : ''}${has(r.wanted5y) ? `${num(r.wanted5y)} wanted within ${H} · ` : ''}the utility rule allows ${r.paper ? num(r.paper, { digits: 0 }) : missingHTML()} · feeder-aware control would fit ${fit}${movedTxt}</div>
+          <div class="pb-up-b">${r.why === 'onboard' ? 'every home here is already a member: an upgrade unlocks no one' : `unlocks <b>${unl}</b> member${has(u) && u.v === 1 ? '' : 's'} ${has(u) ? tagHTML(u.label, `${u.cite}; one size up: ${upCite || 'screening'}`, true) : ''} within ${H}${r.valueUSDYr && has(r.valueUSDYr) && r.valueUSDYr.v ? `, worth ${num(r.valueUSDYr, { money: true, digits: 0 })}/yr` : ''}${has(r.paybackYears) ? ` · pays back in ${num(r.paybackYears, { digits: 1, unit: ' yr' })}` : ''}`}${ageTxt}</div>
         </div>`;
     }).join('');
     let head, note = '';
@@ -497,8 +510,8 @@ export async function mount(root, ctx) {
     if (!rm.rows.length) return `${eyebrow}${missingHTML('no ranking exported for this combo')}`;
     return `
       ${eyebrow}
-      <div class="pb-headline pb-h20">${esc(rm.headline)}</div>
-      <div class="pb-sub">Ranked by the transformer stress it removes, then energy value${month ? `, for ${esc(month)}` : ''} with feeder-aware charging${rm.of ? `, among ${num(rm.of, { digits: 0 })} transformers with a candidate home (one entry each)` : ''}. Each pick adds no new violation because of batteries.</div>
+      <div class="pb-headline pb-h20">${rm.lead ? `The next battery goes to ${esc(rm.lead.home)} on ${esc(rm.lead.tfName)} (rank ${fmtNum(rm.lead.rank)}${rm.of ? ` of ${num(rm.of, { digits: 0 })}` : ''})${rm.lead.stress ? `: it removes ${num(rm.lead.stress, { digits: 2, unit: ' h', screening: true })} above nameplate` : ''}.` : ''}</div>
+      <div class="pb-sub">Ranked by the transformer stress it removes, then energy value${month ? `, for ${esc(month)}` : ''} with feeder-aware charging${rm.of ? `, among ${num(rm.of, { digits: 0 })} transformers with a candidate home (one entry each)` : ''}.${rm.noNew ? (rm.noNew.all ? ` Each pick adds no new violation because of batteries ${tagHTML(rm.noNew.label, rm.noNew.cite, true)}` : ` ${fmtNum(rm.noNew.n)} of ${fmtNum(rm.noNew.of)} picks add no new violation because of batteries ${tagHTML(rm.noNew.label, rm.noNew.cite, true)}`) : ''}</div>
       <div class="pb-ranklist">${rm.rows.map((r) => `
         <div class="pb-rank${r.tf === st.sel ? ' on' : ''}" data-tf="${r.tf}">
           <span class="pb-rank-n">${r.rank}${rm.of ? `<small> of ${fmtNum(rm.of.v)}</small>` : ''}</span>
