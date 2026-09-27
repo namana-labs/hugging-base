@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hugging Base · UI-B dev harness</title>
-<!-- ui/story/dev-b.html (UI-B, dev only): mounts results.js / learnings.js with a minimal ctx that matches the UI-A
-     interface, so the pages can be built before the shell lands. Data: ui/data/<path> first; if that 404s, the
-     contract-shaped fixture in ./dev-b-fixtures/<path> (a FIXTURE banner shows on the page when one is used).
+<!-- ui/story/dev-b.html (UI-B, DEV ONLY; delete with ./dev-b-fixtures at integration): mounts results.js / learnings.js
+     with a ctx shaped exactly like UI-A's ui/story/app.js makeCtx() (params parsed like data.parseStoryLink, k = &k= or 0,
+     num() = shell.js numHTML markup). Data: ./dev-b-fixtures/routes.json (make-fixtures.mjs) routes the real files
+     copied from the ENGINE / PLANNER worktrees (`files`) and answers 404 without a request for paths not available
+     here (`absent`); everything else is read from ui/data. ?cat=data reads ui/data/story/index.json unrouted.
      Open: http://127.0.0.1:8802/ui/story/dev-b.html?page=results&s=2026-08-23/aware   (serve the repo root) -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./pages-b.css">
 <style>
   html, body { margin:0; height:100%; background:#f7f4ec; font-family:'Hanken Grotesk',system-ui,sans-serif; color:#10231a; }
@@ -19,7 +19,7 @@
   .devb-nav { display:flex; gap:2px; padding:3px; border:1px solid #e3dfd3; border-radius:8px; font-size:13px; }
   .devb-nav button { font:inherit; border:0; background:transparent; padding:5px 10px; border-radius:6px; cursor:pointer; color:#10231a; }
   .devb-nav button.on { background:#e4efe6; color:#1e4d2b; font-weight:700; }
-  .devb-h select { font:inherit; font-size:13px; padding:4px 6px; border:1px solid #cfcabd; border-radius:6px; background:#fffdf8; }
+  .devb-h select { font:inherit; font-size:13px; padding:4px 6px; border:1px solid #cfcabd; border-radius:6px; background:#fffdf8; max-width:420px; }
   .devb-note { font-size:12px; color:#5f6b63; }
   #root { height:calc(100vh - 60px); }
 </style>
@@ -36,11 +36,12 @@
 <script type="module">
 import * as fmt from '../lib/format.js';
 
-const DATA = '../data/', FIX = './dev-b-fixtures/';
-// ENGINE copies these into ui/data at integration; until then the harness reads Michael's committed originals
-const ALIAS = { 'p1/worker_kill.json': '../../mpalacios/out/p1/worker_kill.json', 'p3/covert.json': '../../mpalacios/out/p3/covert.json' };
+const DATA = '../data/';
 const cache = new Map();
 class HttpError extends Error { constructor(status, path) { super(`HTTP ${status} for ${path}`); this.status = status; this.path = path; } }
+let devFiles = {}, devAbsent = new Set();
+if (new URLSearchParams(location.search).get('cat') !== 'data') { const r = await fetchDocRaw('./dev-b-fixtures/routes.json'); devFiles = r.files || {}; devAbsent = new Set(r.absent || []); }
+async function fetchDocRaw(url) { const r = await fetch(url); if (!r.ok) throw new Error(`HTTP ${r.status} for ${url}`); return r.json(); }
 async function fetchDoc(url, path) {
   const r = await fetch(url);
   if (!r.ok) throw new HttpError(r.status, path);
@@ -50,46 +51,48 @@ async function fetchDoc(url, path) {
 }
 function getAny(path) {
   if (cache.has(path)) return cache.get(path);
-  const p = (async () => {
-    try { return await fetchDoc(DATA + path, path); } catch (e) {
-      if (!(e instanceof HttpError) || e.status !== 404) throw e;
-      if (ALIAS[path]) return fetchDoc(ALIAS[path], path);
-      return fetchDoc(FIX + path, path);                 // throws HttpError(404) when no fixture exists either
-    }
-  })();
+  const p = devAbsent.has(path) ? Promise.reject(new HttpError(404, path)) : fetchDoc(devFiles[path] || DATA + path, path);
   cache.set(path, p); p.catch(() => cache.delete(path));
   return p;
 }
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-function num(x, opts = {}) {
-  const v = fmt.fmtValue(x, opts);                        // throws on a bare number or an unknown label
-  return `<span class="num">${esc(v)}</span><span class="pb-tag"${x.cite ? ` title="${esc(x.cite)}"` : ''}>${x.label}</span>`;
+const TAGS = [...fmt.LABELS, 'UNVERIFIED', 'SCREENING'];
+const chip = (label, cite) => `<span class="chip chip-${label}"${cite ? ` title="${esc(cite)}"` : ''}>${label}</span>`;
+function num(x, opts = {}) {                              // = UI-A shell.js numHTML (throws on a bare number)
+  if (x === null || typeof x !== 'object' || Array.isArray(x) || !('v' in x) || !TAGS.includes(x.label)) throw new fmt.LabelError(`unlabelled number: ${JSON.stringify(x)}`);
+  const std = fmt.LABELS.includes(x.label);
+  const val = fmt.fmtValue(std ? x : { ...x, label: 'ASSUMPTION' }, opts);
+  const screening = opts.screening || x.screening === true || x.label === 'SCREENING';
+  return `<span class="num">${esc(val)}</span>${x.label !== 'SCREENING' ? chip(x.label, x.cite) : ''}${screening ? chip('SCREENING', `Screening estimate, not checked by OpenDSS.${x.cite ? ' ' + x.cite : ''}`) : ''}`;
 }
 
 const q = new URLSearchParams(location.search);
+const int = (k, lo, hi) => { const r = q.get(k); if (r === null || !/^\d+$/.test(r)) return null; const n = Number(r); return n >= lo && n <= hi ? n : null; };
 const catalogue = await getAny('story/index.json');
 const scenario = catalogue.scenarios.find((s) => s.id === q.get('s')) || catalogue.scenarios.find((s) => s.id === catalogue.default);
 const page = q.get('page') === 'learnings' ? 'learnings' : 'results';
-document.getElementById('note').textContent = catalogue.fixture ? 'UI-B dev harness · catalogue FIXTURE' : 'UI-B dev harness';
+document.getElementById('note').textContent = devFiles['story/index.json'] ? 'UI-B dev harness · real files copied from ENGINE / PLANNER' : 'UI-B dev harness · ui/data';
 const sel = document.getElementById('scn');
 sel.innerHTML = catalogue.scenarios.map((s) => `<option value="${esc(s.id)}"${s.id === scenario.id ? ' selected' : ''}>${esc(s.id)}</option>`).join('');
 sel.addEventListener('change', () => nav(page, { s: sel.value }));
 for (const b of document.querySelectorAll('[data-page]')) { b.classList.toggle('on', b.dataset.page === page); b.addEventListener('click', () => nav(b.dataset.page, { s: scenario.id })); }
 
-let k = q.has('k') && Number.isFinite(+q.get('k')) ? +q.get('k') : null;
+const params = { page, s: q.get('s'), k: int('k', 0, 100000), speed: null, q: int('q', 1, 4), tf: int('tf', 0, 100000), n: int('n', 0, 50), cat: null, nowebgl: false };
+let k = params.k ?? 0;
 const listeners = new Set();
-function link(params = {}) {
+function link(p = {}) {
   const u = new URLSearchParams(location.search);
-  for (const [key, v] of Object.entries(params)) { if (v == null || v === '') u.delete(key); else u.set(key, String(v)); }
-  return `?${u.toString()}`;
+  for (const [key, v] of Object.entries(p)) { if (v == null || v === '') u.delete(key); else u.set(key, String(v)); }
+  return `?${u.toString().replace(/%2F/g, '/').replace(/%3D/g, '=')}`;
 }
-function nav(p, params = {}) { location.search = link({ page: p, q: null, tf: null, n: null, ...params }); }
+function nav(p, extra = {}) { location.search = link({ page: p, ...extra }); }
 const ctx = {
-  catalogue, scenario, params: Object.fromEntries(q.entries()),
+  catalogue, scenario, params,
   getJSON: getAny, getAny, k,
-  setK(v) { k = v; history.replaceState(null, '', link({ k: v })); for (const f of listeners) f(v); },
+  setK(v) { k = Math.max(0, Math.round(v)); ctx.k = k; history.replaceState(null, '', link({ k: k || null })); for (const f of listeners) f(k); },
   onK(fn) { listeners.add(fn); return () => listeners.delete(fn); },
-  nav, link, num, fmt, devPlannerLib: new URL('./dev-b-fixtures/planner.js', location.href).href,
+  nav, link, num, fmt,
+  devPlannerLib: new URL('./dev-b-fixtures/planner.js', location.href).href,   // a byte copy of PLANNER's ui/lib/planner.js
 };
 const mod = await import(`./${page}.js`);
 window.__devb = { page, handle: await mod.mount(document.getElementById('root'), ctx), ctx };
