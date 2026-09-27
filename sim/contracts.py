@@ -12,7 +12,8 @@ Checks, per file (ui/data/ems/** is a P3 snapshot of site/ems: size-checked only
      (labelled once in `series`). Any dict with "v" and "label" anywhere must carry a valid label;
   3. shapes of the named files (topology, p1/meta, p1/<branch>, p2/index, p2/<combo>, and the round-2 history files
      p1/days/index.json (A.10), p1/days/calendar.json (A.9h), p1/days/<date>/meta.json (A.5h) and
-     p1/days/<date>/<branch>.json.gz (A.6h)) where cheap;
+     p1/days/<date>/<branch>.json.gz (A.6h); the sprint story files (A.12) story/index.json, p1/variants/<l>=<v>/*,
+     p1/extras/*.json.gz, p1/worker_kill.json (A.6b) and p3/covert.json (A.11)) where cheap;
   4. size: at most DATA_FILE_CAP_MB per file and DATA_BUDGET_MB for all of ui/data, counted ON DISK (a .json.gz
      counts its compressed bytes, and is decompressed and checked by rules 1-3 like any other file).
 Ends with one line: "CONTRACTS: PASS (...)" or "CONTRACTS: FAIL (...)".
@@ -38,8 +39,9 @@ HEADLINE_KEYS = {"summary", "relief", "money", "referee", "flip", "usefulCapacit
                  "metrics", "headline", "fleetCounterfactualTotals", "scaleLadder"}
 ID_KEYS = {"rank", "home", "tf", "step", "k", "n", "index", "of", "runs", "minute", "seq", "batt"}
 ENVELOPE_KEYS = ("schema", "producer", "inputs", "constants", "sources", "series")
-# sim.<module> for simulator output; scripts.<name> for a fetcher in scripts/ (footprints.json: scripts.fetch_footprints)
-PRODUCER_RE = r"(sim|scripts)\.[a-z0-9_]+"
+# sim.<module> for simulator output; scripts.<name> for a fetcher in scripts/ (footprints.json: scripts.fetch_footprints);
+# mpalacios.<module> for the runtime and detection replays (p1/worker_kill.json, p3/covert.json; A.6b, A.11)
+PRODUCER_RE = r"(sim|scripts|mpalacios)\.[a-z0-9_]+"
 INPUT_KEYS = ("prices_sha256", "loads_sha256", "topology_sha256")
 
 
@@ -148,7 +150,7 @@ def check_envelope(doc):
     if not re.fullmatch(r"hb\.[A-Za-z0-9_.-]+\.v\d+", str(doc["schema"])):
         errs.append(f"envelope: schema {doc['schema']!r} is not hb.<name>.v<N>")
     if not re.fullmatch(PRODUCER_RE, str(doc["producer"])):
-        errs.append(f"envelope: producer {doc['producer']!r} is not sim.<module> or scripts.<name>")
+        errs.append(f"envelope: producer {doc['producer']!r} is not sim.<module>, scripts.<name> or mpalacios.<module>")
     inp = doc["inputs"]
     if not isinstance(inp, dict) or any(k not in inp for k in INPUT_KEYS):
         errs.append(f"envelope: inputs must carry {INPUT_KEYS}")
@@ -223,25 +225,120 @@ def _check_p1_meta(doc, errs, tag):
         _need("cash" in doc.get("series", {}), f"{tag}: series.cash label missing", errs)
 
 
-def _check_p1_branch(doc, errs, tag):
+def _check_p1_branch(doc, errs, tag, m=96):
+    """A.6. m = the fleet size (96; a fleet-size variant's meta.fleet length, A.12)."""
     n = len(doc["loading"])
     _need(all(len(r) == 379 for r in doc["loading"]), f"{tag}: loading rows != 379", errs)
     _need(len(doc["tier"]) == n and all(len(s) == 379 for s in doc["tier"]), f"{tag}: tier strings", errs)
-    _need(len(doc["state"]) == n and all(len(s) == 96 for s in doc["state"]), f"{tag}: state strings", errs)
+    _need(len(doc["state"]) == n and all(len(s) == m for s in doc["state"]), f"{tag}: state strings != {m} chars", errs)
     _need(len(doc["batKW"]) == n and len(doc["soc"]) == n, f"{tag}: batKW/soc length", errs)
+    _need(all(len(r) == m for r in doc["batKW"]) and all(len(r) == m for r in doc["soc"]),
+          f"{tag}: batKW/soc rows != {m}", errs)
     _need(set(doc["focus"]) >= {"A", "B", "C", "D"}, f"{tag}: focus A-D missing", errs)
 
 
-def check_shapes(rel, doc):
-    """Cheap shape checks for the named files (docs/contracts.md)."""
+VARIANT_RE = re.compile(r"p1/variants/(fleet|cls|reserve|soc0|growth)=([A-Za-z0-9]+)/")
+EXTRAS_RE = re.compile(r"p1/extras/[A-Za-z0-9_=.-]+\.json$")
+STORY_LEVERS = ("evening", "policy", "failure", "fleet", "cls", "reserve", "soc0", "growth")
+MOMENT_KEYS = ("k", "t", "rule", "text", "label")
+FAILURE_KEYS = ("kind", "where", "k0", "k1", "text", "label")
+
+
+def _check_extras(doc, errs, tag):
+    """A.12: one playable scenario's extra series; a key the source run cannot give is ABSENT (named in `absent`)."""
+    n = doc["steps"]
+    absent = set(doc.get("absent") or ())
+    for k in ("vTfMilli", "headKW", "headKVAr", "capKVAr", "feederLoadKW", "worstPct", "worstTf"):
+        if k in absent:
+            _need(k not in doc, f"{tag}: {k} is listed absent but present", errs)
+            continue
+        _need(isinstance(doc.get(k), list) and len(doc[k]) == n, f"{tag}: {k} must hold {n} values", errs)
+        _need(k in doc.get("series", {}), f"{tag}: series.{k} label missing", errs)
+    if "vTfMilli" in doc:
+        _need(all(len(r) == 379 for r in doc["vTfMilli"]), f"{tag}: vTfMilli rows != 379", errs)
+    _need(sorted(doc["busOrder"]) == list(range(379)), f"{tag}: busOrder must be a permutation of 0..378", errs)
+    _need(len(doc["busDistKm"]) == 379 and doc["busDistKm"] == sorted(doc["busDistKm"]),
+          f"{tag}: busDistKm must be 379 ascending distances (busOrder's)", errs)
+    for m in doc["moments"]:
+        _need(all(k in m for k in MOMENT_KEYS) and m["label"] in LABELS and 0 <= m["k"] < n,
+              f"{tag}: moment {m.get('rule')} needs {MOMENT_KEYS}, a valid label and 0 <= k < steps", errs)
+    for f in doc["failures"]:
+        _need(all(k in f for k in FAILURE_KEYS) and f["label"] in LABELS and 0 <= f["k0"] <= f["k1"] < n,
+              f"{tag}: failure {f.get('kind')} needs {FAILURE_KEYS}, a valid label and 0 <= k0 <= k1 < steps", errs)
+    eng = doc.get("engine") or {}
+    _need(isinstance(eng.get("buildSeconds"), dict) and eng["buildSeconds"].get("label") in LABELS,
+          f"{tag}: engine.buildSeconds must be labelled", errs)
+
+
+def _check_story(doc, errs, root):
+    tag = "story/index"
+    ids = [s["id"] for s in doc["scenarios"]]
+    _need(len(set(ids)) == len(ids), f"{tag}: duplicate scenario ids", errs)
+    _need(doc["default"] in ids, f"{tag}: default {doc['default']!r} is not a scenario", errs)
+    _need(set(doc["levers"]) == set(STORY_LEVERS), f"{tag}: levers must be {STORY_LEVERS}", errs)
+    for k, lv in doc["levers"].items():
+        opts = [o["id"] for o in lv["options"]]
+        _need(lv["default"] in opts and all("label" in o for o in lv["options"]),
+              f"{tag}: lever {k} needs labelled options holding its default", errs)
+    for s in doc["scenarios"]:
+        t = f"{tag}[{s['id']}]"
+        _need(set(s["levers"]) == set(STORY_LEVERS), f"{t}: levers must name all eight", errs)
+        for k, v in s["levers"].items():
+            _need(v in [o["id"] for o in doc["levers"][k]["options"]], f"{t}: lever {k}={v!r} is not an option", errs)
+        paths = [s["meta"], s["branch"], s["extras"], *s["compare"].values()] + ([s["attack"]] if "attack" in s else [])
+        for p in paths:
+            _need(root is None or (Path(root) / p).exists(), f"{t}: {p} does not exist", errs)
+        _need(s["gz"] == s["branch"].endswith(".gz"), f"{t}: gz flag", errs)
+        _need(isinstance(s.get("summary"), dict) and s["summary"], f"{t}: summary missing", errs)
+        eng = s.get("engine") or {}
+        _need(all(isinstance(eng.get(k), dict) and eng[k].get("label") in LABELS for k in ("buildSeconds", "solves")),
+              f"{t}: engine.buildSeconds / solves must be labelled", errs)
+    for u in doc["unavailable"]:
+        _need(isinstance(u.get("levers"), dict) and set(u["levers"]) <= set(STORY_LEVERS) and u.get("reason"),
+              f"{tag}: unavailable rows need levers (partial) and a reason", errs)
+
+
+def check_shapes(rel, doc, root=None):
+    """Cheap shape checks for the named files (docs/contracts.md). `root` (ui/data) lets story/index.json check that
+    every path it names exists."""
     errs = []
     name = rel.replace("\\", "/")
     base = name.split("fixtures/", 1)[-1]
     if base.endswith(".json.gz"):
         base = base[:-3]
     day = DAY_DIR_RE.match(base)
+    var = VARIANT_RE.match(base)
     try:
-        if base == "p1/days/index.json":                          # A.10
+        if base == "story/index.json":                           # A.12
+            _check_story(doc, errs, root)
+        elif var and base.endswith("/meta.json"):                  # A.12 variant meta (A.5 shape)
+            tag = f"p1/variants/{var.group(1)}={var.group(2)}/meta"
+            _check_p1_meta(doc, errs, tag)
+            _need(doc["variant"]["lever"] == var.group(1) and str(doc["variant"]["value"]) == var.group(2),
+                  f"{tag}: variant block != its folder", errs)
+            _need(isinstance(doc["fleet"], list) and doc["fleet"], f"{tag}: fleet (home indices) missing", errs)
+            _need("aware_faults" not in doc["branches"], f"{tag}: variants have no aware_faults branch", errs)
+        elif var and name.endswith(".json.gz"):                    # A.12 variant branch (A.6 shape)
+            b = base.rsplit("/", 1)[1][:-5]
+            tag = f"p1/variants/{var.group(1)}={var.group(2)}/{b}"
+            _need(b in HIST_BRANCHES, f"{tag}: branch must be one of {HIST_BRANCHES}", errs)
+            m = len(doc["state"][0]) if doc.get("state") else 96
+            if root is not None:
+                vm = Path(root) / base.rsplit("/", 1)[0] / "meta.json"
+                if vm.exists():
+                    m = len(read_json_any(vm)["fleet"])
+            _check_p1_branch(doc, errs, tag, m=m)
+        elif base.startswith("p1/variants/"):
+            errs.append(f"{base}: not a known variant file (A.12)")
+        elif EXTRAS_RE.match(base):                                # A.12 extras
+            _need(name.endswith(".json.gz"), f"{base}: extras are gzipped (.json.gz)", errs)
+            _check_extras(doc, errs, base)
+        elif base.startswith("p1/extras/"):
+            errs.append(f"{base}: not a known extras file (A.12)")
+        elif base == "p3/covert.json":                             # A.11
+            _need(isinstance(doc.get("summary"), dict) and "window" in doc and "attack" in doc,
+                  "p3/covert: summary, window and attack are required", errs)
+        elif base == "p1/days/index.json":                        # A.10
             days = doc["days"]
             _need(isinstance(days, list) and days, "p1/days/index: days empty", errs)
             _need(days and days[0]["date"] == "2026-08-23" and days[0]["dir"] == "", "p1/days/index: row 0 must be 2026-08-23 with dir \"\"", errs)
@@ -310,7 +407,7 @@ def validate(root=UI_DATA, out=print):
     labelled_n = 0
     cap = DATA_FILE_CAP_MB * 1024 * 1024
     for p in files:
-        rel = str(p.relative_to(root))
+        rel = p.relative_to(root).as_posix()            # forward slashes on every OS (the ems/ exemption below)
         size = p.stat().st_size
         total += size
         errs = []
@@ -328,7 +425,7 @@ def validate(root=UI_DATA, out=print):
                 le, n = audit_labels(doc)
                 labelled_n += n
                 errs += le
-                errs += check_shapes(rel, doc)
+                errs += check_shapes(rel, doc, root)
         out(f"contract {rel:44s} {size / 1024:9.1f} KB  {'ok' if not errs else 'FAIL'}")
         for e in errs[:12]:
             out(f"    - {e}")
@@ -336,9 +433,11 @@ def validate(root=UI_DATA, out=print):
             out(f"    - ... {len(errs) - 12} more")
         if errs:
             failures.append(rel)
-    out(f"contract total {len(files)} files, {total / 1048576:.2f} MB (budget {DATA_BUDGET_MB} MB, {DATA_FILE_CAP_MB} MB per file); {labelled_n} labelled numbers")
-    if total > DATA_BUDGET_MB * 1048576:
-        failures.append(f"total {total / 1048576:.2f} MB > {DATA_BUDGET_MB} MB")
+    from . import constants as _c                      # read at call time: the budget is TRUTH's constant
+    budget = _c.DATA_BUDGET_MB
+    out(f"contract total {len(files)} files, {total / 1048576:.2f} MB (budget {budget} MB, {DATA_FILE_CAP_MB} MB per file); {labelled_n} labelled numbers")
+    if total > budget * 1048576:
+        failures.append(f"total {total / 1048576:.2f} MB > {budget} MB")
     return failures, len(files), total, labelled_n
 
 

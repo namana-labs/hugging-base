@@ -13,6 +13,10 @@
     python -m sim.p1_build --out DIR       # write somewhere else (verify --rebuild uses this)
     python -m sim.p1_build --dwell N --out DIR   # MIN_DWELL_MIN override (the judge's check); the envelope exports N
 
+Scenario levers (sprint story contract; sim.scenarios builds the variants): Scenario(..., soc0, reserve, growth) and a
+fleet doc passed to Feeder(fleet=...) (size and class). Every lever defaults to the committed value, so the committed
+build is byte-identical. A reserve below RESERVE_FLOOR (the 20% member reserve) is refused: it is a hard constraint.
+
 Heavy (about 3,000 OpenDSS solves): run through scripts/build_all.sh p1 (takes the shared lock).
 Prices REAL (ERCOT LZ_NORTH), loads SIM (SMART-DS 2018, same calendar date, 15 -> 1 min linear: DERIVED), battery
 power factor 1.0 (ASSUMPTION), controller view = total transformer load with a 60 s lag (ASSUMPTION, §12 Q4).
@@ -39,7 +43,9 @@ from .devices import Battery, Device, CLASSES, discharge_limit
 from .feeder import Feeder, ROOT
 from .money import (energy_value_usd, money_block, ercot_demand, scale_ladder, ERCOT_DEMAND_REL, split_block, cash_cents,
                     head_kva_per_phase, SPLIT_CITE)
-from .orchestrator import Controller, charge_target
+from .orchestrator import Controller, allocate, charge_target
+from .devices import Command
+from .constants import COMMAND_TTL_S, COMMS_STALE_S
 from .prices import price_at, onset_d26, discharge_plan
 from .tiers import tier_codes, tier_strings, normal_events, protection_events
 from .history import story_for             # the day chip's story line (tag + why), formatted from the meta
@@ -65,14 +71,17 @@ def i10(x):
     return np.rint(np.asarray(x, dtype=float) * 10).astype(int).tolist()
 
 
-def constants_block(names, dwell=MIN_DWELL_MIN):
+def constants_block(names, dwell=MIN_DWELL_MIN, overrides=None):
     """The envelope's `constants`: the values that ran. A --dwell override replaces MIN_DWELL_MIN's value and cite, so
-    a judge-check build never exports the default it did not use (build prompt 5.3)."""
+    a judge-check build never exports the default it did not use (build prompt 5.3). `overrides` ({NAME: {value, label,
+    cite}}, a scenario lever's values: Scenario.overrides()) replaces or adds entries the same way."""
     c = export(*names)
     if "MIN_DWELL_MIN" in c and dwell != MIN_DWELL_MIN:
         c["MIN_DWELL_MIN"] = {"value": dwell, "label": "ASSUMPTION",
                               "cite": f"override: judge check (--dwell {dwell}); the committed build uses {MIN_DWELL_MIN} "
                                       f"({TAG['MIN_DWELL_MIN']['cite']})"}
+    for k, v in (overrides or {}).items():
+        c[k] = v
     return c
 
 
@@ -100,11 +109,13 @@ class Window:
         return int((dt - self.t0).total_seconds() // 60)
 
 
-def market(win):
-    """(modes[n], plan, onset) from sim.prices: the market plan is the same for every branch with batteries (DERIVED)."""
+def market(win, soc0=SOC0, reserve=RESERVE_FLOOR, emax=CORE_USABLE_KWH, pmax=CORE_POWER_KW, rte=CORE_RTE):
+    """(modes[n], plan, onset) from sim.prices: the market plan is the same for every branch with batteries (DERIVED).
+    One battery's usable energy above the reserve sizes the plan: soc0, reserve and the class (emax, pmax, rte) are
+    the scenario's (defaults: the committed Core at SOC0 over RESERVE_FLOOR)."""
     onset, onset_p, peak_ts, threshold, rule_mode = onset_d26(win.day)
-    usable = (SOC0 - RESERVE_FLOOR) * CORE_USABLE_KWH * math.sqrt(CORE_RTE)
-    plan = discharge_plan(win.day, onset, usable, CORE_POWER_KW)
+    usable = (soc0 - reserve) * emax * math.sqrt(rte)
+    plan = discharge_plan(win.day, onset, usable, pmax)
     modes = ["idle"] * win.steps
     full_plan_modes = {}
     for ts, minutes in plan:
@@ -121,11 +132,33 @@ def market(win):
     return modes, plan, (onset, onset_p, peak_ts, threshold, rule_mode), full_plan_modes
 
 
-class Scenario:
-    """Everything shared by the branches: feeder, loads, fleet, prices, the plan."""
+def check_levers(soc0, reserve, growth):
+    """Refuse a lever outside its physical range. The 20% member reserve is a hard constraint (CLAUDE.md): never below
+    RESERVE_FLOOR, in any scenario."""
+    if reserve < RESERVE_FLOOR - 1e-12:
+        raise ValueError(f"reserve {reserve:.0%} is below the {RESERVE_FLOOR:.0%} member reserve (a hard constraint)")
+    if not reserve < 1.0:
+        raise ValueError(f"reserve {reserve} must be below 1")
+    if not reserve <= soc0 <= 1.0:
+        raise ValueError(f"start charge {soc0} must lie between the reserve {reserve} and 1")
+    if not growth > -1.0:
+        raise ValueError(f"home-load growth {growth} must be above -100%")
 
-    def __init__(self, win, loads=None, feeder=None):
+
+class Scenario:
+    """Everything shared by the branches: feeder, loads, fleet, prices, the plan.
+
+    Levers (defaults = the committed build): soc0 (state of charge at 16:00), reserve (the member reserve, never below
+    RESERVE_FLOOR), growth (uniform multiplier 1 + growth on every home's kW and kvar, the warm-up minute included:
+    sim.siting's growth_factor definition). The fleet (size, class, placement) is the feeder's: Feeder(fleet=doc)."""
+
+    def __init__(self, win, loads=None, feeder=None, soc0=SOC0, reserve=RESERVE_FLOOR, growth=0.0):
         from .loads import Loads
+        check_levers(soc0, reserve, growth)
+        self.soc0 = soc0
+        self.reserve = reserve
+        self.growth = growth
+        self.const_extra = {}            # more envelope constants for a scenario (sim.scenarios: the fleet levers)
         self.win = win
         self.loads = loads if loads is not None else Loads()
         self.feeder = feeder if feeder is not None else Feeder()
@@ -146,24 +179,109 @@ class Scenario:
         self.focus = {k: f.tf_index[v] for k, v in FOCUS_TFS.items()}
         self.focus["240"] = f.tf_index[BRIDGE_TF]
         self.focus_of_tf = {v: k for k, v in self.focus.items()}
-        self.modes, self.plan, self.onset, self.plan_minutes = market(win)
+        # the market plan is sized on one battery of the fleet's class (the Core by default; the Legacy lever uses
+        # the Legacy's power and energy). A mixed fleet has no single plan battery: refused.
+        kinds = sorted(set(self.cls))
+        if len(kinds) != 1:
+            raise ValueError(f"the market plan needs one battery class, the fleet has {kinds}")
+        spec = CLASSES[kinds[0]]
+        self.modes, self.plan, self.onset, self.plan_minutes = market(win, soc0, reserve, spec["emax"], spec["pmax"],
+                                                                      spec["rte"])
         self.price = np.array([price_at(win.time(k)) for k in range(win.steps)])
         # SoC at the window start: SOC0 at 16:00, or (quick windows) SOC0 run through the plan minutes before start
-        soc = np.full(self.m, SOC0)
+        soc = np.full(self.m, soc0)
         pre = [t for t in sorted(self.plan_minutes) if t < win.t0 and t >= datetime.strptime(f"{win.day}T16:00", FMT)]
         for _ in pre:
             for i in range(self.m):
-                b = Battery(soc=float(soc[i]), cls=self.cls[i])
+                b = Battery(soc=float(soc[i]), cls=self.cls[i], reserve=reserve)
                 b.advance(-self.pmax[i], DT_H)
                 soc[i] = b.soc
         self.soc_start = soc
         self._loads_cache = [None] * win.steps
 
+    def loads_at(self, minute):
+        """Home kW and kvar (Loads.dss order) at local minute `minute` of the day, with the growth lever applied."""
+        kw, kvar = self.loads.at_minute(self.win.day, minute)
+        if self.growth:
+            kw, kvar = kw * (1 + self.growth), kvar * (1 + self.growth)
+        return kw, kvar
+
     def home_loads(self, k):
         if self._loads_cache[k] is None:
-            self._loads_cache[k] = self.loads.at_minute(self.win.day, self.win.start_min + k)
+            self._loads_cache[k] = self.loads_at(self.win.start_min + k)
         kw, kvar = self._loads_cache[k]
         return kw.copy(), kvar.copy()
+
+    def controller(self, dwell_min):
+        """The aware controller: sim.orchestrator.Controller, or (reserve lever above the floor) ReserveController."""
+        args = (self.tf_of_batt, self.pmax, self.emax, self.rte, self.ids)
+        if self.reserve == RESERVE_FLOOR:
+            return Controller(*args, dwell_min=dwell_min)
+        return ReserveController(*args, dwell_min=dwell_min, reserve=self.reserve)
+
+    def overrides(self):
+        """Envelope constants for the levers that differ from the committed build ({} by default)."""
+        o = {}
+        if self.soc0 != SOC0:
+            o["SOC0"] = {"value": self.soc0, "label": "ASSUMPTION",
+                         "cite": f"scenario lever (start charge); the committed build uses {SOC0} ({TAG['SOC0']['cite']})"}
+        if self.reserve != RESERVE_FLOOR:
+            o["RESERVE_FLOOR"] = {"value": self.reserve, "label": "ASSUMPTION",
+                                  "cite": f"scenario lever (member reserve), never below the {RESERVE_FLOOR:.0%} floor "
+                                          f"({TAG['RESERVE_FLOOR']['cite']})"}
+        if self.growth:
+            o["LOAD_GROWTH"] = {"value": self.growth, "label": "ASSUMPTION",
+                                "cite": "scenario lever: every home's kW and kvar x (1 + growth), the warm-up minute "
+                                        "included (sim.siting growth_factor's definition)"}
+        o.update(self.const_extra)
+        return o
+
+
+class ReserveController(Controller):
+    """sim.orchestrator.Controller with a member reserve above RESERVE_FLOOR (the reserve lever). Controller.tick()
+    calls allocate() without `reserve`, so this is its tick with `reserve=self.reserve` passed through; the protocol
+    is unchanged. Used only when the reserve differs from the floor (the committed build uses Controller itself).
+    REQUEST (lead): give Controller a `reserve` argument and delete this class."""
+
+    def __init__(self, *args, reserve=RESERVE_FLOOR, **kw):
+        super().__init__(*args, **kw)
+        self.reserve = reserve
+
+    def tick(self, k, t_s, heard, soc_now, bg_kw, bg_kvar, kva, mode, target_kw, blocked=None):
+        from .orchestrator import BIG
+        st = self.state
+        st.step = k
+        heard = np.asarray(heard, dtype=bool)
+        self.last_seen = np.where(heard, t_s, self.last_seen)
+        self.soc_view = np.where(heard, soc_now, self.soc_view)
+        self.stale = (t_s - self.last_seen) >= COMMS_STALE_S
+        prev_held = st.held.copy()
+        exp = np.array([self.expired(i, t_s) for i in range(self.m)])
+        st.held = ~heard & ~exp
+        st.blocked = np.asarray(blocked, dtype=bool) if blocked is not None else np.zeros(self.m, dtype=bool)
+        st.blocked = st.blocked | (~heard & exp)
+        st.release = {}
+        for i in range(self.m):
+            if exp[i] and st.grant[i] != 0.0:
+                if prev_held[i] and st.grant[i] > 0:
+                    t = int(self.tf[i])
+                    st.release[t] = st.release.get(t, 0.0) + float(st.grant[i])
+                st.grant[i] = 0.0
+                st.grant_step[i] = -BIG
+        kw, caps, dec = allocate(bg_kw, bg_kvar, kva, self.tf, self.soc_view, self.pmax, self.emax, target_kw, mode,
+                                 state=st, alpha=self.alpha, cover=self.cover, rte=self.rte, ids=self.ids,
+                                 reserve=self.reserve)
+        st.commit(kw)
+        cmds = {}
+        for i in range(self.m):
+            if st.held[i] or st.blocked[i]:
+                continue
+            self.seq += 1
+            c = Command.make(self.seq, t_s, float(kw[i]), COMMAND_TTL_S)
+            self.last_cmd[i] = c
+            cmds[i] = c
+            self.issued += 1
+        return kw, caps, dec, cmds
 
 
 def run_branch(sc, branch, faults=None):
@@ -171,12 +289,11 @@ def run_branch(sc, branch, faults=None):
     win, f = sc.win, sc.feeder
     n, m, T = win.steps, sc.m, len(sc.kva)
     f.restore_all()
-    bat = [Battery(soc=float(sc.soc_start[i]), cls=sc.cls[i]) for i in range(m)]
+    bat = [Battery(soc=float(sc.soc_start[i]), cls=sc.cls[i], reserve=sc.reserve) for i in range(m)]
     devs = [Device(b) for b in bat]
     ctl = None
     if branch.startswith("aware"):
-        ctl = Controller(sc.tf_of_batt, sc.pmax, sc.emax, sc.rte, sc.ids, dwell_min=faults.get("dwell", MIN_DWELL_MIN)
-                         if faults else MIN_DWELL_MIN)
+        ctl = sc.controller(faults.get("dwell", MIN_DWELL_MIN) if faults else MIN_DWELL_MIN)
     faults = faults or {}
     pct = np.zeros((n, T))
     P = np.zeros((n, T))
@@ -186,6 +303,10 @@ def run_branch(sc, branch, faults=None):
     soc = np.zeros((n, m))
     target = np.zeros(n)
     home_tf_kw = np.zeros((n, T))
+    head_kw = np.zeros(n)          # sprint readouts (extras): feeder-head P/Q, capacitor kvar, served home load
+    head_kvar = np.zeros(n)
+    cap_kvar = np.zeros(n)
+    load_kw = np.zeros(n)
     states = []
     home_state = []
     ticker = []
@@ -193,7 +314,7 @@ def run_branch(sc, branch, faults=None):
     isolated_at = {}
     grants = np.zeros((n, m))
     # warm-up: the measurement the controller reads at step 0 (the minute before the window, batteries idle)
-    kw0, kvar0 = sc.loads.at_minute(win.day, win.start_min - 1)
+    kw0, kvar0 = sc.loads_at(win.start_min - 1)
     f.set_loads(kw0, kvar0)
     f.set_batteries(np.zeros(m))
     r0 = f.solve()
@@ -283,7 +404,7 @@ def run_branch(sc, branch, faults=None):
                     live = ~(ctl.stale | blocked) & (heard | ~np.array([ctl.expired(i, t_s) for i in range(m)]))
                     tgt = charge_target(np.where(live, known, 1.0), sc.emax, sc.rte, win.deadline_step - k)
                 elif mode == "discharge":
-                    tgt = -float(sum(discharge_limit(socs[i], sc.emax[i], sc.pmax[i], sc.rte[i], DT_H)
+                    tgt = -float(sum(discharge_limit(socs[i], sc.emax[i], sc.pmax[i], sc.rte[i], DT_H, sc.reserve)
                                      for i in range(m) if heard[i]))
                 else:
                     tgt = 0.0
@@ -353,6 +474,8 @@ def run_branch(sc, branch, faults=None):
         P[k] = r["P"]
         head[k] = r["head_amps"]
         vmin_home[k] = r["vmin_home_pu"]
+        head_kw[k], head_kvar[k], cap_kvar[k] = r["head_kw"], r["head_kvar"], r["cap_kvar"]
+        load_kw[k] = float(kw[~np.isin(sc.load_tf, list(f.isolated))].sum()) if f.isolated else float(kw.sum())
         P_prev, Q_prev = r["P"].copy(), r["Q"].copy()
         applied_prev = batkw[k].copy()
         # protection (4.5, ASSUMPTION): judged on OpenDSS loading; the transformer opens for the rest of the window
@@ -373,7 +496,8 @@ def run_branch(sc, branch, faults=None):
     return {"branch": branch, "pct": pct, "P": P, "head": head, "vmin_home": vmin_home, "batkw": batkw, "soc": soc,
             "state": states, "home_state": home_state, "ticker": ticker, "events": events, "target": target,
             "home_tf_kw": home_tf_kw, "isolated_at": isolated_at, "grants": grants, "stats": stats,
-            "ctl": ctl, "devs": devs, "silent": silent}
+            "ctl": ctl, "devs": devs, "silent": silent,
+            "head_kw": head_kw, "head_kvar": head_kvar, "cap_kvar": cap_kvar, "load_kw": load_kw}
 
 
 def _pick_silent(sc, cmds):
@@ -464,7 +588,8 @@ def summarize(sc, run, loads_driver=None):
     outage = np.zeros(socs.shape, dtype=bool)
     for t_iso, k_iso in run["isolated_at"].items():
         outage[k_iso + 1:, sc.tf_of_batt == t_iso] = True
-    below = socs < RESERVE_FLOOR - 1e-9
+    below = socs < sc.reserve - 1e-9
+    rpct = f"{sc.reserve:.0%}"
     breaches = int((below & ~islanded & ~outage).sum())
     used_in_outage = int((below & outage).sum())
     has_batt = run["branch"] != "none"
@@ -481,10 +606,10 @@ def summarize(sc, run, loads_driver=None):
         "homesDark": labelled(len(dark), "SIM", "battery-less homes behind an open transformer"),
         "homesOnBattery": labelled(len(onbat), "SIM", "battery homes islanded on their own battery (lit)"),
         "maxLoading": labelled(round(float(pct.max()), 1), "SIM", "OpenDSS", tf=int(mx[1]), t=hhmm(win.time(mx[0]))),
-        "reserveBreaches": labelled(breaches if has_batt else 0, "SIM", "battery-steps below the 20% reserve outside an outage "
+        "reserveBreaches": labelled(breaches if has_batt else 0, "SIM", f"battery-steps below the {rpct} reserve outside an outage "
                                     "(a battery carrying its home behind an open transformer is the backup in use: reserveUsedInOutage)"),
         "reserveUsedInOutage": labelled(used_in_outage if has_batt else 0, "SIM",
-                                        "battery-steps below the 20% reserve while carrying its home behind an open transformer "
+                                        f"battery-steps below the {rpct} reserve while carrying its home behind an open transformer "
                                         "(the member backup in use during an outage, not a breach; ASSUMPTION fuse rule)"),
         "chargedPctBy0400": labelled(round(float(socs[dl].mean() * 100), 1) if has_batt else None, "SIM",
                                      f"fleet state of charge at {hhmm(win.time(dl + 1))}" if has_batt else "no batteries in this branch"),
@@ -545,7 +670,7 @@ def branch_doc(sc, run, fixture=False, dwell=MIN_DWELL_MIN, inputs=None):
     doc = envelope(f"p1.{run['branch']}", "sim.p1_build", inputs=inputs or inputs_sha(),
                    constants=constants_block(("AWARE_MARGIN", "CORE_POWER_KW", "CORE_USABLE_KWH", "CORE_RTE",
                                               "RESERVE_FLOOR", "SOC0", "BATTERY_PF", "MIN_DWELL_MIN", "COMMAND_TTL_S",
-                                              "COMMS_STALE_S"), dwell),
+                                              "COMMS_STALE_S"), dwell, sc.overrides()),
                    sources={"price": {"label": "REAL", "text": "ERCOT RTM SPP LZ_NORTH 15-min"},
                             "load": {"label": "SIM", "text": LOADS_TEXT},
                             "referee": {"label": "SIM", "text": "OpenDSSDirect.py 0.9.4 AC power flow, every step"}},
@@ -579,7 +704,7 @@ def branch_doc(sc, run, fixture=False, dwell=MIN_DWELL_MIN, inputs=None):
 
 
 def build(win, out=OUT, loads=None, feeder=None, quiet=False, dwell=MIN_DWELL_MIN, branches=BRANCHES, story=story_for,
-          inputs=None, write_branch=None):
+          inputs=None, write_branch=None, scenario_kw=None):
     """Run the branches and write meta.json + one file per branch into `out`.
 
     branches: BRANCHES (23 Aug, the default) or ("none", "naive", "aware") for a history day (HIST-R2 D2: the failure
@@ -587,12 +712,13 @@ def build(win, out=OUT, loads=None, feeder=None, quiet=False, dwell=MIN_DWELL_MI
     story:    a function(meta) -> {tag, why{text, label, cite?}} (default sim.history.story_for), or None;
     inputs:   the envelope's inputs block (a history day names the loads slice it read); default inputs_sha();
     write_branch: function(path_without_suffix, doc) -> (name, bytes) for the branch files (a history day writes gzip);
-              default write_json to <branch>.json."""
+              default write_json to <branch>.json;
+    scenario_kw: the Scenario levers ({soc0, reserve, growth}); default the committed values."""
     branches = tuple(b for b in BRANCHES if b in branches)
     if branches[:3] != ("none", "naive", "aware"):
         raise ValueError(f"branches must include none, naive and aware: {branches}")
     t0 = time.time()
-    sc = Scenario(win, loads=loads, feeder=feeder)
+    sc = Scenario(win, loads=loads, feeder=feeder, **(scenario_kw or {}))
     runs = {}
     solves = 0
     for b in ("none", "naive", "aware"):
@@ -795,7 +921,7 @@ def assemble(sc, runs, tc, faults, solves, dwell=MIN_DWELL_MIN, inputs=None):
                                      "HOT_MINUTES", "STALL_MIN", "P1_DAY", "P1_START", "P1_STEPS", "LOAD_PAIRING",
                                      "PROFILE_INDEX_RULE", "CAPACITY_BENCHMARK_USD_KW_MONTH", "CAPACITY_HIGH_USD_KW_MONTH",
                                      "TRANSFORMER_REPLACEMENT_USD", "HEAD_RATING_A", "HEAD_RATING_KVA",
-                                     "SCALE_LADDER_ERCOT") + LEAD_CONSTS, dwell),
+                                     "SCALE_LADDER_ERCOT") + LEAD_CONSTS, dwell, sc.overrides()),
                     sources={"price": {"label": "REAL", "text": "ERCOT RTM SPP LZ_NORTH 15-min"},
                              "load": {"label": "SIM", "text": LOADS_TEXT},
                              "referee": {"label": "SIM", "text": "OpenDSSDirect.py 0.9.4 AC power flow, every step of every branch"},
@@ -859,7 +985,8 @@ def main(argv=None):
     if not a.quick and a.out is None:
         TIMING.parent.mkdir(parents=True, exist_ok=True)
         TIMING.write_text(json.dumps({"seconds": round(r["seconds"], 1), "solves": r["solves"],
-                                      "loadavg": [round(x, 1) for x in os.getloadavg()]}))
+                                      "loadavg": ([round(x, 1) for x in os.getloadavg()] if hasattr(os, "getloadavg")
+                                                  else None)}))
     return 0
 
 
